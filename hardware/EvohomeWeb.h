@@ -14,7 +14,7 @@
 
 #include "EvohomeBase.h"
 
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 
 class CEvohomeWeb : public CEvohomeBase
 {

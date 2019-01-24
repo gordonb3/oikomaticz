@@ -1678,7 +1678,7 @@
     <ClInclude Include="..\notifications\NotificationHTTP.h">
       <Filter>Notifications</Filter>
     </ClInclude>
-    <ClInclude Include="..\sqlite\sqlite3.h">
+    <ClInclude Include="..\libs\sqlite\sqlite3.h">
       <Filter>SQLite</Filter>
     </ClInclude>
     <ClInclude Include="..\hardware\KMTronicBase.h">
@@ -1711,70 +1711,70 @@
     <ClInclude Include="..\hardware\Thermosmart.h">
       <Filter>Devices\Thermosmart</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\config.h">
+    <ClInclude Include="..\libs\mosquittopp\config.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\dummypthread.h">
+    <ClInclude Include="..\libs\mosquittopp\dummypthread.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\lib_load.h">
+    <ClInclude Include="..\libs\mosquittopp\lib_load.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\logging_mosq.h">
+    <ClInclude Include="..\libs\mosquittopp\logging_mosq.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\memory_mosq.h">
+    <ClInclude Include="..\libs\mosquittopp\memory_mosq.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\messages_mosq.h">
+    <ClInclude Include="..\libs\mosquittopp\messages_mosq.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\mosquitto.h">
+    <ClInclude Include="..\libs\mosquittopp\mosquitto.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\mosquitto_broker.h">
+    <ClInclude Include="..\libs\mosquittopp\mosquitto_broker.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\mosquitto_internal.h">
+    <ClInclude Include="..\libs\mosquittopp\mosquitto_internal.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\mosquitto_plugin.h">
+    <ClInclude Include="..\libs\mosquittopp\mosquitto_plugin.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\mosquittopp.h">
+    <ClInclude Include="..\libs\mosquittopp\mosquittopp.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\mqtt3_protocol.h">
+    <ClInclude Include="..\libs\mosquittopp\mqtt3_protocol.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\net_mosq.h">
+    <ClInclude Include="..\libs\mosquittopp\net_mosq.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\persist.h">
+    <ClInclude Include="..\libs\mosquittopp\persist.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\read_handle.h">
+    <ClInclude Include="..\libs\mosquittopp\read_handle.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\send_mosq.h">
+    <ClInclude Include="..\libs\mosquittopp\send_mosq.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\socks_mosq.h">
+    <ClInclude Include="..\libs\mosquittopp\socks_mosq.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\time_mosq.h">
+    <ClInclude Include="..\libs\mosquittopp\time_mosq.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\tls_mosq.h">
+    <ClInclude Include="..\libs\mosquittopp\tls_mosq.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\uthash.h">
+    <ClInclude Include="..\libs\mosquittopp\uthash.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\util_mosq.h">
+    <ClInclude Include="..\libs\mosquittopp\util_mosq.h">
       <Filter>MQTT</Filter>
     </ClInclude>
-    <ClInclude Include="..\MQTT\will_mosq.h">
+    <ClInclude Include="..\libs\mosquittopp\will_mosq.h">
       <Filter>MQTT</Filter>
     </ClInclude>
     <ClInclude Include="..\hardware\RFXComSerial.h">
@@ -2074,7 +2074,7 @@
     <ClInclude Include="..\hardware\EvohomeScript.h">
       <Filter>Devices\EvoHome</Filter>
     </ClInclude>
-    <ClInclude Include="..\tinyxpath\tinyxml.h">
+    <ClInclude Include="..\libs\tinyxpath\tinyxml.h">
       <Filter>XML</Filter>
     </ClInclude>
     <ClInclude Include="..\hardware\Tado.h">
@@ -2086,7 +2086,7 @@
     <ClInclude Include="..\webserver\WebsocketHandler.h">
       <Filter>Webserver</Filter>
     </ClInclude>
-    <ClInclude Include="..\tinyxpath\xpath_processor.h">
+    <ClInclude Include="..\libs\tinyxpath\xpath_processor.h">
       <Filter>XML</Filter>
     </ClInclude>
     <ClInclude Include="..\zip\iowin32.h">
@@ -2178,13 +2178,13 @@
     <ClCompile Include="..\webserver\server.cpp">
       <Filter>Webserver</Filter>
     </ClCompile>
-    <ClCompile Include="..\json\json_value.cpp">
+    <ClCompile Include="..\libs\jsoncpp\json_value.cpp">
       <Filter>json</Filter>
     </ClCompile>
-    <ClCompile Include="..\json\json_writer.cpp">
+    <ClCompile Include="..\libs\jsoncpp\json_writer.cpp">
       <Filter>json</Filter>
     </ClCompile>
-    <ClCompile Include="..\json\json_reader.cpp">
+    <ClCompile Include="..\libs\jsoncpp\json_reader.cpp">
       <Filter>json</Filter>
     </ClCompile>
     <ClCompile Include="..\tcpserver\TCPClient.cpp">
@@ -2442,7 +2442,7 @@
     <ClCompile Include="..\notifications\NotificationHTTP.cpp">
       <Filter>Notifications</Filter>
     </ClCompile>
-    <ClCompile Include="..\sqlite\sqlite3.c">
+    <ClCompile Include="..\libs\sqlite\sqlite3.c">
       <Filter>SQLite</Filter>
     </ClCompile>
     <ClCompile Include="..\hardware\KMTronicBase.cpp">
@@ -2475,58 +2475,58 @@
     <ClCompile Include="..\hardware\Thermosmart.cpp">
       <Filter>Devices\Thermosmart</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\logging_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\logging_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\memory_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\memory_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\messages_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\messages_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\mosquitto.c">
+    <ClCompile Include="..\libs\mosquittopp\mosquitto.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\mosquittopp.cpp">
+    <ClCompile Include="..\libs\mosquittopp\mosquittopp.cpp">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\net_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\net_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\read_handle.c">
+    <ClCompile Include="..\libs\mosquittopp\read_handle.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\read_handle_client.c">
+    <ClCompile Include="..\libs\mosquittopp\read_handle_client.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\read_handle_shared.c">
+    <ClCompile Include="..\libs\mosquittopp\read_handle_shared.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\send_client_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\send_client_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\send_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\send_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\socks_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\socks_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\srv_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\srv_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\thread_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\thread_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\time_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\time_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\tls_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\tls_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\util_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\util_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
-    <ClCompile Include="..\MQTT\will_mosq.c">
+    <ClCompile Include="..\libs\mosquittopp\will_mosq.c">
       <Filter>MQTT</Filter>
     </ClCompile>
     <ClCompile Include="..\hardware\RFXComSerial.cpp">
@@ -2619,55 +2619,55 @@
     <ClCompile Include="..\hardware\CurrentCostMeterTCP.cpp">
       <Filter>Devices\CurrentCost</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\xml_util.cpp">
+    <ClCompile Include="..\libs\tinyxpath\xml_util.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\xpath_expression.cpp">
+    <ClCompile Include="..\libs\tinyxpath\xpath_expression.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\xpath_processor.cpp">
+    <ClCompile Include="..\libs\tinyxpath\xpath_processor.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\xpath_stack.cpp">
+    <ClCompile Include="..\libs\tinyxpath\xpath_stack.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\xpath_static.cpp">
+    <ClCompile Include="..\libs\tinyxpath\xpath_static.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\xpath_stream.cpp">
+    <ClCompile Include="..\libs\tinyxpath\xpath_stream.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\xpath_syntax.cpp">
+    <ClCompile Include="..\libs\tinyxpath\xpath_syntax.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\action_store.cpp">
+    <ClCompile Include="..\libs\tinyxpath\action_store.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\htmlutil.cpp">
+    <ClCompile Include="..\libs\tinyxpath\htmlutil.cpp">
       <Filter>XML</Filter>
     </ClCompile>
     <ClCompile Include="..\hardware\NefitEasy.cpp">
       <Filter>Devices\Nefit-Easy</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\lex_util.cpp">
+    <ClCompile Include="..\libs\tinyxpath\lex_util.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\node_set.cpp">
+    <ClCompile Include="..\libs\tinyxpath\node_set.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\tinystr.cpp">
+    <ClCompile Include="..\libs\tinyxpath\tinystr.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\tinyxml.cpp">
+    <ClCompile Include="..\libs\tinyxpath\tinyxml.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\tinyxmlerror.cpp">
+    <ClCompile Include="..\libs\tinyxpath\tinyxmlerror.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\tinyxmlparser.cpp">
+    <ClCompile Include="..\libs\tinyxpath\tinyxmlparser.cpp">
       <Filter>XML</Filter>
     </ClCompile>
-    <ClCompile Include="..\tinyxpath\tokenlist.cpp">
+    <ClCompile Include="..\libs\tinyxpath\tokenlist.cpp">
       <Filter>XML</Filter>
     </ClCompile>
     <ClCompile Include="..\notifications\NotificationGCM.cpp">

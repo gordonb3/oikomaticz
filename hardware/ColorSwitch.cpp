@@ -2,7 +2,7 @@
 #include "../main/Helper.h"
 #include "hardwaretypes.h"
 #include "ColorSwitch.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 
 _tColor::_tColor()
 {

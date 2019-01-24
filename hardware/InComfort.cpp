@@ -4,12 +4,12 @@
 #include "../main/Logger.h"
 #include "hardwaretypes.h"
 #include "../main/localtime_r.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 #include "../main/RFXtrx.h"
 #include "../main/SQLHelper.h"
 #include "../httpclient/HTTPClient.h"
 #include "../main/mainworker.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 
 #define round(a) ( int ) ( a + .5 )
 

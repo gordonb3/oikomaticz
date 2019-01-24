@@ -50,7 +50,7 @@ History:
 #include "../main/mainworker.h"
 #include "../webserver/Base64.h"
 #include "csocket.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 
 
 #define CONNECTION_ID				"446f6d6f-7469-637a-2d48-61726d6f6e79" // `Domoticz-Harmony` in ASCII

@@ -47,7 +47,7 @@
 #ifndef __GZipHelper__
 #define __GZipHelper__
 
-#include "../zlib/zutil.h"
+#include "../libs/zlib/zutil.h"
 
 
 #define ALLOC(size) malloc(size)

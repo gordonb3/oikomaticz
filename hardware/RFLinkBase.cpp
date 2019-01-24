@@ -11,7 +11,7 @@
 #include "../main/mainworker.h"
 #include "../main/WebServer.h"
 #include "../webserver/cWebem.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 
 #ifdef _DEBUG
 	#define ENABLE_LOGGING

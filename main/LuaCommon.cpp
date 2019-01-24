@@ -10,15 +10,15 @@ extern "C" {
 #include <lualib.h>
 #include <lauxlib.h>
 #else
-#include "../lua/src/lua.h"
-#include "../lua/src/lualib.h"
-#include "../lua/src/lauxlib.h"
+#include "../libs/lua/src/lua.h"
+#include "../libs/lua/src/lualib.h"
+#include "../libs/lua/src/lauxlib.h"
 #endif
 }
 
 #include <xpath_processor.h>
 
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 #include "SQLHelper.h"
 #include "mainworker.h"
 #include "../hardware/hardwaretypes.h"

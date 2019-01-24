@@ -2,7 +2,7 @@
 #include "Websockets.hpp"
 // debug
 #include "../main/Logger.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 
 #define FIN_MASK 0x80
 #define RSVI1_MASK 0x40

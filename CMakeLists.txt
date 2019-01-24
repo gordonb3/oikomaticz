@@ -56,8 +56,8 @@ IF(USE_BUILTIN_LUA)
   IF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     add_definitions(-DLUA_USE_MACOSX)
   ENDIF()
-  add_subdirectory (lua)
-  get_directory_property (LUA_LIBRARIES DIRECTORY lua
+  add_subdirectory (libs/lua)
+  get_directory_property (LUA_LIBRARIES DIRECTORY libs/lua
     DEFINITION LUA_LIBRARIES)
 ELSE(USE_BUILTIN_LUA)
   find_package(PkgConfig)
@@ -89,9 +89,8 @@ ENDIF(USE_BUILTIN_LUA)
 option(USE_BUILTIN_MQTT "Use builtin Mosquitto library" YES)
 IF(USE_BUILTIN_MQTT)
   message(STATUS "Using builtin Mosquitto library")
-  add_subdirectory (MQTT)
-  get_directory_property (MQTT_LIBRARIES DIRECTORY MQTT
-      DEFINITION MQTT_LIBRARIES)
+  add_subdirectory (libs/mosquittopp)
+  get_directory_property (MQTT_LIBRARIES DIRECTORY libs/mosquittopp DEFINITION MQTT_LIBRARIES)
   add_definitions(-DBUILTIN_MQTT)
 ELSE(USE_BUILTIN_MQTT)
   find_path(MQTT_INCLUDE_DIRS NAMES mosquittopp.h)
@@ -109,8 +108,8 @@ ENDIF(USE_BUILTIN_MQTT)
 
 option(USE_BUILTIN_SQLITE "Use builtin sqlite library" YES)
 IF(USE_BUILTIN_SQLITE)
-  add_subdirectory (sqlite)
-  get_directory_property (SQLite_LIBRARIES DIRECTORY sqlite
+  add_subdirectory (libs/sqlite)
+  get_directory_property (SQLite_LIBRARIES DIRECTORY libs/sqlite
       DEFINITION SQLite_LIBRARIES)
 ELSE(USE_BUILTIN_SQLITE)
   find_package(PkgConfig)
@@ -285,7 +284,7 @@ FIND_PROGRAM(GIT_EXECUTABLE git
 
 
 include_directories(${CMAKE_SOURCE_DIR}/main)
-include_directories(${CMAKE_SOURCE_DIR}/tinyxpath)
+include_directories(${CMAKE_SOURCE_DIR}/libs/tinyxpath)
 
 # a custom target that is always built
 ADD_CUSTOM_TARGET(revisiontag ALL)
@@ -515,25 +514,25 @@ webserver/request_parser.cpp
 webserver/server.cpp
 webserver/Websockets.cpp
 webserver/WebsocketHandler.cpp
-json/json_reader.cpp
-json/json_value.cpp
-json/json_writer.cpp
-tinyxpath/action_store.cpp
-tinyxpath/htmlutil.cpp
-tinyxpath/lex_util.cpp
-tinyxpath/node_set.cpp
-tinyxpath/tinystr.cpp
-tinyxpath/tinyxml.cpp
-tinyxpath/tinyxmlerror.cpp
-tinyxpath/tinyxmlparser.cpp
-tinyxpath/tokenlist.cpp
-tinyxpath/xml_util.cpp
-tinyxpath/xpath_expression.cpp
-tinyxpath/xpath_processor.cpp
-tinyxpath/xpath_stream.cpp
-tinyxpath/xpath_stack.cpp
-tinyxpath/xpath_static.cpp
-tinyxpath/xpath_syntax.cpp
+libs/jsoncpp/json_reader.cpp
+libs/jsoncpp/json_value.cpp
+libs/jsoncpp/json_writer.cpp
+libs/tinyxpath/action_store.cpp
+libs/tinyxpath/htmlutil.cpp
+libs/tinyxpath/lex_util.cpp
+libs/tinyxpath/node_set.cpp
+libs/tinyxpath/tinystr.cpp
+libs/tinyxpath/tinyxml.cpp
+libs/tinyxpath/tinyxmlerror.cpp
+libs/tinyxpath/tinyxmlparser.cpp
+libs/tinyxpath/tokenlist.cpp
+libs/tinyxpath/xml_util.cpp
+libs/tinyxpath/xpath_expression.cpp
+libs/tinyxpath/xpath_processor.cpp
+libs/tinyxpath/xpath_stream.cpp
+libs/tinyxpath/xpath_stack.cpp
+libs/tinyxpath/xpath_static.cpp
+libs/tinyxpath/xpath_syntax.cpp
 )
 add_executable(domoticz ${domoticz_SRCS})
 
@@ -594,9 +593,14 @@ include_directories(${Boost_INCLUDE_DIRS})
 #
 # ZLIB
 #
-option(USE_BUILTIN_ZLIB "Use builtin zlib library" NO)
+option(USE_BUILTIN_ZLIB "Use builtin zlib library" YES)
 if(USE_BUILTIN_ZLIB)
-  add_subdirectory (zlib)
+  SET(ZLIB_INCLUDE_DIRS libs/zlib)
+  add_subdirectory (${ZLIB_INCLUDE_DIRS})
+  SET(ZLIB_LIBRARIES z)
+  ADD_LIBRARY(z STATIC IMPORTED)
+  set_target_properties(z PROPERTIES IMPORTED_LOCATION ${ZLIB_INCLUDE_DIRS}/libz.a)
+
   include_directories(${ZLIB_INCLUDE_DIRS})
 else(USE_BUILTIN_ZLIB)
   find_package(ZLIB REQUIRED)
@@ -614,9 +618,9 @@ endif(USE_BUILTIN_ZLIB)
 #
 option(USE_BUILTIN_MINIZIP "Use builtin minizip library" YES)
 if(USE_BUILTIN_MINIZIP)
-  add_subdirectory(zip)
-  get_directory_property(MINIZIP_LIBRARIES DIRECTORY zip DEFINITION MINIZIP_LIBRARIES)
-  get_directory_property(MINIZIP_INCLUDE_DIRS DIRECTORY zip DEFINITION MINIZIP_INCLUDE_DIRS)
+  add_subdirectory(libs/zlib/contrib/minizip)
+  get_directory_property(MINIZIP_LIBRARIES DIRECTORY libs/zlib/contrib/minizip DEFINITION MINIZIP_LIBRARIES)
+  get_directory_property(MINIZIP_INCLUDE_DIRS DIRECTORY libs/zlib/contrib/minizip DEFINITION MINIZIP_INCLUDE_DIRS)
   include_directories(${MINIZIP_INCLUDE_DIRS})
 else(USE_BUILTIN_MINIZIP)
   find_package(PkgConfig)

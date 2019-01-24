@@ -17,7 +17,7 @@
 #include "../webserver/cWebem.h"
 #include "../main/mainworker.h"
 
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 #include "../main/localtime_r.h"
 
 //OpenZWave includes

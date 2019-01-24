@@ -33,9 +33,9 @@ Version history
 #include "hardwaretypes.h"
 #include "../main/localtime_r.h"
 #include "../httpclient/HTTPClient.h"
-#include <../tinyxpath/xpath_static.h>
+#include <../libs/tinyxpath/xpath_static.h>
 #include "../webserver/Base64.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 #include <sstream>
 
 #ifdef _DEBUG

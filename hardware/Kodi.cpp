@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Kodi.h"
 #include "../hardware/hardwaretypes.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 #include "../main/EventSystem.h"
 #include "../main/Helper.h"
 #include "../main/Logger.h"

@@ -18,7 +18,7 @@
 #include "WebServer.h"
 #include "../main/WebServerHelper.h"
 #include "../webserver/cWebem.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -28,9 +28,9 @@ extern "C" {
 #include <lualib.h>
 #include <lauxlib.h>
 #else
-#include "../lua/src/lua.h"
-#include "../lua/src/lualib.h"
-#include "../lua/src/lauxlib.h"
+#include "../libs/lua/src/lua.h"
+#include "../libs/lua/src/lualib.h"
+#include "../libs/lua/src/lauxlib.h"
 #endif
 }
 

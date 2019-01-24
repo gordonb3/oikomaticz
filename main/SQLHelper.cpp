@@ -10,7 +10,7 @@
 #ifdef WITH_EXTERNAL_SQLITE
 #include <sqlite3.h>
 #else
-#include "../sqlite/sqlite3.h"
+#include "../libs/sqlite/sqlite3.h"
 #endif
 #include "../hardware/hardwaretypes.h"
 #include "../smtpclient/SMTPClient.h"

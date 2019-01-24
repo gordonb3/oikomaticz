@@ -7,7 +7,7 @@
 #include "../main/RFXtrx.h"
 #include "hardwaretypes.h"
 #include "../httpclient/HTTPClient.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 
 #define round(a) ( int ) ( a + .5 )
 

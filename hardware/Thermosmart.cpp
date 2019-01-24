@@ -9,7 +9,7 @@
 #include "../main/SQLHelper.h"
 #include "../httpclient/HTTPClient.h"
 #include "../main/mainworker.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 
 #define round(a) ( int ) ( a + .5 )
 

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "LogitechMediaServer.h"
 #include "../hardware/hardwaretypes.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 #include "../main/Helper.h"
 #include "../main/localtime_r.h"
 #include "../main/Logger.h"

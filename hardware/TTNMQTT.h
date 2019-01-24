@@ -2,10 +2,10 @@
 
 #include "MySensorsBase.h"
 #ifdef BUILTIN_MQTT
-#include "../MQTT/mosquittopp.h"
+#include "../libs/mosquittopp/mosquittopp.h"
 #else
 #ifdef WIN32
-#include "../MQTT/mosquittopp.h"
+#include "../libs/mosquittopp/mosquittopp.h"
 #else
 #include <mosquittopp.h>
 #endif

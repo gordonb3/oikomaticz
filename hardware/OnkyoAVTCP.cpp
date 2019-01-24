@@ -7,8 +7,8 @@
 #include "../main/localtime_r.h"
 #include "../main/mainworker.h"
 #include "../hardware/hardwaretypes.h"
-#include "../json/json.h"
-#include "../tinyxpath/tinyxml.h"
+#include "../libs/jsoncpp/json.h"
+#include "../libs/tinyxpath/tinyxml.h"
 #include "../main/WebServer.h"
 
 #include <sstream>

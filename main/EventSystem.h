@@ -9,9 +9,9 @@ extern "C" {
 #include <lualib.h>
 #include <lauxlib.h>
 #else
-#include "../lua/src/lua.h"
-#include "../lua/src/lualib.h"
-#include "../lua/src/lauxlib.h"
+#include "../libs/lua/src/lua.h"
+#include "../libs/lua/src/lualib.h"
+#include "../libs/lua/src/lauxlib.h"
 #endif
 }
 #include "../httpclient/HTTPClient.h"

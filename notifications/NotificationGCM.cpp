@@ -3,7 +3,7 @@
 #include "../httpclient/HTTPClient.h"
 #include "../main/Logger.h"
 #include "../main/SQLHelper.h"
-#include "../json/json.h"
+#include "../libs/jsoncpp/json.h"
 
 #define GAPI_POST_URL "https://gcm-http.googleapis.com/gcm/send"
 #define GAPI "AIzaSyBnRMroiDaXCKbwPeOmoxkNiQfjWkGMre8"
