@@ -63,14 +63,14 @@ FILETYPE VFT_APP
     {
        BLOCK "040704E4"
        {
-          VALUE "CompanyName", "Domoticz"
+          VALUE "CompanyName", "Oikomaticz"
           VALUE "FileVersion", VER_FILE_VERSION_STR 
           VALUE "FileDescription", "Domoticz Home Automation"
-          VALUE "InternalName", "Domoticz"
+          VALUE "InternalName", "Oikomaticz"
           VALUE "LegalCopyright", "GNU Version 2 or later"
           VALUE "LegalTrademarks", "GNU Version 2 or later"
           VALUE "OriginalFilename", "Domoticz.exe"
-          VALUE "ProductName", "Domoticz"
+          VALUE "ProductName", "Oikomaticz"
           VALUE "ProductVersion", VER_FILE_VERSION_STR 
        }
     }

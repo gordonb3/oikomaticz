@@ -620,7 +620,7 @@ define(['app'], function (app) {
 												var highlow = (item.Status === 'On') ? "Low" : "High";
 												highlighttext = highlow + " Tariff";
 											}
-											img = '<img src="images/' + item.TypeImg + '48_' + item.Status + '.png"  title="' + $.t(highlighttext) + '" height="40" width="40">';
+											img = '<img src="images/' + item.Image + '48_' + item.Status + '.png"  title="' + $.t(highlighttext) + '" height="40" width="40">';
 										}
 										else if (item.SwitchType == "Doorbell") {
 											img = '<img src="images/doorbell48.png" title="' + $.t("Turn On") + '" onclick="SwitchLight(' + item.idx + ',\'On\',RefreshFavorites,' + item.Protected + ');" class="lcursor" height="40" width="40">';

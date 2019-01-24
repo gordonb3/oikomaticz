@@ -25,7 +25,7 @@ bool CNotificationPushalot::SendMessageImplementation(
 {
 	//send message to PushAlot
 
-	std::string cSubject = (Subject == Text) ? "Domoticz" : Subject;
+	std::string cSubject = (Subject == Text) ? "Oikomaticz" : Subject;
 
 	bool bRet;
 	std::stringstream sPostData;

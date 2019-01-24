@@ -2642,7 +2642,7 @@ bool CSQLHelper::OpenDatabase()
 	std::string sValue;
 	if (!GetPreferencesVar("Title", sValue))
 	{
-		UpdatePreferencesVar("Title", "Domoticz");
+		UpdatePreferencesVar("Title", "Oikomaticz");
 	}
 	if ((!GetPreferencesVar("LightHistoryDays", nValue)) || (nValue == 0))
 	{

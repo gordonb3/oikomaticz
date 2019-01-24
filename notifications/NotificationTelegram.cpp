@@ -27,7 +27,7 @@ bool CNotificationTelegram::SendMessageImplementation(
 	const bool bFromNotification)
 {
 	//send message to Telegram
-	//std::string cSubject = (Subject == Text) ? "Domoticz" : Subject;
+	//std::string cSubject = (Subject == Text) ? "Oikomaticz" : Subject;
 
 	bool bRet;
 	std::string sPostData;

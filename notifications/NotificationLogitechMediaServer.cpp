@@ -27,7 +27,7 @@ bool CNotificationLogitechMediaServer::SendMessageImplementation(
 	const std::string &Sound,
 	const bool bFromNotification)
 {
-	std::string	sSubject("Domoticz");
+	std::string	sSubject("Oikomaticz");
 	if (Subject != Text)
 	{
 		sSubject = Subject;

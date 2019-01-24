@@ -26,7 +26,7 @@ bool CNotificationPushbullet::SendMessageImplementation(
 	const bool bFromNotification)
 {
 	//send message to Pushbullet
-	std::string cSubject = (Subject == Text) ? "Domoticz" : Subject;
+	std::string cSubject = (Subject == Text) ? "Oikomaticz" : Subject;
 
 	bool bRet;
 	std::string sPostData;

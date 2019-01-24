@@ -2,7 +2,7 @@
 <html manifest="html5.appcache">
 <head>
 		<meta charset="utf-8">
-		<title>Domoticz</title>
+		<title>Oikomaticz</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="mobile-web-app-capable" content="yes" />
@@ -281,7 +281,7 @@ $(document).ready(function() {
 		isproxied: false
 	};
 	if (typeof sessionStorage.title == 'undefined') {
-		sessionStorage.title = "Domoticz";
+		sessionStorage.title = "Oikomaticz";
 		$.ajax({
 	             	url: "json.htm?type=command&param=gettitle",
 	        	async: false,
@@ -1279,7 +1279,7 @@ $(document).ready(function() {
 	<div class="navbar navbar-inverse navbar-fixed-top" ng-controller="NavbarController" style="display: none;" has-User>
 		<div class="navbar-inner">
 			<div class="container">
-				<a class="brand hidden-phone" id="version" href="#Dashboard"><img src="images/logo/57.png"><h1>Domoticz</h1> <h2 id="appversion" tooltip-html="{{config.versiontooltip}}" tooltip-placement="right" class="version-tooltip">*</h2></a>
+				<a class="brand hidden-phone" id="version" href="#Dashboard"><img src="images/logo/57.png"><h1>Oikomaticz</h1> <h2 id="appversion" tooltip-html="{{config.versiontooltip}}" tooltip-placement="right" class="version-tooltip">*</h2></a>
 				<ul class="nav" id="appnavbar">
 					<li ng-show="config.EnableTabProxy" class="clDashboard"><a id="cProxy" href="/mydomoticz/dashboard"><img src="images/proxy.png"> <span class="hidden-phone hidden-tablet" data-i18n="Proxy">Proxy</span></a></li>
 					<li ng-show="config.EnableTabDashboard" class="divider-vertical clDashboard"></li>
@@ -1366,7 +1366,7 @@ $(document).ready(function() {
 				<div id="main-view" ng-view></div>
 			</div>
 			<div id="copyright" style="display: none;" has-User>
-				<p>&copy; 2012-{{currentyear}} Domoticz | WWW: <a href="http://domoticz.com/" target="_blank">Domoticz.com</a></p>
+				<p>&copy; 2012-2018 Domoticz</p>
 			</div>
 		</div> <!-- /container -->
 	</div>

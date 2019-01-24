@@ -315,7 +315,7 @@ int	uname(struct utsname *putsname)
 {
 	strcpy(putsname->sysname,"Windows");
 	strcpy(putsname->machine,"x86");
-	strcpy(putsname->nodename,"Domoticz");
+	strcpy(putsname->nodename,"Oikomaticz");
 	strcpy(putsname->release,"1.2.3");
 	strcpy(putsname->version,"latest");
 

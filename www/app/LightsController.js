@@ -372,7 +372,7 @@ define(['app'], function (app) {
 										var highlow = (item.Status === 'On') ? "Low" : "High";
 										highlighttext = highlow + " Tariff";
 									}
-									img = '<img src="images/' + item.TypeImg + '48_' + item.Status + '.png"  title="' + $.t(highlighttext) + '" height="48" width="48">';
+									img = '<img src="images/' + item.Image + '48_' + item.Status + '.png"  title="' + $.t(highlighttext) + '" height="48" width="48">';
 								}
 								else if (item.SubType == "Security Panel") {
 									img = '<a href="secpanel/"><img src="images/security48.png" class="lcursor" height="48" width="48"></a>';

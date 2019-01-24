@@ -24,7 +24,7 @@ bool CNotificationPushover::SendMessageImplementation(
 	const std::string &Sound,
 	const bool bFromNotification)
 {
-	std::string cSubject = (Subject == Text) ? "Domoticz" : Subject;
+	std::string cSubject = (Subject == Text) ? "Oikomaticz" : Subject;
 
 	bool bRet;
 	std::string sResult;

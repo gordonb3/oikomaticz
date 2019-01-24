@@ -700,7 +700,7 @@ int main(int argc, char**argv)
 #ifndef _DEBUG
 	CreateMutexA(0, FALSE, "Local\\Domoticz"); 
 	if(GetLastError() == ERROR_ALREADY_EXISTS) { 
-		MessageBox(HWND_DESKTOP,"Another instance of Domoticz is already running!","Domoticz",MB_OK);
+		MessageBox(HWND_DESKTOP,"Another instance of Domoticz is already running!","Oikomaticz",MB_OK);
 		return 1; 
 	}
 #endif //_DEBUG

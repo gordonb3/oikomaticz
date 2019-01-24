@@ -30,7 +30,7 @@ bool CNotificationPushsafer::SendMessageImplementation(
 	
 {
 	//send message to Pushsafer
-	std::string cSubject = (Subject == Text) ? "Domoticz" : Subject;
+	std::string cSubject = (Subject == Text) ? "Oikomaticz" : Subject;
 
 	bool bRet;
 	std::string sResult;
