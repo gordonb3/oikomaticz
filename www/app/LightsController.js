@@ -366,7 +366,15 @@ define(['app'], function (app) {
 									bigtext += "&nbsp;" + streamurl;
 								}
 
-								if (item.SubType == "Security Panel") {
+								if (item.SubType == "Contact") {
+									var highlighttext = item.Status;
+									if (item.HardwareType.indexOf("P1 Smart")  == 0) {
+										var highlow = (item.Status === 'On') ? "Low" : "High";
+										highlighttext = highlow + " Tariff";
+									}
+									img = '<img src="images/' + item.TypeImg + '48_' + item.Status + '.png"  title="' + $.t(highlighttext) + '" height="48" width="48">';
+								}
+								else if (item.SubType == "Security Panel") {
 									img = '<a href="secpanel/"><img src="images/security48.png" class="lcursor" height="48" width="48"></a>';
 								}
 								else if (item.SubType == "Evohome") {
@@ -935,7 +943,16 @@ define(['app'], function (app) {
 								}
 							}
 							xhtm += bigtext + '</td>\n';
-							if (item.SubType == "Security Panel") {
+							if (item.SubType == "Contact") {
+								bAddTimer = false;
+								var highlighttext = item.Status;
+								if (item.HardwareType.indexOf("P1 Smart")  == 0) {
+									var highlow = (item.Status === 'On') ? "Low" : "High";
+									highlighttext = highlow + " Tariff";
+								}
+								xhtm += '\t      <td id="img"><img src="images/' + item.Image + '48_' + item.Status + '.png"  title="' + $.t(highlighttext) + '" height="48" width="48"></td>\n';
+							}
+							else if (item.SubType == "Security Panel") {
 								xhtm += '\t      <td id="img"><a href="secpanel/"><img src="images/security48.png" class="lcursor" height="48" width="48"></a></td>\n';
 							}
 							else if (item.SubType == "Evohome") {

@@ -205,7 +205,15 @@ define(['app'], function (app) {
 							var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + item.ID + ' id="Check-' + item.ID + '" value="' + item.idx + '" />';
 							var TypeImg = item.TypeImg;
 							var itemImage = '<img src="images/' + TypeImg + '.png" width="16" height="16">';
-							if (TypeImg.indexOf("Alert") == 0) {
+							if (item.SubType === "Contact") {
+								if (this.Status) {
+									itemImage = '<img src="images/' + item.Image + '48_' + this.Status + '.png" width="16" height="16">';
+								}
+								else {
+									itemImage = '<img src="images/' + item.Image + '.png" width="16" height="16">';
+								}
+							}
+							else if (TypeImg.indexOf("Alert") == 0) {
 								var aLevel = item.Level;
 								if (aLevel > 4) aLevel = 4;
 								itemImage = '<img src="images/Alert48_' + aLevel + '.png" width="16" height="16">';
@@ -224,6 +232,9 @@ define(['app'], function (app) {
 								else {
 									itemImage = '<img src="images/lightbulboff.png" title="Turn On" onclick="SwitchLight(' + item.idx + ',\'On\',ShowDevices);" class="lcursor">';
 								}
+							}
+							else if ((TypeImg.indexOf("counter") == 0) && (this.Status)) {
+								itemImage = '<img src="images/counter48_' + this.Status + '.png" width="16" height="16">';
 							}
 							else if (TypeImg.indexOf("pushoff") == 0) {
 								itemImage = '<img src="images/pushoff.png" title="Turn Off" onclick="SwitchLight(' + item.idx + ',\'Off\',ShowDevices);" class="lcursor">';

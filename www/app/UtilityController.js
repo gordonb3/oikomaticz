@@ -611,13 +611,13 @@ define(['app'], function (app) {
 										xhtm += '<img src="images/Water48_On.png" height="48" width="48"></td>\n';
 									}
 									else if (item.SwitchTypeVal == 3) {
-										xhtm += '<img src="images/Counter48.png" height="48" width="48"></td>\n';
+										xhtm += '<img src="images/counter48.png" height="48" width="48"></td>\n';
 									}
 									else if (item.SwitchTypeVal == 4) {
 										xhtm += '<img src="images/PV48.png" height="48" width="48"></td>\n';
 									}
 									else {
-										xhtm += '<img src="images/Counter48.png" height="48" width="48"></td>\n';
+										xhtm += '<img src="images/counter48.png" height="48" width="48"></td>\n';
 									}
 								}
 								else {
@@ -625,7 +625,7 @@ define(['app'], function (app) {
 										xhtm += '<img src="images/Gas48.png" height="48" width="48"></td>\n';
 									}
 									else {
-										xhtm += '<img src="images/Counter48.png" height="48" width="48"></td>\n';
+										xhtm += '<img src="images/counter48.png" height="48" width="48"></td>\n';
 									}
 								}
 								if (

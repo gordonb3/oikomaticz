@@ -1145,7 +1145,9 @@
     <Image Include="..\www\images\copy.png" />
     <Image Include="..\www\images\copy_hover.png" />
     <Image Include="..\www\images\counter.png" />
-    <Image Include="..\www\images\Counter48.png" />
+    <Image Include="..\www\images\counter48.png" />
+    <Image Include="..\www\images\counter48_On.png" />
+    <Image Include="..\www\images\counter48_Off.png" />
     <Image Include="..\www\images\csv.png" />
     <Image Include="..\www\images\csv_hover.png" />
     <Image Include="..\www\images\current.png" />

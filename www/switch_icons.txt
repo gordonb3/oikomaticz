@@ -17,3 +17,4 @@ Heating;Heating;Heating device
 Cooling;Cooling;Cooling device
 ComputerPC;Computer PC;Personal Computer System
 Phone;Phone;Mobile Phone
+counter;Counter;Counter

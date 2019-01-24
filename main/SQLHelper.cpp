@@ -34,7 +34,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#define DB_VERSION 133
+#define DB_VERSION 134
 
 extern http::server::CWebServerHelper m_webservers;
 extern std::string szWWWFolder;
@@ -2603,6 +2603,30 @@ bool CSQLHelper::OpenDatabase()
 			query("INSERT INTO Hardware(ID, Name, Enabled, Type, Address, Port, SerialPort, Username, Password, Extra, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, DataTimeout) SELECT ID, Name, Enabled, Type, Address, Port, SerialPort, Username, Password, Extra, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, DataTimeout FROM tmp_Hardware;");
 			query("DROP TABLE tmp_Hardware;");
 		}
+
+		if (dbversion < 134)
+		{
+			// patch to move existing gas m-bus channel override to the hardware table
+			std::vector<std::vector<std::string> > result;
+			result = query("SELECT Value FROM UserVariables WHERE (Name='P1GasMeterChannel')");
+			if (!result.empty())
+			{
+				unsigned char gasmbuschannel = static_cast<unsigned char>(result[0][0][0]) ^ 0x30;
+				if (gasmbuschannel < 5)
+					gasmbuschannel |= 0x30;
+				else
+					gasmbuschannel = 0x30;
+
+				result = safe_query("SELECT ID FROM Hardware WHERE Type=%d OR Type=%d", HTYPE_P1SmartMeter, HTYPE_P1SmartMeterLAN);
+				for (const auto & itt : result)
+				{
+					std::vector<std::string> sd = itt;
+					safe_query("UPDATE HARDWARE SET Mode4=%c WHERE ID=%s", gasmbuschannel, sd[0].c_str());
+				}
+				query("DELETE FROM UserVariables WHERE (Name='P1GasMeterChannel')");
+			}
+		}
+
 	}
 	else if (bNewInstall)
 	{

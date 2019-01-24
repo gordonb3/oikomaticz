@@ -21,13 +21,12 @@
 //
 //Class P1MeterSerial
 //
-P1MeterSerial::P1MeterSerial(const int ID, const std::string& devname, const unsigned int baud_rate, const bool disable_crc, const int ratelimit):
+P1MeterSerial::P1MeterSerial(const int ID, const std::string& devname, const unsigned int baud_rate, const bool disable_crc, const unsigned int ratelimit, const unsigned int gasmeterchannel):
 m_szSerialPort(devname)
 {
 	m_HwdID=ID;
 	m_iBaudRate=baud_rate;
-	m_bDisableCRC = disable_crc;
-	m_ratelimit = ratelimit;
+	SetOptions(disable_crc, ratelimit, gasmeterchannel);
 }
 
 P1MeterSerial::P1MeterSerial(const std::string& devname,

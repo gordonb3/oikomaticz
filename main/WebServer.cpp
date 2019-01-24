@@ -572,6 +572,8 @@ namespace http {
 
 			RegisterCommandCode("addArilux", boost::bind(&CWebServer::Cmd_AddArilux, this, _1, _2, _3));
 
+			RegisterCommandCode("p1setoptions", boost::bind(&CWebServer::Cmd_P1SetOptions, this, _1, _2, _3));
+
 			RegisterRType("graph", boost::bind(&CWebServer::RType_HandleGraph, this, _1, _2, _3));
 			RegisterRType("lightlog", boost::bind(&CWebServer::RType_LightLog, this, _1, _2, _3));
 			RegisterRType("textlog", boost::bind(&CWebServer::RType_TextLog, this, _1, _2, _3));

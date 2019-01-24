@@ -2023,3 +2023,53 @@
         </tr>
     </table>
 </div>
+
+<div id="p1smartmeter" style="display:none;">
+    <div class="page-header-small">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+                <td>
+                    <h1 data-i18n="Options">Options</h1>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <table class="display" id="p1settingstable" border="0" cellpadding="0" cellspacing="20">
+        <tr valign="top" id="trcrc">
+            <td align="right" style="width:110px"><label for="disablecrc"><span data-i18n="CRC message validation">CRC message validation</span>:</label></td>
+            <td>
+                <input type="checkbox" id="disablecrc" checked="checked"><br />
+                <span data-i18n="Using CRC message validation prevents incorrect data from entering the Domoticz database.">Using CRC message validation prevents incorrect data from entering the Domoticz database.</span><br />
+                <strong><font class="warning-text"><span data-i18n="Should normally not be disabled!"></span></font></strong>
+            </td>
+        </tr>
+        <tr valign="top">
+            <td align="right" style="width:110px"><label for="ratelimit"><span data-i18n="Rate Limit">Rate Limit</span>:</label></td>
+            <td><input type="text" id="ratelimit" style="width: 50px; padding: .2em;" class="text ui-widget-content ui-corner-all" />&nbsp;<span data-i18n="(Seconds) 0 = Disabled">Seconds</span>
+                <br />
+                <span data-i18n="This limits the amount of meter updates.">This limits the amount of meter updates.</span>
+                <br />
+            </td>
+        </tr>
+        <tr valign="top">
+            <td align="right" style="width:110px"><label for="gasmbuschannel"><span data-i18n="Gas meter channel">Gas meter channel</span>:</label></td>
+            <td>
+                <select id="gasmbuschannel" style="width:50px" class="combobox ui-corner-all">
+                    <option value="0">auto</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td></td>
+            <td><br /><a class="btn btn-danger sub-tabs-apply" onclick="SetP1Options();" data-i18n="Apply Options">Apply Options</a></td>
+        </tr>
+    </table>
+
+    <input type="hidden" id="idx" name="idx" value="-1">
+</div>
+

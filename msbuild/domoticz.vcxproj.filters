@@ -3235,7 +3235,13 @@
     <Image Include="..\www\images\counter.png">
       <Filter>www\images</Filter>
     </Image>
-    <Image Include="..\www\images\Counter48.png">
+    <Image Include="..\www\images\counter48.png">
+      <Filter>www\images</Filter>
+    </Image>
+    <Image Include="..\www\images\counter48_On.png">
+      <Filter>www\images</Filter>
+    </Image>
+    <Image Include="..\www\images\counter48_Off.png">
       <Filter>www\images</Filter>
     </Image>
     <Image Include="..\www\images\csv.png">

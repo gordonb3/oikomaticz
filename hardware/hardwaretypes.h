@@ -192,6 +192,7 @@
 #define sSwitchTypeFaber			0x77
 #define sSwitchTypeDrayton			0x78
 #define sSwitchTypeV2Phoenix		0x79
+#define sSwitchGeneralContact		0x7a
 
 //Switch commands
 #define gswitch_sOff				0x00
