@@ -1,4 +1,5 @@
 *.orig
+*.rej
 msbuild
 *.db
 *.db-shm
