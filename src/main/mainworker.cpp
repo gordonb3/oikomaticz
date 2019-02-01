@@ -233,13 +233,6 @@ MainWorker::MainWorker()
 	m_LastSunriseSet = "";
 	m_DayLength = "";
 
-	m_bHaveDownloadedDomoticzUpdate = false;
-	m_bHaveDownloadedDomoticzUpdateSuccessFull = false;
-	m_bDoDownloadDomoticzUpdate = false;
-	m_LastUpdateCheck = 0;
-	m_bHaveUpdate = false;
-	m_iRevision = 0;
-
 	m_SecStatus = SECSTATUS_DISARMED;
 
 	m_rxMessageIdx = 1;
@@ -1218,111 +1211,6 @@ bool MainWorker::Stop()
 #define HEX( x ) \
 	std::setw(2) << std::setfill('0') << std::hex << std::uppercase << (int)( x )
 
-bool MainWorker::IsUpdateAvailable(const bool bIsForced)
-{
-	if (!g_bUseUpdater)
-		return false;
-
-	if (!bIsForced)
-	{
-		int nValue = 0;
-		m_sql.GetPreferencesVar("UseAutoUpdate", nValue);
-		if (nValue != 1)
-		{
-			return false;
-		}
-	}
-
-	utsname my_uname;
-	if (uname(&my_uname) < 0)
-		return false;
-
-	std::string machine = my_uname.machine;
-	if (machine == "armv6l")
-	{
-		//Seems like old arm systems can also use the new arm build
-		machine = "armv7l";
-	}
-
-#ifdef DEBUG_DOWNLOAD
-	m_szSystemName = "linux";
-	machine = "armv7l";
-#endif
-
-	if ((m_szSystemName != "windows") && (machine != "armv6l") && (machine != "armv7l") && (machine != "x86_64") && (machine != "aarch64"))
-	{
-		//Only Raspberry Pi (Wheezy)/Ubuntu/windows/osx for now!
-		return false;
-	}
-	time_t atime = mytime(NULL);
-	if (!bIsForced)
-	{
-		if (atime - m_LastUpdateCheck < 12 * 3600)
-		{
-			return m_bHaveUpdate;
-		}
-	}
-	m_LastUpdateCheck = atime;
-
-	int nValue;
-	m_sql.GetPreferencesVar("ReleaseChannel", nValue);
-	bool bIsBetaChannel = (nValue != 0);
-
-	std::string szURL;
-	if (!bIsBetaChannel)
-	{
-		szURL = "https://www.domoticz.com/download.php?channel=stable&type=version&system=" + m_szSystemName + "&machine=" + machine;
-		m_szDomoticzUpdateURL = "https://www.domoticz.com/download.php?channel=stable&type=release&system=" + m_szSystemName + "&machine=" + machine;
-		m_szDomoticzUpdateChecksumURL = "https://www.domoticz.com/download.php?channel=stable&type=checksum&system=" + m_szSystemName + "&machine=" + machine;
-	}
-	else
-	{
-		szURL = "https://www.domoticz.com/download.php?channel=beta&type=version&system=" + m_szSystemName + "&machine=" + machine;
-		m_szDomoticzUpdateURL = "https://www.domoticz.com/download.php?channel=beta&type=release&system=" + m_szSystemName + "&machine=" + machine;
-		m_szDomoticzUpdateChecksumURL = "https://www.domoticz.com/download.php?channel=beta&type=checksum&system=" + m_szSystemName + "&machine=" + machine;
-	}
-
-	std::string revfile;
-
-	if (!HTTPClient::GET(szURL, revfile))
-		return false;
-
-	stdreplace(revfile, "\r\n", "\n");
-	std::vector<std::string> strarray;
-	StringSplit(revfile, "\n", strarray);
-	if (strarray.size() < 1)
-		return false;
-	StringSplit(strarray[0], " ", strarray);
-	if (strarray.size() != 3)
-		return false;
-
-	int version = atoi(szAppVersion.substr(szAppVersion.find(".") + 1).c_str());
-	m_iRevision = atoi(strarray[2].c_str());
-#ifdef DEBUG_DOWNLOAD
-	m_bHaveUpdate = true;
-#else
-	m_bHaveUpdate = ((version != m_iRevision) && (version < m_iRevision));
-#endif
-	return m_bHaveUpdate;
-}
-
-bool MainWorker::StartDownloadUpdate()
-{
-#ifndef DEBUG_DOWNLOAD
-#ifdef WIN32
-	return false; //managed by web gui
-#endif
-#endif
-
-	if (!IsUpdateAvailable(true))
-		return false; //no new version available
-
-	m_bHaveDownloadedDomoticzUpdate = false;
-	m_bHaveDownloadedDomoticzUpdateSuccessFull = false;
-	m_bDoDownloadDomoticzUpdate = true;
-	return true;
-}
-
 void MainWorker::HandleAutomaticBackups()
 {
 	int nValue = 0;
@@ -1528,47 +1416,6 @@ void MainWorker::Do_Work()
 	int heartbeat_counter = 0;
 	while (!IsStopRequested(500))
 	{
-		if (m_bDoDownloadDomoticzUpdate)
-		{
-			m_bDoDownloadDomoticzUpdate = false;
-
-			_log.Log(LOG_STATUS, "Starting Upgrade progress...");
-#ifdef WIN32
-			std::string outfile;
-
-			//First download the checksum file
-			outfile = szStartupFolder + "update.tgz.sha256sum";
-			bool bHaveDownloadedChecksum = HTTPClient::GETBinaryToFile(m_szDomoticzUpdateChecksumURL.c_str(), outfile.c_str());
-			if (bHaveDownloadedChecksum)
-			{
-				//Next download the actual update
-				outfile = szStartupFolder + "update.tgz";
-				m_bHaveDownloadedDomoticzUpdateSuccessFull = HTTPClient::GETBinaryToFile(m_szDomoticzUpdateURL.c_str(), outfile.c_str());
-				if (!m_bHaveDownloadedDomoticzUpdateSuccessFull)
-				{
-					m_UpdateStatusMessage = "Problem downloading update file!";
-				}
-			}
-			else
-				m_UpdateStatusMessage = "Problem downloading checksum file!";
-#else
-			int nValue;
-			m_sql.GetPreferencesVar("ReleaseChannel", nValue);
-			bool bIsBetaChannel = (nValue != 0);
-
-			std::string scriptname = szUserDataFolder + "scripts/download_update.sh";
-			std::string strparm = szUserDataFolder;
-			if (bIsBetaChannel)
-				strparm += " /beta";
-
-			std::string lscript = scriptname + " " + strparm;
-			_log.Log(LOG_STATUS, "Starting: %s", lscript.c_str());
-			int ret = system(lscript.c_str());
-			m_bHaveDownloadedDomoticzUpdateSuccessFull = (ret == 0);
-#endif
-			m_bHaveDownloadedDomoticzUpdate = true;
-		}
-
 		second_counter++;
 		if (second_counter < 2)
 			continue;
@@ -1695,10 +1542,6 @@ void MainWorker::Do_Work()
 					}
 				}
 #endif
-				if ((ltime.tm_hour == 5) || (ltime.tm_hour == 17))
-				{
-					IsUpdateAvailable(true);//check for update
-				}
 				HandleAutomaticBackups();
 			}
 		}

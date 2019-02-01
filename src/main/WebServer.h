@@ -185,7 +185,6 @@ private:
 	void Cmd_GetAuth(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetUptime(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetActualHistory(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_GetNewHistory(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetConfig(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_SendNotification(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_EmailCameraSnapshot(WebEmSession & session, const request& req, Json::Value &root);
@@ -196,9 +195,6 @@ private:
 	void Cmd_SystemReboot(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_ExcecuteScript(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetCosts(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_CheckForUpdate(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_DownloadUpdate(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_DownloadReady(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_DeleteDatePoint(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_SetActiveTimerPlan(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_AddTimer(WebEmSession & session, const request& req, Json::Value &root);

@@ -502,7 +502,6 @@ namespace http {
 			RegisterCommandCode("duplicatetimerplan", boost::bind(&CWebServer::Cmd_DuplicateTimerPlan, this, _1, _2, _3));
 
 			RegisterCommandCode("getactualhistory", boost::bind(&CWebServer::Cmd_GetActualHistory, this, _1, _2, _3));
-			RegisterCommandCode("getnewhistory", boost::bind(&CWebServer::Cmd_GetNewHistory, this, _1, _2, _3));
 
 			RegisterCommandCode("getconfig", boost::bind(&CWebServer::Cmd_GetConfig, this, _1, _2, _3), true);
 			RegisterCommandCode("sendnotification", boost::bind(&CWebServer::Cmd_SendNotification, this, _1, _2, _3));
@@ -514,9 +513,6 @@ namespace http {
 			RegisterCommandCode("system_reboot", boost::bind(&CWebServer::Cmd_SystemReboot, this, _1, _2, _3));
 			RegisterCommandCode("execute_script", boost::bind(&CWebServer::Cmd_ExcecuteScript, this, _1, _2, _3));
 			RegisterCommandCode("getcosts", boost::bind(&CWebServer::Cmd_GetCosts, this, _1, _2, _3));
-			RegisterCommandCode("checkforupdate", boost::bind(&CWebServer::Cmd_CheckForUpdate, this, _1, _2, _3));
-			RegisterCommandCode("downloadupdate", boost::bind(&CWebServer::Cmd_DownloadUpdate, this, _1, _2, _3));
-			RegisterCommandCode("downloadready", boost::bind(&CWebServer::Cmd_DownloadReady, this, _1, _2, _3));
 			RegisterCommandCode("deletedatapoint", boost::bind(&CWebServer::Cmd_DeleteDatePoint, this, _1, _2, _3));
 
 			RegisterCommandCode("setactivetimerplan", boost::bind(&CWebServer::Cmd_SetActiveTimerPlan, this, _1, _2, _3));
@@ -2471,21 +2467,6 @@ namespace http {
 			CdzVents* dzvents = CdzVents::GetInstance();
 			root["dzvents_version"] = dzvents->GetVersion();
 			root["python_version"] = szPyVersion;
-
-			if (session.rights != 2)
-			{
-				//only admin users will receive the update notification
-				root["UseUpdate"] = false;
-				root["HaveUpdate"] = false;
-			}
-			else
-			{
-				root["UseUpdate"] = g_bUseUpdater;
-				root["HaveUpdate"] = m_mainworker.IsUpdateAvailable(false);
-				root["DomoticzUpdateURL"] = m_mainworker.m_szDomoticzUpdateURL;
-				root["SystemName"] = m_mainworker.m_szSystemName;
-				root["Revision"] = m_mainworker.m_iRevision;
-			}
 		}
 
 		void CWebServer::Cmd_GetAuth(WebEmSession & session, const request& req, Json::Value &root)
@@ -2547,58 +2528,6 @@ namespace http {
 					root["result"][ii]["message"] = sLine;
 					ii++;
 				}
-			}
-		}
-
-		void CWebServer::Cmd_GetNewHistory(WebEmSession & session, const request& req, Json::Value &root)
-		{
-			root["status"] = "OK";
-			root["title"] = "GetNewHistory";
-
-			std::string historyfile;
-			int nValue;
-			m_sql.GetPreferencesVar("ReleaseChannel", nValue);
-			bool bIsBetaChannel = (nValue != 0);
-
-			std::string szHistoryURL = "https://www.domoticz.com/download.php?channel=stable&type=history";
-			if (bIsBetaChannel)
-			{
-				utsname my_uname;
-				if (uname(&my_uname) < 0)
-					return;
-
-				std::string systemname = my_uname.sysname;
-				std::string machine = my_uname.machine;
-				std::transform(systemname.begin(), systemname.end(), systemname.begin(), ::tolower);
-
-				if (machine == "armv6l")
-				{
-					//Seems like old arm systems can also use the new arm build
-					machine = "armv7l";
-				}
-
-				if (((machine != "armv6l") && (machine != "armv7l") && (systemname != "windows") && (machine != "x86_64") && (machine != "aarch64")) || (strstr(my_uname.release, "ARCH+") != NULL))
-					szHistoryURL = "https://www.domoticz.com/download.php?channel=beta&type=history";
-				else
-					szHistoryURL = "https://www.domoticz.com/download.php?channel=beta&type=history&system=" + systemname + "&machine=" + machine;
-			}
-			if (!HTTPClient::GET(szHistoryURL, historyfile))
-			{
-				historyfile = "Unable to get Online History document !!";
-			}
-
-			std::istringstream stream(historyfile);
-			std::string sLine;
-			int ii = 0;
-			while (std::getline(stream, sLine))
-			{
-				root["LastLogTime"] = "";
-				if (sLine.find("Version ") == 0)
-					root["result"][ii]["level"] = 1;
-				else
-					root["result"][ii]["level"] = 0;
-				root["result"][ii]["message"] = sLine;
-				ii++;
 			}
 		}
 
@@ -3106,64 +3035,6 @@ namespace http {
 					root["CounterR2"] = szTmp;
 				}
 			}
-		}
-
-		void CWebServer::Cmd_CheckForUpdate(WebEmSession & session, const request& req, Json::Value &root)
-		{
-			bool bHaveUser = (session.username != "");
-			int urights = 3;
-			if (bHaveUser)
-			{
-				int iUser = FindUser(session.username.c_str());
-				if (iUser != -1)
-					urights = static_cast<int>(m_users[iUser].userrights);
-			}
-			root["statuscode"] = urights;
-
-			root["status"] = "OK";
-			root["title"] = "CheckForUpdate";
-			root["HaveUpdate"] = false;
-			root["Revision"] = m_mainworker.m_iRevision;
-
-			if (session.rights != 2)
-			{
-				session.reply_status = reply::forbidden;
-				return; //Only admin users may update
-			}
-
-			bool bIsForced = (request::findValue(&req, "forced") == "true");
-
-			if (!bIsForced)
-			{
-				int nValue = 0;
-				m_sql.GetPreferencesVar("UseAutoUpdate", nValue);
-				if (nValue != 1)
-				{
-					return;
-				}
-			}
-
-			root["HaveUpdate"] = m_mainworker.IsUpdateAvailable(bIsForced);
-			root["DomoticzUpdateURL"] = m_mainworker.m_szDomoticzUpdateURL;
-			root["SystemName"] = m_mainworker.m_szSystemName;
-			root["Revision"] = m_mainworker.m_iRevision;
-		}
-
-		void CWebServer::Cmd_DownloadUpdate(WebEmSession & session, const request& req, Json::Value &root)
-		{
-			if (!m_mainworker.StartDownloadUpdate())
-				return;
-			root["status"] = "OK";
-			root["title"] = "DownloadUpdate";
-		}
-
-		void CWebServer::Cmd_DownloadReady(WebEmSession & session, const request& req, Json::Value &root)
-		{
-			if (!m_mainworker.m_bHaveDownloadedDomoticzUpdate)
-				return;
-			root["status"] = "OK";
-			root["title"] = "DownloadReady";
-			root["downloadok"] = (m_mainworker.m_bHaveDownloadedDomoticzUpdateSuccessFull) ? true : false;
 		}
 
 		void CWebServer::Cmd_DeleteDatePoint(WebEmSession & session, const request& req, Json::Value &root)

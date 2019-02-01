@@ -1,3 +1,6 @@
-#define APPVERSION 9700
-#define APPHASH "b97777b"
-#define APPDATE 1478691222
+#pragma once
+#define VERSION_STRING "4."
+#define APPVERSION "10.276"
+#define APPHASH "81ef124"
+#define APPDATE 1549020095
+

@@ -114,17 +114,8 @@ public:
 #endif
 	CCameraHandler m_cameras;
 	bool m_bIgnoreUsernamePassword;
-	bool m_bHaveUpdate;
-	int m_iRevision;
 
 	std::string m_szSystemName;
-	std::string m_szDomoticzUpdateURL;
-
-	bool IsUpdateAvailable(const bool bIsForced = false);
-	bool StartDownloadUpdate();
-	bool m_bHaveDownloadedDomoticzUpdate;
-	bool m_bHaveDownloadedDomoticzUpdateSuccessFull;
-	std::string m_UpdateStatusMessage;
 
 	void GetAvailableWebThemes();
 
@@ -163,8 +154,6 @@ private:
 
 	std::mutex m_devicemutex;
 
-	std::string m_szDomoticzUpdateChecksumURL;
-	bool m_bDoDownloadDomoticzUpdate;
 	bool m_bStartHardware;
 	unsigned char m_hardwareStartCounter;
 
@@ -176,7 +165,6 @@ private:
 	std::shared_ptr<std::thread> m_thread;
 	std::mutex m_mutex;
 
-	time_t m_LastUpdateCheck;
 
 	void Do_Work();
 	void Heartbeat();

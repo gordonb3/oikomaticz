@@ -18,8 +18,8 @@ CMakeFiles
 *.pdb
 *.tlog
 CMakeCache.txt
-domoticz
-!scripts/logrotate/domoticz
+oikomaticz
+!scripts/logrotate/oikomaticz
 stdafx.h.gch
 .DS_Store
 .AppleDouble
@@ -27,7 +27,7 @@ Config/OZW_Log.txt
 Config/zwscene.xml
 backups/
 domocookie.txt
-domoticz.exe
+oikomaticz.exe
 /Config/zwcfg_*.xml
 /makebetarob
 /plugins/manifest.xml
