@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6AD96441-5B2C-467B-AAB6-A1B8368D503A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>domoticz</RootNamespace>
+    <RootNamespace>oikomaticz</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -881,7 +881,7 @@
     <ClCompile Include="..\libs\jsoncpp\json_writer.cpp" />
     <ClCompile Include="..\main\mainworker.cpp" />
     <ClCompile Include="..\hardware\RFXComSerial.cpp" />
-    <ClCompile Include="..\main\domoticz.cpp" />
+    <ClCompile Include="..\main\oikomaticz.cpp" />
     <ClCompile Include="..\hardware\RFXComTCP.cpp" />
     <ClCompile Include="..\main\RFXNames.cpp" />
     <ClCompile Include="..\main\stdafx.cpp">

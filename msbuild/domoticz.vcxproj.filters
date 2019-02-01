@@ -2211,7 +2211,7 @@
     <ClCompile Include="..\httpclient\UrlEncode.cpp">
       <Filter>HTTPClient</Filter>
     </ClCompile>
-    <ClCompile Include="..\main\domoticz.cpp">
+    <ClCompile Include="..\main\oikomaticz.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\main\Helper.cpp">
