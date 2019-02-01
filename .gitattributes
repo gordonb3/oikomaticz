@@ -94,3 +94,5 @@ html5.appcache text
 *.h++ text diff=cpp
 *.hh text diff=cpp
 
+#exclude imported libs from linguist scan
+libs/* linguist-vendored
