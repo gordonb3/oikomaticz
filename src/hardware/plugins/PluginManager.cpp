@@ -6,6 +6,7 @@
 #ifdef ENABLE_PYTHON
 
 #include <tinyxpath/tinyxml.h>
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
 #include "PluginManager.h"
