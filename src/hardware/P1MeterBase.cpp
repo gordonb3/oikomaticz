@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "P1MeterBase.h"
 #include "hardwaretypes.h"
-#include "../main/SQLHelper.h"
-#include "../main/localtime_r.h"
-#include "../main/Logger.h"
+#include "main/SQLHelper.h"
+#include "main/localtime_r.h"
+#include "main/Logger.h"
 #include "jsoncpp/json.h"
-#include "../main/mainworker.h"
-#include "../main/WebServer.h"
+#include "main/mainworker.h"
+#include "main/WebServer.h"
 
 #include <iostream>
 

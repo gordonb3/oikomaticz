@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "MQTT.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
 #include <iostream>
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
-#include "../main/SQLHelper.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
+#include "main/SQLHelper.h"
 #include "jsoncpp/json.h"
 #include "../notifications/NotificationHelper.h"
 #define __STDC_FORMAT_MACROS

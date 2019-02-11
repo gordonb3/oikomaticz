@@ -120,13 +120,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include "SysfsGpio.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
 #include "hardwaretypes.h"
-#include "../main/RFXtrx.h"
-#include "../main/mainworker.h"
-#include "../main/SQLHelper.h"
-#include "../main/localtime_r.h"
+#include "main/RFXtrx.h"
+#include "main/mainworker.h"
+#include "main/SQLHelper.h"
+#include "main/localtime_r.h"
 
 /*
 Note:

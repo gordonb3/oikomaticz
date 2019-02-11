@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RFXtrx.h"
-#include "../hardware/DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include "Scheduler.h"
 #include "EventSystem.h"
 #include "Camera.h"
@@ -13,7 +13,7 @@
 #include "concurrent_queue.h"
 #include "../webserver/server_settings.hpp"
 #ifdef ENABLE_PYTHON
-#	include "../hardware/plugins/PluginManager.h"
+#	include "hardware/plugins/PluginManager.h"
 #endif
 
 class MainWorker : public StoppableTask

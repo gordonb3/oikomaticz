@@ -1,7 +1,7 @@
 #pragma once
 #include "WebServer.h"
 #ifndef NOCLOUD
-#include "../hardware/DomoticzTCP.h"
+#include "hardware/DomoticzTCP.h"
 #endif
 #include "../tcpserver/TCPServer.h"
 

@@ -17,16 +17,16 @@ License: Public domain
 #include "OpenWebNetTCP.h"
 #include "openwebnet/bt_openwebnet.h"
 
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/SQLHelper.h"
-#include "../main/localtime_r.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/SQLHelper.h"
+#include "main/localtime_r.h"
 #include "csocket.h"
 
 #include <string.h>
 #include "hardwaretypes.h"
-#include "../main/RFXNames.h"
-#include "../main/RFXtrx.h"
+#include "main/RFXNames.h"
+#include "main/RFXtrx.h"
 
 #define OPENWEBNET_HEARTBEAT_DELAY      1
 #define OPENWEBNET_STATUS_NB_HEARTBEAT  600

@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "Comm5SMTCP.h"
-#include "../main/Helper.h"
-#include "../main/localtime_r.h"
-#include "../main/Logger.h"
-#include "../main/mainworker.h"
+#include "main/Helper.h"
+#include "main/localtime_r.h"
+#include "main/Logger.h"
+#include "main/mainworker.h"
 #include "../httpclient/HTTPClient.h"
 #include "../httpclient/UrlEncode.h"
 

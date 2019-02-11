@@ -1,5 +1,5 @@
 #pragma once
-#include "../main/RFXtrx.h"
+#include "main/RFXtrx.h"
 
 #if 0
 // usage example:

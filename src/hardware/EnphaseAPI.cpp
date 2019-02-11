@@ -1,14 +1,14 @@
 #include "stdafx.h"
 #include "EnphaseAPI.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
 #include "../httpclient/UrlEncode.h"
 #include "hardwaretypes.h"
-#include "../main/localtime_r.h"
+#include "main/localtime_r.h"
 #include "../httpclient/HTTPClient.h"
 #include "jsoncpp/json.h"
-#include "../main/RFXtrx.h"
-#include "../main/mainworker.h"
+#include "main/RFXtrx.h"
+#include "main/mainworker.h"
 #include <iostream>
 
 //https://enphase.com/en-us/products-and-services/envoy

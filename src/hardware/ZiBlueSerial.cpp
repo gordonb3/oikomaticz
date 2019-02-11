@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "ZiBlueSerial.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/localtime_r.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/localtime_r.h"
 
 #include <boost/exception/diagnostic_information.hpp>
 

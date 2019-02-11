@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "HTTPClient.h"
 #include <curl/curl.h>
-#include "../main/Logger.h"
+#include "main/Logger.h"
 
 #include <algorithm>
 #include <iostream>

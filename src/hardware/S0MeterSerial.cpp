@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "S0MeterSerial.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/RFXtrx.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/RFXtrx.h"
 #include "P1MeterBase.h"
 #include "hardwaretypes.h"
 

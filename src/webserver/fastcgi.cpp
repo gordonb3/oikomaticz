@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include "../httpclient/UrlEncode.h"
-#include "../main/Helper.h"
+#include "main/Helper.h"
 
 //(c) 2016 GizMoCuz
 

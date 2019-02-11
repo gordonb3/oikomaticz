@@ -13,7 +13,7 @@
  */
 
 #include "stdafx.h"
-#include "../main/Logger.h"
+#include "main/Logger.h"
 #include "globals.h"
 #include "status.h"
 
@@ -29,10 +29,10 @@
 
 #include "../eHouseTCP.h"
 #include "../hardwaretypes.h"
-#include "../../main/RFXtrx.h"
-#include "../../main/localtime_r.h"
-#include "../../main/mainworker.h"
-#include "../../main/SQLHelper.h"
+#include "main/RFXtrx.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
+#include "main/SQLHelper.h"
 unsigned char TESTTEST = 0;
 /*unsigned char eHEnableAutoDiscovery = 1;
 unsigned char eHEnableProDiscovery = 1;

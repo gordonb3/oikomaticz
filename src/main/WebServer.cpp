@@ -10,34 +10,34 @@
 #include "EventSystem.h"
 #include "dzVents.h"
 #include "../httpclient/HTTPClient.h"
-#include "../hardware/hardwaretypes.h"
-#include "../hardware/1Wire.h"
-#include "../hardware/OTGWBase.h"
+#include "hardware/hardwaretypes.h"
+#include "hardware/1Wire.h"
+#include "hardware/OTGWBase.h"
 #ifdef WITH_OPENZWAVE
-#include "../hardware/OpenZWave.h"
+#include "hardware/OpenZWave.h"
 #endif
-#include "../hardware/EnOceanESP2.h"
-#include "../hardware/EnOceanESP3.h"
-#include "../hardware/Wunderground.h"
-#include "../hardware/DarkSky.h"
-#include "../hardware/AccuWeather.h"
-#include "../hardware/OpenWeatherMap.h"
-#include "../hardware/Kodi.h"
-#include "../hardware/Limitless.h"
-#include "../hardware/LogitechMediaServer.h"
-#include "../hardware/MySensorsBase.h"
-#include "../hardware/RFXBase.h"
-#include "../hardware/RFLinkBase.h"
-#include "../hardware/SysfsGpio.h"
-#include "../hardware/HEOS.h"
-#include "../hardware/eHouseTCP.h"
-#include "../hardware/USBtin.h"
-#include "../hardware/USBtin_MultiblocV8.h"
+#include "hardware/EnOceanESP2.h"
+#include "hardware/EnOceanESP3.h"
+#include "hardware/Wunderground.h"
+#include "hardware/DarkSky.h"
+#include "hardware/AccuWeather.h"
+#include "hardware/OpenWeatherMap.h"
+#include "hardware/Kodi.h"
+#include "hardware/Limitless.h"
+#include "hardware/LogitechMediaServer.h"
+#include "hardware/MySensorsBase.h"
+#include "hardware/RFXBase.h"
+#include "hardware/RFLinkBase.h"
+#include "hardware/SysfsGpio.h"
+#include "hardware/HEOS.h"
+#include "hardware/eHouseTCP.h"
+#include "hardware/USBtin.h"
+#include "hardware/USBtin_MultiblocV8.h"
 #ifdef WITH_GPIO
-#include "../hardware/Gpio.h"
-#include "../hardware/GpioPin.h"
+#include "hardware/Gpio.h"
+#include "hardware/GpioPin.h"
 #endif // WITH_GPIO
-#include "../hardware/Tellstick.h"
+#include "hardware/Tellstick.h"
 #include "../webserver/Base64.h"
 #include "../smtpclient/SMTPClient.h"
 #include "jsoncpp/json.h"
@@ -46,7 +46,7 @@
 #include "../push/BasePush.h"
 #include <algorithm>
 #ifdef ENABLE_PYTHON
-#include "../hardware/plugins/Plugins.h"
+#include "hardware/plugins/Plugins.h"
 #endif
 
 #ifndef WIN32
@@ -57,7 +57,7 @@
 #include "dirent_windows.h"
 #endif
 #include "../notifications/NotificationHelper.h"
-#include "../main/LuaHandler.h"
+#include "main/LuaHandler.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

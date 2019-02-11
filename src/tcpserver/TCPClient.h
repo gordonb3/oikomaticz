@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../main/Noncopyable.h"
+#include "main/Noncopyable.h"
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
 

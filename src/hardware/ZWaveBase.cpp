@@ -6,14 +6,14 @@
 #include <ctype.h>
 #include <iomanip>
 
-#include "../main/Helper.h"
-#include "../main/RFXtrx.h"
-#include "../main/mainworker.h"
+#include "main/Helper.h"
+#include "main/RFXtrx.h"
+#include "main/mainworker.h"
 #include "hardwaretypes.h"
 
-#include "../main/localtime_r.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
+#include "main/localtime_r.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
 
 #include "OpenZWave.h"
 

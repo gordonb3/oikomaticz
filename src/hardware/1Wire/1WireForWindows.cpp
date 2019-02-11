@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #ifdef WIN32
 #include "1WireForWindows.h"
-#include "../../main/Logger.h"
+#include "main/Logger.h"
 #include <boost/optional.hpp>
 #include "jsoncpp/json.h"
 #include <WS2tcpip.h>

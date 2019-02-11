@@ -3,12 +3,12 @@
 #ifndef WIN32
 #ifdef WITH_LIBUSB
 #include "VolcraftCO20.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
 #include "hardwaretypes.h"
-#include "../main/RFXtrx.h"
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
+#include "main/RFXtrx.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
 #include <usb.h>
 #include <stdint.h>
 

@@ -4,7 +4,7 @@
 #include "EventSystem.h"
 
 #ifdef ENABLE_PYTHON
-    #include "../hardware/plugins/DelayedLink.h"
+    #include "hardware/plugins/DelayedLink.h"
     #include "structmember.h"
 
     namespace Plugins {

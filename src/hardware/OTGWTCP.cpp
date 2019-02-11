@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "OTGWTCP.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
 #include <iostream>
-#include "../main/localtime_r.h"
+#include "main/localtime_r.h"
 
 #define RETRY_DELAY 30
 

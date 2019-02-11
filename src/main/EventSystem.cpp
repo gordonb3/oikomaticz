@@ -6,17 +6,17 @@
 #include "Helper.h"
 #include "SQLHelper.h"
 #include "Logger.h"
-#include "../hardware/hardwaretypes.h"
-#include "../hardware/Kodi.h"
-#include "../hardware/LogitechMediaServer.h"
-#include "../hardware/MySensorsBase.h"
+#include "hardware/hardwaretypes.h"
+#include "hardware/Kodi.h"
+#include "hardware/LogitechMediaServer.h"
+#include "hardware/MySensorsBase.h"
 #include <iostream>
 #include "../httpclient/UrlEncode.h"
 #include "localtime_r.h"
 #include "SQLHelper.h"
 #include "../notifications/NotificationHelper.h"
 #include "WebServer.h"
-#include "../main/WebServerHelper.h"
+#include "main/WebServerHelper.h"
 #include "../webserver/cWebem.h"
 #include "jsoncpp/json.h"
 #define __STDC_FORMAT_MACROS
@@ -33,8 +33,8 @@ extern std::string szUserDataFolder, szStartupFolder;
 extern http::server::CWebServerHelper m_webservers;
 
 #ifdef ENABLE_PYTHON
-#include "../hardware/plugins/Plugins.h"
-#include "../hardware/plugins/PluginMessages.h"
+#include "hardware/plugins/Plugins.h"
+#include "hardware/plugins/PluginMessages.h"
 #include "EventsPythonModule.h"
 #include "EventsPythonDevice.h"
 extern PyObject * PDevice_new(PyTypeObject *type, PyObject *args, PyObject *kwds);

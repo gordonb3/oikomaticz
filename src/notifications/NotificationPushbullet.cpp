@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "NotificationPushbullet.h"
 #include "../httpclient/HTTPClient.h"
-#include "../main/Logger.h"
+#include "main/Logger.h"
 #include "jsoncpp/json.h"
 #include "../httpclient/UrlEncode.h"
 

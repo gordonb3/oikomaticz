@@ -1,15 +1,15 @@
 #include "stdafx.h"
 #include "OpenWeatherMap.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
 #include "../httpclient/UrlEncode.h"
 #include "hardwaretypes.h"
-#include "../main/localtime_r.h"
+#include "main/localtime_r.h"
 #include "../httpclient/HTTPClient.h"
 #include "jsoncpp/json.h"
-#include "../main/RFXtrx.h"
-#include "../main/mainworker.h"
-#include "../main/SQLHelper.h"
+#include "main/RFXtrx.h"
+#include "main/mainworker.h"
+#include "main/SQLHelper.h"
 
 #ifdef _DEBUG
 	//#define DEBUG_OPENWEATHERMAP

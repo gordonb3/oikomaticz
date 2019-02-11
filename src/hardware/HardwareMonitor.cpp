@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "HardwareMonitor.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
 #include "hardwaretypes.h"
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
-#include "../main/SQLHelper.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
+#include "main/SQLHelper.h"
 #include <wchar.h>
 
 //Note, for Windows we use OpenHardware Monitor

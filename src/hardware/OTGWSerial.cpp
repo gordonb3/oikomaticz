@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "OTGWSerial.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/RFXtrx.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/RFXtrx.h"
 #include "P1MeterBase.h"
 #include "hardwaretypes.h"
-#include "../main/localtime_r.h"
+#include "main/localtime_r.h"
 
 #include <algorithm>
 #include <boost/bind.hpp>

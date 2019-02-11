@@ -2,7 +2,7 @@
 
 #include "ASyncTCP.h"
 #include "DomoticzHardware.h"
-#include "../main/RFXtrx.h"
+#include "main/RFXtrx.h"
 
 class MochadTCP: public CDomoticzHardwareBase,  ASyncTCP
 {

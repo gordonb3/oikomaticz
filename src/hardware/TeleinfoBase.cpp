@@ -21,9 +21,9 @@ History :
 
 #include "stdafx.h"
 #include "TeleinfoBase.h"
-#include "../main/Logger.h"
-#include "../main/localtime_r.h"
-#include "../main/Helper.h"
+#include "main/Logger.h"
+#include "main/localtime_r.h"
+#include "main/Helper.h"
 #include <bitset>			 // This is necessary to compile on Windows
 
 #ifdef _DEBUG

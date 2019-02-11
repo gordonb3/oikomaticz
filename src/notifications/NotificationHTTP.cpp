@@ -1,10 +1,10 @@
 #include "stdafx.h"
-#include "../main/Helper.h"
+#include "main/Helper.h"
 #include "NotificationHTTP.h"
 #include "../httpclient/HTTPClient.h"
 #include "../httpclient/UrlEncode.h"
-#include "../main/SQLHelper.h"
-#include "../main/Logger.h"
+#include "main/SQLHelper.h"
+#include "main/Logger.h"
 
 extern std::string szUserDataFolder;
 

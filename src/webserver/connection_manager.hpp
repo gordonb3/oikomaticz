@@ -12,7 +12,7 @@
 #define HTTP_CONNECTION_MANAGER_HPP
 
 #include <set>
-#include "../main/Noncopyable.h"
+#include "main/Noncopyable.h"
 #include "connection.hpp"
 
 namespace http {

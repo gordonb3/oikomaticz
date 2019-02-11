@@ -1,16 +1,16 @@
 #include "stdafx.h"
 #include "HttpPoller.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
-#include "../main/localtime_r.h"
-#include "../main/RFXtrx.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
+#include "main/localtime_r.h"
+#include "main/RFXtrx.h"
 #include "hardwaretypes.h"
 #include "../httpclient/HTTPClient.h"
 #include "jsoncpp/json.h"
 #include "../webserver/Base64.h"
-#include "../main/WebServer.h"
-#include "../main/LuaHandler.h"
+#include "main/WebServer.h"
+#include "main/LuaHandler.h"
 
 #define round(a) ( int ) ( a + .5 )
 

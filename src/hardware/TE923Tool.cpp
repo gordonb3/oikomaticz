@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "../main/Logger.h"
-#include "../main/localtime_r.h"
+#include "main/Logger.h"
+#include "main/localtime_r.h"
 
 //Part of this class is written by Sebastian John
 /***************************************************************************

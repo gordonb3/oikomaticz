@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DomoticzHardware.h"
-#include "../main/RFXtrx.h"
+#include "main/RFXtrx.h"
 #include <boost/thread/thread_time.hpp>
 
 #define CONFIG_NR_OF_PARAMETER_TYPES        13

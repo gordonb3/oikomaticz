@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "ETH8020.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
 #include "../httpclient/HTTPClient.h"
 #include "hardwaretypes.h"
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
-#include "../main/SQLHelper.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
+#include "main/SQLHelper.h"
 #include <sstream>
 
 #define ETH8020_POLL_INTERVAL 10

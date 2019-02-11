@@ -17,9 +17,9 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
-#include "../main/Helper.h"
-#include "../main/localtime_r.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/localtime_r.h"
+#include "main/Logger.h"
 
 #define SHORT_SESSION_TIMEOUT 600 // 10 minutes
 #define LONG_SESSION_TIMEOUT (30 * 86400) // 30 days

@@ -5,7 +5,7 @@
 
 #include "DomoticzHardware.h"
 #include "hardwaretypes.h"
-#include "../main/RFXtrx.h"
+#include "main/RFXtrx.h"
 
 namespace Json
 {

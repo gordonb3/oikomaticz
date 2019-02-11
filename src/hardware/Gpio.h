@@ -28,7 +28,7 @@ Source: http://wiringpi.com
 
 #include "DomoticzHardware.h"
 #include "GpioPin.h"
-#include "../main/RFXtrx.h"
+#include "main/RFXtrx.h"
 
 class CGpio : public CDomoticzHardwareBase
 {

@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #ifndef NOCLOUD
 #include "proxyclient.h"
-#include "../hardware/DomoticzTCP.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
+#include "hardware/DomoticzTCP.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
 #include "../webserver/Base64.h"
 #include "../tcpserver/TCPServer.h"
 #include "sha1.hpp"

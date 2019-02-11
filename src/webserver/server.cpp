@@ -6,10 +6,10 @@
 #include <boost/bind.hpp>
 #include "server.hpp"
 #include <fstream>
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
 
 extern bool g_bIsWSL;
 

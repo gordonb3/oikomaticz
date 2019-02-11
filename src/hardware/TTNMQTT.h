@@ -2,7 +2,7 @@
 
 #include "MySensorsBase.h"
 #include <mosquittopp.h>
-#include "../main/BaroForecastCalculator.h"
+#include "main/BaroForecastCalculator.h"
 
 namespace Json
 {

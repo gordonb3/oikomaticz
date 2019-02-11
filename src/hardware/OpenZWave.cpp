@@ -6,19 +6,19 @@
 #include <ctype.h>
 #include <algorithm>
 
-#include "../main/Helper.h"
-#include "../main/RFXtrx.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
+#include "main/Helper.h"
+#include "main/RFXtrx.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
 #include "../webserver/Base64.h"
 #include "hardwaretypes.h"
 
-#include "../main/WebServer.h"
+#include "main/WebServer.h"
 #include "../webserver/cWebem.h"
-#include "../main/mainworker.h"
+#include "main/mainworker.h"
 
 #include "jsoncpp/json.h"
-#include "../main/localtime_r.h"
+#include "main/localtime_r.h"
 
 //OpenZWave includes
 #include "openzwave/Options.h"

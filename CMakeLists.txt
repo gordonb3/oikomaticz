@@ -226,9 +226,6 @@ endmacro()
 
 find_program(GIT_EXECUTABLE git DOC "git command line client")
 
-
-include_directories(${CMAKE_SOURCE_DIR}/main)
-
 # a custom target that is always built
 add_custom_target(revisiontag ALL)
 
@@ -243,7 +240,7 @@ add_custom_command(TARGET revisiontag COMMAND ${CMAKE_COMMAND}
 
 # sources
 add_subdirectory(src)
-include_directories(${CMAKE_SOURCE_DIR}/src/main)
+include_directories(${CMAKE_SOURCE_DIR}/src)
 get_directory_property(DZ_SRCS DIRECTORY src DEFINITION DZ_SRCS)
 add_executable(oikomaticz ${DZ_SRCS})
 
@@ -433,7 +430,7 @@ else()
   target_link_libraries(oikomaticz -lrt ${Boost_LIBRARIES} ${CURL_LIBRARIES} pthread ${CMAKE_DL_LIBS} ${TELLDUS_LIBRARIES} ${EXECINFO_LIBRARIES})
 endif()
 
-ADD_PRECOMPILED_HEADER(oikomaticz "src/main/stdafx.h")
+ADD_PRECOMPILED_HEADER(oikomaticz "src/stdafx.h")
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   if(USE_STATIC_LIBSTDCXX)

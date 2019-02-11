@@ -3,12 +3,12 @@
 #include "stdafx.h"
 #include "MultiFun.h"
 #include "hardwaretypes.h"
-#include "../main/Logger.h"
-#include "../main/RFXtrx.h"
-#include "../main/Helper.h"
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
-#include "../main/SQLHelper.h"
+#include "main/Logger.h"
+#include "main/RFXtrx.h"
+#include "main/Helper.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
+#include "main/SQLHelper.h"
 #include "csocket.h"
 #include <boost/assign.hpp>
 

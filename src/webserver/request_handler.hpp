@@ -12,7 +12,7 @@
 #define HTTP_REQUEST_HANDLER_HPP
 
 #include <string>
-#include "../main/Noncopyable.h"
+#include "main/Noncopyable.h"
 #ifndef WEBSERVER_DONT_USE_ZIP
 	#include <unzip.h>
 	#define USEWIN32IOAPI

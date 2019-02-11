@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "EcoCompteur.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
-#include "../main/localtime_r.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
+#include "main/localtime_r.h"
 #include "hardwaretypes.h"
 #include "../httpclient/HTTPClient.h"
 #include "jsoncpp/json.h"
-#include "../main/WebServer.h"
+#include "main/WebServer.h"
 
 /*
 Driver for Legrand EcoCompteur IP (4 120 00)

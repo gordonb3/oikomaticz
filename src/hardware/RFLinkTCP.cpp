@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "RFLinkTCP.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
 #include <iostream>
-#include "../main/localtime_r.h"
+#include "main/localtime_r.h"
 
 CRFLinkTCP::CRFLinkTCP(const int ID, const std::string &IPAddress, const unsigned short usIPPort):
 	m_szIPAddress(IPAddress)

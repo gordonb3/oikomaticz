@@ -7,8 +7,8 @@
 
 #include "PluginMessages.h"
 #include "PluginProtocols.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
 #include "../webserver/Base64.h"
 #include "icmp_header.hpp"
 #include "ipv4_header.hpp"

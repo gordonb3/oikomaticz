@@ -1,18 +1,18 @@
 #include "stdafx.h"
 #include "1WireByOWFS.h"
-#include "../../main/mainworker.h"
-#include "../main/Logger.h"
+#include "main/mainworker.h"
+#include "main/Logger.h"
 
 #include <fstream>
 #include <algorithm>
 
 #ifdef WIN32
-#include "../../main/dirent_windows.h"
+#include "main/dirent_windows.h"
 #else
 #include <dirent.h>
 #endif
 
-#include "../../main/Helper.h"
+#include "main/Helper.h"
 
 C1WireByOWFS::C1WireByOWFS(const std::string& path):
 	m_path(path)

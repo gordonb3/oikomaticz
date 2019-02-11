@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "MochadTCP.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/localtime_r.h"
-#include "../main/RFXtrx.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/localtime_r.h"
+#include "main/RFXtrx.h"
 #include <iostream>
 
 #include "hardwaretypes.h"
-#include "../main/Logger.h"
+#include "main/Logger.h"
 
 #define RETRY_DELAY 30
 

@@ -1,10 +1,10 @@
 #include "stdafx.h"
-#include "../main/Logger.h"
+#include "main/Logger.h"
 #include "NotificationKodi.h"
-#include "../main/Helper.h"
+#include "main/Helper.h"
 #include "xmbcclient.h"
-#include "../main/RFXNames.h"
-#include "../main/SQLHelper.h"
+#include "main/RFXNames.h"
+#include "main/SQLHelper.h"
 
 extern std::string szWWWFolder;
 

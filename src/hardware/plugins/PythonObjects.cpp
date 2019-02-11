@@ -5,13 +5,13 @@
 //
 #ifdef ENABLE_PYTHON
 
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
-#include "../hardware/hardwaretypes.h"
-#include "../main/localtime_r.h"
-#include "../main/mainstructs.h"
-#include "../main/mainworker.h"
-#include "../main/EventSystem.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
+#include "hardware/hardwaretypes.h"
+#include "main/localtime_r.h"
+#include "main/mainstructs.h"
+#include "main/mainworker.h"
+#include "main/EventSystem.h"
 #include "../notifications/NotificationHelper.h"
 #include "PythonObjects.h"
 #include "PluginMessages.h"

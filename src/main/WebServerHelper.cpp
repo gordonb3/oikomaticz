@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "WebServerHelper.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
 #include "../webserver/proxyclient.h"
 
 namespace http {

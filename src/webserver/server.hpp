@@ -9,7 +9,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <string>
-#include "../main/Noncopyable.h"
+#include "main/Noncopyable.h"
 #include "connection_manager.hpp"
 #include "request_handler.hpp"
 #include "server_settings.hpp"

@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "Ec3kMeterTCP.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
 #include <iostream>
-#include "../main/localtime_r.h"
-//#include "../main/mainworker.h"
-#include "../hardware/hardwaretypes.h"
+#include "main/localtime_r.h"
+//#include "main/mainworker.h"
+#include "hardware/hardwaretypes.h"
 #include "jsoncpp/json.h"
 
 #include <sstream>

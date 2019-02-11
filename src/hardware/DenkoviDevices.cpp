@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "DenkoviDevices.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
 #include "../httpclient/HTTPClient.h"
 #include "hardwaretypes.h"
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
-#include "../main/SQLHelper.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
+#include "main/SQLHelper.h"
 #include <sstream>
 
 #define MAX_POLL_INTERVAL 3600*1000

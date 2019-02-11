@@ -14,14 +14,14 @@
 #include "PluginMessages.h"
 #include "PluginTransports.h"
 
-#include "../main/Helper.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
-#include "../main/WebServer.h"
-#include "../main/mainworker.h"
-#include "../main/EventSystem.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
+#include "main/WebServer.h"
+#include "main/mainworker.h"
+#include "main/EventSystem.h"
 #include "jsoncpp/json.h"
-#include "../main/localtime_r.h"
+#include "main/localtime_r.h"
 #ifdef WIN32
 #	include <direct.h>
 #else
@@ -31,7 +31,7 @@
 #include "DelayedLink.h"
 
 #ifdef ENABLE_PYTHON
-#include "../../main/EventsPythonModule.h"
+#include "main/EventsPythonModule.h"
 #endif
 
 #define MINIMUM_PYTHON_VERSION "3.4.0"

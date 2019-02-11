@@ -1,10 +1,10 @@
 #include "stdafx.h"
-#include "../main/Logger.h"
+#include "main/Logger.h"
 #include "NotificationLogitechMediaServer.h"
-#include "../hardware/LogitechMediaServer.h"
-#include "../main/mainworker.h"
-#include "../main/Helper.h"
-#include "../main/RFXNames.h"
+#include "hardware/LogitechMediaServer.h"
+#include "main/mainworker.h"
+#include "main/Helper.h"
+#include "main/RFXNames.h"
 
 CNotificationLogitechMediaServer::CNotificationLogitechMediaServer() : CNotificationBase(std::string("lms"), OPTIONS_NONE)
 {

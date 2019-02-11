@@ -1,14 +1,14 @@
 #include "stdafx.h"
 #include "PanasonicTV.h"
 #include "jsoncpp/json.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
 #include "../notifications/NotificationHelper.h"
-#include "../main/WebServer.h"
-#include "../main/mainworker.h"
-#include "../main/EventSystem.h"
-#include "../hardware/hardwaretypes.h"
+#include "main/WebServer.h"
+#include "main/mainworker.h"
+#include "main/EventSystem.h"
+#include "hardware/hardwaretypes.h"
 #include <iostream>
 
 #define round(a) ( int ) ( a + .5 )

@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "RFXBase.h"
-#include "../main/mainworker.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
-#include "../main/RFXtrx.h"
+#include "main/mainworker.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
+#include "main/RFXtrx.h"
 
 CRFXBase::CRFXBase()
 {

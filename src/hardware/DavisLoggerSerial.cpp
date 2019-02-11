@@ -1,17 +1,17 @@
 #include "stdafx.h"
 #include "DavisLoggerSerial.h"
-#include "../main/Logger.h"
+#include "main/Logger.h"
 #include "hardwaretypes.h"
-#include "../main/RFXtrx.h"
-#include "../main/Helper.h"
+#include "main/RFXtrx.h"
+#include "main/Helper.h"
 
 #include <string>
 #include <algorithm>
 #include <iostream>
 #include <boost/bind.hpp>
 
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
 
 #include <ctime>
 

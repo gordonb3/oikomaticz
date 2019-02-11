@@ -34,13 +34,13 @@ Authors:
 #include <sys/ioctl.h>
 #endif
 #include <math.h>
-#include "../main/Helper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
 #include "hardwaretypes.h"
-#include "../main/RFXtrx.h"
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
-#include "../main/SQLHelper.h"
+#include "main/RFXtrx.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
+#include "main/SQLHelper.h"
 
 #define round(a) ( int ) ( a + .5 )
 

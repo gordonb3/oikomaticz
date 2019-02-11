@@ -1,16 +1,16 @@
 #include "stdafx.h"
 #include "EnOceanESP2.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/RFXtrx.h"
-#include "../main/SQLHelper.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/RFXtrx.h"
+#include "main/SQLHelper.h"
 
 #include <string>
 #include <algorithm>
 #include <iostream>
 #include <boost/bind.hpp>
 #include "hardwaretypes.h"
-#include "../main/localtime_r.h"
+#include "main/localtime_r.h"
 
 #include <boost/exception/diagnostic_information.hpp>
 #include <cmath>

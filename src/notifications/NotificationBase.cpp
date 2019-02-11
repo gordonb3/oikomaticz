@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "NotificationBase.h"
-#include "../main/SQLHelper.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
+#include "main/SQLHelper.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
 #include "../httpclient/UrlEncode.h"
 #include "../webserver/Base64.h"
 

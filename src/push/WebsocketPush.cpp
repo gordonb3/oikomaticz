@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "WebsocketPush.h"
 #include "../webserver/WebsocketHandler.h"
-#include "../main/mainworker.h"
+#include "main/mainworker.h"
 
 extern boost::signals2::signal<void(const std::string &Subject, const std::string &Text, const std::string &ExtraData, const int Priority, const std::string & Sound, const bool bFromNotification)> sOnNotificationReceived;
 

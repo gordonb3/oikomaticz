@@ -22,7 +22,7 @@
 #include "cWebem.h"
 #include "GZipHelper.h"
 
-#include "../main/Logger.h"
+#include "main/Logger.h"
 
 #define ZIPREADBUFFERSIZE (8192)
 

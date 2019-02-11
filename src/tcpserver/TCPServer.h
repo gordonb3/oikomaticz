@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../hardware/DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include "TCPClient.h"
 #include <set>
 

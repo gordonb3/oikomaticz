@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DomoticzHardware.h"
-#include "../main/BaroForecastCalculator.h"
+#include "main/BaroForecastCalculator.h"
 
 namespace Json
 {

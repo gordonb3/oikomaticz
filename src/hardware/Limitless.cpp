@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "Limitless.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
 #include "hardwaretypes.h"
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
-#include "../main/WebServer.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
+#include "main/WebServer.h"
 #include "../webserver/cWebem.h"
 
 #define round(a) ( int ) ( a + .5 )

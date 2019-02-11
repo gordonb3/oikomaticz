@@ -1,8 +1,8 @@
 #pragma once
 
 #include <boost/signals2.hpp>
-#include "../main/RFXNames.h"
-#include "../main/StoppableTask.h"
+#include "main/RFXNames.h"
+#include "main/StoppableTask.h"
 // type support
 #include "cereal/types/string.hpp"
 #include "cereal/types/memory.hpp"

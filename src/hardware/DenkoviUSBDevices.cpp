@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "DenkoviUSBDevices.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
 
 #include <iostream>
 #include <boost/lexical_cast.hpp>

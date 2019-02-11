@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "NotificationGCM.h"
 #include "../httpclient/HTTPClient.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
 #include "jsoncpp/json.h"
 
 #define GAPI_POST_URL "https://gcm-http.googleapis.com/gcm/send"

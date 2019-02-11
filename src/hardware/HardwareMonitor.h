@@ -1,5 +1,5 @@
 #pragma once
-//#include "../main/RFXtrx.h"
+//#include "main/RFXtrx.h"
 #include "DomoticzHardware.h"
 #if defined WIN32
 	// for windows system info

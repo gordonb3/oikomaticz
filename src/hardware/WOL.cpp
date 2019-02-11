@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "WOL.h"
 #include "jsoncpp/json.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
-#include "../main/RFXtrx.h"
-#include "../main/WebServer.h"
-#include "../main/mainworker.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
+#include "main/RFXtrx.h"
+#include "main/WebServer.h"
+#include "main/mainworker.h"
 #include "../webserver/cWebem.h"
 
 namespace Json

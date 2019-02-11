@@ -27,11 +27,11 @@ Version history
 
 #include "stdafx.h"
 #include "EcoDevices.h"
-#include "../main/Helper.h"
-#include "../main/SQLHelper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/SQLHelper.h"
+#include "main/Logger.h"
 #include "hardwaretypes.h"
-#include "../main/localtime_r.h"
+#include "main/localtime_r.h"
 #include "../httpclient/HTTPClient.h"
 #include <tinyxpath/xpath_static.h>
 #include "../webserver/Base64.h"

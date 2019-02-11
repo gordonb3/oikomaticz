@@ -2,7 +2,7 @@
 #include "Helper.h"
 #include "Logger.h"
 #include "RFXtrx.h"
-#include "../main/LuaCommon.h"
+#include "main/LuaCommon.h"
 
 extern "C" {
 #include <lua.h>
@@ -15,7 +15,7 @@ extern "C" {
 #include "jsoncpp/json.h"
 #include "SQLHelper.h"
 #include "mainworker.h"
-#include "../hardware/hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 
 extern std::string szUserDataFolder;
 

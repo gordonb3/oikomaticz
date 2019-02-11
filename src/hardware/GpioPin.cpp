@@ -27,7 +27,7 @@ Source: http://wiringpi.com
 
 #include "stdafx.h"
 #ifdef WITH_GPIO
-#include "../main/Logger.h"
+#include "main/Logger.h"
 #include "GpioPin.h"
 
 CGpioPin::CGpioPin(const int pin_number, const std::string &label, const int value, const bool direction, const int edge, const int active_low, const int read_value_fd, const bool db_state):

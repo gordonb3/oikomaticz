@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "P1MeterTCP.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/localtime_r.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/localtime_r.h"
 
 P1MeterTCP::P1MeterTCP(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const bool disable_crc, const unsigned int ratelimit, const unsigned int gasmeterchannel):
 	m_szIPAddress(IPAddress),

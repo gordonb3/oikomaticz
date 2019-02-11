@@ -44,20 +44,20 @@
     #include <unistd.h>
     #include <sys/ioctl.h>
 #endif
-#include "../main/Helper.h"
-#include "../main/Logger.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
 #include "hardwaretypes.h"
-#include "../main/RFXtrx.h"
-#include "../main/SQLHelper.h"
+#include "main/RFXtrx.h"
+#include "main/SQLHelper.h"
 #include "MCP23x17.h"
 #include <fstream>
 #include <algorithm>
 #include <functional>
 #include <cctype>
 #include <locale>
-#include "../main/localtime_r.h"
-#include "../main/WebServer.h"
-#include "../main/mainworker.h"
+#include "main/localtime_r.h"
+#include "main/WebServer.h"
+#include "main/mainworker.h"
 
 #define PIFACE_INPUT_PROCESS_INTERVAL           5                // 100 msec
 #define PIFACE_COUNTER_COUNTER_INTERVAL         1

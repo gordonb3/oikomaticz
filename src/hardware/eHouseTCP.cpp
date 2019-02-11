@@ -52,11 +52,11 @@ h l O nr
 #include "eHouse/status.h"
 #include "eHouseTCP.h"
 #include "hardwaretypes.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
-#include "../main/RFXtrx.h"
-#include "../main/localtime_r.h"
-#include "../main/SQLHelper.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
+#include "main/RFXtrx.h"
+#include "main/localtime_r.h"
+#include "main/SQLHelper.h"
 //#include <vector>
 //#include <thread>
 #define OPTA_CLR_DB					0x1		//Clear Domoticz DBs on start (for test of device discovery - other devices will also be deleted)

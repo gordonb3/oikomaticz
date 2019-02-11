@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "EvohomeSerial.h"
-#include "../main/Logger.h"
+#include "main/Logger.h"
 #include "hardwaretypes.h"
-#include "../main/Helper.h"
-#include "../main/SQLHelper.h"
-#include "../main/localtime_r.h"
+#include "main/Helper.h"
+#include "main/SQLHelper.h"
+#include "main/localtime_r.h"
 #include <boost/exception/diagnostic_information.hpp>
 
 CEvohomeSerial::CEvohomeSerial(const int ID, const std::string &szSerialPort, const int baudrate, const std::string &UserContID) :

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RFXNames.h"
-#include "../hardware/hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include <string>
 #include "StoppableTask.h"
 

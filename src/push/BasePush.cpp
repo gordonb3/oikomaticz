@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "BasePush.h"
-#include "../hardware/hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "jsoncpp/json.h"
-#include "../main/Helper.h"
-#include "../main/Logger.h"
-#include "../main/RFXtrx.h"
-#include "../main/SQLHelper.h"
-#include "../main/WebServer.h"
+#include "main/Helper.h"
+#include "main/Logger.h"
+#include "main/RFXtrx.h"
+#include "main/SQLHelper.h"
+#include "main/WebServer.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

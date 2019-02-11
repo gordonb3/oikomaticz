@@ -12,7 +12,7 @@
 #include <Python.h>
 #include <structmember.h>
 #include <frameobject.h>
-#include "../../main/Helper.h"
+#include "main/Helper.h"
 
 namespace Plugins {
 

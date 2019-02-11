@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #ifndef NOCLOUD
 #include "proxycommon.h"
-#include "../main/Logger.h"
+#include "main/Logger.h"
 
 CValueLengthPart::CValueLengthPart(ProxyPdu *pdu)
 {

@@ -2,7 +2,7 @@
 
 #include <string>
 #include "RFXNames.h"
-#include "../hardware/hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "Helper.h"
 #include "../httpclient/UrlEncode.h"
 #include "../httpclient/HTTPClient.h"

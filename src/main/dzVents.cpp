@@ -2,9 +2,9 @@
 #include "mainworker.h"
 #include "SQLHelper.h"
 #include "localtime_r.h"
-#include "../hardware/hardwaretypes.h"
-#include "../main/Logger.h"
-#include "../main/WebServerHelper.h"
+#include "hardware/hardwaretypes.h"
+#include "main/Logger.h"
+#include "main/WebServerHelper.h"
 #include "dzVents.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

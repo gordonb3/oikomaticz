@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "MQTT.h"
 #include "MySensorsMQTT.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
 #include <iostream>
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
 
 #define TOPIC_DEFAULT	"MyMQTT"
 #define TOPIC_IN		"domoticz/in/"

@@ -17,7 +17,7 @@
 #include <fstream>
 #include <math.h>
 #include <algorithm>
-#include "../main/localtime_r.h"
+#include "main/localtime_r.h"
 #include <sstream>
 #include <openssl/md5.h>
 #include <chrono>
@@ -29,7 +29,7 @@
 #endif
 
 #include "RFXtrx.h"
-#include "../hardware/hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 
 // Includes for SystemUptime()
 #if defined(__linux__) || defined(__linux) || defined(linux)

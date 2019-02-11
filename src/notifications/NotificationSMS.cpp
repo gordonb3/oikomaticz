@@ -2,8 +2,8 @@
 #include "NotificationSMS.h"
 #include "../httpclient/HTTPClient.h"
 #include "../httpclient/UrlEncode.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
 
 CNotificationSMS::CNotificationSMS() : CNotificationBase(std::string("clickatell"), OPTIONS_URL_SUBJECT | OPTIONS_URL_BODY | OPTIONS_URL_PARAMS)
 {

@@ -12,11 +12,11 @@
  */
 #include "stdafx.h"
 #include "EvohomeWeb.h"
-#include "../main/Helper.h"
-#include "../main/localtime_r.h"
-#include "../main/Logger.h"
-#include "../main/SQLHelper.h"
-#include "../main/mainworker.h"
+#include "main/Helper.h"
+#include "main/localtime_r.h"
+#include "main/Logger.h"
+#include "main/SQLHelper.h"
+#include "main/mainworker.h"
 #include "hardwaretypes.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

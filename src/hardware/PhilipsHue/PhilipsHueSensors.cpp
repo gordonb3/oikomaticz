@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "PhilipsHueSensors.h"
-#include "../../main/mainworker.h"
+#include "main/mainworker.h"
 #include "jsoncpp/json.h"
 
 CPHSensorState::CPHSensorState(): m_buttonevent(0), m_presence(false), m_temperature(0), m_lightlevel(0), m_dark(false), m_daylight(false) { }

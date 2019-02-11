@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../main/StoppableTask.h"
+#include "main/StoppableTask.h"
 
 //
 //	Domoticz Plugin System - Dnpwwo, 2016

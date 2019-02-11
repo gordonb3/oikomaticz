@@ -13,8 +13,8 @@
 #include <boost/algorithm/string.hpp>
 #include "connection_manager.hpp"
 #include "request_handler.hpp"
-#include "../main/localtime_r.h"
-#include "../main/Logger.h"
+#include "main/localtime_r.h"
+#include "main/Logger.h"
 
 namespace http {
 namespace server {

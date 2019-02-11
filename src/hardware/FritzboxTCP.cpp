@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "FritzboxTCP.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
 #include <iostream>
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
 
-#include "../main/SQLHelper.h"
-#include "../hardware/hardwaretypes.h"
+#include "main/SQLHelper.h"
+#include "hardware/hardwaretypes.h"
 
 #include <sstream>
 

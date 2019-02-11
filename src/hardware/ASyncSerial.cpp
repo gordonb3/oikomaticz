@@ -26,9 +26,9 @@
  */
 #include "stdafx.h"
 #include "ASyncSerial.h"
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/Noncopyable.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/Noncopyable.h"
 
 #include <string>
 #include <algorithm>

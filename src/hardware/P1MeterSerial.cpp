@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "P1MeterSerial.h"
-#include "../main/Logger.h"
-#include "../main/localtime_r.h"
-#include "../main/Helper.h"
-#include "../main/SQLHelper.h"
-#include "../main/mainworker.h"
-#include "../main/WebServer.h"
+#include "main/Logger.h"
+#include "main/localtime_r.h"
+#include "main/Helper.h"
+#include "main/SQLHelper.h"
+#include "main/mainworker.h"
+#include "main/WebServer.h"
 #include "../webserver/cWebem.h"
 
 //NOTE!!!, this code is partly based on the great work of RHekkers:

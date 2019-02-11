@@ -6,11 +6,11 @@
 #ifdef WIN32
 #include "1Wire/1WireForWindows.h"
 #endif // WIN32
-#include "../main/Logger.h"
-#include "../main/RFXtrx.h"
-#include "../main/Helper.h"
-#include "../main/localtime_r.h"
-#include "../main/mainworker.h"
+#include "main/Logger.h"
+#include "main/RFXtrx.h"
+#include "main/Helper.h"
+#include "main/localtime_r.h"
+#include "main/mainworker.h"
 
 #include <set>
 #include <cmath>
