@@ -115,7 +115,7 @@ define(['app'], function (app) {
 				(text.indexOf("Panasonic") >= 0) ||
 				(text.indexOf("BleBox") >= 0) ||
 				(text.indexOf("TE923") >= 0) ||
-				(text.indexOf("Volcraft") >= 0) ||
+				(text.indexOf("VoltCraft") >= 0) ||
 				(text.indexOf("GPIO") >= 0) ||
 				(text.indexOf("Dummy") >= 0) ||
 				(text.indexOf("System Alive") >= 0) ||
@@ -1280,7 +1280,7 @@ define(['app'], function (app) {
 				(text.indexOf("Panasonic") >= 0) ||
 				(text.indexOf("BleBox") >= 0) ||
 				(text.indexOf("TE923") >= 0) ||
-				(text.indexOf("Volcraft") >= 0) ||
+				(text.indexOf("VoltCraft") >= 0) ||
 				(text.indexOf("Dummy") >= 0) ||
 				(text.indexOf("System Alive") >= 0) ||
 				(text.indexOf("Kodi Media") >= 0) ||
@@ -3315,7 +3315,7 @@ define(['app'], function (app) {
 
 						if (
 							(data["Type"].indexOf("TE923") >= 0) ||
-							(data["Type"].indexOf("Volcraft") >= 0) ||
+							(data["Type"].indexOf("VoltCraft") >= 0) ||
 							(data["Type"].indexOf("Dummy") >= 0) ||
 							(data["Type"].indexOf("System Alive") >= 0) ||
 							(data["Type"].indexOf("PiFace") >= 0) ||
@@ -3765,7 +3765,7 @@ define(['app'], function (app) {
 			}
 
 			if ((text.indexOf("TE923") >= 0) ||
-				(text.indexOf("Volcraft") >= 0) ||
+				(text.indexOf("VoltCraft") >= 0) ||
 				(text.indexOf("Dummy") >= 0) ||
 				(text.indexOf("System Alive") >= 0) ||
 				(text.indexOf("PiFace") >= 0) ||

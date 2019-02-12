@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #ifndef WIN32
 #ifdef WITH_LIBUSB
-#include "VolcraftCO20.h"
+#include "VoltCraftCO20.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
 #include "hardwaretypes.h"
@@ -12,7 +12,7 @@
 #include <usb.h>
 #include <stdint.h>
 
-#define VolcraftCO20_POLL_INTERVAL 30
+#define VoltCraftCO20_POLL_INTERVAL 30
 
 #define DRIVER_NAME_LEN	1024
 #define USB_BUF_LEN	1024
@@ -25,21 +25,21 @@
 //code taken and modified form https://github.com/bwildenhain/air-quality-sensor/blob/master/src/air01.c
 //at this moment it does not work under windows... no idea why... help appreciated!
 
-CVolcraftCO20::CVolcraftCO20(const int ID)
+CVoltCraftCO20::CVoltCraftCO20(const int ID)
 {
 	m_HwdID=ID;
 }
 
-CVolcraftCO20::~CVolcraftCO20(void)
+CVoltCraftCO20::~CVoltCraftCO20(void)
 {
 }
 
-bool CVolcraftCO20::StartHardware()
+bool CVoltCraftCO20::StartHardware()
 {
 	RequestStart();
 
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&CVolcraftCO20::Do_Work, this);
+	m_thread = std::make_shared<std::thread>(&CVoltCraftCO20::Do_Work, this);
 	SetThreadNameInt(m_thread->native_handle());
 	m_bIsStarted=true;
 	sOnConnected(this);
@@ -47,7 +47,7 @@ bool CVolcraftCO20::StartHardware()
 	return (m_thread != nullptr);
 }
 
-bool CVolcraftCO20::StopHardware()
+bool CVoltCraftCO20::StopHardware()
 {
 	if (m_thread)
 	{
@@ -59,9 +59,9 @@ bool CVolcraftCO20::StopHardware()
     return true;
 }
 
-void CVolcraftCO20::Do_Work()
+void CVoltCraftCO20::Do_Work()
 {
-	int sec_counter=VolcraftCO20_POLL_INTERVAL-5;
+	int sec_counter=VoltCraftCO20_POLL_INTERVAL-5;
 	while (!IsStopRequested(1000))
 	{
 		sec_counter++;
@@ -70,7 +70,7 @@ void CVolcraftCO20::Do_Work()
 			m_LastHeartbeat=mytime(NULL);
 		}
 
-		if (sec_counter%VolcraftCO20_POLL_INTERVAL==0)
+		if (sec_counter%VoltCraftCO20_POLL_INTERVAL==0)
 		{
 			GetSensorDetails();
 		}
@@ -78,7 +78,7 @@ void CVolcraftCO20::Do_Work()
 	_log.Log(LOG_STATUS,"Voltcraft CO-20: Worker stopped...");
 }
 
-bool CVolcraftCO20::WriteToHardware(const char *pdata, const unsigned char length)
+bool CVoltCraftCO20::WriteToHardware(const char *pdata, const unsigned char length)
 {
 	return false;
 }
@@ -191,7 +191,7 @@ static int get_voc_value(int vendor, int product, uint16_t &voc)
 	return ret;
 }
 
-void CVolcraftCO20::GetSensorDetails()
+void CVoltCraftCO20::GetSensorDetails()
 {
 	try
 	{

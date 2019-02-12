@@ -133,7 +133,7 @@
 
 #ifdef WITH_LIBUSB
 #include "hardware/TE923.h"
-#include "hardware/VolcraftCO20.h"
+#include "hardware/VoltCraftCO20.h"
 #endif
 
 #ifdef WITH_OPENZWAVE
@@ -885,7 +885,7 @@ bool MainWorker::AddHardwareFromParams(
 	case HTYPE_VOLCRAFTCO20:
 		//Voltcraft CO-20 Air Quality
 #ifdef WITH_LIBUSB
-		pHardware = new CVolcraftCO20(ID);
+		pHardware = new CVoltCraftCO20(ID);
 #endif
 		break;
 #endif

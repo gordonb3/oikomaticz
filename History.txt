@@ -1180,7 +1180,7 @@ Version 1.607 (May 11th 2013)
 - Implemented: Razberry (Z-Wave) usage meter sensor
 - Implemented: Support for multiple Email recipients
 - Implemented: Temp+Baro sensor, subType BMP085 I2C
-- Implemented: Volcraft CO-20 Air Quality hardware device (Unix only!)
+- Implemented: VoltCraft CO-20 Air Quality hardware device (Unix only!)
 - Implemented: Website security, forbidden result after to many attempts
 - Implemented: when a light/switch is pressed an optional script can be started (see scripts/readme.txt)
 - Changed: Email setup now includes Port number

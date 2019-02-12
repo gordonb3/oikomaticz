@@ -171,7 +171,7 @@ static const STR_TABLE_SINGLE	HardwareTypeTable[] =
 	{ HTYPE_Rego6XX, "Rego 6XX USB/serial interface",								"Rego_6XX" },
 	{ HTYPE_TTN_MQTT, "The Things Network (MQTT/CayenneLPP) with LAN interface",	"TTN_MQTT" },
 	{ HTYPE_DavisVantage, "Davis Vantage Weather Station USB",						"Davis" },
-	{ HTYPE_VOLCRAFTCO20, "Volcraft CO-20 USB air quality sensor",					"Voltcraft" },
+	{ HTYPE_VOLCRAFTCO20, "VoltCraft CO-20 USB air quality sensor",					"Voltcraft" },
 	{ HTYPE_1WIRE, "1-Wire (System)",												"1-Wire" },
 	{ HTYPE_RaspberryBMP085, "I2C sensor BMP085/180 Temp+Baro",						"I2C BM" },
 	{ HTYPE_Wunderground, "Weather Underground",									"WU" },

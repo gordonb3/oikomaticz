@@ -4,11 +4,11 @@
 #ifdef WITH_LIBUSB
 #include "DomoticzHardware.h"
 
-class CVolcraftCO20 : public CDomoticzHardwareBase
+class CVoltCraftCO20 : public CDomoticzHardwareBase
 {
 public:
-	explicit CVolcraftCO20(const int ID);
-	~CVolcraftCO20(void);
+	explicit CVoltCraftCO20(const int ID);
+	~CVoltCraftCO20(void);
 
 	bool WriteToHardware(const char *pdata, const unsigned char length) override;
 private:

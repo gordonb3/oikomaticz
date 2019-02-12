@@ -22,7 +22,7 @@ endif()
 
 if(NOT LIBUSB_FOUND)
   list(FILTER DZ_devices_SRCS EXCLUDE REGEX "TE923")
-  list(FILTER DZ_devices_SRCS EXCLUDE REGEX "Volcraft")
+  list(FILTER DZ_devices_SRCS EXCLUDE REGEX "VoltCraft")
 endif()
 
 if(NOT OpenZWave)
