@@ -5,7 +5,7 @@
 #include <string>
 #include <time.h>
 #include "ZWaveBase.h"
-#include "ASyncSerial.h"
+#include "hardware/ASyncSerial.h"
 #include <list>
 #include "openzwave/control_panel/ozwcp.h"
 

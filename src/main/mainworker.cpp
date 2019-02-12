@@ -117,7 +117,6 @@
 #include "hardware/Tado.h"
 #include "hardware/TeleinfoBase.h"
 #include "hardware/TeleinfoSerial.h"
-#include "hardware/Tellstick.h"
 #include "hardware/Thermosmart.h"
 #include "hardware/ToonThermostat.h"
 #include "hardware/TTNMQTT.h"
@@ -138,16 +137,21 @@
 #endif
 
 #ifdef WITH_OPENZWAVE
-#include "hardware/OpenZWave.h"
+#include "hardware/OpenZWave/OpenZWave.h"
 #endif
 
-// load notifications configuration
-#include "notifications/NotificationHelper.h"
+#ifdef WITH_TELLDUSCORE
+#include "hardware/Tellstick.h"
+#endif
 
 #ifdef WITH_GPIO
 #include "hardware/Gpio.h"
 #include "hardware/GpioPin.h"
 #endif
+
+// load notifications configuration
+#include "notifications/NotificationHelper.h"
+
 
 #ifdef WIN32
 #include "msbuild/WindowsHelper.h"
@@ -966,12 +970,15 @@ bool MainWorker::AddHardwareFromParams(
 	case HTYPE_Dummy:
 		pHardware = new CDummy(ID);
 		break;
-	case HTYPE_Tellstick: {
+	case HTYPE_Tellstick:
+#ifdef WITH_TELLDUSCORE
+	{
             CTellstick* tellstick;
             if (CTellstick::Create(&tellstick, ID, Mode1, Mode2)) {
                 pHardware = tellstick;
             }
         }
+#endif
 		break;
 	case HTYPE_EVOHOME_SCRIPT:
 		pHardware = new CEvohomeScript(ID);

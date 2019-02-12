@@ -10,11 +10,11 @@
 #include "main/RFXtrx.h"
 #include "main/Logger.h"
 #include "main/SQLHelper.h"
-#include "../webserver/Base64.h"
-#include "hardwaretypes.h"
+#include "webserver/Base64.h"
+#include "hardware/hardwaretypes.h"
 
 #include "main/WebServer.h"
-#include "../webserver/cWebem.h"
+#include "webserver/cWebem.h"
 #include "main/mainworker.h"
 
 #include "jsoncpp/json.h"

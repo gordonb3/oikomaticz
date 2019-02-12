@@ -21,7 +21,20 @@ file(GLOB tinyxpath_SRCS tinyxpath/*.cpp)
 list(FILTER tinyxpath_SRCS EXCLUDE REGEX "tinyxpath/main.cpp")
 add_library(tinyxpath STATIC ${tinyxpath_SRCS})
 
-set(STATIC_LIBRARIES jsoncpp tinyxpath)
+# serial
+file(GLOB_RECURSE serial_SRCS serial/*.cpp)
+list(FILTER serial_SRCS EXCLUDE REGEX "win")
+add_library(serial STATIC ${serial_SRCS})
+
+set(STATIC_LIBRARIES jsoncpp tinyxpath serial)
+
+# openzwave
+if(OpenZWave)
+  file(GLOB_RECURSE openzwave_SRCS openzwave/*.cpp)
+  add_library(openzwave STATIC ${openzwave_SRCS})
+  list(APPEND STATIC_LIBRARIES openzwave)
+endif()
+
 
 
 ## included libraries that may be used to override dynamicly linked system provided libraries
@@ -153,5 +166,5 @@ endif(USE_BUILTIN_MINIZIP)
 
 ## combine paths for querying by our main project file
 set(BUILTIN_LIBRARIES ${STATIC_LIBRARIES} ${LUA_LIBRARIES} ${MQTT_LIBRARIES} ${SQLite_LIBRARIES} ${ZLIB_LIBRARIES} ${MINIZIP_LIBRARIES})
-set(BUILTIN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${LUA_INCLUDE_DIRS} ${MQTT_INCLUDE_DIRS} ${SQLite_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS} ${MINIZIP_INCLUDE_DIRS})
+set(BUILTIN_INCLUDE_DIRS ${LUA_INCLUDE_DIRS} ${MQTT_INCLUDE_DIRS} ${SQLite_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS} ${MINIZIP_INCLUDE_DIRS})
 

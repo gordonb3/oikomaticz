@@ -1,7 +1,7 @@
 #pragma once
 
 #include <time.h>
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 class ZWaveBase : public CDomoticzHardwareBase
 {

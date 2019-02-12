@@ -14,7 +14,7 @@
 #include "hardware/1Wire.h"
 #include "hardware/OTGWBase.h"
 #ifdef WITH_OPENZWAVE
-#include "hardware/OpenZWave.h"
+#include "hardware/OpenZWave/OpenZWave.h"
 #endif
 #include "hardware/EnOceanESP2.h"
 #include "hardware/EnOceanESP3.h"
@@ -37,7 +37,9 @@
 #include "hardware/Gpio.h"
 #include "hardware/GpioPin.h"
 #endif // WITH_GPIO
+#ifdef TELLDUSCORE_INCLUDE
 #include "hardware/Tellstick.h"
+#endif
 #include "../webserver/Base64.h"
 #include "../smtpclient/SMTPClient.h"
 #include "jsoncpp/json.h"
@@ -660,8 +662,9 @@ namespace http {
 			//thpost.html
 			RegisterRType("openzwavenodes", boost::bind(&CWebServer::RType_OpenZWaveNodes, this, _1, _2, _3));
 #endif
+#ifdef TELLDUSCORE_INCLUDE
 			RegisterCommandCode("tellstickApplySettings", boost::bind(&CWebServer::Cmd_TellstickApplySettings, this, _1, _2, _3));
-
+#endif
 			m_pWebEm->RegisterWhitelistURLString("/html5.appcache");
 			m_pWebEm->RegisterWhitelistURLString("/images/floorplans/plan");
 

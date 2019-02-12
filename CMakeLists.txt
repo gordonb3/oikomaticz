@@ -238,9 +238,64 @@ add_custom_command(TARGET revisiontag COMMAND ${CMAKE_COMMAND}
    -P ${CMAKE_CURRENT_SOURCE_DIR}/getgit.cmake)
 
 
-# sources
-add_subdirectory(src)
+## Find libraries  
+
+#
+# CURL
+#
+find_package(CURL)
+
+#
+# Find MD5/RMD160/SHA library
+#
+find_package(OpenSSL REQUIRED)
+
+#
+# USB
+#
+if(WITH_LIBUSB)
+  find_path(LIBUSB_INCLUDE_DIR usb.h
+     HINTS ${PC_LIBUSB_INCLUDEDIR} ${PC_LIBUSB_INCLUDE_DIRS})
+  find_library(LIBUSB_LIBRARY NAMES usb
+     HINTS ${PC_LIBUSB_LIBDIR} ${PC_LIBUSB_LIBRARY_DIRS})
+  set(LIBUSB_LIBRARIES ${LIBUSB_LIBRARY})
+
+  find_package_handle_standard_args(LIBUSB  DEFAULT_MSG  LIBUSB_LIBRARIES LIBUSB_INCLUDE_DIR)
+  if(NOT LIBUSB_FOUND)
+    message(STATUS "==== LibUSB not found, support for TE923/Voltcraft disabled!")
+  endif(NOT LIBUSB_FOUND)
+endif(WITH_LIBUSB)
+
+#
+# OpenZWave
+# try to find open-zwave, if found, include support
+#
+if(USE_STATIC_OPENZWAVE)
+  find_library(OpenZWave NAMES libopenzwave.a HINTS "../open-zwave-read-only" "../open-zwave-read-only/cpp/build")
+  set(OPENZWAVE_LIB ${OpenZWave})
+else(USE_STATIC_OPENZWAVE)
+  pkg_check_modules(OPENZWAVE libopenzwave)
+  if(OPENZWAVE_FOUND)
+    message(STATUS "==== OpenZWave package found!")
+    find_library(OpenZWave NAMES libopenzwave.so HINTS ${OPENZWAVE_LIBRARY_DIRS})
+  endif(OPENZWAVE_FOUND)
+endif(USE_STATIC_OPENZWAVE)
+
+
+#
+# Tellstick
+#
+find_path(TELLDUSCORE_INCLUDE NAMES telldus-core.h)
+
+
+## Sources
+
+# main include dirs
 include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${CMAKE_SOURCE_DIR}/libs)
+
+# source files
+add_subdirectory(src)
 get_directory_property(DZ_SRCS DIRECTORY src DEFINITION DZ_SRCS)
 add_executable(oikomaticz ${DZ_SRCS})
 
@@ -251,17 +306,9 @@ add_dependencies(oikomaticz revisiontag)
 
 ## Link libraries
 
-# builtin libs
-add_subdirectory(libs)
-get_directory_property(BUILTIN_INCLUDE_DIRS DIRECTORY libs DEFINITION BUILTIN_INCLUDE_DIRS)
-include_directories(${BUILTIN_INCLUDE_DIRS})
-get_directory_property(BUILTIN_LIBRARIES DIRECTORY libs DEFINITION BUILTIN_LIBRARIES)
-target_link_libraries(oikomaticz ${BUILTIN_LIBRARIES})
-
 #
 # Find MD5/RMD160/SHA library
 #
-find_package(OpenSSL REQUIRED)
 if(NOT OPENSSL_INCLUDE_DIR)
   message(SEND_ERROR "Failed to find OpenSSL include files (ssl.h), no HTTPS support")
 endif()
@@ -303,9 +350,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 #
 # CURL
 #
-find_package(CURL)
 if(CURL_FOUND)
-  message(STATUS "Found Curl ${CURL_VERSION} found at: ${CURL_LIBRARIES}")
+  message(STATUS "Curl ${CURL_VERSION} found at: ${CURL_LIBRARIES}")
   message(STATUS "Curl includes found at: ${CURL_INCLUDE_DIRS}")
   include_directories(${CURL_INCLUDE_DIRS})
   # add_definitions(-DWWW_ENABLE_SSL)
@@ -316,48 +362,21 @@ endif(CURL_FOUND)
 #
 # USB
 #
-if(WITH_LIBUSB)
-  find_path(LIBUSB_INCLUDE_DIR usb.h
-     HINTS ${PC_LIBUSB_INCLUDEDIR} ${PC_LIBUSB_INCLUDE_DIRS})
-  find_library(LIBUSB_LIBRARY NAMES usb
-     HINTS ${PC_LIBUSB_LIBDIR} ${PC_LIBUSB_LIBRARY_DIRS})
-  set(LIBUSB_LIBRARIES ${LIBUSB_LIBRARY})
+if(LIBUSB_FOUND)
+  message(STATUS "Libusb found at: ${LIBUSB_LIBRARIES}")
+  add_definitions(-DWITH_LIBUSB)
+  target_link_libraries(oikomaticz ${LIBUSB_LIBRARIES})
+endif(LIBUSB_FOUND)
 
-  find_package_handle_standard_args(LIBUSB  DEFAULT_MSG  LIBUSB_LIBRARIES LIBUSB_INCLUDE_DIR)
-  if(LIBUSB_FOUND)
-    message(STATUS "Found Libusb ${LIBUSB_VERSION} at: ${LIBUSB_LIBRARIES}")
-    add_definitions(-DWITH_LIBUSB)
-    target_link_libraries(oikomaticz ${LIBUSB_LIBRARIES})
-  else()
-    message(STATUS "==== LibUSB not found, support for TE923/Voltcraft disabled!")
-  endif(LIBUSB_FOUND)
-endif(WITH_LIBUSB)
-
-## support lua popen on Linux platforms
-#if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-# set(OperatingSystem "Linux")
-# add_definitions(-DLUA_USE_LINUX)
-#endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 #
 # OpenZWave
 # try to find open-zwave, if found, include support
 #
-if(USE_STATIC_OPENZWAVE)
-  find_library(OpenZWave NAMES libopenzwave.a HINTS "../open-zwave-read-only" "../open-zwave-read-only/cpp/build")
-  set(OPENZWAVE_LIB ${OpenZWave})
-else()
-  pkg_check_modules(OPENZWAVE libopenzwave)
-  if(OPENZWAVE_FOUND)
-    message(STATUS "==== OpenZWave package found!")
-    find_library(OpenZWave NAMES libopenzwave.so HINTS ${OPENZWAVE_LIBRARY_DIRS})
-    message(STATUS ${OpenZWave})
-  endif()
-endif()
 if(OpenZWave)
-  message(STATUS ${OpenZWave})
+  message(STATUS "OpenZWave found at: ${OpenZWave}")
   target_link_libraries(oikomaticz ${OpenZWave})
-  include_directories(${CMAKE_SOURCE_DIR}/hardware/openzwave)
+  include_directories(${CMAKE_SOURCE_DIR}/libs/openzwave)
   add_definitions(-DWITH_OPENZWAVE)
   # open-zwave needs libudev if statically linked
   if(USE_STATIC_OPENZWAVE)
@@ -407,7 +426,6 @@ else()
 endif()
 
 
-find_path(TELLDUSCORE_INCLUDE NAMES telldus-core.h)
 if(TELLDUSCORE_INCLUDE)
   find_library(TELLDUS_LIBRARIES NAMES libtelldus-core.so)
   if(TELLDUS_LIBRARIES)
@@ -420,6 +438,14 @@ if(TELLDUSCORE_INCLUDE)
 else(TELLDUSCORE_INCLUDE)
   message(STATUS "Did not find telldus-core, not adding tellstick support")
 endif(TELLDUSCORE_INCLUDE)
+
+
+# builtin libs
+add_subdirectory(libs)
+get_directory_property(BUILTIN_INCLUDE_DIRS DIRECTORY libs DEFINITION BUILTIN_INCLUDE_DIRS)
+include_directories(${BUILTIN_INCLUDE_DIRS})
+get_directory_property(BUILTIN_LIBRARIES DIRECTORY libs DEFINITION BUILTIN_LIBRARIES)
+target_link_libraries(oikomaticz ${BUILTIN_LIBRARIES})
 
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
