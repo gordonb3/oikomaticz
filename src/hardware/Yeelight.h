@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 

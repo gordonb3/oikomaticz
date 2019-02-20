@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "NotificationPushover.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "main/Logger.h"
 
 CNotificationPushover::CNotificationPushover() : CNotificationBase(std::string("pushover"), OPTIONS_URL_SUBJECT | OPTIONS_URL_BODY | OPTIONS_URL_PARAMS)

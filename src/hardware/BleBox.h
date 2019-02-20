@@ -3,8 +3,8 @@
 // implememtation for devices : http://blebox.eu/
 // by Fantom (szczukot@poczta.onet.pl)
 
-#include "DomoticzHardware.h"
-#include "hardwaretypes.h"
+#include "hardware/DomoticzHardware.h"
+#include "hardware/hardwaretypes.h"
 #include "main/RFXtrx.h"
 
 namespace Json

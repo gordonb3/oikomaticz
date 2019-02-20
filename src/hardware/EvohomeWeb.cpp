@@ -17,10 +17,10 @@
 #include "main/Logger.h"
 #include "main/SQLHelper.h"
 #include "main/mainworker.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 
 #define LOGONFAILTRESHOLD 3
 #define MINPOLINTERVAL 10

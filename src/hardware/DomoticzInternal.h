@@ -9,7 +9,7 @@
 #ifndef HARDWARE_DOMOTICZINTERNAL_H_
 #define HARDWARE_DOMOTICZINTERNAL_H_
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 // Internl use only (eg. Security Panel device)
 // User can not attach device to this type of hardware

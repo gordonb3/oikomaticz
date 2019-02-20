@@ -8,10 +8,10 @@
 #include "main/SQLHelper.h"
 #include "main/mainworker.h"
 #include "main/WebServer.h"
-#include "../../webserver/cWebem.h"
-#include "../../httpclient/HTTPClient.h"
+#include "webserver/cWebem.h"
+#include "httpclient/HTTPClient.h"
 #include "jsoncpp/json.h"
-#include "../hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 
 #define round(a) ( int ) ( a + .5 )
 

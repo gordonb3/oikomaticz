@@ -30,11 +30,11 @@ Version history
 #include "main/Helper.h"
 #include "main/SQLHelper.h"
 #include "main/Logger.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include <tinyxpath/xpath_static.h>
-#include "../webserver/Base64.h"
+#include "webserver/Base64.h"
 #include "jsoncpp/json.h"
 #include <sstream>
 

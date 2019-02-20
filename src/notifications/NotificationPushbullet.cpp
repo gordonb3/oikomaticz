@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "NotificationPushbullet.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "main/Logger.h"
 #include "jsoncpp/json.h"
-#include "../httpclient/UrlEncode.h"
+#include "httpclient/UrlEncode.h"
 
 CNotificationPushbullet::CNotificationPushbullet() : CNotificationBase(std::string("pushbullet"), OPTIONS_URL_SUBJECT | OPTIONS_URL_BODY | OPTIONS_URL_PARAMS)
 {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ASyncTCP.h"
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 class Comm5TCP : public CDomoticzHardwareBase, ASyncTCP
 {

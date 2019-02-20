@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "P1MeterBase.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/SQLHelper.h"
 #include "main/localtime_r.h"
 #include "main/Logger.h"

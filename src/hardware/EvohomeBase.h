@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include <condition_variable>
 
 #define RFX_SETID3(ID,id1,id2,id3) {id1=ID>>16&0xFF;id2=ID>>8&0xFF;id3=ID&0xFF;}

@@ -7,7 +7,7 @@
 #include "localtime_r.h"
 
 #if defined WIN32
-//	#include "../msbuild/WindowsHelper.h"
+//	#include "msbuild/WindowsHelper.h"
 //	#include <Shlobj.h>
 #else
 	#include <sys/stat.h>

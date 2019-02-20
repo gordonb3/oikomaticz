@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include "csocket.h"
 
 class bt_openwebnet;

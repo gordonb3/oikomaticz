@@ -19,7 +19,7 @@
 #include "main/mainworker.h"
 #include "main/localtime_r.h"
 
-#include "../../notifications/NotificationHelper.h"
+#include "notifications/NotificationHelper.h"
 
 #define ADD_STRING_TO_DICT(pDict, key, value) \
 		{	\

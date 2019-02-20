@@ -4,7 +4,7 @@
 #include "main/Helper.h"
 #include "main/RFXtrx.h"
 #include "P1MeterBase.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
 
 #include <algorithm>

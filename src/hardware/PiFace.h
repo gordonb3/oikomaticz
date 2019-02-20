@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include "main/RFXtrx.h"
 #include <boost/thread/thread_time.hpp>
 

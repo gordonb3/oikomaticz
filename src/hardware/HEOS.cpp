@@ -5,12 +5,12 @@
 #include "main/Helper.h"
 #include "main/Logger.h"
 #include "main/SQLHelper.h"
-#include "../notifications/NotificationHelper.h"
+#include "notifications/NotificationHelper.h"
 #include "main/WebServer.h"
 #include "main/mainworker.h"
 #include "main/localtime_r.h"
 #include "main/EventSystem.h"
-#include "../webserver/cWebem.h"
+#include "webserver/cWebem.h"
 
 #include <iostream>
 

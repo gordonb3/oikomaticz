@@ -29,7 +29,7 @@
 
 #include "stdafx.h"
 #include "main/Logger.h"
-#include "../eHouseTCP.h"
+#include "hardware/eHouseTCP.h"
 #ifndef WIN32
 #else
 #endif

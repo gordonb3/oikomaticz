@@ -1,7 +1,7 @@
 #pragma once
 
-#include "DomoticzHardware.h"
-#include "hardwaretypes.h"
+#include "hardware/DomoticzHardware.h"
+#include "hardware/hardwaretypes.h"
 
 class CNefitEasy : public CDomoticzHardwareBase
 {

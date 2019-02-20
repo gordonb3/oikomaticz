@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "main/Helper.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "ColorSwitch.h"
 #include "jsoncpp/json.h"
 

@@ -21,7 +21,7 @@
 #include "stdafx.h"
 #include "EvohomeScript.h"
 #include "main/Logger.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 //#include "main/RFXtrx.h"
 //#include "main/Helper.h"
 #include "main/SQLHelper.h"

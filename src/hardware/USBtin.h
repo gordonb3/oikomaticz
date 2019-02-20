@@ -18,7 +18,7 @@ History :
 #pragma once
 #include "ASyncSerial.h"
 #include "USBtin_MultiblocV8.h"
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 class USBtin : public USBtin_MultiblocV8,AsyncSerial
 {

@@ -7,13 +7,13 @@
 #include "main/localtime_r.h"
 #include "main/WebServer.h"
 #include "main/mainworker.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include <string>
 #include <sstream>
 #include <algorithm>
 #include <iostream>
 #include <boost/bind.hpp>
-#include "../webserver/cWebem.h"
+#include "webserver/cWebem.h"
 #include "jsoncpp/json.h"
 
 #include <ctime>

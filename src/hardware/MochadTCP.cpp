@@ -6,7 +6,7 @@
 #include "main/RFXtrx.h"
 #include <iostream>
 
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/Logger.h"
 
 #define RETRY_DELAY 30

@@ -46,7 +46,7 @@
 #endif
 #include "main/Helper.h"
 #include "main/Logger.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
 #include "MCP23x17.h"

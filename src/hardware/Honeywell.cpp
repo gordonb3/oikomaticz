@@ -2,15 +2,15 @@
 #include "Honeywell.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
 #include "main/WebServerHelper.h"
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "main/mainworker.h"
 #include "jsoncpp/json.h"
-#include "../webserver/Base64.h"
+#include "webserver/Base64.h"
 
 #define round(a) ( int ) ( a + .5 )
 

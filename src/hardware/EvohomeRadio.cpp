@@ -13,7 +13,7 @@
  */
 #include "stdafx.h"
 #include "EvohomeRadio.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/Helper.h"
 #include "main/localtime_r.h"
 #include "main/Logger.h"
@@ -21,7 +21,7 @@
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
 #include "main/WebServer.h"
-#include "../webserver/cWebem.h"
+#include "webserver/cWebem.h"
 #include "jsoncpp/json.h"
 
 extern std::string szUserDataFolder;

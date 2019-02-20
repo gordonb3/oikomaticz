@@ -19,7 +19,7 @@ History :
 */
 #include "stdafx.h"
 #include "USBtin.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
 #include "main/Logger.h"
 #include "main/RFXtrx.h"

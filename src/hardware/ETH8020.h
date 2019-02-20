@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 class CETH8020 : public CDomoticzHardwareBase
 {

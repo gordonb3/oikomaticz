@@ -3,7 +3,7 @@
 */
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include "main/RFXtrx.h"
 
 struct gpio_info

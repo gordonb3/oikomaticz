@@ -3,8 +3,8 @@
 #include "main/SQLHelper.h"
 #include "main/Logger.h"
 #include "main/Helper.h"
-#include "../httpclient/UrlEncode.h"
-#include "../webserver/Base64.h"
+#include "httpclient/UrlEncode.h"
+#include "webserver/Base64.h"
 
 typedef std::map<std::string, std::string* >::iterator it_conf_type;
 typedef std::map<std::string, int* >::iterator it_conf_type_int;

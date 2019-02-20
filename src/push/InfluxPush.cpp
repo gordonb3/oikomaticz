@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "InfluxPush.h"
 #include "hardware/hardwaretypes.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "jsoncpp/json.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
@@ -9,8 +9,8 @@
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
 #include "main/WebServer.h"
-#include "../webserver/Base64.h"
-#include "../webserver/cWebem.h"
+#include "webserver/Base64.h"
+#include "webserver/cWebem.h"
 #include "main/localtime_r.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

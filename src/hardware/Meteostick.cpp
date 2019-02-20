@@ -5,7 +5,7 @@
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
 #include "P1MeterBase.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include <string>
 #include <algorithm>
 #include <iostream>

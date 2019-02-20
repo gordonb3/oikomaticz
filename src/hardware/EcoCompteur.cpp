@@ -3,8 +3,8 @@
 #include "main/Helper.h"
 #include "main/Logger.h"
 #include "main/localtime_r.h"
-#include "hardwaretypes.h"
-#include "../httpclient/HTTPClient.h"
+#include "hardware/hardwaretypes.h"
+#include "httpclient/HTTPClient.h"
 #include "jsoncpp/json.h"
 #include "main/WebServer.h"
 

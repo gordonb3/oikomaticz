@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "BleBox.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "jsoncpp/json.h"
 #include "main/Helper.h"
 #include "main/localtime_r.h"
@@ -8,7 +8,7 @@
 #include "main/mainworker.h"
 #include "main/SQLHelper.h"
 #include "main/WebServer.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 
 struct STR_DEVICE {
 	int			unit;

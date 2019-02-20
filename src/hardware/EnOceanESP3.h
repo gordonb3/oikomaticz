@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ASyncSerial.h"
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include <map>
 
 #define ENOCEAN3_READ_BUFFER_SIZE 65*1024

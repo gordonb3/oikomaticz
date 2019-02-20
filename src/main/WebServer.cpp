@@ -9,7 +9,7 @@
 #include "localtime_r.h"
 #include "EventSystem.h"
 #include "dzVents.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "hardware/hardwaretypes.h"
 #include "hardware/1Wire.h"
 #include "hardware/OTGWBase.h"
@@ -40,12 +40,12 @@
 #ifdef TELLDUSCORE_INCLUDE
 #include "hardware/Tellstick.h"
 #endif
-#include "../webserver/Base64.h"
-#include "../smtpclient/SMTPClient.h"
+#include "webserver/Base64.h"
+#include "smtpclient/SMTPClient.h"
 #include "jsoncpp/json.h"
 #include "Logger.h"
 #include "SQLHelper.h"
-#include "../push/BasePush.h"
+#include "push/BasePush.h"
 #include <algorithm>
 #ifdef ENABLE_PYTHON
 #include "hardware/plugins/Plugins.h"
@@ -55,10 +55,10 @@
 #include <sys/utsname.h>
 #include <dirent.h>
 #else
-#include "../msbuild/WindowsHelper.h"
+#include "msbuild/WindowsHelper.h"
 #include "dirent_windows.h"
 #endif
-#include "../notifications/NotificationHelper.h"
+#include "notifications/NotificationHelper.h"
 #include "main/LuaHandler.h"
 
 #define __STDC_FORMAT_MACROS

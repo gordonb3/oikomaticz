@@ -26,7 +26,7 @@
 #include <inttypes.h>
 
 #if defined WIN32
-	#include "../msbuild/WindowsHelper.h"
+	#include "msbuild/WindowsHelper.h"
 #endif
 
 typedef std::map<std::string, CNotificationBase*>::iterator it_noti_type;

@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "NotificationTelegram.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "main/Logger.h"
 #include "jsoncpp/json.h"
-#include "../httpclient/UrlEncode.h"
+#include "httpclient/UrlEncode.h"
 
 CNotificationTelegram::CNotificationTelegram() : CNotificationBase(std::string("telegram"), OPTIONS_URL_SUBJECT | OPTIONS_URL_BODY | OPTIONS_URL_PARAMS)
 {

@@ -18,8 +18,8 @@ History :
 #pragma once
 
 #include <iostream>
-#include "DomoticzHardware.h"
-#include "hardwaretypes.h"
+#include "hardware/DomoticzHardware.h"
+#include "hardware/hardwaretypes.h"
 
 class CTeleinfoBase : public CDomoticzHardwareBase
 {

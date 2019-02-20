@@ -5,12 +5,12 @@
 #include "Logger.h"
 #include "Helper.h"
 #include "mainworker.h"
-#include "../httpclient/HTTPClient.h"
-#include "../smtpclient/SMTPClient.h"
-#include "../webserver/Base64.h"
+#include "httpclient/HTTPClient.h"
+#include "smtpclient/SMTPClient.h"
+#include "webserver/Base64.h"
 #include "SQLHelper.h"
 #include "WebServer.h"
-#include "../webserver/cWebem.h"
+#include "webserver/cWebem.h"
 #include "jsoncpp/json.h"
 
 #define CAMERA_POLL_INTERVAL 30

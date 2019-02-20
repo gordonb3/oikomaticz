@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 #define RFLINK_READ_BUFFER_SIZE 65*1024
 #define RFLINK_RETRY_DELAY 30

@@ -28,13 +28,13 @@
 #include "Helper.h"
 #include "WebServerHelper.h"
 #include "SQLHelper.h"
-#include "../notifications/NotificationHelper.h"
+#include "notifications/NotificationHelper.h"
 #include "appversion.h"
 #include "localtime_r.h"
 #include "SignalHandler.h"
 
 #if defined WIN32
-	#include "../msbuild/WindowsHelper.h"
+	#include "msbuild/WindowsHelper.h"
 	#include <Shlobj.h>
 #else
 	#include <sys/stat.h>

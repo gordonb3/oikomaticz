@@ -23,7 +23,7 @@ History :
 */
 #include "stdafx.h"
 #include "USBtin_MultiblocV8.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/Logger.h"
 #include "main/localtime_r.h"
 #include "main/RFXtrx.h"

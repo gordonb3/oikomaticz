@@ -2,7 +2,7 @@
 
 #ifndef WIN32
 #ifdef WITH_LIBUSB
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 class CVoltCraftCO20 : public CDomoticzHardwareBase
 {

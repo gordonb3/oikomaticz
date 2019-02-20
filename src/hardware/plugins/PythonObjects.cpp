@@ -12,7 +12,7 @@
 #include "main/mainstructs.h"
 #include "main/mainworker.h"
 #include "main/EventSystem.h"
-#include "../notifications/NotificationHelper.h"
+#include "notifications/NotificationHelper.h"
 #include "PythonObjects.h"
 #include "PluginMessages.h"
 #include "PluginProtocols.h"

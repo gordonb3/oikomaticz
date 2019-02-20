@@ -7,7 +7,7 @@
 #include "main/mainworker.h"
 #include "main/SQLHelper.h"
 #include "jsoncpp/json.h"
-#include "../webserver/Base64.h"
+#include "webserver/Base64.h"
 #include "cayenne_lpp/CayenneLPP_Dec.h"
 
 #define RETRY_DELAY 30

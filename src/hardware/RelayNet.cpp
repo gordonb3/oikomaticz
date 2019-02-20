@@ -92,15 +92,15 @@
 //---------------------------------------------------------------------------
 #include "stdafx.h"
 #include "RelayNet.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "ASyncTCP.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
 #include "main/localtime_r.h"
 #include "main/mainworker.h"
 #include "main/SQLHelper.h"
-#include "../webserver/Base64.h"
-#include "../httpclient/HTTPClient.h"
+#include "webserver/Base64.h"
+#include "httpclient/HTTPClient.h"
 #include <sstream>
 
 //===========================================================================

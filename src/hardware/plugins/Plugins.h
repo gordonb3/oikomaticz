@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../DomoticzHardware.h"
-#include "../hardwaretypes.h"
-#include "../../notifications/NotificationBase.h"
+#include "hardware/DomoticzHardware.h"
+#include "hardware/hardwaretypes.h"
+#include "notifications/NotificationBase.h"
 
 #ifndef byte
 typedef unsigned char byte;

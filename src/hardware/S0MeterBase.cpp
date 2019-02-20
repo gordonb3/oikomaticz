@@ -7,9 +7,9 @@
 #include "main/localtime_r.h"
 #include "main/mainworker.h"
 #include "main/WebServer.h"
-#include "../webserver/cWebem.h"
+#include "webserver/cWebem.h"
 #include "P1MeterBase.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include <string>
 #include <algorithm>
 #include <iostream>

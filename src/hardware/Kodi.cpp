@@ -8,7 +8,7 @@
 #include "main/mainworker.h"
 #include "main/SQLHelper.h"
 #include "main/WebServer.h"
-#include "../notifications/NotificationHelper.h"
+#include "notifications/NotificationHelper.h"
 
 #define MAX_TITLE_LEN 40
 

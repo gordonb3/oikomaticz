@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "NotificationSMS.h"
-#include "../httpclient/HTTPClient.h"
-#include "../httpclient/UrlEncode.h"
+#include "httpclient/HTTPClient.h"
+#include "httpclient/UrlEncode.h"
 #include "main/Logger.h"
 #include "main/Helper.h"
 

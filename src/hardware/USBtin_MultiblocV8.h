@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
 #include <string>
-#include "DomoticzHardware.h"
-#include "hardwaretypes.h"
+#include "hardware/DomoticzHardware.h"
+#include "hardware/hardwaretypes.h"
 
 #define MAX_NUMBER_BLOC 		30
 

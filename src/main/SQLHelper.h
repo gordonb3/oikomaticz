@@ -4,8 +4,8 @@
 #include "RFXNames.h"
 #include "hardware/hardwaretypes.h"
 #include "Helper.h"
-#include "../httpclient/UrlEncode.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/UrlEncode.h"
+#include "httpclient/HTTPClient.h"
 #include "StoppableTask.h"
 
 #define timer_resolution_hz 25

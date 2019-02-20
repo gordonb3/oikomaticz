@@ -3,7 +3,7 @@
 // implememtation for weather with free api key : http://openweathermap.org/
 // by Fantom (szczukot@poczta.onet.pl)
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 class COpenWeatherMap : public CDomoticzHardwareBase
 {

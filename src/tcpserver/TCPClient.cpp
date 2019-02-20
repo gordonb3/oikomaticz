@@ -3,7 +3,7 @@
 #include "TCPServer.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
-#include "../webserver/proxyclient.h"
+#include "webserver/proxyclient.h"
 
 namespace tcp {
 namespace server {

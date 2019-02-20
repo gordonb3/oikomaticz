@@ -4,8 +4,8 @@
 #include "main/localtime_r.h"
 #include "main/Logger.h"
 #include "main/mainworker.h"
-#include "../httpclient/HTTPClient.h"
-#include "../httpclient/UrlEncode.h"
+#include "httpclient/HTTPClient.h"
+#include "httpclient/UrlEncode.h"
 
 #include <iostream>
 

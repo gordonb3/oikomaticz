@@ -1,6 +1,6 @@
 #pragma once
-#include "../webserver/cWebem.h"
-#include "../webserver/request.hpp"
+#include "webserver/cWebem.h"
+#include "webserver/request.hpp"
 
 #define OPTIONS_NONE 0
 #define OPTIONS_URL_SUBJECT 1

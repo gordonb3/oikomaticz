@@ -2,7 +2,7 @@
 
 
 #include <set>
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include "hardware/1Wire/1WireCommon.h"
 
 class I_1WireSystem;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "DomoticzHardware.h"
-#include "hardwaretypes.h"
+#include "hardware/DomoticzHardware.h"
+#include "hardware/hardwaretypes.h"
 #include "TelldusFunctions.h"
 
 class CTellstick : public CDomoticzHardwareBase

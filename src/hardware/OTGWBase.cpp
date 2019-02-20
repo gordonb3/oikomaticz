@@ -7,8 +7,8 @@
 #include "main/localtime_r.h"
 #include "main/mainworker.h"
 #include "main/WebServerHelper.h"
-#include "../webserver/cWebem.h"
-#include "hardwaretypes.h"
+#include "webserver/cWebem.h"
+#include "hardware/hardwaretypes.h"
 #include <string>
 #include <algorithm>
 #include <iostream>

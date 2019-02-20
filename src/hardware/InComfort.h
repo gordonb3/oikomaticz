@@ -8,8 +8,8 @@
 // - IO values did not get send to the correct sensor
 // - Slow changing values were not updated. Forcing an update every 15 minutes.
 
-#include "DomoticzHardware.h"
-#include "hardwaretypes.h"
+#include "hardware/DomoticzHardware.h"
+#include "hardware/hardwaretypes.h"
 
 class CInComfort : public CDomoticzHardwareBase
 {

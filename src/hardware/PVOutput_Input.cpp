@@ -2,12 +2,12 @@
 #include "PVOutput_Input.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
 #include "jsoncpp/json.h"
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "main/mainworker.h"
 
 #define round(a) ( int ) ( a + .5 )

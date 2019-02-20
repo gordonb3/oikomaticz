@@ -7,7 +7,7 @@
 #include "main/mainworker.h"
 #include "main/SQLHelper.h"
 #include "jsoncpp/json.h"
-#include "../notifications/NotificationHelper.h"
+#include "notifications/NotificationHelper.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

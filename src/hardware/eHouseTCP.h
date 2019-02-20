@@ -8,8 +8,8 @@
 //Recent update : 2018 - 08 - 16
 #include "eHouse/globals.h"
 
-#include "DomoticzHardware.h"
-#include "hardwaretypes.h"
+#include "hardware/DomoticzHardware.h"
+#include "hardware/hardwaretypes.h"
 
 class eHouseTCP : public  CDomoticzHardwareBase
 

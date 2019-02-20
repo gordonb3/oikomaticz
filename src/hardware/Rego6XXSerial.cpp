@@ -6,7 +6,7 @@
 #include "main/mainworker.h"
 #include "main/WebServer.h"
 #include "main/SQLHelper.h"
-#include "../webserver/cWebem.h"
+#include "webserver/cWebem.h"
 
 // This code is inspired by the Rago600 project:
 // http://rago600.sourceforge.net/
@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <iostream>
 #include <boost/bind.hpp>
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 
 #include <ctime>
 

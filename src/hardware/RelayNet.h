@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ASyncTCP.h"
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include "main/RFXtrx.h"
 
 class RelayNet : public CDomoticzHardwareBase, ASyncTCP

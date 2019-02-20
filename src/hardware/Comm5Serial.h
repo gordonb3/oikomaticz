@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ASyncSerial.h"
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 class Comm5Serial : public CDomoticzHardwareBase, AsyncSerial
 {

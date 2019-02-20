@@ -11,13 +11,13 @@
 #include "hardware/LogitechMediaServer.h"
 #include "hardware/MySensorsBase.h"
 #include <iostream>
-#include "../httpclient/UrlEncode.h"
+#include "httpclient/UrlEncode.h"
 #include "localtime_r.h"
 #include "SQLHelper.h"
-#include "../notifications/NotificationHelper.h"
+#include "notifications/NotificationHelper.h"
 #include "WebServer.h"
 #include "main/WebServerHelper.h"
-#include "../webserver/cWebem.h"
+#include "webserver/cWebem.h"
 #include "jsoncpp/json.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

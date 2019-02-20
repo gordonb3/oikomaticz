@@ -27,8 +27,8 @@
 #define SHUT_RDWR	SD_BOTH
 #endif
 
-#include "../eHouseTCP.h"
-#include "../hardwaretypes.h"
+#include "hardware/eHouseTCP.h"
+#include "hardware/hardwaretypes.h"
 #include "main/RFXtrx.h"
 #include "main/localtime_r.h"
 #include "main/mainworker.h"

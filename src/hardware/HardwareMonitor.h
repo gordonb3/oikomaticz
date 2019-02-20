@@ -1,6 +1,6 @@
 #pragma once
 //#include "main/RFXtrx.h"
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #if defined WIN32
 	// for windows system info
 	#include <wbemidl.h>

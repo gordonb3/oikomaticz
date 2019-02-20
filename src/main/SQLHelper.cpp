@@ -9,11 +9,11 @@
 #include "mainworker.h"
 #include <sqlite3.h>
 #include "hardware/hardwaretypes.h"
-#include "../smtpclient/SMTPClient.h"
+#include "smtpclient/SMTPClient.h"
 #include "WebServerHelper.h"
-#include "../webserver/Base64.h"
+#include "webserver/Base64.h"
 #include "clx_unzip.h"
-#include "../notifications/NotificationHelper.h"
+#include "notifications/NotificationHelper.h"
 #include "IFTTT.h"
 #ifdef ENABLE_PYTHON
 #include "hardware/plugins/Plugins.h"
@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #else
-#include "../msbuild/WindowsHelper.h"
+#include "msbuild/WindowsHelper.h"
 #endif
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

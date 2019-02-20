@@ -5,10 +5,10 @@
 #include "main/SQLHelper.h"
 #include "main/localtime_r.h"
 #include "main/RFXtrx.h"
-#include "hardwaretypes.h"
-#include "../httpclient/HTTPClient.h"
+#include "hardware/hardwaretypes.h"
+#include "httpclient/HTTPClient.h"
 #include "jsoncpp/json.h"
-#include "../webserver/Base64.h"
+#include "webserver/Base64.h"
 #include "main/WebServer.h"
 #include "main/LuaHandler.h"
 

@@ -9,9 +9,9 @@
 #include "WindCalculation.h"
 #include "TrendCalculator.h"
 #include "StoppableTask.h"
-#include "../tcpserver/TCPServer.h"
+#include "tcpserver/TCPServer.h"
 #include "concurrent_queue.h"
-#include "../webserver/server_settings.hpp"
+#include "webserver/server_settings.hpp"
 #ifdef ENABLE_PYTHON
 #	include "hardware/plugins/PluginManager.h"
 #endif

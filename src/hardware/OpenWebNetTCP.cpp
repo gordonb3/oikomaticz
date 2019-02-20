@@ -24,7 +24,7 @@ License: Public domain
 #include "csocket.h"
 
 #include <string.h>
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/RFXNames.h"
 #include "main/RFXtrx.h"
 

@@ -8,7 +8,7 @@
 #include "dzVents.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#include "../webserver/Base64.h"
+#include "webserver/Base64.h"
 
 extern std::string szUserDataFolder, szWebRoot, szStartupFolder;
 extern http::server::CWebServerHelper m_webservers;

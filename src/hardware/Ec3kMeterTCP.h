@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ASyncTCP.h"
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 
 #define MAX_EC3K_METERS 64

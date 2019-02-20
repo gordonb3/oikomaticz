@@ -25,7 +25,7 @@
 #include <cstring>
 
 #if defined WIN32
-#include "../msbuild/WindowsHelper.h"
+#include "msbuild/WindowsHelper.h"
 #endif
 
 #include "RFXtrx.h"

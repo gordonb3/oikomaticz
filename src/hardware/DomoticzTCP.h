@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include "RFXBase.h"
 #if defined WIN32
 #include "ws2tcpip.h"

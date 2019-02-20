@@ -26,7 +26,7 @@ Source: http://wiringpi.com
 */
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include "GpioPin.h"
 #include "main/RFXtrx.h"
 

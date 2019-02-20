@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "1Wire.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "1Wire/1WireByOWFS.h"
 #include "1Wire/1WireByKernel.h"
 #ifdef WIN32

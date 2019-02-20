@@ -9,8 +9,8 @@
 #include "main/SQLHelper.h"
 #include "main/mainworker.h"
 #include "main/WebServer.h"
-#include "../webserver/Base64.h"
-#include "../webserver/cWebem.h"
+#include "webserver/Base64.h"
+#include "webserver/cWebem.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

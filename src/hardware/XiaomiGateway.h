@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include <boost/tuple/tuple.hpp>
 #include <list>
 #include <mutex>

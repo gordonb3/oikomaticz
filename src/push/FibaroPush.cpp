@@ -1,16 +1,16 @@
 #include "stdafx.h"
 #include "FibaroPush.h"
 #include "hardware/hardwaretypes.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "jsoncpp/json.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
 #include "main/mainworker.h"
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
-#include "../webserver/Base64.h"
+#include "webserver/Base64.h"
 #include "main/WebServer.h"
-#include "../webserver/cWebem.h"
+#include "webserver/cWebem.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include <iostream>
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 
 namespace Json
 {

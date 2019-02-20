@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ASyncSerial.h"
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 #include "P1MeterBase.h"
 
 #define RX_BUFFER_SIZE 100

@@ -2,11 +2,11 @@
 #include "ICYThermostat.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "main/mainworker.h"
 #include "jsoncpp/json.h"
 

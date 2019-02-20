@@ -4,13 +4,13 @@
 #include "main/Logger.h"
 #include "main/Helper.h"
 #include "main/RFXtrx.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
 #include "main/SQLHelper.h"
 
 #include "main/mainworker.h"
 #include "main/WebServer.h"
-#include "../webserver/cWebem.h"
+#include "webserver/cWebem.h"
 #include "jsoncpp/json.h"
 
 #ifdef _DEBUG

@@ -2,14 +2,14 @@
 #include "NefitEasy.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
-#include "../httpclient/UrlEncode.h"
-#include "hardwaretypes.h"
+#include "httpclient/UrlEncode.h"
+#include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
-#include "../httpclient/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "jsoncpp/json.h"
 #include "main/RFXtrx.h"
 #include "main/mainworker.h"
-#include "../webserver/Base64.h"
+#include "webserver/Base64.h"
 
 /*
 We need HTTP server to access Nefit/Bosch XMPP backend over HTTP written by Robert Klep (https://github.com/robertklep/nefit-easy-http-server)

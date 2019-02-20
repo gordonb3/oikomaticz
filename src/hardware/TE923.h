@@ -4,7 +4,7 @@
 
 #ifdef WITH_LIBUSB
 
-#include "DomoticzHardware.h"
+#include "hardware/DomoticzHardware.h"
 
 class CTE923 : public CDomoticzHardwareBase
 {

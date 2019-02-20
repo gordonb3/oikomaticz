@@ -3,7 +3,7 @@
 #ifndef NOCLOUD
 #include "hardware/DomoticzTCP.h"
 #endif
-#include "../tcpserver/TCPServer.h"
+#include "tcpserver/TCPServer.h"
 
 namespace http {
 	namespace server {

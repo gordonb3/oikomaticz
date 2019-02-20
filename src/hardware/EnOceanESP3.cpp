@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <iostream>
 #include <boost/bind.hpp>
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
 
 #include <boost/exception/diagnostic_information.hpp>

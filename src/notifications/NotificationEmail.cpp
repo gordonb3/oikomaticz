@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "NotificationEmail.h"
-#include "../smtpclient/SMTPClient.h"
+#include "smtpclient/SMTPClient.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
 #include "main/localtime_r.h"

@@ -24,7 +24,7 @@ History :
 
 #include "stdafx.h"
 #include "TeleinfoSerial.h"
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
 #include "main/Logger.h"
 
