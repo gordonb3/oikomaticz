@@ -2,7 +2,7 @@
 #include "fastcgi.hpp"
 #include <fstream>
 #include <sstream>
-#include "httpclient/UrlEncode.h"
+#include "protocols/UrlEncode.h"
 #include "main/Helper.h"
 
 //(c) 2016 GizMoCuz

@@ -21,7 +21,7 @@ License: Public domain
 #include "main/Helper.h"
 #include "main/SQLHelper.h"
 #include "main/localtime_r.h"
-#include "csocket.h"
+#include "protocols/csocket.h"
 
 #include <string.h>
 #include "hardware/hardwaretypes.h"

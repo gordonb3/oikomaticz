@@ -2,7 +2,7 @@
 #ifndef BUFFEREDP1ASYNCSERIAL_H
 #define	BUFFEREDP1ASYNCSERIAL_H
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "P1MeterBase.h"
 
 class P1MeterSerial: public AsyncSerial, public P1MeterBase

@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "main/Helper.h"
 #include "NotificationHTTP.h"
-#include "httpclient/HTTPClient.h"
-#include "httpclient/UrlEncode.h"
+#include "protocols/HTTPClient.h"
+#include "protocols/UrlEncode.h"
 #include "main/SQLHelper.h"
 #include "main/Logger.h"
 

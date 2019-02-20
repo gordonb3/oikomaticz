@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "MySensorsBase.h"
 
 class MySensorsSerial : public AsyncSerial, public MySensorsBase

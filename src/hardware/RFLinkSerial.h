@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "RFLinkBase.h"
 
 class CRFLinkSerial: public AsyncSerial, public CRFLinkBase

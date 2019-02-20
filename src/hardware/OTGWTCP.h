@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncTCP.h"
+#include "protocols/ASyncTCP.h"
 #include "OTGWBase.h"
 
 class OTGWTCP: public OTGWBase, ASyncTCP

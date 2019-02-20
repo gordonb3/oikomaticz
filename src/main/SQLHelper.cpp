@@ -9,7 +9,7 @@
 #include "mainworker.h"
 #include <sqlite3.h>
 #include "hardware/hardwaretypes.h"
-#include "smtpclient/SMTPClient.h"
+#include "protocols/SMTPClient.h"
 #include "WebServerHelper.h"
 #include "webserver/Base64.h"
 #include "clx_unzip.h"

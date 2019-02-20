@@ -1,7 +1,7 @@
 #pragma once
 
 #include "hardware/DomoticzHardware.h"
-#include "csocket.h"
+#include "protocols/csocket.h"
 
 class bt_openwebnet;
 

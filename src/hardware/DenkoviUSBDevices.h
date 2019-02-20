@@ -1,7 +1,7 @@
 #pragma once
 
 #include "hardware/DomoticzHardware.h"
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include <iosfwd>
 
 enum _eDenkoviUSBDevice

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "S0MeterBase.h"
 
 class S0MeterSerial: public AsyncSerial, public S0MeterBase

@@ -8,7 +8,7 @@ extern "C" {
 #include <lualib.h>
 #include <lauxlib.h>
 }
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 
 #include "LuaCommon.h"
 #include "concurrent_queue.h"

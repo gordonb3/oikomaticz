@@ -7,9 +7,9 @@ project(oikomaticz_src)
 ## Target
 file(GLOB DZ_core_SRCS main/*.cpp)
 file(GLOB DZ_server_SRCS tcpserver/*.cpp webserver/*.cpp)
-file(GLOB DZ_messaging_SRCS push/*.cpp notifications/*.cpp smtpclient/*.cpp)
+file(GLOB DZ_messaging_SRCS push/*.cpp notifications/*.cpp)
 
-file(GLOB DZ_common_SRCS httpclient/*.cpp)
+file(GLOB DZ_common_SRCS protocols/*.cpp)
 
 file(GLOB_RECURSE DZ_devices_SRCS hardware/*.cpp)
 list(FILTER DZ_devices_SRCS EXCLUDE REGEX "win")

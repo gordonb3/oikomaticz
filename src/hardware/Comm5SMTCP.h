@@ -2,7 +2,7 @@
 
 #include <deque>
 #include <iostream>
-#include "ASyncTCP.h"
+#include "protocols/ASyncTCP.h"
 #include "hardware/DomoticzHardware.h"
 
 class Comm5SMTCP : public CDomoticzHardwareBase, ASyncTCP

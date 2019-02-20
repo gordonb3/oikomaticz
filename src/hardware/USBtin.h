@@ -16,7 +16,7 @@ History :
 */
 
 #pragma once
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "USBtin_MultiblocV8.h"
 #include "hardware/DomoticzHardware.h"
 

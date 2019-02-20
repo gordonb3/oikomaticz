@@ -11,7 +11,7 @@
 #include "hardware/LogitechMediaServer.h"
 #include "hardware/MySensorsBase.h"
 #include <iostream>
-#include "httpclient/UrlEncode.h"
+#include "protocols/UrlEncode.h"
 #include "localtime_r.h"
 #include "SQLHelper.h"
 #include "notifications/NotificationHelper.h"

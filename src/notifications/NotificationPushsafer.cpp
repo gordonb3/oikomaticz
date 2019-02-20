@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "NotificationPushsafer.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "main/Logger.h"
-#include "httpclient/UrlEncode.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/UrlEncode.h"
+#include "protocols/HTTPClient.h"
 #include "webserver/Base64.h"
 #include "main/Helper.h"
 

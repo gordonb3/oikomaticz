@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncTCP.h"
+#include "protocols/ASyncTCP.h"
 #include "hardware/DomoticzHardware.h"
 
 class OnkyoAVTCP : public CDomoticzHardwareBase, ASyncTCP

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "ZiBlueBase.h"
 
 class CZiBlueSerial: public AsyncSerial, public CZiBlueBase

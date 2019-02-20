@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "HttpPush.h"
 #include "main/Helper.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "main/Logger.h"
 #include "hardware/hardwaretypes.h"
 #include "main/RFXtrx.h"

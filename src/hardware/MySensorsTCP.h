@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncTCP.h"
+#include "protocols/ASyncTCP.h"
 #include "MySensorsBase.h"
 
 class MySensorsTCP : public MySensorsBase, ASyncTCP

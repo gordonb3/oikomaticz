@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncTCP.h"
+#include "protocols/ASyncTCP.h"
 #include "RFXBase.h"
 
 class RFXComTCP : public CRFXBase, ASyncTCP

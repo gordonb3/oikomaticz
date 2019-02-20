@@ -9,7 +9,7 @@
 #include "main/localtime_r.h"
 #include "main/mainworker.h"
 #include "main/SQLHelper.h"
-#include "csocket.h"
+#include "protocols/csocket.h"
 #include <boost/assign.hpp>
 
 #ifdef _DEBUG

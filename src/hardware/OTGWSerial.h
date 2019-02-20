@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "OTGWBase.h"
 
 class OTGWSerial: public AsyncSerial, public OTGWBase

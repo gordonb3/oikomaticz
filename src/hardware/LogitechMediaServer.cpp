@@ -9,7 +9,7 @@
 #include "main/SQLHelper.h"
 #include "main/WebServer.h"
 #include "notifications/NotificationHelper.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 
 CLogitechMediaServer::CLogitechMediaServer(const int ID, const std::string &IPAddress, const int Port, const std::string &User, const std::string &Pwd, const int PollIntervalsec) :
 	m_IP(IPAddress),

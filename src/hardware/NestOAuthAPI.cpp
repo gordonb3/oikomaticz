@@ -11,7 +11,7 @@
 #include "main/localtime_r.h"
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "main/mainworker.h"
 #include "jsoncpp/json.h"
 #include "webserver/Base64.h"

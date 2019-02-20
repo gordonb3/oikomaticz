@@ -9,7 +9,7 @@
 #include "localtime_r.h"
 #include "EventSystem.h"
 #include "dzVents.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "hardware/hardwaretypes.h"
 #include "hardware/1Wire.h"
 #include "hardware/OTGWBase.h"
@@ -41,7 +41,7 @@
 #include "hardware/Tellstick.h"
 #endif
 #include "webserver/Base64.h"
-#include "smtpclient/SMTPClient.h"
+#include "protocols/SMTPClient.h"
 #include "jsoncpp/json.h"
 #include "Logger.h"
 #include "SQLHelper.h"

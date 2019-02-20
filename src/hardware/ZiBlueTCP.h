@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncTCP.h"
+#include "protocols/ASyncTCP.h"
 #include "ZiBlueBase.h"
 
 class CZiBlueTCP: public CZiBlueBase, ASyncTCP

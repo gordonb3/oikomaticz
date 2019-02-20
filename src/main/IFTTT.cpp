@@ -2,7 +2,7 @@
 #include "IFTTT.h"
 #include "SQLHelper.h"
 #include "Logger.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "jsoncpp/json.h"
 #include "webserver/Base64.h"
 

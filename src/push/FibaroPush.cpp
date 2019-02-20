@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "FibaroPush.h"
 #include "hardware/hardwaretypes.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "jsoncpp/json.h"
 #include "main/Helper.h"
 #include "main/Logger.h"

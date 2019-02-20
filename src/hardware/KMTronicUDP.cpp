@@ -5,8 +5,8 @@
 #include <iostream>
 #include "main/localtime_r.h"
 #include "main/mainworker.h"
-#include "httpclient/HTTPClient.h"
-#include "httpclient/UrlEncode.h"
+#include "protocols/HTTPClient.h"
+#include "protocols/UrlEncode.h"
 
 #define KMTRONIC_POLL_INTERVAL 10
 

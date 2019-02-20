@@ -22,7 +22,7 @@ History :
 
 #pragma once
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "TeleinfoBase.h"
 #define TELEINFO_PARITY            boost::asio::serial_port_base::parity::even
 #define TELEINFO_CARACTER_SIZE      7

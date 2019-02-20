@@ -2,7 +2,7 @@
 #include "Sterbox.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
 #include "main/mainworker.h"

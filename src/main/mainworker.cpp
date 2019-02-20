@@ -11,7 +11,7 @@
 #include "push/InfluxPush.h"
 #include "push/GooglePubSubPush.h"
 
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "webserver/Base64.h"
 #include <boost/algorithm/string/join.hpp>
 

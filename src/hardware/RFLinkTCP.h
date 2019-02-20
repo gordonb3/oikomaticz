@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncTCP.h"
+#include "protocols/ASyncTCP.h"
 #include "RFLinkBase.h"
 
 class CRFLinkTCP: public CRFLinkBase, ASyncTCP

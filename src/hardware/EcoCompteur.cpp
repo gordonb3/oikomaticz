@@ -4,7 +4,7 @@
 #include "main/Logger.h"
 #include "main/localtime_r.h"
 #include "hardware/hardwaretypes.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "jsoncpp/json.h"
 #include "main/WebServer.h"
 

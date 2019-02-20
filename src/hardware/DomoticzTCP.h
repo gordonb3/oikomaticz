@@ -5,7 +5,7 @@
 #if defined WIN32
 #include "ws2tcpip.h"
 #endif
-#include "ASyncTCP.h"
+#include "protocols/ASyncTCP.h"
 
 class DomoticzTCP : public CRFXBase, ASyncTCP
 {

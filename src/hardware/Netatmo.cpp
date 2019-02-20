@@ -6,7 +6,7 @@
 #include "main/localtime_r.h"
 #include "main/RFXtrx.h"
 #include "hardware/hardwaretypes.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "jsoncpp/json.h"
 
 #define round(a) ( int ) ( a + .5 )

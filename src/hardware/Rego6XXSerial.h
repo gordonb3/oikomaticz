@@ -2,7 +2,7 @@
 #ifndef BUFFEREDRego6XXASYNCSERIAL_H
 #define	BUFFEREDRego6XXASYNCSERIAL_H
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "hardware/DomoticzHardware.h"
 
 #define Rego6XX_READ_BUFFER_SIZE 32

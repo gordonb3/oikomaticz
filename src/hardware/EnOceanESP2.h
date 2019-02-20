@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "hardware/DomoticzHardware.h"
 
 #define ENOCEAN2_READ_BUFFER_SIZE 40

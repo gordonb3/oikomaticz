@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "NotificationProwl.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "main/Logger.h"
 
 CNotificationProwl::CNotificationProwl() : CNotificationBase(std::string("prowl"), OPTIONS_URL_SUBJECT | OPTIONS_URL_BODY | OPTIONS_URL_PARAMS)

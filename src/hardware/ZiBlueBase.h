@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "hardware/DomoticzHardware.h"
 
 #define ZiBlue_READ_BUFFER_SIZE 5*1024

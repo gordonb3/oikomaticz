@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "KMTronicBase.h"
 
 class KMTronic433 : public AsyncSerial, public KMTronicBase

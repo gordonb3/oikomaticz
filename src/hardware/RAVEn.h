@@ -21,7 +21,7 @@
 */
 
 #include "hardware/DomoticzHardware.h"
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 
 #define MAX_BUFFER_LEN  10000
 

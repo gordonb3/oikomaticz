@@ -2,7 +2,7 @@
 #ifndef BUFFEREDASYNCSERIAL_H
 #define	BUFFEREDASYNCSERIAL_H
 
-#include "ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "RFXBase.h"
 #include "serial/serial.h"
 

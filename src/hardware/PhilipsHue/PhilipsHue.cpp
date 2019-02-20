@@ -9,7 +9,7 @@
 #include "main/mainworker.h"
 #include "main/WebServer.h"
 #include "webserver/cWebem.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "jsoncpp/json.h"
 #include "hardware/hardwaretypes.h"
 

@@ -32,7 +32,7 @@ Version history
 #include "main/Logger.h"
 #include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include <tinyxpath/xpath_static.h>
 #include "webserver/Base64.h"
 #include "jsoncpp/json.h"

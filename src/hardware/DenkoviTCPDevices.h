@@ -1,7 +1,7 @@
 #pragma once
 
 #include "hardware/DomoticzHardware.h"
-#include "ASyncTCP.h"
+#include "protocols/ASyncTCP.h"
 #include <iosfwd>
 
 enum _eDenkoviTCPDevice

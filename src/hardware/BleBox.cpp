@@ -8,7 +8,7 @@
 #include "main/mainworker.h"
 #include "main/SQLHelper.h"
 #include "main/WebServer.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 
 struct STR_DEVICE {
 	int			unit;

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "NotificationGCM.h"
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "main/Logger.h"
 #include "main/SQLHelper.h"
 #include "jsoncpp/json.h"
