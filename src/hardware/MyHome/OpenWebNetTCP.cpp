@@ -15,7 +15,7 @@ License: Public domain
 ************************************************************************/
 #include "stdafx.h"
 #include "OpenWebNetTCP.h"
-#include "openwebnet/bt_openwebnet.h"
+#include "bt_openwebnet.h"
 
 #include "main/Logger.h"
 #include "main/Helper.h"

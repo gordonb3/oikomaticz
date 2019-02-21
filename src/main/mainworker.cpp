@@ -11,7 +11,7 @@
 #include "push/InfluxPush.h"
 #include "push/GooglePubSubPush.h"
 
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 #include "webserver/Base64.h"
 #include <boost/algorithm/string/join.hpp>
 
@@ -75,6 +75,8 @@
 #include "hardware/MochadTCP.h"
 #include "hardware/MQTT.h"
 #include "hardware/MultiFun.h"
+#include "hardware/MyHome/OpenWebNetTCP.h"
+#include "hardware/MyHome/OpenWebNetUSB.h"
 #include "hardware/MySensorsMQTT.h"
 #include "hardware/MySensorsSerial.h"
 #include "hardware/MySensorsTCP.h"
@@ -84,8 +86,6 @@
 #include "hardware/Netatmo.h"
 #include "hardware/OnkyoAVTCP.h"
 #include "hardware/OpenWeatherMap.h"
-#include "hardware/OpenWebNetTCP.h"
-#include "hardware/OpenWebNetUSB.h"
 #include "hardware/OTGWSerial.h"
 #include "hardware/OTGWTCP.h"
 #include "hardware/P1MeterBase.h"
@@ -716,6 +716,7 @@ bool MainWorker::AddHardwareFromParams(
 	case HTYPE_Meteostick:
 		pHardware = new Meteostick(ID, SerialPort, 115200);
 		break;
+// Evohome
 	case HTYPE_EVOHOME_SCRIPT:
 		pHardware = new CEvohomeScript(ID);
 		break;
@@ -728,6 +729,7 @@ bool MainWorker::AddHardwareFromParams(
 	case HTYPE_EVOHOME_WEB:
 		pHardware = new CEvohomeWeb(ID, Username, Password, Mode1, Mode2, Mode3);
 		break;
+
 	case HTYPE_RFLINKUSB:
 		pHardware = new CRFLinkSerial(ID, SerialPort);
 		break;
@@ -1014,9 +1016,14 @@ bool MainWorker::AddHardwareFromParams(
 	case HTYPE_DomoticzInternal:
 		pHardware = new DomoticzInternal(ID);
 		break;
+// MyHome
 	case HTYPE_OpenWebNetTCP:
 		pHardware = new COpenWebNetTCP(ID, Address, Port, Password, Mode1);
 		break;
+	case HTYPE_OpenWebNetUSB:
+		pHardware = new COpenWebNetUSB(ID, SerialPort, 115200);
+		break;
+
 	case HTYPE_BleBox:
 		pHardware = new BleBox(ID, Mode1);
 		break;
@@ -1042,9 +1049,6 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case HTYPE_Arilux:
 		pHardware = new Arilux(ID);
-		break;
-	case HTYPE_OpenWebNetUSB:
-		pHardware = new COpenWebNetUSB(ID, SerialPort, 115200);
 		break;
 	case HTYPE_IntergasInComfortLAN2RF:
 		pHardware = new CInComfort(ID, Address, Port);
