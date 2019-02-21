@@ -20,7 +20,7 @@
 #include "hardware/hardwaretypes.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#include "httpclient/HTTPClient.h"
+#include "protocols/HTTPClient.h"
 
 #define LOGONFAILTRESHOLD 3
 #define MINPOLINTERVAL 10

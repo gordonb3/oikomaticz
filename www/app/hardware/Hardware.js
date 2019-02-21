@@ -905,11 +905,11 @@ define(['app'], function (app) {
 					}
 				});
 			}
-			else if (text.indexOf("Honeywell") >= 0) {
-				var apiKey = $("#hardwarecontent #divhoneywell #hwApiKey").val();
-				var apiSecret = $("#hardwarecontent #divhoneywell #hwApiSecret").val();
-				var accessToken = $("#hardwarecontent #divhoneywell #hwAccessToken").val();
-				var refreshToken = $("#hardwarecontent #divhoneywell #hwRefreshToken").val();
+			else if (text.indexOf("Honeywell Lyric") >= 0) {
+				var apiKey = $("#hardwarecontent #divhoneywelllyric #hwApiKey").val();
+				var apiSecret = $("#hardwarecontent #divhoneywelllyric #hwApiSecret").val();
+				var accessToken = $("#hardwarecontent #divhoneywelllyric #hwAccessToken").val();
+				var refreshToken = $("#hardwarecontent #divhoneywelllyric #hwRefreshToken").val();
 				var extra = btoa(apiKey) + "|" + btoa(apiSecret);
 
 				$.ajax({
@@ -1866,11 +1866,11 @@ define(['app'], function (app) {
 					}
 				});
 			}
-			else if (text.indexOf("Honeywell") >= 0) {
-				var apiKey = $("#hardwarecontent #divhoneywell #hwApiKey").val();
-				var apiSecret = $("#hardwarecontent #divhoneywell #hwApiSecret").val();
-				var accessToken = $("#hardwarecontent #divhoneywell #hwAccessToken").val();
-				var refreshToken = $("#hardwarecontent #divhoneywell #hwRefreshToken").val();
+			else if (text.indexOf("Honeywell Lyric") >= 0) {
+				var apiKey = $("#hardwarecontent #divhoneywelllyric #hwApiKey").val();
+				var apiSecret = $("#hardwarecontent #divhoneywelllyric #hwApiSecret").val();
+				var accessToken = $("#hardwarecontent #divhoneywelllyric #hwAccessToken").val();
+				var refreshToken = $("#hardwarecontent #divhoneywelllyric #hwRefreshToken").val();
 				var extra = btoa(apiKey) + "|" + btoa(apiSecret);
 
 				$.ajax({
@@ -3531,14 +3531,14 @@ define(['app'], function (app) {
 							$("#hardwarecontent #hardwareparamswinddelen #combomillselect").val(data["Mode1"]);
 							$("#hardwarecontent #hardwareparamswinddelen #nrofwinddelen").val(data["Port"]);
 						}
-						else if (data["Type"].indexOf("Honeywell") >= 0) {
-							$("#hardwarecontent #hardwareparamshoneywell #hwAccessToken").val(data["Username"]);
-							$("#hardwarecontent #hardwareparamshoneywell #hwRefreshToken").val(data["Password"]);
+						else if (data["Type"].indexOf("Honeywell Lyric") >= 0) {
+							$("#hardwarecontent #hardwareparamshoneywelllyric #hwAccessToken").val(data["Username"]);
+							$("#hardwarecontent #hardwareparamshoneywelllyric #hwRefreshToken").val(data["Password"]);
 							var tmp = data["Extra"];
 							var tmparray = tmp.split("|");
 							if (tmparray.length == 2) {
-								$("#hardwarecontent #hardwareparamshoneywell #hwApiKey").val(atob(tmparray[0]));
-								$("#hardwarecontent #hardwareparamshoneywell #hwApiSecret").val(atob(tmparray[1]));
+								$("#hardwarecontent #hardwareparamshoneywelllyric #hwApiKey").val(atob(tmparray[0]));
+								$("#hardwarecontent #hardwareparamshoneywelllyric #hwApiSecret").val(atob(tmparray[1]));
 							}
 						}
 						else if (data["Type"].indexOf("Goodwe solar inverter via Web") >= 0) {
@@ -3724,7 +3724,7 @@ define(['app'], function (app) {
 			$("#hardwarecontent #divlocation").hide();
 			$("#hardwarecontent #divphilipshue").hide();
 			$("#hardwarecontent #divwinddelen").hide();
-			$("#hardwarecontent #divhoneywell").hide();
+			$("#hardwarecontent #divhoneywelllyric").hide();
 			$("#hardwarecontent #divmqtt").hide();
 			$("#hardwarecontent #divmysensorsmqtt").hide();
 			$("#hardwarecontent #divsolaredgeapi").hide();
@@ -4024,7 +4024,7 @@ define(['app'], function (app) {
 				$("#hardwarecontent #divhttppoller").hide();
 				$("#hardwarecontent #divwinddelen").show();
 			}
-			else if (text.indexOf("Honeywell") >= 0) {
+			else if (text.indexOf("Honeywell Lyric") >= 0) {
 				$("#hardwarecontent #divserial").hide();
 				$("#hardwarecontent #divremote").hide();
 				$("#hardwarecontent #divlogin").hide();
@@ -4032,7 +4032,7 @@ define(['app'], function (app) {
 				$("#hardwarecontent #lblusername").hide();
 				$("#hardwarecontent #divunderground").hide();
 				$("#hardwarecontent #divhttppoller").hide();
-				$("#hardwarecontent #divhoneywell").show();
+				$("#hardwarecontent #divhoneywelllyric").show();
 			}
 			else if (text.indexOf("Logitech Media Server") >= 0) {
 				$("#hardwarecontent #divserial").hide();

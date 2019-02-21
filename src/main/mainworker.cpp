@@ -49,17 +49,17 @@
 #include "hardware/EnOceanESP3.h"
 #include "hardware/EnphaseAPI.h"
 #include "hardware/ETH8020.h"
-#include "hardware/Evohome/EvohomeBase.h"
-#include "hardware/Evohome/EvohomeScript.h"
-#include "hardware/Evohome/EvohomeSerial.h"
-#include "hardware/Evohome/EvohomeTCP.h"
-#include "hardware/Evohome/EvohomeWeb.h"
+#include "hardware/Honeywell/EvohomeBase.h"
+#include "hardware/Honeywell/EvohomeScript.h"
+#include "hardware/Honeywell/EvohomeSerial.h"
+#include "hardware/Honeywell/EvohomeTCP.h"
+#include "hardware/Honeywell/EvohomeWeb.h"
 #include "hardware/FritzboxTCP.h"
 #include "hardware/GoodweAPI.h"
 #include "hardware/HardwareMonitor.h"
 #include "hardware/HarmonyHub/HarmonyHubWS.hpp"
 #include "hardware/HEOS.h"
-#include "hardware/Honeywell.h"
+#include "hardware/Honeywell/Lyric.h"
 #include "hardware/HttpPoller.h"
 #include "hardware/I2C.h"
 #include "hardware/ICYThermostat.h"
@@ -963,8 +963,8 @@ bool MainWorker::AddHardwareFromParams(
 	case HTYPE_Tado:
 		pHardware = new CTado(ID, Username, Password);
 		break;
-	case HTYPE_Honeywell:
-		pHardware = new CHoneywell(ID, Username, Password, Extra);
+	case HTYPE_HoneywellLyric:
+		pHardware = new Lyric(ID, Username, Password, Extra);
 		break;
 	case HTYPE_Philips_Hue:
 		pHardware = new CPhilipsHue(ID, Address, Port, Username, Mode1, Mode2);

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "RFXNames.h"
 #include "RFXtrx.h"
-#include "hardware/Evohome/EvohomeBase.h"
+#include "hardware/Honeywell/EvohomeBase.h"
 #include "hardware/hardwaretypes.h"
 #include "Helper.h"
 #include "Logger.h"
@@ -273,7 +273,7 @@ static const STR_TABLE_SINGLE	HardwareTypeTable[] =
 	{ HTYPE_RaspberryMCP23017, "I2C sensor GPIO 16bit expander MCP23017",			"I2C GPIO" },
 	{ HTYPE_eHouseTCP, "eHouse UDP+TCP with LAN interface",							"eHouse" },
 	{ HTYPE_EcoCompteur, "EcoCompteur Legrand with LAN interface",					"EcoCompteur" },
-	{ HTYPE_Honeywell, "Honeywell Thermostat",										"Honeywell" },
+	{ HTYPE_HoneywellLyric, "Honeywell Lyric Thermostat",										"Honeywell" },
 	{ HTYPE_Tado, "Tado Thermostat",												"Tado" },
 	{ HTYPE_DenkoviHTTPDevices, "Denkovi Modules with LAN (HTTP) Interface",		"Denkovi" },
 	{ HTYPE_DenkoviUSBDevices, "Denkovi Modules with USB Interface",				"Denkovi" },

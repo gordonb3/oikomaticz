@@ -211,7 +211,7 @@ enum _eHardwareTypes {
 	HTYPE_Comm5SMTCP,			//111
 	HTYPE_Nest_OAuthAPI,		//112
 	HTYPE_EcoCompteur,			//113
-	HTYPE_Honeywell,			//114
+	HTYPE_HoneywellLyric,			//114
 	HTYPE_Tado,					//115
 	HTYPE_DenkoviHTTPDevices,		//116
 	HTYPE_DenkoviUSBDevices,	//117

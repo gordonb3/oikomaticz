@@ -8,11 +8,11 @@ namespace Json
 	class Value;
 };
 
-class CHoneywell : public CDomoticzHardwareBase
+class Lyric : public CDomoticzHardwareBase
 {
 public:
-	CHoneywell(const int ID, const std::string &Username, const std::string &Password, const std::string &Extra);
-	~CHoneywell(void);
+	Lyric(const int ID, const std::string &Username, const std::string &Password, const std::string &Extra);
+	~Lyric(void);
 	bool WriteToHardware(const char *pdata, const unsigned char length) override;
 private:
 	void SetSetpoint(const int idx, const float temp, const int nodeid);

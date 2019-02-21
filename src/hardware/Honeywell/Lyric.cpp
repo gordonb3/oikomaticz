@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Honeywell.h"
+#include "Lyric.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
 #include "hardware/hardwaretypes.h"
@@ -29,7 +29,7 @@ const std::string kAwayDesc = "Away ([name])";
 
 extern http::server::CWebServerHelper m_webservers;
 
-CHoneywell::CHoneywell(const int ID, const std::string &Username, const std::string &Password, const std::string &Extra)
+Lyric::Lyric(const int ID, const std::string &Username, const std::string &Password, const std::string &Extra)
 {
 	m_HwdID = ID;
 	mAccessToken = Username;
@@ -46,41 +46,41 @@ CHoneywell::CHoneywell(const int ID, const std::string &Username, const std::str
 		mApiSecret = base64_decode(strextra[1]);
 	}
 	if (mApiKey.empty()) {
-		_log.Log(LOG_STATUS, "Honeywell: No API key was set. Using default API key. This will result in many errors caused by quota limitations.");
+		_log.Log(LOG_STATUS, "Honeywell Lyric: No API key was set. Using default API key. This will result in many errors caused by quota limitations.");
 		mApiKey = HONEYWELL_DEFAULT_APIKEY;
 		mApiSecret = HONEYWELL_DEFAULT_APISECRET;
 	}
 	if (Username.empty() || Password.empty()) {
-		_log.Log(LOG_ERROR, "Honeywell: Please update your access token/request token!...");
+		_log.Log(LOG_ERROR, "Honeywell Lyric: Please update your access token/request token!...");
 	}
 	mLastMinute = -1;
 	Init();
 }
 
-CHoneywell::~CHoneywell(void)
+Lyric::~Lyric(void)
 {
 }
 
-void CHoneywell::Init()
+void Lyric::Init()
 {
 	mTokenExpires = mytime(NULL);
 }
 
-bool CHoneywell::StartHardware()
+bool Lyric::StartHardware()
 {
 	RequestStart();
 
 	Init();
 	mLastMinute = -1;
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&CHoneywell::Do_Work, this);
+	m_thread = std::make_shared<std::thread>(&Lyric::Do_Work, this);
 	SetThreadNameInt(m_thread->native_handle());
 	mIsStarted = true;
 	sOnConnected(this);
 	return (m_thread != nullptr);
 }
 
-bool CHoneywell::StopHardware()
+bool Lyric::StopHardware()
 {
 	if (m_thread)
 	{
@@ -99,9 +99,9 @@ bool CHoneywell::StopHardware()
 //
 // worker thread
 //
-void CHoneywell::Do_Work()
+void Lyric::Do_Work()
 {
-	_log.Log(LOG_STATUS, "Honeywell: Worker started...");
+	_log.Log(LOG_STATUS, "Honeywell Lyric: Worker started...");
 	int sec_counter = HONEYWELL_POLL_INTERVAL - 5;
 	while (!IsStopRequested(1000))
 	{
@@ -114,14 +114,14 @@ void CHoneywell::Do_Work()
 			GetThermostatData();
 		}
 	}
-	_log.Log(LOG_STATUS, "Honeywell: Worker stopped...");
+	_log.Log(LOG_STATUS, "Honeywell Lyric: Worker stopped...");
 }
 
 
 //
-// callback from Domoticz backend to update the Honeywell thermostat
+// callback from Domoticz backend to update the Honeywell Lyric thermostat
 //
-bool CHoneywell::WriteToHardware(const char *pdata, const unsigned char /*length*/)
+bool Lyric::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 {
 	const tRBUF *pCmd = reinterpret_cast<const tRBUF *>(pdata);
 	if (pCmd->LIGHTING2.packettype == pTypeLighting2)
@@ -152,9 +152,9 @@ bool CHoneywell::WriteToHardware(const char *pdata, const unsigned char /*length
 }
 
 //
-// refresh the OAuth2 token through Honeywell API
+// refresh the OAuth2 token through Honeywell Lyric API
 //
-bool CHoneywell::refreshToken()
+bool Lyric::refreshToken()
 {
 	if (mRefreshToken.empty())
 		return false;
@@ -182,7 +182,7 @@ bool CHoneywell::refreshToken()
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::POST(HONEYWELL_TOKEN_PATH, postData, headers, sResult)) {
-		_log.Log(LOG_ERROR, "Honeywell: Error refreshing token");
+		_log.Log(LOG_ERROR, "Honeywell Lyric: Error refreshing token");
 		return false;
 	}
 
@@ -190,7 +190,7 @@ bool CHoneywell::refreshToken()
 	Json::Reader jReader;
 	bool ret = jReader.parse(sResult, root);
 	if (!ret) {
-		_log.Log(LOG_ERROR, "Honeywell: Invalid/no data received...");
+		_log.Log(LOG_ERROR, "Honeywell Lyric: Invalid/no data received...");
 		return false;
 	}
 
@@ -202,7 +202,7 @@ bool CHoneywell::refreshToken()
 		mTokenExpires = mytime(NULL) + (expires_in > 0 ? expires_in : 600) - HWAPITIMEOUT;
 		mAccessToken = at;
 		mRefreshToken = rt;
-		_log.Log(LOG_NORM, "Honeywell: Storing received access & refresh token. Token expires after %d seconds.",expires_in);
+		_log.Log(LOG_NORM, "Honeywell Lyric: Storing received access & refresh token. Token expires after %d seconds.",expires_in);
 		m_sql.safe_query("UPDATE Hardware SET Username='%q', Password='%q' WHERE (ID==%d)", mAccessToken.c_str(), mRefreshToken.c_str(), m_HwdID);
 		mSessionHeaders.clear();
 		mSessionHeaders.push_back("Authorization:Bearer " + mAccessToken);
@@ -215,9 +215,9 @@ bool CHoneywell::refreshToken()
 }
 
 //
-// Get honeywell data through Honeywell API
+// Get Honeywell Lyric data through Honeywell Lyric API
 //
-void CHoneywell::GetThermostatData()
+void Lyric::GetThermostatData()
 {
 	if (!refreshToken())
 		return;
@@ -229,7 +229,7 @@ void CHoneywell::GetThermostatData()
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::GET(sURL, mSessionHeaders, sResult)) {
-		_log.Log(LOG_ERROR, "Honeywell: Error getting thermostat data!");
+		_log.Log(LOG_ERROR, "Honeywell Lyric: Error getting thermostat data!");
 		return;
 	}
 
@@ -237,7 +237,7 @@ void CHoneywell::GetThermostatData()
 	Json::Reader jReader;
 	bool ret = jReader.parse(sResult, root);
 	if (!ret) {
-		_log.Log(LOG_ERROR, "Honeywell: Invalid/no data received...");
+		_log.Log(LOG_ERROR, "Honeywell Lyric: Invalid/no data received...");
 		return;
 	}
 
@@ -306,9 +306,9 @@ void CHoneywell::GetThermostatData()
 }
 
 //
-// send the temperature from honeywell to domoticz backend
+// send the temperature from Honeywell Lyric to domoticz backend
 //
-void CHoneywell::SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
+void Lyric::SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
 {
 	_tThermostat thermos;
 	thermos.subtype = sTypeThermSetpoint;
@@ -324,12 +324,12 @@ void CHoneywell::SendSetPointSensor(const unsigned char Idx, const float Temp, c
 }
 
 //
-// transfer pause status to Honeywell api
+// transfer pause status to Honeywell Lyric api
 //
-void CHoneywell::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid*/)
+void Lyric::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid*/)
 {
 	if (!refreshToken()) {
-		_log.Log(LOG_ERROR,"Honeywell: No token available. Failed setting thermostat data");
+		_log.Log(LOG_ERROR,"Honeywell Lyric: No token available. Failed setting thermostat data");
 		return;
 	}
 
@@ -351,7 +351,7 @@ void CHoneywell::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::POST(url, writer.write(reqRoot), mSessionHeaders, sResult, true, true)) {
-		_log.Log(LOG_ERROR, "Honeywell: Error setting thermostat data!");
+		_log.Log(LOG_ERROR, "Honeywell Lyric: Error setting thermostat data!");
 		return;
 	}
 
@@ -361,12 +361,12 @@ void CHoneywell::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid
 }
 
 //
-// transfer the updated temperature to Honeywell API
+// transfer the updated temperature to Honeywell Lyric API
 //
-void CHoneywell::SetSetpoint(const int idx, const float temp, const int /*nodeid*/)
+void Lyric::SetSetpoint(const int idx, const float temp, const int /*nodeid*/)
 {
 	if (!refreshToken()) {
-		_log.Log(LOG_ERROR, "Honeywell: No token available. Error setting thermostat data!");
+		_log.Log(LOG_ERROR, "Honeywell Lyric: No token available. Error setting thermostat data!");
 		return;
 	}
 
@@ -388,7 +388,7 @@ void CHoneywell::SetSetpoint(const int idx, const float temp, const int /*nodeid
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::POST(url, writer.write(reqRoot), mSessionHeaders, sResult, true, true)) {
-		_log.Log(LOG_ERROR, "Honeywell: Error setting thermostat data!");
+		_log.Log(LOG_ERROR, "Honeywell Lyric: Error setting thermostat data!");
 		return;
 	}
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hardware/ASyncSerial.h"
+#include "protocols/ASyncSerial.h"
 #include "EvohomeRadio.h"
 
 class CEvohomeSerial : public AsyncSerial, public CEvohomeRadio
