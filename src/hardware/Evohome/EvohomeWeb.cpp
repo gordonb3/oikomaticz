@@ -20,7 +20,7 @@
 #include "hardware/hardwaretypes.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#include "protocols/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 
 #define LOGONFAILTRESHOLD 3
 #define MINPOLINTERVAL 10
@@ -119,7 +119,6 @@ bool CEvohomeWeb::StartSession()
 		return false;
 	}
 
-	m_sessiontimer = mytime(NULL) + 3599; // Honeywell will invalidate our session ID after an hour
 	m_loggedon = true;
 	m_logonfailures = 0;
 
@@ -901,6 +900,9 @@ bool CEvohomeWeb::login(const std::string &user, const std::string &password)
 	}
 
 	m_v2refresh_token = j_login["refresh_token"].asString();
+	int v2token_expiration_time = atoi(j_login["expires_in"].asString().c_str());
+	m_sessiontimer = mytime(NULL) + v2token_expiration_time; // Honeywell will invalidate our session ID after an hour
+
 	std::stringstream atoken;
 	atoken << "Authorization: bearer " << j_login["access_token"].asString();
 
@@ -979,6 +981,9 @@ bool CEvohomeWeb::renew_login()
 	}
 
 	m_v2refresh_token = j_login["refresh_token"].asString();
+	int v2token_expiration_time = atoi(j_login["expires_in"].asString().c_str());
+	m_sessiontimer = mytime(NULL) + v2token_expiration_time; // Honeywell will invalidate our session ID after an hour
+
 	std::stringstream atoken;
 	atoken << "Authorization: bearer " << j_login["access_token"].asString();
 
@@ -1026,6 +1031,7 @@ bool CEvohomeWeb::user_account()
 	if (!j_account.isMember("userId"))
 	{
 		_log.Log(LOG_ERROR, "(%s) retrieve user account info did not return an ID", m_Name.c_str());
+std::cout << sz_response << "\n";
 		return false;
 	}
 
@@ -1927,7 +1933,6 @@ std::string CEvohomeWeb::send_receive_data(std::string url, std::string postdata
 
 std::string CEvohomeWeb::put_receive_data(std::string url, std::string putdata, std::vector<std::string> &headers)
 {
-
 	std::vector<unsigned char> vHTTPResponse;
 	std::vector<std::string> vHeaderData;
 

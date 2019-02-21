@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "RFXNames.h"
 #include "RFXtrx.h"
-#include "hardware/EvohomeBase.h"
+#include "hardware/Evohome/EvohomeBase.h"
 #include "hardware/hardwaretypes.h"
 #include "Helper.h"
 #include "Logger.h"

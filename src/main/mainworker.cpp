@@ -11,7 +11,7 @@
 #include "push/InfluxPush.h"
 #include "push/GooglePubSubPush.h"
 
-#include "protocols/HTTPClient.h"
+#include "httpclient/HTTPClient.h"
 #include "webserver/Base64.h"
 #include <boost/algorithm/string/join.hpp>
 
@@ -49,11 +49,11 @@
 #include "hardware/EnOceanESP3.h"
 #include "hardware/EnphaseAPI.h"
 #include "hardware/ETH8020.h"
-#include "hardware/EvohomeBase.h"
-#include "hardware/EvohomeScript.h"
-#include "hardware/EvohomeSerial.h"
-#include "hardware/EvohomeTCP.h"
-#include "hardware/EvohomeWeb.h"
+#include "hardware/Evohome/EvohomeBase.h"
+#include "hardware/Evohome/EvohomeScript.h"
+#include "hardware/Evohome/EvohomeSerial.h"
+#include "hardware/Evohome/EvohomeTCP.h"
+#include "hardware/Evohome/EvohomeWeb.h"
 #include "hardware/FritzboxTCP.h"
 #include "hardware/GoodweAPI.h"
 #include "hardware/HardwareMonitor.h"
@@ -716,11 +716,17 @@ bool MainWorker::AddHardwareFromParams(
 	case HTYPE_Meteostick:
 		pHardware = new Meteostick(ID, SerialPort, 115200);
 		break;
+	case HTYPE_EVOHOME_SCRIPT:
+		pHardware = new CEvohomeScript(ID);
+		break;
 	case HTYPE_EVOHOME_SERIAL:
 		pHardware = new CEvohomeSerial(ID, SerialPort, Mode1, Extra);
 		break;
 	case HTYPE_EVOHOME_TCP:
 		pHardware = new CEvohomeTCP(ID, Address, Port, Extra);
+		break;
+	case HTYPE_EVOHOME_WEB:
+		pHardware = new CEvohomeWeb(ID, Username, Password, Mode1, Mode2, Mode3);
 		break;
 	case HTYPE_RFLINKUSB:
 		pHardware = new CRFLinkSerial(ID, SerialPort);
@@ -980,9 +986,6 @@ bool MainWorker::AddHardwareFromParams(
         }
 #endif
 		break;
-	case HTYPE_EVOHOME_SCRIPT:
-		pHardware = new CEvohomeScript(ID);
-		break;
 	case HTYPE_PiFace:
 		pHardware = new CPiFace(ID);
 		break;
@@ -1045,9 +1048,6 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case HTYPE_IntergasInComfortLAN2RF:
 		pHardware = new CInComfort(ID, Address, Port);
-		break;
-	case HTYPE_EVOHOME_WEB:
-		pHardware = new CEvohomeWeb(ID, Username, Password, Mode1, Mode2, Mode3);
 		break;
 	case HTYPE_Rtl433:
 		pHardware = new CRtl433(ID, Extra);
