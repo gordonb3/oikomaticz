@@ -314,6 +314,7 @@ void HarmonyHubWS::Do_Work()
 				{
 					// timeout
 					_log.Log(LOG_ERROR, "Harmony Hub: setup command socket timed out");
+					m_connectionstatus = harmonyhubpp::connection::status::closed;
 //					ResetCommunicationSocket();
 				}
 			}
@@ -499,7 +500,14 @@ void HarmonyHubWS::ProcessHarmonyResponse(const Json::Value &j_data)
 	}
 	if (returncode != 200)
 	{
-		_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Error %d returned in response to %s", returncode, j_data["cmd"].asString().c_str());
+		if (m_connectionstatus == harmonyhubpp::connection::status::connecting)
+		{
+			m_connectionstatus = harmonyhubpp::connection::status::closed;
+			if (m_bShowConnectError)
+				_log.Log(LOG_ERROR, "Harmony Hub: Attempt to connect to Hub returned error %d", returncode);
+		}
+		else
+			_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Error %d returned in response to %s", returncode, j_data["cmd"].asString().c_str());
 		return;
 	}
 	

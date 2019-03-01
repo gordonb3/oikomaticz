@@ -43,7 +43,7 @@ namespace harmonyhubpp {
 #ifndef without_discovery
 /************************************************************************
  *									*
- * harmonyhubpp::HarmonyDiscovery						*
+ * harmonyhubpp::HarmonyDiscovery					*
  *									*
  * This subclass performs a HTTP call to the HarmonyHub to retrieve	*
  * parameters needed for our websockets connection			*
@@ -73,19 +73,23 @@ private:
 
 	std::string get_strvalue(size_t offset)
 	{
-		size_t start = m_discoveryinfo.find_first_of('"', offset) + 1;
-		size_t stop = m_discoveryinfo.find_first_of('"', start);
+		size_t start = m_discoveryinfo.find_first_not_of(" :", offset);
+		size_t stop;
+		if (m_discoveryinfo[start] == '"')
+		{
+			start++;
+			stop = m_discoveryinfo.find_first_of('"', start);
+		}
+		else
+			stop = m_discoveryinfo.find_first_of(" ,}", start + 1);
+
 		if (stop != std::string::npos)
 			return m_discoveryinfo.substr(start, stop - start);
 		return "";
 	}
 
-public:
-	HarmonyDiscovery(const std::string IPAddress)
+	bool HTTP_POST(const std::string uri, const std::string origin, const std::string postdata)
 	{
-		std::string uri = "http://";
-		uri.append(IPAddress);
-		uri.append(":8088");
 		m_discoveryinfo = "";
 		std::vector<unsigned char> response;
 		CURL *conn;
@@ -97,7 +101,7 @@ public:
 		if (!conn)
 		{
 			m_discoveryinfo = "{\"msg\":\"Failed to instantiate libcurl\",\"code\":\"-1\"}";
-			return;
+			return false;
 		}
 
 		curl_version_info_data* info = curl_version_info(CURLVERSION_NOW);
@@ -108,14 +112,14 @@ public:
 		httpheader = curl_slist_append(httpheader, "Content-Type: application/json");
 		httpheader = curl_slist_append(httpheader, "Accept : application/json");
 		httpheader = curl_slist_append(httpheader, "charsets: utf-8");
-		httpheader = curl_slist_append(httpheader, "Origin: http://localhost.nebula.myharmony.com");
+		httpheader = curl_slist_append(httpheader, origin.c_str());
 
 		curl_easy_reset(conn);
 		curl_easy_setopt(conn, CURLOPT_USERAGENT, m_userAgent.c_str());
 		curl_easy_setopt(conn, CURLOPT_WRITEFUNCTION, this->write_curl_data);
 		curl_easy_setopt(conn, CURLOPT_HTTPHEADER, httpheader);
 		curl_easy_setopt(conn, CURLOPT_WRITEDATA, (void *)&response);
-		curl_easy_setopt(conn, CURLOPT_POSTFIELDS, "{\"id\":1,\"cmd\":\"connect.discoveryinfo?get\",\"params\":{}}");
+		curl_easy_setopt(conn, CURLOPT_POSTFIELDS, postdata.c_str());
 		curl_easy_setopt(conn, CURLOPT_URL, uri.c_str());
 		curlres = curl_easy_perform(conn);
 
@@ -135,6 +139,30 @@ public:
 		curl_easy_cleanup(conn);
 		curl_global_cleanup();
 
+		return (curlres == CURLE_OK);
+	}
+
+
+public:
+	HarmonyDiscovery(const std::string IPAddress)
+	{
+		std::string uri = "http://";
+		uri.append(IPAddress);
+		uri.append(":8088");
+
+		std::string origin = "Origin: http://localhost.nebula.myharmony.com";
+		std::string postdata = "{\"id\":1,\"cmd\":\"connect.discoveryinfo?get\",\"params\":{}}";
+		if (!HTTP_POST(uri, origin, postdata))
+			return;
+
+		if (!is_msgOK() && (m_discoveryinfo.find("417") != std::string::npos))
+		{
+			// discovery returned code 417 -> retry the call with different parameters
+		
+			origin = "Origin: http://sl.dhg.myharmony.com";
+			postdata = "{\"id\":1,\"cmd\":\"setup.account?getProvisionInfo\",\"params\":{}}";
+			HTTP_POST(uri, origin, postdata);
+		}
 	}
 
 	~HarmonyDiscovery()
@@ -151,18 +179,25 @@ public:
 
 	std::string get_id()
 	{
-		size_t offset = m_discoveryinfo.find("remoteId");
+		size_t offset = m_discoveryinfo.find("emoteId");
 		if (offset == std::string::npos)
 			return "";
-		return get_strvalue(offset + 10);
+		return get_strvalue(offset + 9);
 	}
 
 	std::string get_domain()
 	{
 		size_t offset = m_discoveryinfo.find("discoveryServerUri\"");
-		if (offset == std::string::npos)
-			return "";
-		std::string domain = get_strvalue(offset + 20);
+		if (offset != std::string::npos)
+			offset += 20;
+		else
+		{
+			offset = m_discoveryinfo.find("discoveryServer\"");
+			if (offset == std::string::npos)
+				return "";
+			offset += 17;
+		}
+		std::string domain = get_strvalue(offset);
 		size_t start = domain.find_first_of(":\\/") + 1;
 		size_t stop = domain.find_first_of("\\/", start);
 		while ((stop == start) && (stop != std::string::npos))
@@ -195,7 +230,7 @@ private:
 
 /****************************************************************
  *								*
- * harmonyhubpp::HarmonyConnection					*
+ * harmonyhubpp::HarmonyConnection				*
  *								*
  * This subclass provides the link with websocketpp		*
  *								*
