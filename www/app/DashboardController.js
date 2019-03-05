@@ -1465,7 +1465,12 @@ define(['app'], function (app) {
 										var status = "";
 										if (typeof item.Counter != 'undefined') {
 											if ($scope.config.DashboardType == 0) {
-												status += '' + $.t("Usage") + ': ' + item.CounterToday;
+												if (item.SubType == "Managed Counter") {
+													status += '' + item.Counter;
+												}
+												else {
+													status += '' + $.t("Usage") + ': ' + item.CounterToday;
+												}
 											}
 											else {
 												if (typeof item.CounterDeliv == 'undefined') {
@@ -1584,6 +1589,10 @@ define(['app'], function (app) {
 												) {
 													status = item.Counter;
 												}
+											}
+											else if (item.SubType == "Managed Counter") {
+												status = "";
+												bigtext = item.Counter;
 											}
 											else {
 												status = '' + $.t("Usage") + ': ' + item.CounterToday;
@@ -3543,13 +3552,23 @@ define(['app'], function (app) {
 									var status = "";
 									if (typeof item.Counter != 'undefined') {
 										if ($scope.config.DashboardType == 0) {
-											status = '' + $.t("Usage") + ': ' + item.CounterToday;
+											if (item.SubType == "Managed Counter") {
+												status = '' + item.Counter;
+											}
+											else {
+												status = '' + $.t("Usage") + ': ' + item.CounterToday;
+											}
 										}
 										else {
 											if ((typeof item.CounterDeliv != 'undefined') && (item.CounterDeliv != 0)) {
 												status = 'U: T: ' + item.CounterToday;
 											} else {
-												status = 'T: ' + item.CounterToday;
+												if (item.SubType == "Managed Counter") {
+													status = '' + item.Counter;
+												}
+												else {
+													status = 'T: ' + item.CounterToday;
+												}
 											}
 										}
 									}
@@ -3694,6 +3713,9 @@ define(['app'], function (app) {
 									) {
 										bigtexthtml += item.CounterToday;
 									}
+									else if (item.SubType == "Managed Counter") {
+										bigtexthtml += item.Counter;
+									}
 									else if (
 										(item.Type == "Air Quality") ||
 										(item.Type == "Lux") ||
@@ -3728,7 +3750,7 @@ define(['app'], function (app) {
 									var imagehtml = '<img src="images/';
 
 									if (typeof item.Counter != 'undefined') {
-										if ((item.Type == "RFXMeter") || (item.Type == "YouLess Meter")) {
+										if ((item.Type == "RFXMeter") || (item.Type == "YouLess Meter") || (item.SubType == "Managed Counter")) {
 											if (item.SwitchTypeVal == 1) {
                                                 imagehtml = '<a href="#/Devices/' + item.idx + '/Log"><img src="images/Gas48.png" class="lcursor" height="40" width="40"></a></td>\n';
 											}
@@ -3759,7 +3781,7 @@ define(['app'], function (app) {
 										) {
 											statushtml = item.Counter;
 										}
-										else if (item.SubType != "Gas") { // this is weird..
+										else if ((item.SubType != "Gas") && (item.SubType != "Managed Counter")) { // this is weird..
 											statushtml = '' + $.t("Usage") + ': ' + item.CounterToday;
 										}
 										else if ((item.SubType == "Gas") || (item.SubType == "RFXMeter counter")) { // added this to fill the status value. If it's the same as the bigtext, then it won't be shown again.
