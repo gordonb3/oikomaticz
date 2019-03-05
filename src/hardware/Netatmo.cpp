@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "Netatmo.h"
-#include "main/Helper.h"
-#include "main/Logger.h"
-#include "main/SQLHelper.h"
-#include "main/localtime_r.h"
-#include "main/RFXtrx.h"
-#include "hardware/hardwaretypes.h"
-#include "protocols/HTTPClient.h"
-#include "jsoncpp/json.h"
+#include "../main/Helper.h"
+#include "../main/Logger.h"
+#include "../main/SQLHelper.h"
+#include "../main/localtime_r.h"
+#include "../main/RFXtrx.h"
+#include "hardwaretypes.h"
+#include "../httpclient/HTTPClient.h"
+#include "../json/json.h"
 
 #define round(a) ( int ) ( a + .5 )
 
