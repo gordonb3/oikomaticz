@@ -111,22 +111,22 @@ public:
 		const std::string &DeviceName,
 		const unsigned char devType,
 		const unsigned char subType,
-		const _eNotificationTypes ntype,
+		const device::notification::type::value ntype,
 		const float mvalue);
 	bool CheckAndHandleNotification(
 		const uint64_t Idx,
 		const std::string &DeviceName,
-		const _eNotificationTypes ntype,
+		const device::notification::type::value ntype,
 		const std::string &message);
 
 	bool CheckAndHandleSwitchNotification(
 		const uint64_t Idx,
 		const std::string &DeviceName,
-		const _eNotificationTypes ntype);
+		const device::notification::type::value ntype);
 	bool CheckAndHandleSwitchNotification(
 		const uint64_t Idx,
 		const std::string & DeviceName,
-		const _eNotificationTypes ntype,
+		const device::notification::type::value ntype,
 		const int llevel);
 
 	std::map<std::string, CNotificationBase*> m_notifiers;
@@ -168,7 +168,7 @@ private:
 		const std::string &DeviceName,
 		const unsigned char devType,
 		const unsigned char subType,
-		const _eNotificationTypes ntype,
+		const device::notification::type::value ntype,
 		const float mvalue);
 	bool CheckAndHandleAmpere123Notification(
 		const uint64_t Idx,

@@ -4619,7 +4619,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pHardware == NULL)
 				return;
-			if (pHardware->HwdType != HTYPE_OpenZWave)
+			if (pHardware->HwdType != hardware::type::OpenZWave)
 				return;
 			m_ZW_Hwidx = iHardwareID;
 			COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
@@ -5286,7 +5286,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(atoi(idx.c_str()));
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::string configFilePath = "";
@@ -5310,7 +5310,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					pOZWHardware->m_ozwcp.SetAllNodesChanged();
@@ -5324,7 +5324,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5347,7 +5347,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5368,7 +5368,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5386,7 +5386,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5404,7 +5404,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5430,7 +5430,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5454,7 +5454,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5481,7 +5481,7 @@ namespace http {
 				CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 				if (pHardware != NULL)
 				{
-					if (pHardware->HwdType == HTYPE_OpenZWave)
+					if (pHardware->HwdType == hardware::type::OpenZWave)
 					{
 						COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 						std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5496,7 +5496,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5509,7 +5509,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5523,7 +5523,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5547,7 +5547,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(m_ZW_Hwidx);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_OpenZWave)
+				if (pHardware->HwdType == hardware::type::OpenZWave)
 				{
 					COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 					std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);
@@ -5575,7 +5575,7 @@ namespace http {
 				return;
 			COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 
-			if (pHardware->HwdType == HTYPE_OpenZWave)
+			if (pHardware->HwdType == hardware::type::OpenZWave)
 			{
 				COpenZWave *pOZWHardware = (COpenZWave*)pHardware;
 				std::lock_guard<std::mutex> l(pOZWHardware->m_NotificationMutex);

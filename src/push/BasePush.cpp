@@ -12,12 +12,6 @@
 #include <inttypes.h>
 #include <boost/date_time/c_local_time_adjustor.hpp>
 
-typedef struct _STR_TABLE_ID1_ID2 {
-	unsigned long    id1;
-	unsigned long    id2;
-	const char   *str1;
-} STR_TABLE_ID1_ID2;
-
 extern const char *findTableID1ID2(const _STR_TABLE_ID1_ID2 *t, const unsigned long id1, const unsigned long id2);
 
 const char *RFX_Type_SubType_Values(const unsigned char dType, const unsigned char sType)
@@ -492,7 +486,7 @@ std::string CBasePush::ProcessSendValue(const std::string &rawsendValue, const i
 {
 	std::string vType = DropdownOptionsValue(m_DeviceRowIdx, delpos);
 	unsigned char tempsign = m_sql.m_tempsign[0];
-	_eMeterType metertype = (_eMeterType)metertypein;
+	device::meter::type::value metertype = (device::meter::type::value)metertypein;
 	char szData[100];
 	szData[0] = 0;
 
@@ -715,7 +709,7 @@ std::string CBasePush::getUnit(const int delpos, const int metertypein)
 {
 	std::string vType = DropdownOptionsValue(m_DeviceRowIdx, delpos);
 	unsigned char tempsign = m_sql.m_tempsign[0];
-	_eMeterType metertype = (_eMeterType)metertypein;
+	device::meter::type::value metertype = (device::meter::type::value)metertypein;
 	char szData[100];
 	szData[0] = 0;
 

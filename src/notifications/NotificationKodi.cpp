@@ -115,10 +115,10 @@ std::string CNotificationKodi::GetIconFile(const std::string &ExtraData)
 		posType+=12;
 		std::string	szType = ExtraData.substr(posType, ExtraData.find("|", posType)-posType);
 		std::string	szTypeImage;
-		_eSwitchType switchtype=(_eSwitchType)atoi(szType.c_str());
+		device::_switch::type::value switchtype=(device::_switch::type::value)atoi(szType.c_str());
 		switch (switchtype)
 		{
-			case STYPE_OnOff:
+			case device::_switch::type::OnOff:
 				if (posCustom >= 0)
 				{
 					posCustom+=13;
@@ -127,48 +127,48 @@ std::string CNotificationKodi::GetIconFile(const std::string &ExtraData)
 				}
 				else szTypeImage = "Light48";
 				break;
-			case STYPE_Doorbell:
+			case device::_switch::type::Doorbell:
 				szTypeImage = "doorbell48";
 				break;
-			case STYPE_Contact:
+			case device::_switch::type::Contact:
 				szTypeImage = "contact48";
 				break;
-			case STYPE_Blinds:
-			case STYPE_BlindsPercentage:
-			case STYPE_VenetianBlindsUS:
-			case STYPE_VenetianBlindsEU:
-			case STYPE_BlindsPercentageInverted:
-			case STYPE_BlindsInverted:
+			case device::_switch::type::Blinds:
+			case device::_switch::type::BlindsPercentage:
+			case device::_switch::type::VenetianBlindsUS:
+			case device::_switch::type::VenetianBlindsEU:
+			case device::_switch::type::BlindsPercentageInverted:
+			case device::_switch::type::BlindsInverted:
 				szTypeImage = "blinds48";
 				break;
-			case STYPE_X10Siren:
+			case device::_switch::type::X10Siren:
 				szTypeImage = "siren";
 				break;
-			case STYPE_SMOKEDETECTOR:
+			case device::_switch::type::SMOKEDETECTOR:
 				szTypeImage = "smoke48";
 				break;
-			case STYPE_Dimmer:
+			case device::_switch::type::Dimmer:
 				szTypeImage = "Dimmer48";
 				break;
-			case STYPE_Motion:
+			case device::_switch::type::Motion:
 				szTypeImage = "motion48";
 				break;
-			case STYPE_PushOn:
+			case device::_switch::type::PushOn:
 				szTypeImage = "pushon48";
 				break;
-			case STYPE_PushOff:
+			case device::_switch::type::PushOff:
 				szTypeImage = "pushon48";
 				break;
-			case STYPE_DoorContact:
+			case device::_switch::type::DoorContact:
 				szTypeImage = "Door48";
 				break;
-			case STYPE_DoorLock:
+			case device::_switch::type::DoorLock:
 				szTypeImage = "Door48";
 				break;
-			case STYPE_DoorLockInverted:
+			case device::_switch::type::DoorLockInverted:
 				szTypeImage = "Door48";
 				break;
-			case STYPE_Media:
+			case device::_switch::type::Media:
 				if (posCustom >= 0)
 				{
 					posCustom += 13;

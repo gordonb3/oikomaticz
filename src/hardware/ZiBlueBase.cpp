@@ -19,12 +19,6 @@
 	#define DEBUG_ZIBLUE
 #endif
 
-typedef struct _STR_TABLE_SINGLE {
-	unsigned long    id;
-	const char   *str1;
-	const char   *str2;
-} STR_TABLE_SINGLE;
-
 extern const char *findTableIDSingle1(const STR_TABLE_SINGLE *t, const unsigned long id);
 
 const char *szZiBlueProtocolRFLink(const unsigned char id)

@@ -615,7 +615,7 @@ void CdzVents::ExportDomoticzDataToLua(lua_State *lua_state, const std::vector<C
 		lua_pushstring(lua_state, sub_type);
 		lua_rawset(lua_state, -3);
 		lua_pushstring(lua_state, "switchType");
-		lua_pushstring(lua_state, Switch_Type_Desc((_eSwitchType)sitem.switchtype));
+		lua_pushstring(lua_state, device::_switch::type::Description((device::_switch::type::value)sitem.switchtype));
 		lua_rawset(lua_state, -3);
 		lua_pushstring(lua_state, "switchTypeValue");
 		lua_pushnumber(lua_state, (lua_Number)sitem.switchtype);

@@ -18,8 +18,8 @@ struct tScheduleItem
 	unsigned short startYear;
 	unsigned char startHour;
 	unsigned char startMin;
-	_eTimerType	timerType;
-	_eTimerCommand timerCmd;
+	device::timer::type::value	timerType;
+	device::timer::command::value timerCmd;
 	int Level;
 	_tColor Color;
 	float Temperature;
@@ -42,8 +42,8 @@ struct tScheduleItem
 		startYear = 0;
 		startHour = 0;
 		startMin = 0;
-		timerType = TTYPE_ONTIME;
-		timerCmd = TCMD_ON;
+		timerType = device::timer::type::ONTIME;
+		timerCmd = device::timer::command::ON;
 		Level = 0;
 		Temperature = 0.0f;
 		bUseRandomness = false;

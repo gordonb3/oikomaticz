@@ -354,7 +354,7 @@ void CNest::UpdateSmokeSensor(const unsigned char Idx, const bool bOn, const std
 		result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q')", m_HwdID, szIdx);
 		if (!result.empty())
 		{
-			m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID=='%q')", STYPE_SMOKEDETECTOR, result[0][0].c_str());
+			m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID=='%q')", device::_switch::type::SMOKEDETECTOR, result[0][0].c_str());
 		}
 	}
 	else

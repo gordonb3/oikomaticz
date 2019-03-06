@@ -21,7 +21,7 @@ private:
 	void ParseP1Data(const unsigned char *pData, const int Len, const bool disable_crc, int ratelimit);
 
 	bool CheckCRC();
-	void UpsertSwitch(const int NodeID, const _eSwitchType switchtype, const int switchstate, const char* defaultname);
+	void UpsertSwitch(const int NodeID, const device::_switch::type::value switchtype, const int switchstate, const char* defaultname);
 
 public:
 	P1Power	m_power;

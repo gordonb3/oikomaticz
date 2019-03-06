@@ -218,7 +218,7 @@ bool RFXComSerial::UpgradeFirmware()
 {
 	int AddressLow = PKT_pmrangelow;
 	int AddressHigh = PKT_pmrangehigh;
-	if (HwdType == HTYPE_RFXtrx868)
+	if (HwdType == hardware::type::RFXtrx868)
 	{
 		AddressLow = PKT_pmrangelow868;
 		AddressHigh = PKT_pmrangehigh868;
@@ -888,10 +888,10 @@ namespace http {
 			if (pHardware == NULL)
 			{
 				//Direct Entry, try to find the RFXCom hardware
-				pHardware = m_mainworker.GetHardwareByType(HTYPE_RFXtrx433);
+				pHardware = m_mainworker.GetHardwareByType(hardware::type::RFXtrx433);
 				if (pHardware == NULL)
 				{
-					pHardware = m_mainworker.GetHardwareByType(HTYPE_RFXtrx868);
+					pHardware = m_mainworker.GetHardwareByType(hardware::type::RFXtrx868);
 					if (pHardware == NULL)
 					{
 						return;
@@ -912,9 +912,9 @@ namespace http {
 			outfile.close();
 
 			if (
-				(pHardware->HwdType == HTYPE_RFXtrx315) ||
-				(pHardware->HwdType == HTYPE_RFXtrx433) ||
-				(pHardware->HwdType == HTYPE_RFXtrx868)
+				(pHardware->HwdType == hardware::type::RFXtrx315) ||
+				(pHardware->HwdType == hardware::type::RFXtrx433) ||
+				(pHardware->HwdType == hardware::type::RFXtrx868)
 				)
 			{
 				RFXComSerial *pRFXComSerial = reinterpret_cast<RFXComSerial *>(pHardware);
@@ -948,7 +948,7 @@ namespace http {
 			unsigned char Mode5 = atoi(result[0][4].c_str());
 			unsigned char Mode6 = atoi(result[0][5].c_str());
 
-			_eHardwareTypes HWType = (_eHardwareTypes)atoi(result[0][6].c_str());
+			hardware::type::value HWType = (hardware::type::value)atoi(result[0][6].c_str());
 
 			tRBUF Response;
 			Response.ICMND.freqsel = Mode1;
@@ -958,7 +958,7 @@ namespace http {
 			Response.ICMND.msg5 = Mode5;
 			Response.ICMND.msg6 = Mode6;
 
-			if (HWType != HTYPE_RFXtrx868)
+			if (HWType != hardware::type::RFXtrx868)
 			{
 				Response.IRESPONSE.UNDECODEDenabled = (request::findValue(&req, "undecon") == "on") ? 1 : 0;
 				Response.IRESPONSE.X10enabled = (request::findValue(&req, "X10") == "on") ? 1 : 0;
@@ -1023,18 +1023,18 @@ namespace http {
 			if (pHardware == NULL)
 			{
 				//Direct Entry, try to find the RFXCom hardware
-				pHardware = m_mainworker.GetHardwareByType(HTYPE_RFXtrx433);
+				pHardware = m_mainworker.GetHardwareByType(hardware::type::RFXtrx433);
 				if (pHardware == NULL)
 				{
-					pHardware = m_mainworker.GetHardwareByType(HTYPE_RFXtrx868);
+					pHardware = m_mainworker.GetHardwareByType(hardware::type::RFXtrx868);
 				}
 			}
 			if (pHardware != NULL)
 			{
 				if (
-					(pHardware->HwdType == HTYPE_RFXtrx315) ||
-					(pHardware->HwdType == HTYPE_RFXtrx433) ||
-					(pHardware->HwdType == HTYPE_RFXtrx868)
+					(pHardware->HwdType == hardware::type::RFXtrx315) ||
+					(pHardware->HwdType == hardware::type::RFXtrx433) ||
+					(pHardware->HwdType == hardware::type::RFXtrx868)
 					)
 				{
 					RFXComSerial *pRFXComSerial = reinterpret_cast<RFXComSerial *>(pHardware);

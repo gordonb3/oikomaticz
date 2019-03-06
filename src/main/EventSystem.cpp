@@ -484,7 +484,7 @@ void CEventSystem::GetCurrentStates()
 			sitem.sValue = l_sValue.assign(sd[4]);
 
 			sitem.switchtype = atoi(sd[7].c_str());
-			_eSwitchType switchtype = (_eSwitchType)sitem.switchtype;
+			device::_switch::type::value switchtype = (device::_switch::type::value)sitem.switchtype;
 			std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10].c_str());
 			sitem.nValueWording = l_nValueWording.assign(nValueToWording(sitem.devType, sitem.subType, switchtype, sitem.nValue, sitem.sValue, options));
 			sitem.lastUpdate = l_lastUpdate.assign(sd[8]);
@@ -924,23 +924,23 @@ void CEventSystem::GetCurrentMeasurementStates()
 						sprintf(szTmp, "%" PRIu64, total_real);
 
 						float musage = 0;
-						_eMeterType metertype = (_eMeterType)sitem.switchtype;
+						device::meter::type::value metertype = (device::meter::type::value)sitem.switchtype;
 						switch (metertype)
 						{
-						case MTYPE_ENERGY:
-						case MTYPE_ENERGY_GENERATED:
+						case device::meter::type::ENERGY:
+						case device::meter::type::ENERGY_GENERATED:
 							musage = float(total_real) / EnergyDivider;
 							sprintf(szTmp, "%.03f kWh", musage);
 							break;
-						case MTYPE_GAS:
+						case device::meter::type::GAS:
 							musage = float(total_real) / GasDivider;
 							sprintf(szTmp, "%.02f m3", musage);
 							break;
-						case MTYPE_WATER:
+						case device::meter::type::WATER:
 							musage = float(total_real) / WaterDivider;
 							sprintf(szTmp, "%.02f m3", musage);
 							break;
-						case MTYPE_COUNTER:
+						case device::meter::type::COUNTER:
 							sprintf(szTmp, "%" PRIu64, total_real);
 							break;
 						default:
@@ -963,23 +963,23 @@ void CEventSystem::GetCurrentMeasurementStates()
 						sprintf(szTmp, "%.02f", usage);
 
 						float musage = 0;
-						_eMeterType metertype = (_eMeterType)sitem.switchtype;
+						device::meter::type::value metertype = (device::meter::type::value)sitem.switchtype;
 						switch (metertype)
 						{
-						case MTYPE_ENERGY:
-						case MTYPE_ENERGY_GENERATED:
+						case device::meter::type::ENERGY:
+						case device::meter::type::ENERGY_GENERATED:
 							musage = usage / EnergyDivider;
 							sprintf(szTmp, "%.03f kWh", musage);
 							break;
-						case MTYPE_GAS:
+						case device::meter::type::GAS:
 							musage = usage / GasDivider;
 							sprintf(szTmp, "%.02f m3", musage);
 							break;
-						case MTYPE_WATER:
+						case device::meter::type::WATER:
 							musage = usage / WaterDivider;
 							sprintf(szTmp, "%.02f m3", musage);
 							break;
-						case MTYPE_COUNTER:
+						case device::meter::type::COUNTER:
 							break;
 						default:
 							continue; //not handled
@@ -1080,23 +1080,23 @@ void CEventSystem::GetCurrentMeasurementStates()
 					sprintf(szTmp, "%" PRIu64, total_real);
 
 					float musage = 0;
-					_eMeterType metertype = (_eMeterType)sitem.switchtype;
+					device::meter::type::value metertype = (device::meter::type::value)sitem.switchtype;
 					switch (metertype)
 					{
-					case MTYPE_ENERGY:
-					case MTYPE_ENERGY_GENERATED:
+					case device::meter::type::ENERGY:
+					case device::meter::type::ENERGY_GENERATED:
 						musage = float(total_real) / EnergyDivider;
 						sprintf(szTmp, "%.03f kWh", musage);
 						break;
-					case MTYPE_GAS:
+					case device::meter::type::GAS:
 						musage = float(total_real) / GasDivider;
 						sprintf(szTmp, "%.02f m3", musage);
 						break;
-					case MTYPE_WATER:
+					case device::meter::type::WATER:
 						musage = float(total_real) / WaterDivider;
 						sprintf(szTmp, "%.02f m3", musage);
 						break;
-					case MTYPE_COUNTER:
+					case device::meter::type::COUNTER:
 						sprintf(szTmp, "%" PRIu64, total_real);
 						break;
 					default:
@@ -1356,7 +1356,7 @@ void CEventSystem::UpdateUserVariable(const uint64_t ulDevID, const std::string 
 	itt->second = replaceitem;
 }
 
-std::string CEventSystem::UpdateSingleState(const uint64_t ulDevID, const std::string &devname, const int nValue, const char* sValue, const unsigned char devType, const unsigned char subType, const _eSwitchType switchType, const std::string &lastUpdate, const unsigned char lastLevel, const std::map<std::string, std::string> & options)
+std::string CEventSystem::UpdateSingleState(const uint64_t ulDevID, const std::string &devname, const int nValue, const char* sValue, const unsigned char devType, const unsigned char subType, const device::_switch::type::value switchType, const std::string &lastUpdate, const unsigned char lastLevel, const std::map<std::string, std::string> & options)
 {
 	std::string nValueWording = nValueToWording(devType, subType, switchType, nValue, sValue, options);
 
@@ -1478,7 +1478,7 @@ void CEventSystem::ProcessDevice(const int HardwareID, const uint64_t ulDevID, c
 	if (!result.empty())
 	{
 		std::vector<std::string> sd = result[0];
-		_eSwitchType switchType = (_eSwitchType)atoi(sd[1].c_str());
+		device::_switch::type::value switchType = (device::_switch::type::value)atoi(sd[1].c_str());
 		std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(result[0][4].c_str());
 
 		std::string osValue = sValue;
@@ -1668,7 +1668,7 @@ void CEventSystem::EvaluateEvent(const std::vector<_tEventQueue> &items)
 			std::vector<std::vector<std::string> > result;
 			result = m_sql.safe_query(
 				"SELECT DeviceStatus.HardwareID, DeviceStatus.ID, DeviceStatus.Unit FROM DeviceStatus INNER JOIN Hardware ON DeviceStatus.HardwareID=Hardware.ID WHERE (DeviceStatus.Type=%d AND DeviceStatus.SubType=%d  AND Hardware.Type=%d)",
-				pTypeSecurity1, sTypeDomoticzSecurity, HTYPE_PythonPlugin);
+				pTypeSecurity1, sTypeDomoticzSecurity, hardware::type::PythonPlugin);
 
 			if (!result.empty())
 			{
@@ -3647,7 +3647,7 @@ void CEventSystem::UpdateDevice(const uint64_t idx, const int nValue, const std:
 		std::string dtype = sd[0];
 		std::string dsubtype = sd[1];
 		std::string dname = sd[2];
-		_eSwitchType dswitchtype = (_eSwitchType)atoi(sd[3].c_str());
+		device::_switch::type::value dswitchtype = (device::_switch::type::value)atoi(sd[3].c_str());
 		int dlastlevel = atoi(sd[4].c_str());
 		std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[5].c_str());
 		int db_nValue = atoi(sd[6].c_str());
@@ -3759,9 +3759,9 @@ void CEventSystem::UpdateDevice(const uint64_t idx, const int nValue, const std:
 			if (pHardware)
 			{
 				if (
-					(pHardware->HwdType == HTYPE_MySensorsUSB) ||
-					(pHardware->HwdType == HTYPE_MySensorsTCP) ||
-					(pHardware->HwdType == HTYPE_MySensorsMQTT)
+					(pHardware->HwdType == hardware::type::MySensorsUSB) ||
+					(pHardware->HwdType == hardware::type::MySensorsTCP) ||
+					(pHardware->HwdType == hardware::type::MySensorsMQTT)
 					)
 				{
 					unsigned long ID;
@@ -3909,7 +3909,7 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 	else if (oParseResults.sCommand.substr(0, 13) == "Play Playlist") {
 		std::string	sParams = oParseResults.sCommand.substr(14);
 
-		CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByType(HTYPE_Kodi);
+		CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByType(hardware::type::Kodi);
 		if (pBaseHardware != NULL)
 		{
 			CKodi			*pHardware = reinterpret_cast<CKodi*>(pBaseHardware);
@@ -3929,7 +3929,7 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 
 		if (pBaseHardware == NULL)  // if not handled try Logitech
 		{
-			pBaseHardware = m_mainworker.GetHardwareByType(HTYPE_LogitechMediaServer);
+			pBaseHardware = m_mainworker.GetHardwareByType(hardware::type::LogitechMediaServer);
 			if (pBaseHardware == NULL) return false;
 			CLogitechMediaServer *pHardware = reinterpret_cast<CLogitechMediaServer*>(pBaseHardware);
 
@@ -3942,7 +3942,7 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 	}
 	else if (oParseResults.sCommand.substr(0, 14) == "Play Favorites") {
 		std::string	sParams = oParseResults.sCommand.substr(15);
-		CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByType(HTYPE_Kodi);
+		CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByType(hardware::type::Kodi);
 		if (pBaseHardware != NULL)
 		{
 			CKodi			*pHardware = reinterpret_cast<CKodi*>(pBaseHardware);
@@ -3955,7 +3955,7 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 	}
 	else if (oParseResults.sCommand.substr(0, 7) == "Execute") {
 		std::string	sParams = oParseResults.sCommand.substr(8);
-		CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByType(HTYPE_Kodi);
+		CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByType(hardware::type::Kodi);
 		if (pBaseHardware != NULL)
 		{
 			CKodi	*pHardware = reinterpret_cast<CKodi*>(pBaseHardware);
@@ -3981,11 +3981,11 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 		}
 
 		std::vector<std::string> sd = result[0];
-		_eSwitchType switchtype = (_eSwitchType)atoi(sd[0].c_str());
+		device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[0].c_str());
 		int iOnDelay = atoi(sd[1].c_str());
 
 		bool bIsOn = IsLightSwitchOn(oParseResults.sCommand);
-		if (switchtype == STYPE_Selector) {
+		if (switchtype == device::_switch::type::Selector) {
 			bIsOn = (level > 0) ? true : false;
 		}
 		iDeviceDelay = bIsOn ? iOnDelay : 0;
@@ -4069,7 +4069,7 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 
 
 
-std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSubType, const _eSwitchType switchtype, const int nValue, const std::string &sValue, const std::map<std::string, std::string> & options)
+std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSubType, const device::_switch::type::value switchtype, const int nValue, const std::string &sValue, const std::map<std::string, std::string> & options)
 {
 
 	std::string lstatus = "";
@@ -4084,7 +4084,7 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 			lstatus = "Set Level";
 		}
 	*/
-	if (switchtype == STYPE_Dimmer)
+	if (switchtype == device::_switch::type::Dimmer)
 	{
 		// use default lstatus
 	}
@@ -4097,13 +4097,13 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 	{
 		lstatus = std::to_string(nValue);
 	}
-	else if (switchtype == STYPE_Selector)
+	else if (switchtype == device::_switch::type::Selector)
 	{
 		std::map<std::string, std::string> statuses;
 		GetSelectorSwitchStatuses(options, statuses);
 		lstatus = statuses[std::to_string(llevel)];
 	}
-	else if ((switchtype == STYPE_Contact) || (switchtype == STYPE_DoorContact))
+	else if ((switchtype == device::_switch::type::Contact) || (switchtype == device::_switch::type::DoorContact))
 	{
 		bool bIsOn = IsLightSwitchOn(lstatus);
 		if (bIsOn)
@@ -4115,7 +4115,7 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 			lstatus = "Closed";
 		}
 	}
-	else if (switchtype == STYPE_DoorLock)
+	else if (switchtype == device::_switch::type::DoorLock)
 	{
 		bool bIsOn = IsLightSwitchOn(lstatus);
 		if (bIsOn)
@@ -4127,7 +4127,7 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 			lstatus = "Unlocked";
 		}
 	}
-	else if (switchtype == STYPE_DoorLockInverted)
+	else if (switchtype == device::_switch::type::DoorLockInverted)
 	{
 		bool bIsOn = IsLightSwitchOn(lstatus);
 		if (bIsOn)
@@ -4139,7 +4139,7 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 			lstatus = "Locked";
 		}
 	}
-	else if (switchtype == STYPE_Blinds)
+	else if (switchtype == device::_switch::type::Blinds)
 	{
 		if (lstatus == "On")
 		{
@@ -4154,7 +4154,7 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 			lstatus = "Open";
 		}
 	}
-	else if (switchtype == STYPE_BlindsInverted)
+	else if (switchtype == device::_switch::type::BlindsInverted)
 	{
 		if (lstatus == "Off")
 		{
@@ -4169,7 +4169,7 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 			lstatus = "Open";
 		}
 	}
-	else if (switchtype == STYPE_BlindsPercentage)
+	else if (switchtype == device::_switch::type::BlindsPercentage)
 	{
 		if (lstatus == "On")
 		{
@@ -4180,7 +4180,7 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 			lstatus = "Open";
 		}
 	}
-	else if (switchtype == STYPE_BlindsPercentageInverted)
+	else if (switchtype == device::_switch::type::BlindsPercentageInverted)
 	{
 		if (lstatus == "On")
 		{
@@ -4191,9 +4191,9 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 			lstatus = "Closed";
 		}
 	}
-	else if (switchtype == STYPE_Media)
+	else if (switchtype == device::_switch::type::Media)
 	{
-		lstatus = Media_Player_States((const _eMediaStatus)nValue);
+		lstatus = device::media::status::Description((const device::media::status::value)nValue);
 	}
 	else if (lstatus == "")
 	{
@@ -4331,7 +4331,7 @@ int CEventSystem::calculateDimLevel(int deviceID, int percentageLevel)
 
 		unsigned char dType = atoi(sd[0].c_str());
 		unsigned char dSubType = atoi(sd[1].c_str());
-		_eSwitchType switchtype = (_eSwitchType)atoi(sd[2].c_str());
+		device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[2].c_str());
 		std::string lstatus = "";
 		int llevel = 0;
 		bool bHaveDimmer = false;
@@ -4343,14 +4343,14 @@ int CEventSystem::calculateDimLevel(int deviceID, int percentageLevel)
 
 		if (maxDimLevel != 0)
 		{
-			if ((switchtype == STYPE_Dimmer) || (switchtype == STYPE_BlindsPercentage) || (switchtype == STYPE_BlindsPercentageInverted))
+			if ((switchtype == device::_switch::type::Dimmer) || (switchtype == device::_switch::type::BlindsPercentage) || (switchtype == device::_switch::type::BlindsPercentageInverted))
 			{
 				float fLevel = (maxDimLevel / 100.0f) * percentageLevel;
 				if (fLevel > 100)
 					fLevel = 100;
 				iLevel = int(fLevel);
 			}
-			else if (switchtype == STYPE_Selector)
+			else if (switchtype == device::_switch::type::Selector)
 			{
 				// llevel cannot be get without sValue so level is getting from percentageLevel
 				iLevel = percentageLevel;

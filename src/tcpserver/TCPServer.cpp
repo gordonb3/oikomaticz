@@ -507,7 +507,7 @@ void CTCPServer::stopAllClients()
 
 void CTCPServer::DoDecodeMessage(const CTCPClientBase *pClient, const unsigned char *pRXCommand)
 {
-	HwdType = HTYPE_Domoticz;
+	HwdType = hardware::type::Domoticz;
 	m_HwdID=8765;
 	m_Name="DomoticzFromMaster";
 	m_SeqNr=1;

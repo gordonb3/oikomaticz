@@ -604,7 +604,7 @@ void CSysfsGpio::CreateDomoticzDevices()
 				m_sql.safe_query(
 					"INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, Options) "
 					"VALUES (%d,'%q',%d, %d, %d, %d, 0, 12, 255, '%q', %d, ' ', '0')",
-					m_HwdID, deviceid[0].c_str(), m_saved_state[i].pin_number, pTypeLighting2, sTypeAC, int(STYPE_Contact), "Input", m_saved_state[i].value);
+					m_HwdID, deviceid[0].c_str(), m_saved_state[i].pin_number, pTypeLighting2, sTypeAC, int(device::_switch::type::Contact), "Input", m_saved_state[i].value);
 			}
 		}
 		else
@@ -655,7 +655,7 @@ void CSysfsGpio::CreateDomoticzDevices()
 				m_sql.safe_query(
 					"INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, Options) "
 					"VALUES (%d,'%q',%d, %d, %d, %d, 0, 12, 255, '%q', %d, ' ', '1')",
-					m_HwdID, deviceid[0].c_str(), m_saved_state[i].pin_number, pTypeLighting2, sTypeAC, int(STYPE_OnOff), "Output", m_saved_state[i].value);
+					m_HwdID, deviceid[0].c_str(), m_saved_state[i].pin_number, pTypeLighting2, sTypeAC, int(device::_switch::type::OnOff), "Output", m_saved_state[i].value);
 			}
 		}
 	}

@@ -274,7 +274,7 @@ bool P1MeterBase::MatchLine()
 		{
 			m_lastTariff = m_currentTariff;
 			int sstate = (m_currentTariff == 1) ? gswitch_sOn : gswitch_sOff;
-			UpsertSwitch(255, STYPE_OnOff, sstate, "Power Tariff Low");
+			UpsertSwitch(255, device::_switch::type::OnOff, sstate, "Power Tariff Low");
 		}
 
 
@@ -729,7 +729,7 @@ void P1MeterBase::ParseP1Data(const unsigned char *pData, const int Len, const b
 }
 
 
-void P1MeterBase::UpsertSwitch(const int NodeID, const _eSwitchType switchtype, const int switchstate, const char* defaultname)
+void P1MeterBase::UpsertSwitch(const int NodeID, const device::_switch::type::value switchtype, const int switchstate, const char* defaultname)
 {
 	char szID[10];
 	sprintf(szID, "%08X", (unsigned int)NodeID);
@@ -805,7 +805,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if ((pBaseHardware->HwdType != HTYPE_P1SmartMeter) && (pBaseHardware->HwdType != HTYPE_P1SmartMeterLAN))
+			if ((pBaseHardware->HwdType != hardware::type::P1SmartMeter) && (pBaseHardware->HwdType != hardware::type::P1SmartMeterLAN))
 				return;
 			P1MeterBase *pHardware = reinterpret_cast<P1MeterBase*>(pBaseHardware);
 

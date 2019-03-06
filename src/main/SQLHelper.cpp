@@ -1150,7 +1150,7 @@ bool CSQLHelper::OpenDatabase()
 		{
 			//Move onboard system sensor (temperature) to the motherboard hardware
 			std::vector<std::vector<std::string> > result;
-			result = safe_query("SELECT ID FROM Hardware WHERE (Type==%d) AND (Name=='Motherboard') LIMIT 1", HTYPE_System);
+			result = safe_query("SELECT ID FROM Hardware WHERE (Type==%d) AND (Name=='Motherboard') LIMIT 1", hardware::type::System);
 			if (!result.empty())
 			{
 				int hwId = atoi(result[0][0].c_str());
@@ -1246,7 +1246,7 @@ bool CSQLHelper::OpenDatabase()
 
 			szQuery2.clear();
 			szQuery2.str("");
-			szQuery2 << "SELECT ID, Password FROM Hardware WHERE ([Type]==" << HTYPE_Domoticz << ")";
+			szQuery2 << "SELECT ID, Password FROM Hardware WHERE ([Type]==" << hardware::type::Domoticz << ")";
 			result2 = query(szQuery2.str());
 			for (const auto & itt : result2)
 			{
@@ -1267,7 +1267,7 @@ bool CSQLHelper::OpenDatabase()
 			//S0 Meter patch
 			std::stringstream szQuery2;
 			std::vector<std::vector<std::string> > result;
-			szQuery2 << "SELECT ID, Mode1, Mode2, Mode3, Mode4 FROM HARDWARE WHERE([Type]==" << HTYPE_S0SmartMeterUSB << ")";
+			szQuery2 << "SELECT ID, Mode1, Mode2, Mode3, Mode4 FROM HARDWARE WHERE([Type]==" << hardware::type::S0SmartMeterUSB << ")";
 			result = query(szQuery2.str());
 			if (!result.empty())
 			{
@@ -1345,7 +1345,7 @@ bool CSQLHelper::OpenDatabase()
 			std::vector<std::vector<std::string> > result;
 			std::vector<std::vector<std::string> > result2;
 			std::vector<std::vector<std::string> > result3;
-			szQuery << "SELECT ID FROM HARDWARE WHERE([Type]==" << HTYPE_TOONTHERMOSTAT << ")";
+			szQuery << "SELECT ID FROM HARDWARE WHERE([Type]==" << hardware::type::TOONTHERMOSTAT << ")";
 			result = query(szQuery.str());
 			for (const auto & itt : result)
 			{
@@ -1429,7 +1429,7 @@ bool CSQLHelper::OpenDatabase()
 				{
 					std::vector<std::string> sd = itt;
 					int hwId = atoi(sd[0].c_str());
-					_eHardwareTypes hwtype = (_eHardwareTypes)atoi(sd[1].c_str());
+					hardware::type::value hwtype = (hardware::type::value)atoi(sd[1].c_str());
 					size_t Port = (size_t)atoi(sd[2].c_str());
 
 					if (IsSerialDevice(hwtype))
@@ -1498,7 +1498,7 @@ bool CSQLHelper::OpenDatabase()
 		if (dbversion < 75)
 		{
 			safe_query("UPDATE Hardware SET Username='%q', Password='%q' WHERE ([Type]=%d)",
-				"Change_user_pass", "", HTYPE_THERMOSMART);
+				"Change_user_pass", "", hardware::type::THERMOSMART);
 			if (!DoesColumnExistsInTable("Description", "DeviceStatus"))
 			{
 				query("ALTER TABLE DeviceStatus ADD COLUMN [Description] VARCHAR(200) DEFAULT ''");
@@ -1576,7 +1576,7 @@ bool CSQLHelper::OpenDatabase()
 		{
 			// MQTT set default mode
 			std::stringstream szQuery2;
-			szQuery2 << "UPDATE Hardware SET Mode1=1 WHERE  ([Type]==" << HTYPE_MQTT << " )";
+			szQuery2 << "UPDATE Hardware SET Mode1=1 WHERE  ([Type]==" << hardware::type::MQTT << " )";
 			query(szQuery2.str());
 		}
 		if (dbversion < 82)
@@ -1604,10 +1604,10 @@ bool CSQLHelper::OpenDatabase()
 		{
 			//Add hardware monitor as normal hardware class (if not already added)
 			std::vector<std::vector<std::string> > result;
-			result = safe_query("SELECT ID FROM Hardware WHERE (Type==%d)", HTYPE_System);
+			result = safe_query("SELECT ID FROM Hardware WHERE (Type==%d)", hardware::type::System);
 			if (result.empty())
 			{
-				m_sql.safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Motherboard',1, %d,'',1,'','',0,0,0,0,0,0)", HTYPE_System);
+				m_sql.safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Motherboard',1, %d,'',1,'','',0,0,0,0,0,0)", hardware::type::System);
 			}
 		}
 		if (dbversion < 85)
@@ -1672,11 +1672,11 @@ bool CSQLHelper::OpenDatabase()
 			int hwdID = -1;
 			std::string securityPanelDeviceID = "148702"; // 0x00148702
 			std::vector<std::vector<std::string> > result;
-			result = safe_query("SELECT ID FROM Hardware WHERE (Type==%d)", HTYPE_DomoticzInternal);
+			result = safe_query("SELECT ID FROM Hardware WHERE (Type==%d)", hardware::type::DomoticzInternal);
 			if (result.empty())
 			{
-				m_sql.safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Domoticz Internal',1, %d,'',1,'','',0,0,0,0,0,0)", HTYPE_DomoticzInternal);
-				result = safe_query("SELECT ID FROM Hardware WHERE (Type==%d)", HTYPE_DomoticzInternal);
+				m_sql.safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Domoticz Internal',1, %d,'',1,'','',0,0,0,0,0,0)", hardware::type::DomoticzInternal);
+				result = safe_query("SELECT ID FROM Hardware WHERE (Type==%d)", hardware::type::DomoticzInternal);
 			}
 			if (!result.empty())
 			{
@@ -1764,11 +1764,11 @@ bool CSQLHelper::OpenDatabase()
 		if (dbversion < 94)
 		{
 			std::stringstream szQuery;
-			szQuery << "UPDATE Timers SET [Type]=[Type]+2 WHERE ([Type]>" << TTYPE_FIXEDDATETIME << ")";
+			szQuery << "UPDATE Timers SET [Type]=[Type]+2 WHERE ([Type]>" << device::timer::type::FIXEDDATETIME << ")";
 			query(szQuery.str());
 			szQuery.clear();
 			szQuery.str("");
-			szQuery << "UPDATE SceneTimers SET [Type]=[Type]+2 WHERE ([Type]>" << TTYPE_FIXEDDATETIME << ")";
+			szQuery << "UPDATE SceneTimers SET [Type]=[Type]+2 WHERE ([Type]>" << device::timer::type::FIXEDDATETIME << ")";
 			query(szQuery.str());
 		}
 		if (dbversion < 95)
@@ -1834,14 +1834,14 @@ bool CSQLHelper::OpenDatabase()
 		{
 			//Convert depricated CounterType 'Time' to type Counter with options ValueQuantity='Time' & ValueUnits='Min'
 			//Add options ValueQuantity='Count' to existing CounterType 'Counter'
-			const unsigned char charNTYPE_TODAYTIME = 'm';
+			const unsigned char oldnotification = 'm';
 			std::stringstream szQuery, szQuery1, szQuery2, szQuery3;
 			std::vector<std::vector<std::string> > result, result1;
 			std::vector<std::string> sd;
 			szQuery.clear();
 			szQuery.str("");
 			szQuery << "SELECT ID FROM Hardware"
-				" WHERE (([Type] = " << HTYPE_Dummy << ") OR ([Type] = " << HTYPE_YouLess << "))";
+				" WHERE (([Type] = " << hardware::type::Dummy << ") OR ([Type] = " << hardware::type::YouLess << "))";
 			result = query(szQuery.str());
 			if (!result.empty())
 			{
@@ -1854,7 +1854,7 @@ bool CSQLHelper::OpenDatabase()
 						" WHERE ((([Type]=" << pTypeRFXMeter << ") AND (SubType=" << sTypeRFXMeterCount << "))"
 						" OR (([Type]=" << pTypeGeneral << ") AND (SubType=" << sTypeCounterIncremental << "))"
 						" OR ([Type]=" << pTypeYouLess << "))"
-						" AND ((SwitchType=" << MTYPE_COUNTER << ") OR (SwitchType=" << MTYPE_TIME << "))"
+						" AND ((SwitchType=" << device::meter::type::COUNTER << ") OR (SwitchType=" << device::meter::type::TIME << "))"
 						" AND (HardwareID=" << sd[0] << ")";
 					result1 = query(szQuery1.str());
 					if (!result1.empty())
@@ -1863,14 +1863,14 @@ bool CSQLHelper::OpenDatabase()
 						{
 							sd = itt2;
 							uint64_t devidx = atoi(sd[0].c_str());
-							_eMeterType switchType = (_eMeterType)atoi(sd[2].c_str());
+							device::meter::type::value switchType = (device::meter::type::value)atoi(sd[2].c_str());
 
-							if (switchType == MTYPE_COUNTER)
+							if (switchType == device::meter::type::COUNTER)
 							{
 								//Add options to existing SwitchType 'Counter'
 								m_sql.SetDeviceOptions(devidx, m_sql.BuildDeviceOptions("ValueQuantity:Count;ValueUnits:", false));
 							}
-							else if (switchType == MTYPE_TIME)
+							else if (switchType == device::meter::type::TIME)
 							{
 								//Set default options
 								m_sql.SetDeviceOptions(devidx, m_sql.BuildDeviceOptions("ValueQuantity:Time;ValueUnits:Min", false));
@@ -1879,14 +1879,14 @@ bool CSQLHelper::OpenDatabase()
 								szQuery2.clear();
 								szQuery2.str("");
 								szQuery2 << "UPDATE DeviceStatus"
-									" SET SwitchType=" << MTYPE_COUNTER << " WHERE (ID=" << devidx << ")";
+									" SET SwitchType=" << device::meter::type::COUNTER << " WHERE (ID=" << devidx << ")";
 								query(szQuery2.str());
 
 								//Update notifications 'Time' -> 'Counter'
 								szQuery3.clear();
 								szQuery3.str("");
 								szQuery3 << "UPDATE Notifications"
-									" SET Params=REPLACE(Params, '" << charNTYPE_TODAYTIME << ";', '" << Notification_Type_Desc(NTYPE_TODAYCOUNTER, 1) << ";')"
+									" SET Params=REPLACE(Params, '" << oldnotification << ";', '" << device::notification::type::Description(device::notification::type::TODAYCOUNTER, 1) << ";')"
 									" WHERE (DeviceRowID=" << devidx << ")";
 								query(szQuery3.str());
 							}
@@ -1902,21 +1902,21 @@ bool CSQLHelper::OpenDatabase()
 			std::vector<std::vector<std::string> > result;
 			std::vector<std::string> sd;
 			szQuery << "SELECT ID FROM Hardware WHERE ( "
-				<< "([Type] = " << HTYPE_OpenThermGateway << ") OR "
-				<< "([Type] = " << HTYPE_OpenThermGatewayTCP << ") OR "
-				<< "([Type] = " << HTYPE_DavisVantage << ") OR "
-				<< "([Type] = " << HTYPE_System << ") OR "
-				<< "([Type] = " << HTYPE_ICYTHERMOSTAT << ") OR "
-				<< "([Type] = " << HTYPE_Meteostick << ") OR "
-				<< "([Type] = " << HTYPE_PVOUTPUT_INPUT << ") OR "
-				<< "([Type] = " << HTYPE_SBFSpot << ") OR "
-				<< "([Type] = " << HTYPE_SolarEdgeTCP << ") OR "
-				<< "([Type] = " << HTYPE_TE923 << ") OR "
-				<< "([Type] = " << HTYPE_TOONTHERMOSTAT << ") OR "
-				<< "([Type] = " << HTYPE_Wunderground << ") OR "
-				<< "([Type] = " << HTYPE_DarkSky << ") OR "
-				<< "([Type] = " << HTYPE_AccuWeather << ") OR "
-				<< "([Type] = " << HTYPE_OpenZWave << ")"
+				<< "([Type] = " << hardware::type::OpenThermGateway << ") OR "
+				<< "([Type] = " << hardware::type::OpenThermGatewayTCP << ") OR "
+				<< "([Type] = " << hardware::type::DavisVantage << ") OR "
+				<< "([Type] = " << hardware::type::System << ") OR "
+				<< "([Type] = " << hardware::type::ICYTHERMOSTAT << ") OR "
+				<< "([Type] = " << hardware::type::Meteostick << ") OR "
+				<< "([Type] = " << hardware::type::PVOUTPUT_INPUT << ") OR "
+				<< "([Type] = " << hardware::type::SBFSpot << ") OR "
+				<< "([Type] = " << hardware::type::SolarEdgeTCP << ") OR "
+				<< "([Type] = " << hardware::type::TE923 << ") OR "
+				<< "([Type] = " << hardware::type::TOONTHERMOSTAT << ") OR "
+				<< "([Type] = " << hardware::type::Wunderground << ") OR "
+				<< "([Type] = " << hardware::type::DarkSky << ") OR "
+				<< "([Type] = " << hardware::type::AccuWeather << ") OR "
+				<< "([Type] = " << hardware::type::OpenZWave << ")"
 				<< ")";
 			result = query(szQuery.str());
 			if (!result.empty())
@@ -1938,9 +1938,9 @@ bool CSQLHelper::OpenDatabase()
 			std::vector<std::vector<std::string> > result;
 			std::vector<std::string> sd;
 			szQuery << "SELECT ID FROM Hardware WHERE ( "
-				<< "([Type] = " << HTYPE_DavisVantage << ") OR "
-				<< "([Type] = " << HTYPE_TE923 << ") OR "
-				<< "([Type] = " << HTYPE_OpenZWave << ")"
+				<< "([Type] = " << hardware::type::DavisVantage << ") OR "
+				<< "([Type] = " << hardware::type::TE923 << ") OR "
+				<< "([Type] = " << hardware::type::OpenZWave << ")"
 				<< ")";
 			result = query(szQuery.str());
 			if (!result.empty())
@@ -2024,7 +2024,7 @@ bool CSQLHelper::OpenDatabase()
 			//S0 Meter patch
 			std::stringstream szQuery2;
 			std::vector<std::vector<std::string> > result;
-			szQuery2 << "SELECT ID, Address FROM Hardware WHERE([Type]==" << HTYPE_S0SmartMeterUSB << ")";
+			szQuery2 << "SELECT ID, Address FROM Hardware WHERE([Type]==" << hardware::type::S0SmartMeterUSB << ")";
 			result = query(szQuery2.str());
 			if (!result.empty())
 			{
@@ -2105,7 +2105,7 @@ bool CSQLHelper::OpenDatabase()
 			query("INSERT INTO Hardware(ID, Name, Enabled, Type, Address, Port, SerialPort, Username, Password, Extra, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, DataTimeout) SELECT ID, Name, Enabled, Type, Address, Port, SerialPort, Username, Password, Extra, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, DataTimeout FROM tmp_Hardware;");
 			query("DROP TABLE tmp_Hardware;");
 
-			result = safe_query("SELECT ID, Extra FROM Hardware WHERE Type=%d", HTYPE_HTTPPOLLER);
+			result = safe_query("SELECT ID, Extra FROM Hardware WHERE Type=%d", hardware::type::HTTPPOLLER);
 			if (!result.empty())
 			{
 				std::stringstream szQuery2;
@@ -2127,7 +2127,7 @@ bool CSQLHelper::OpenDatabase()
 			//SolarEdge API, no need for Serial Number anymore
 			std::stringstream szQuery2;
 			std::vector<std::vector<std::string> > result;
-			szQuery2 << "SELECT ID, Password FROM Hardware WHERE([Type]==" << HTYPE_SolarEdgeAPI << ")";
+			szQuery2 << "SELECT ID, Password FROM Hardware WHERE([Type]==" << hardware::type::SolarEdgeAPI << ")";
 			result = query(szQuery2.str());
 			if (!result.empty())
 			{
@@ -2143,7 +2143,7 @@ bool CSQLHelper::OpenDatabase()
 			//Fix for MySensor general switch with wrong subtype
 			std::stringstream szQuery2;
 			std::vector<std::vector<std::string> > result;
-			szQuery2 << "SELECT ID FROM Hardware WHERE ([Type]==" << HTYPE_MySensorsTCP << ") OR ([Type]==" << HTYPE_MySensorsUSB << ")";
+			szQuery2 << "SELECT ID FROM Hardware WHERE ([Type]==" << hardware::type::MySensorsTCP << ") OR ([Type]==" << hardware::type::MySensorsUSB << ")";
 			result = query(szQuery2.str());
 			if (!result.empty())
 			{
@@ -2162,7 +2162,7 @@ bool CSQLHelper::OpenDatabase()
 			//Patch for new 1-Wire subtypes
 			std::stringstream szQuery2;
 			std::vector<std::vector<std::string> > result;
-			szQuery2 << "SELECT ID FROM Hardware WHERE([Type]==" << HTYPE_1WIRE << ")";
+			szQuery2 << "SELECT ID FROM Hardware WHERE([Type]==" << hardware::type::OneWire << ")";
 			result = query(szQuery2.str());
 			if (!result.empty())
 			{
@@ -2181,9 +2181,9 @@ bool CSQLHelper::OpenDatabase()
 		{
 			//Set default values for new parameters in EcoDevices and Teleinfo EDF
 			std::stringstream szQuery1, szQuery2;
-			szQuery1 << "UPDATE Hardware SET Mode1 = 0, Mode2 = 60 WHERE Type =" << HTYPE_ECODEVICES;
+			szQuery1 << "UPDATE Hardware SET Mode1 = 0, Mode2 = 60 WHERE Type =" << hardware::type::ECODEVICES;
 			query(szQuery1.str());
-			szQuery2 << "UPDATE Hardware SET Mode1 = 0, Mode2 = 0, Mode3 = 60 WHERE Type =" << HTYPE_TeleinfoMeter;
+			szQuery2 << "UPDATE Hardware SET Mode1 = 0, Mode2 = 0, Mode3 = 60 WHERE Type =" << hardware::type::TeleinfoMeter;
 			query(szQuery2.str());
 		}
 		if (dbversion < 115)
@@ -2191,7 +2191,7 @@ bool CSQLHelper::OpenDatabase()
 			//Patch for Evohome Web
 			std::stringstream szQuery2;
 			std::vector<std::vector<std::string> > result;
-			szQuery2 << "SELECT ID, Name, Mode1, Mode2, Mode3, Mode4, Mode5 FROM Hardware WHERE([Type]==" << HTYPE_EVOHOME_WEB << ")";
+			szQuery2 << "SELECT ID, Name, Mode1, Mode2, Mode3, Mode4, Mode5 FROM Hardware WHERE([Type]==" << hardware::type::EVOHOME_WEB << ")";
 			result = query(szQuery2.str());
 			if (!result.empty())
 			{
@@ -2277,7 +2277,7 @@ bool CSQLHelper::OpenDatabase()
 			// incorrect call to hardware class from mainworker: move Evohome installation parameters from Mode5 to unused Mode3
 			std::stringstream szQuery2;
 			std::vector<std::vector<std::string> > result;
-			szQuery2 << "SELECT ID, Mode5 FROM Hardware WHERE([Type]==" << HTYPE_EVOHOME_WEB << ")";
+			szQuery2 << "SELECT ID, Mode5 FROM Hardware WHERE([Type]==" << hardware::type::EVOHOME_WEB << ")";
 			result = query(szQuery2.str());
 			if (!result.empty())
 			{
@@ -2295,7 +2295,7 @@ bool CSQLHelper::OpenDatabase()
 			std::vector<std::vector<std::string> > result;
 			std::vector<std::vector<std::string> > result2;
 			std::vector<std::vector<std::string> > result3;
-			szQuery2 << "SELECT ID FROM Hardware WHERE([Type]==" << HTYPE_DarkSky << ")";
+			szQuery2 << "SELECT ID FROM Hardware WHERE([Type]==" << hardware::type::DarkSky << ")";
 			result = query(szQuery2.str());
 			if (!result.empty())
 			{
@@ -2417,7 +2417,7 @@ bool CSQLHelper::OpenDatabase()
 			//Patch for ZWave, change device type from sTypeColor_RGB_W to sTypeColor_RGB_W_Z
 			szQuery2.clear();
 			szQuery2.str("");
-			szQuery2 << "SELECT ID FROM Hardware WHERE([Type]==" << HTYPE_OpenZWave << ")";
+			szQuery2 << "SELECT ID FROM Hardware WHERE([Type]==" << hardware::type::OpenZWave << ")";
 			result = query(szQuery2.str());
 			if (!result.empty())
 			{
@@ -2454,7 +2454,7 @@ bool CSQLHelper::OpenDatabase()
 		}
 		if (dbversion < 127)
 		{
-			safe_query("UPDATE Hardware SET Mode2 = 3 WHERE Type = %d", HTYPE_Philips_Hue);
+			safe_query("UPDATE Hardware SET Mode2 = 3 WHERE Type = %d", hardware::type::Philips_Hue);
 		}
 		if (dbversion < 128)
 		{
@@ -2565,7 +2565,7 @@ bool CSQLHelper::OpenDatabase()
 			std::vector<std::string> sd;
 			szQuery.clear();
 			szQuery.str("");
-			szQuery << "SELECT ID FROM Hardware WHERE([Type]==" << HTYPE_Philips_Hue << ")";
+			szQuery << "SELECT ID FROM Hardware WHERE([Type]==" << hardware::type::Philips_Hue << ")";
 			result = query(szQuery.str());
 			if (!result.empty())
 			{
@@ -2613,7 +2613,7 @@ bool CSQLHelper::OpenDatabase()
 				else
 					gasmbuschannel = 0x30;
 
-				result = safe_query("SELECT ID FROM Hardware WHERE Type=%d OR Type=%d", HTYPE_P1SmartMeter, HTYPE_P1SmartMeterLAN);
+				result = safe_query("SELECT ID FROM Hardware WHERE Type=%d OR Type=%d", hardware::type::P1SmartMeter, hardware::type::P1SmartMeterLAN);
 				for (const auto & itt : result)
 				{
 					std::vector<std::string> sd = itt;
@@ -2629,7 +2629,7 @@ bool CSQLHelper::OpenDatabase()
 		//place here actions that needs to be performed on new databases
 		query("INSERT INTO Plans (Name) VALUES ('$Hidden Devices')");
 		// Add hardware for internal use
-		m_sql.safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Domoticz Internal',1, %d,'',1,'','',0,0,0,0,0,0)", HTYPE_DomoticzInternal);
+		m_sql.safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Domoticz Internal',1, %d,'',1,'','',0,0,0,0,0,0)", hardware::type::DomoticzInternal);
 	}
 	UpdatePreferencesVar("DB_Version", DB_VERSION);
 
@@ -2718,7 +2718,7 @@ bool CSQLHelper::OpenDatabase()
 
 			szQuery.clear();
 			szQuery.str("");
-			szQuery << "SELECT ID,Mode1 FROM Hardware WHERE (Type=" << HTYPE_Rego6XX << ")";
+			szQuery << "SELECT ID,Mode1 FROM Hardware WHERE (Type=" << hardware::type::Rego6XX << ")";
 			result = query(szQuery.str());
 			if (!result.empty())
 			{
@@ -3199,7 +3199,7 @@ void CSQLHelper::Do_Work()
 
 			if (itt->_ItemType == TITEM_SWITCHCMD)
 			{
-				if (itt->_switchtype == STYPE_Motion)
+				if (itt->_switchtype == device::_switch::type::Motion)
 				{
 					std::string devname = "";
 					switch (itt->_devType)
@@ -3657,8 +3657,8 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 		if (!result.empty())
 		{
 			std::vector<std::string> sd = result[0];
-			_eHardwareTypes Type = (_eHardwareTypes)atoi(sd[0].c_str());
-			if (Type == HTYPE_PythonPlugin)
+			hardware::type::value Type = (hardware::type::value)atoi(sd[0].c_str());
+			if (Type == hardware::type::PythonPlugin)
 			{
 				// Not allowed to add device to plugin HW (plugin framework does not use key column "ID" but instead uses column "unit" as key)
 				_log.Log(LOG_ERROR, "CSQLHelper::CreateDevice: Not allowed to add device owned by plugin %u!", HardwareID);
@@ -3870,7 +3870,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 			if (DeviceRowIdx != -1)
 			{
 				//Set switch type to selector
-				m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%" PRIu64 ")", STYPE_Selector, DeviceRowIdx);
+				m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%" PRIu64 ")", device::_switch::type::Selector, DeviceRowIdx);
 				//Set default device options
 				m_sql.SetDeviceOptions(DeviceRowIdx, BuildDeviceOptions("SelectorStyle:0;LevelNames:Off|Level1|Level2|Level3", false));
 			}
@@ -3898,7 +3898,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 			if (DeviceRowIdx != -1)
 			{
 				//Set switch type to dimmer
-				m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%" PRIu64 ")", STYPE_Dimmer, DeviceRowIdx);
+				m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%" PRIu64 ")", device::_switch::type::Dimmer, DeviceRowIdx);
 			}
 		}
 		break;
@@ -4232,7 +4232,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 #ifdef ENABLE_PYTHON
 		//TODO: Plugins should perhaps be blocked from implicitly adding a device by update? It's most likely a bug due to updating a removed device..
 		CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(HardwareID);
-		if (pHardware != NULL && pHardware->HwdType == HTYPE_PythonPlugin)
+		if (pHardware != NULL && pHardware->HwdType == hardware::type::PythonPlugin)
 		{
 			_log.Debug(DEBUG_NORM, "CSQLHelper::UpdateValueInt: Notifying plugin %u about creation of device %u", HardwareID, unit);
 			Plugins::CPlugin *pPlugin = (Plugins::CPlugin*)pHardware;
@@ -4248,7 +4248,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 		auto options = BuildDeviceOptions(sOption);
 		devname = result[0][1];
 		bDeviceUsed = atoi(result[0][2].c_str()) != 0;
-		_eSwitchType stype = (_eSwitchType)atoi(result[0][3].c_str());
+		device::_switch::type::value stype = (device::_switch::type::value)atoi(result[0][3].c_str());
 		int old_nValue = atoi(result[0][4].c_str());
 		std::string old_sValue = result[0][5];
 		time_t now = time(0);
@@ -4288,10 +4288,10 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 		else
 		{
 			if (
-				(stype == STYPE_DoorContact) ||
-				(stype == STYPE_DoorLock) ||
-				(stype == STYPE_DoorLockInverted) ||
-				(stype == STYPE_Contact)
+				(stype == device::_switch::type::DoorContact) ||
+				(stype == device::_switch::type::DoorLock) ||
+				(stype == device::_switch::type::DoorLockInverted) ||
+				(stype == device::_switch::type::Contact)
 				)
 			{
 				//Check if we received the same state as before, if yes, don't do anything (only update)
@@ -4394,7 +4394,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 			bool bHaveDimmer = false;
 			std::vector<std::string> sd = result[0];
 			std::string Name = sd[0];
-			_eSwitchType switchtype = (_eSwitchType)atoi(sd[1].c_str());
+			device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[1].c_str());
 			float AddjValue = static_cast<float>(atof(sd[2].c_str()));
 			GetLightStatus(devType, subType, switchtype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 
@@ -4402,9 +4402,9 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 			std::string slevel = sd[6];
 
 			if ((bIsLightSwitchOn) && (llevel != 0) && (llevel != 255) ||
-				(switchtype == STYPE_BlindsPercentage) || (switchtype == STYPE_BlindsPercentageInverted))
+				(switchtype == device::_switch::type::BlindsPercentage) || (switchtype == device::_switch::type::BlindsPercentageInverted))
 			{
-				if (switchtype == STYPE_BlindsPercentage || switchtype == STYPE_BlindsPercentageInverted)
+				if (switchtype == device::_switch::type::BlindsPercentage || switchtype == device::_switch::type::BlindsPercentageInverted)
 				{
 					if (nValue == light2_sOn)
 						llevel = 100;
@@ -4432,7 +4432,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 					bIsLightSwitchOn = true;//Force use of OnAction for all actions
 
 				}
-				else if (switchtype == STYPE_Selector) {
+				else if (switchtype == device::_switch::type::Selector) {
 					bIsLightSwitchOn = (llevel > 0) ? true : false;
 					OnAction = GetSelectorSwitchLevelAction(BuildDeviceOptions(Options, true), llevel);
 					OffAction = GetSelectorSwitchLevelAction(BuildDeviceOptions(Options, true), 0);
@@ -4499,18 +4499,18 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 				}
 			}
 
-			_eHardwareTypes HWtype = HTYPE_Domoticz; //just a value
+			hardware::type::value HWtype = hardware::type::Domoticz; //just a value
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(HardwareID);
 			if (pHardware != NULL)
 				HWtype = pHardware->HwdType;
 
 			//Check for notifications
-			if (HWtype != HTYPE_LogitechMediaServer) // Skip notifications for LMS here; is handled by the LMS plug-in
+			if (HWtype != hardware::type::LogitechMediaServer) // Skip notifications for LMS here; is handled by the LMS plug-in
 			{
-				if (switchtype == STYPE_Selector)
-					m_notifications.CheckAndHandleSwitchNotification(ulID, devname, (bIsLightSwitchOn) ? NTYPE_SWITCH_ON : NTYPE_SWITCH_OFF, llevel);
+				if (switchtype == device::_switch::type::Selector)
+					m_notifications.CheckAndHandleSwitchNotification(ulID, devname, (bIsLightSwitchOn) ? device::notification::type::SWITCH_ON : device::notification::type::SWITCH_OFF, llevel);
 				else
-					m_notifications.CheckAndHandleSwitchNotification(ulID, devname, (bIsLightSwitchOn) ? NTYPE_SWITCH_ON : NTYPE_SWITCH_OFF);
+					m_notifications.CheckAndHandleSwitchNotification(ulID, devname, (bIsLightSwitchOn) ? device::notification::type::SWITCH_ON : device::notification::type::SWITCH_OFF);
 			}
 			if (bIsLightSwitchOn)
 			{
@@ -4519,14 +4519,14 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 					bool bAdd2DelayQueue = false;
 					int cmd = 0;
 					if (
-						(switchtype == STYPE_OnOff) ||
-						(switchtype == STYPE_Motion) ||
-						(switchtype == STYPE_Dimmer) ||
-						(switchtype == STYPE_PushOn) ||
-						(switchtype == STYPE_DoorContact) ||
-						(switchtype == STYPE_DoorLock) ||
-						(switchtype == STYPE_DoorLockInverted) ||
-						(switchtype == STYPE_Selector)
+						(switchtype == device::_switch::type::OnOff) ||
+						(switchtype == device::_switch::type::Motion) ||
+						(switchtype == device::_switch::type::Dimmer) ||
+						(switchtype == device::_switch::type::PushOn) ||
+						(switchtype == device::_switch::type::DoorContact) ||
+						(switchtype == device::_switch::type::DoorLock) ||
+						(switchtype == device::_switch::type::DoorLockInverted) ||
+						(switchtype == device::_switch::type::Selector)
 						)
 					{
 						switch (devType)
@@ -5360,7 +5360,7 @@ bool CSQLHelper::UpdateCalendarMeter(
 	std::vector<std::string> sd = result[0];
 	uint64_t DeviceRowID = std::strtoull(sd[0].c_str(), nullptr, 10);
 	//std::string devname = sd[1];
-	//_eSwitchType switchtype = (_eSwitchType)atoi(sd[2].c_str());
+	//device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[2].c_str());
 
 	if (shortLog)
 	{
@@ -6103,23 +6103,23 @@ void CSQLHelper::AddCalendarUpdateMeter()
 		//unsigned char Unit = atoi(sd[3].c_str());
 		unsigned char devType = atoi(sd[4].c_str());
 		unsigned char subType = atoi(sd[5].c_str());
-		_eSwitchType switchtype = (_eSwitchType)atoi(sd[6].c_str());
-		_eMeterType metertype = (_eMeterType)switchtype;
+		device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[6].c_str());
+		device::meter::type::value metertype = (device::meter::type::value)switchtype;
 
 		float tGasDivider = GasDivider;
 
 		if (devType == pTypeP1Power)
 		{
-			metertype = MTYPE_ENERGY;
+			metertype = device::meter::type::ENERGY;
 		}
 		else if (devType == pTypeP1Gas)
 		{
-			metertype = MTYPE_GAS;
+			metertype = device::meter::type::GAS;
 			tGasDivider = 1000.0f;
 		}
 		else if ((devType == pTypeRego6XXValue) && (subType == sTypeRego6XXCounter))
 		{
-			metertype = MTYPE_COUNTER;
+			metertype = device::meter::type::COUNTER;
 		}
 
 
@@ -6169,26 +6169,26 @@ void CSQLHelper::AddCalendarUpdateMeter()
 				musage = 0;
 				switch (metertype)
 				{
-				case MTYPE_ENERGY:
-				case MTYPE_ENERGY_GENERATED:
+				case device::meter::type::ENERGY:
+				case device::meter::type::ENERGY_GENERATED:
 					musage = float(total_real) / EnergyDivider;
 					if (musage != 0)
-						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, NTYPE_TODAYENERGY, musage);
+						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, device::notification::type::TODAYENERGY, musage);
 					break;
-				case MTYPE_GAS:
+				case device::meter::type::GAS:
 					musage = float(total_real) / tGasDivider;
 					if (musage != 0)
-						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, NTYPE_TODAYGAS, musage);
+						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, device::notification::type::TODAYGAS, musage);
 					break;
-				case MTYPE_WATER:
+				case device::meter::type::WATER:
 					musage = float(total_real) / WaterDivider;
 					if (musage != 0)
-						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, NTYPE_TODAYGAS, musage);
+						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, device::notification::type::TODAYGAS, musage);
 					break;
-				case MTYPE_COUNTER:
+				case device::meter::type::COUNTER:
 					musage = float(total_real);
 					if (musage != 0)
-						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, NTYPE_TODAYCOUNTER, musage);
+						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, device::notification::type::TODAYCOUNTER, musage);
 					break;
 				default:
 					//Unhandled
@@ -6299,8 +6299,8 @@ void CSQLHelper::AddCalendarUpdateMultiMeter()
 		//unsigned char Unit = atoi(sd[3].c_str());
 		unsigned char devType = atoi(sd[4].c_str());
 		unsigned char subType = atoi(sd[5].c_str());
-		//_eSwitchType switchtype=(_eSwitchType) atoi(sd[6].c_str());
-		//_eMeterType metertype=(_eMeterType)switchtype;
+		//device::_switch::type::value switchtype=(device::_switch::type::value) atoi(sd[6].c_str());
+		//device::meter::type::value metertype=(device::meter::type::value)switchtype;
 
 		result = safe_query(
 			"SELECT MIN(Value1), MAX(Value1), MIN(Value2), MAX(Value2), MIN(Value3), MAX(Value3), MIN(Value4), MAX(Value4), MIN(Value5), MAX(Value5), MIN(Value6), MAX(Value6) FROM MultiMeter WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
@@ -6361,7 +6361,7 @@ void CSQLHelper::AddCalendarUpdateMultiMeter()
 			if (devType == pTypeP1Power)
 			{
 				float musage = (total_real[0] + total_real[4]) / EnergyDivider;
-				m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, NTYPE_TODAYENERGY, musage);
+				m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, device::notification::type::TODAYENERGY, musage);
 			}
 			/*
 			//Insert the last (max) counter values into the table to get the "today" value correct.
@@ -6734,7 +6734,7 @@ void CSQLHelper::DeleteDevices(const std::string &idx)
 				std::vector<std::string> sd = result[0];
 				std::string HwID = sd[0];
 				std::string Unit = sd[1];
-				CDomoticzHardwareBase *pHardware = m_mainworker.GetHardwareByIDType(HwID, HTYPE_PythonPlugin);
+				CDomoticzHardwareBase *pHardware = m_mainworker.GetHardwareByIDType(HwID, hardware::type::PythonPlugin);
 				if (pHardware != NULL)
 				{
 					removeddevices.insert(std::make_pair(HwID, Unit));
@@ -6790,7 +6790,7 @@ void CSQLHelper::DeleteDevices(const std::string &idx)
 			int Unit = atoi(it.second.c_str());
 			// Notify plugin to sync plugins' device list
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(HwID);
-			if (pHardware != NULL && pHardware->HwdType == HTYPE_PythonPlugin)
+			if (pHardware != NULL && pHardware->HwdType == hardware::type::PythonPlugin)
 			{
 				_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDevices: Notifying plugin %u about deletion of device %u", HwID, Unit);
 				Plugins::CPlugin *pPlugin = (Plugins::CPlugin*)pHardware;
@@ -7025,7 +7025,7 @@ void CSQLHelper::CheckSceneStatus(const uint64_t Idx)
 		//unsigned char Unit=atoi(sd[2].c_str());
 		unsigned char dType = atoi(sd[3].c_str());
 		unsigned char dSubType = atoi(sd[4].c_str());
-		_eSwitchType switchtype = (_eSwitchType)atoi(sd[5].c_str());
+		device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[5].c_str());
 
 		std::string lstatus = "";
 		int llevel = 0;
@@ -8481,20 +8481,20 @@ float CSQLHelper::GetCounterDivider(const int metertype, const int dType, const 
 		int tValue;
 		switch (metertype)
 		{
-		case MTYPE_ENERGY:
-		case MTYPE_ENERGY_GENERATED:
+		case device::meter::type::ENERGY:
+		case device::meter::type::ENERGY_GENERATED:
 			if (GetPreferencesVar("MeterDividerEnergy", tValue))
 			{
 				divider = float(tValue);
 			}
 			break;
-		case MTYPE_GAS:
+		case device::meter::type::GAS:
 			if (GetPreferencesVar("MeterDividerGas", tValue))
 			{
 				divider = float(tValue);
 			}
 			break;
-		case MTYPE_WATER:
+		case device::meter::type::WATER:
 			if (GetPreferencesVar("MeterDividerWater", tValue))
 			{
 				divider = float(tValue);

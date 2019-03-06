@@ -187,7 +187,7 @@ bool CLimitLess::AddSwitchIfNotExits(const unsigned char Unit, const std::string
 		result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (Unit==%d) AND (Type==%d) AND (SubType==%d)", m_HwdID, int(Unit), pTypeColorSwitch, int(m_LEDType));
 		if (result.empty())
 		{
-			m_sql.InsertDevice(m_HwdID, "1", Unit, pTypeColorSwitch, m_LEDType, STYPE_Dimmer, 0, " ", devname);
+			m_sql.InsertDevice(m_HwdID, "1", Unit, pTypeColorSwitch, m_LEDType, device::_switch::type::Dimmer, 0, " ", devname);
 			return false;
 		}
 	}
@@ -195,7 +195,7 @@ bool CLimitLess::AddSwitchIfNotExits(const unsigned char Unit, const std::string
 		result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (Unit==%d) AND (Type==%d) AND (SubType==%d)", m_HwdID, int(Unit), pTypeColorSwitch, sTypeColor_RGB_CW_WW);
 		if (result.empty())
 		{
-			m_sql.InsertDevice(m_HwdID, "1", Unit, pTypeColorSwitch, sTypeColor_RGB_CW_WW, STYPE_Dimmer, 0, " ", devname);
+			m_sql.InsertDevice(m_HwdID, "1", Unit, pTypeColorSwitch, sTypeColor_RGB_CW_WW, device::_switch::type::Dimmer, 0, " ", devname);
 			return false;
 		}
 	}

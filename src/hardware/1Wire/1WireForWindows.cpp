@@ -7,7 +7,7 @@
 #include "jsoncpp/json.h"
 #include <WS2tcpip.h>
 
-#define _1WIRE_SERVICE_PORT "1664"
+#define _OneWire_SERVICE_PORT "1664"
 
 
 void Log(const _eLogLevel level, const char* logline, ...)
@@ -38,7 +38,7 @@ SOCKET ConnectToService()
    hints.ai_protocol = IPPROTO_TCP;
 
    // Resolve the server address and port
-   int getaddrinfoRet = getaddrinfo("localhost",_1WIRE_SERVICE_PORT,&hints,&result);
+   int getaddrinfoRet = getaddrinfo("localhost",_OneWire_SERVICE_PORT,&hints,&result);
    if (getaddrinfoRet != 0)
    {
       Log(LOG_ERROR,"getaddrinfo failed with error: %d\n", getaddrinfoRet);

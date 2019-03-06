@@ -250,7 +250,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 		case pTypeP1Power:
 			nexpected = 5;
 			if (nsize >= nexpected) {
-				return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, (float)atof(strarray[4].c_str()));
+				return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, (float)atof(strarray[4].c_str()));
 			}
 			break;
 		case pTypeRFXSensor:
@@ -259,7 +259,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 					return CheckAndHandleTempHumidityNotification(DevRowIdx, sName, fValue, 0, true, false);
 				case sTypeRFXSensorAD:
 				case sTypeRFXSensorVolt:
-					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, fValue);
+					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, fValue);
 				default:
 					break;
 			}
@@ -295,7 +295,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 				float dewpoint = (float)CalculateDewPoint(Temp, Hum);
 				r1 = CheckAndHandleTempHumidityNotification(DevRowIdx, sName, Temp, Hum, true, true);
 				r2 = CheckAndHandleDewPointNotification(DevRowIdx, sName, Temp, dewpoint);
-				r3 = CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_BARO, (float)atof(strarray[3].c_str()));
+				r3 = CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::BARO, (float)atof(strarray[3].c_str()));
 				return r1 && r2 && r3;
 			}
 			break;
@@ -303,7 +303,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 			nexpected = 2;
 			if (nsize >= nexpected) {
 				fValue2 = (float)atof(strarray[1].c_str());
-				return CheckAndHandleRainNotification(DevRowIdx, sName, cType, cSubType, NTYPE_RAIN, fValue2);
+				return CheckAndHandleRainNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::RAIN, fValue2);
 			}
 			break;
 		case pTypeTEMP_BARO:
@@ -312,7 +312,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 				float Temp = (float)atof(strarray[0].c_str());
 				float Baro = (float)atof(strarray[1].c_str());
 				r1 = CheckAndHandleTempHumidityNotification(DevRowIdx, sName, Temp, 0, true, false);
-				r2 = CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_BARO, Baro);
+				r2 = CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::BARO, Baro);
 				return r1 && r2;
 			}
 			break;
@@ -327,7 +327,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 				}
 				else
 					r1 = true;
-				r2 = CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_UV, Level);
+				r2 = CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::UV, Level);
 				return r1 && r2;
 			}
 			break;
@@ -354,7 +354,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 			if (nsize >= nexpected) {
 				float wspeedms = (float)(atof(strarray[2].c_str()) / 10.0f);
 				float temp = (float)atof(strarray[4].c_str());
-				r1 = CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_WIND, wspeedms);
+				r1 = CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::WIND, wspeedms);
 				r2 = CheckAndHandleTempHumidityNotification(DevRowIdx, sName, temp, 0, true, false);
 				return r1 && r2;
 			}
@@ -363,33 +363,33 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 			nexpected = 2;
 			if (nsize >= nexpected) {
 				float usagecurrent = (float)atof(strarray[1].c_str());
-				return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, usagecurrent);
+				return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, usagecurrent);
 			}
 			break;
 		case pTypeAirQuality:
-			return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, (float)nValue);
+			return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, (float)nValue);
 		case pTypeWEIGHT:
 		case pTypeLux:
-			return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, fValue);
+			return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, fValue);
 		case pTypeRego6XXTemp:
-			return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_TEMPERATURE, fValue);
+			return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::TEMPERATURE, fValue);
 		case pTypePOWER:
 			nexpected = 1;
 			if (nsize >= nexpected) {
 				fValue2 = (float)atof(strarray[0].c_str());
-				return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, fValue2);
+				return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, fValue2);
 			}
 			break;
 		case pTypeRFXMeter:
 			switch(cSubType) {
 				case sTypeRFXMeterCount:
-					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_TODAYCOUNTER, fValue);
+					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::TODAYCOUNTER, fValue);
 				default:
 					break;
 			}
 			break;
 		case pTypeUsage:
-			return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, fValue);
+			return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, fValue);
 			break;
 		case pTypeP1Gas:
 			// ignore, notification is done day by day in SQLHelper
@@ -403,7 +403,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 						//miles
 						fValue2 *= 0.6214f;
 					}
-					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, fValue2);
+					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, fValue2);
 				case sTypeDistance:
 					m_sql.GetMeterType(HardwareID, ID.c_str(), unit, cType, cSubType, meterType);
 					fValue2 = fValue;
@@ -411,23 +411,23 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 						//inches
 						fValue2 *= 0.393701f;
 					}
-					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, fValue2);
+					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, fValue2);
 				case sTypeBaro:
 				case sTypeKwh:
 					nexpected = 1;
 					if (nsize >= nexpected) {
 						fValue2 = (float)atof(strarray[0].c_str());
-						return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, fValue2);
+						return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, fValue2);
 					}
 					break;
 				case sTypeZWaveAlarm:
 					return CheckAndHandleValueNotification(DevRowIdx, sName, nValue);
 				case sTypePercentage:
-					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_PERCENTAGE, fValue);
+					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::PERCENTAGE, fValue);
 				case sTypeSoilMoisture:
 				case sTypeLeafWetness:
 				case sTypeAlert:
-					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, (float)nValue);
+					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, (float)nValue);
 				case sTypeFan:
 				case sTypeSoundLevel:
 				case sTypeSolarRadiation:
@@ -436,7 +436,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 				case sTypePressure:
 				case sTypeWaterflow:
 				case sTypeCustom:
-					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, NTYPE_USAGE, fValue);
+					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, device::notification::type::USAGE, fValue);
 				default:
 					// silently ignore other general devices
 					return false;
@@ -497,9 +497,9 @@ bool CNotificationHelper::CheckAndHandleTempHumidityNotification(
 
 	std::string msg = "";
 
-	std::string label = Notification_Type_Label(NTYPE_TEMPERATURE);
-	std::string signtemp = Notification_Type_Desc(NTYPE_TEMPERATURE, 1);
-	std::string signhum = Notification_Type_Desc(NTYPE_HUMIDITY, 1);
+	std::string label = device::notification::type::Label(device::notification::type::TEMPERATURE);
+	std::string signtemp = device::notification::type::Description(device::notification::type::TEMPERATURE, 1);
+	std::string signhum = device::notification::type::Description(device::notification::type::HUMIDITY, 1);
 
 	std::vector<_tNotification>::const_iterator itt;
 	for (itt = notifications.begin(); itt != notifications.end(); ++itt)
@@ -623,7 +623,7 @@ bool CNotificationHelper::CheckAndHandleDewPointNotification(
 
 	std::string msg = "";
 
-	std::string signdewpoint = Notification_Type_Desc(NTYPE_DEWPOINT, 1);
+	std::string signdewpoint = device::notification::type::Description(device::notification::type::DEWPOINT, 1);
 
 	std::vector<_tNotification>::const_iterator itt;
 	for (itt = notifications.begin(); itt != notifications.end(); ++itt)
@@ -678,7 +678,7 @@ bool CNotificationHelper::CheckAndHandleValueNotification(
 	std::string msg = "";
 	std::string notValue;
 
-	std::string signvalue = Notification_Type_Desc(NTYPE_VALUE, 1);
+	std::string signvalue = device::notification::type::Description(device::notification::type::VALUE, 1);
 
 	std::vector<_tNotification>::const_iterator itt;
 	for (itt = notifications.begin(); itt != notifications.end(); ++itt)
@@ -737,9 +737,9 @@ bool CNotificationHelper::CheckAndHandleAmpere123Notification(
 
 	std::string notValue;
 
-	std::string signamp1 = Notification_Type_Desc(NTYPE_AMPERE1, 1);
-	std::string signamp2 = Notification_Type_Desc(NTYPE_AMPERE2, 1);
-	std::string signamp3 = Notification_Type_Desc(NTYPE_AMPERE3, 1);
+	std::string signamp1 = device::notification::type::Description(device::notification::type::AMPERE1, 1);
+	std::string signamp2 = device::notification::type::Description(device::notification::type::AMPERE2, 1);
+	std::string signamp3 = device::notification::type::Description(device::notification::type::AMPERE3, 1);
 
 	std::vector<_tNotification>::const_iterator itt;
 	for (itt = notifications.begin(); itt != notifications.end(); ++itt)
@@ -770,17 +770,17 @@ bool CNotificationHelper::CheckAndHandleAmpere123Notification(
 			if (ntype == signamp1)
 			{
 				ampere = Ampere1;
-				ltype = Notification_Type_Desc(NTYPE_AMPERE1, 0);
+				ltype = device::notification::type::Description(device::notification::type::AMPERE1, 0);
 			}
 			else if (ntype == signamp2)
 			{
 				ampere = Ampere2;
-				ltype = Notification_Type_Desc(NTYPE_AMPERE2, 0);
+				ltype = device::notification::type::Description(device::notification::type::AMPERE2, 0);
 			}
 			else if (ntype == signamp3)
 			{
 				ampere = Ampere3;
-				ltype = Notification_Type_Desc(NTYPE_AMPERE3, 0);
+				ltype = device::notification::type::Description(device::notification::type::AMPERE3, 0);
 			}
 			bSendNotification = ApplyRule(splitresults[1], (ampere == svalue), (ampere < svalue));
 			if (bSendNotification && (!bRecoveryMessage || itt->SendAlways))
@@ -820,7 +820,7 @@ bool CNotificationHelper::CheckAndHandleAmpere123Notification(
 bool CNotificationHelper::CheckAndHandleNotification(
 	const uint64_t Idx,
 	const std::string &devicename,
-	const _eNotificationTypes ntype,
+	const device::notification::type::value ntype,
 	const std::string &message)
 {
 	std::vector<_tNotification> notifications = GetNotifications(Idx);
@@ -840,7 +840,7 @@ bool CNotificationHelper::CheckAndHandleNotification(
 	//check if not sent 12 hours ago, and if applicable
 	atime -= m_NotificationSensorInterval;
 
-	std::string ltype = Notification_Type_Desc(ntype, 1);
+	std::string ltype = device::notification::type::Description(ntype, 1);
 	std::vector<_tNotification>::const_iterator itt;
 	for (itt = notifications.begin(); itt != notifications.end(); ++itt)
 	{
@@ -871,7 +871,7 @@ bool CNotificationHelper::CheckAndHandleNotification(
 	const std::string &devicename,
 	const unsigned char devType,
 	const unsigned char subType,
-	const _eNotificationTypes ntype,
+	const device::notification::type::value ntype,
 	const float mvalue)
 {
 	std::vector<_tNotification> notifications = GetNotifications(Idx);
@@ -901,9 +901,9 @@ bool CNotificationHelper::CheckAndHandleNotification(
 
 	std::string msg = "";
 
-	std::string ltype = Notification_Type_Desc(ntype, 0);
-	std::string nsign = Notification_Type_Desc(ntype, 1);
-	std::string label = Notification_Type_Label(ntype);
+	std::string ltype = device::notification::type::Description(ntype, 0);
+	std::string nsign = device::notification::type::Description(ntype, 1);
+	std::string label = device::notification::type::Label(ntype);
 
 	std::vector<_tNotification>::const_iterator itt;
 	for (itt = notifications.begin(); itt != notifications.end(); ++itt)
@@ -968,7 +968,7 @@ bool CNotificationHelper::CheckAndHandleNotification(
 bool CNotificationHelper::CheckAndHandleSwitchNotification(
 	const uint64_t Idx,
 	const std::string &devicename,
-	const _eNotificationTypes ntype)
+	const device::notification::type::value ntype)
 {
 	std::vector<_tNotification> notifications = GetNotifications(Idx);
 	if (notifications.size() == 0)
@@ -980,12 +980,12 @@ bool CNotificationHelper::CheckAndHandleSwitchNotification(
 		Idx);
 	if (result.empty())
 		return false;
-	_eSwitchType switchtype = (_eSwitchType)atoi(result[0][0].c_str());
+	device::_switch::type::value switchtype = (device::_switch::type::value)atoi(result[0][0].c_str());
 	std::string szExtraData = "|Name=" + devicename + "|SwitchType=" + result[0][0] + "|CustomImage=" + result[0][1] + "|";
 
 	std::string msg = "";
 
-	std::string ltype = Notification_Type_Desc(ntype, 1);
+	std::string ltype = device::notification::type::Description(ntype, 1);
 
 	time_t atime = mytime(NULL);
 	atime -= m_NotificationSwitchInterval;
@@ -1008,34 +1008,34 @@ bool CNotificationHelper::CheckAndHandleSwitchNotification(
 			{
 				bSendNotification = true;
 				msg = devicename;
-				if (ntype == NTYPE_SWITCH_ON)
+				if (ntype == device::notification::type::SWITCH_ON)
 				{
 					szExtraData += "Status=On|";
 					switch (switchtype)
 					{
-					case STYPE_Doorbell:
+					case device::_switch::type::Doorbell:
 						notValue = "pressed";
 						break;
-					case STYPE_Contact:
+					case device::_switch::type::Contact:
 						notValue = "Open";
 						szExtraData += "Image=Contact48_On|";
 						break;
-					case STYPE_DoorContact:
+					case device::_switch::type::DoorContact:
 						notValue = "Open";
 						szExtraData += "Image=Door48_On|";
 						break;
-					case STYPE_DoorLock:
+					case device::_switch::type::DoorLock:
 						notValue = "Locked";
 						szExtraData += "Image=Door48_Off|";
 						break;
-					case STYPE_DoorLockInverted:
+					case device::_switch::type::DoorLockInverted:
 						notValue = "Unlocked";
 						szExtraData += "Image=Door48_On|";
 						break;
-					case STYPE_Motion:
+					case device::_switch::type::Motion:
 						notValue = "movement detected";
 						break;
-					case STYPE_SMOKEDETECTOR:
+					case device::_switch::type::SMOKEDETECTOR:
 						notValue = "ALARM/FIRE !";
 						break;
 					default:
@@ -1047,15 +1047,15 @@ bool CNotificationHelper::CheckAndHandleSwitchNotification(
 					szExtraData += "Status=Off|";
 					switch (switchtype)
 					{
-					case STYPE_DoorContact:
-					case STYPE_Contact:
+					case device::_switch::type::DoorContact:
+					case device::_switch::type::Contact:
 						notValue = "Closed";
 						break;
-					case STYPE_DoorLock:
+					case device::_switch::type::DoorLock:
 						notValue = "Unlocked";
 						szExtraData += "Image=Door48_On|";
 						break;
-					case STYPE_DoorLockInverted:
+					case device::_switch::type::DoorLockInverted:
 						notValue = "Locked";
 						szExtraData += "Image=Door48_Off|";
 						break;
@@ -1081,7 +1081,7 @@ bool CNotificationHelper::CheckAndHandleSwitchNotification(
 bool CNotificationHelper::CheckAndHandleSwitchNotification(
 	const uint64_t Idx,
 	const std::string &devicename,
-	const _eNotificationTypes ntype,
+	const device::notification::type::value ntype,
 	const int llevel)
 {
 	std::vector<_tNotification> notifications = GetNotifications(Idx);
@@ -1093,13 +1093,13 @@ bool CNotificationHelper::CheckAndHandleSwitchNotification(
 		Idx);
 	if (result.empty())
 		return false;
-	_eSwitchType switchtype = (_eSwitchType)atoi(result[0][0].c_str());
+	device::_switch::type::value switchtype = (device::_switch::type::value)atoi(result[0][0].c_str());
 	std::string szExtraData = "|Name=" + devicename + "|SwitchType=" + result[0][0] + "|CustomImage=" + result[0][1] + "|";
 	std::string sOptions = result[0][2].c_str();
 
 	std::string msg = "";
 
-	std::string ltype = Notification_Type_Desc(ntype, 1);
+	std::string ltype = device::notification::type::Description(ntype, 1);
 
 	time_t atime = mytime(NULL);
 	atime -= m_NotificationSwitchInterval;
@@ -1121,7 +1121,7 @@ bool CNotificationHelper::CheckAndHandleSwitchNotification(
 			if (atype == ltype)
 			{
 				msg = devicename;
-				if (ntype == NTYPE_SWITCH_ON)
+				if (ntype == device::notification::type::SWITCH_ON)
 				{
 					if (splitresults.size() < 3)
 						continue; //impossible
@@ -1136,7 +1136,7 @@ bool CNotificationHelper::CheckAndHandleSwitchNotification(
 						std::string sLevel = std::to_string(llevel);
 						szExtraData += "Status=Level " + sLevel + "|";
 
-						if (switchtype == STYPE_Selector)
+						if (switchtype == device::_switch::type::Selector)
 						{
 							std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sOptions);
 							std::string levelNames = options["LevelNames"];
@@ -1177,7 +1177,7 @@ bool CNotificationHelper::CheckAndHandleRainNotification(
 	const std::string &devicename,
 	const unsigned char devType,
 	const unsigned char subType,
-	const _eNotificationTypes ntype,
+	const device::notification::type::value ntype,
 	const float mvalue)
 {
 	std::vector<std::vector<std::string> > result;
@@ -1217,7 +1217,7 @@ bool CNotificationHelper::CheckAndHandleRainNotification(
 			float total_max = mvalue;
 			double total_real = total_max - total_min;
 			total_real *= AddjMulti;
-			CheckAndHandleNotification(Idx, devicename, devType, subType, NTYPE_RAIN, (float)total_real);
+			CheckAndHandleNotification(Idx, devicename, devType, subType, device::notification::type::RAIN, (float)total_real);
 		}
 	}
 	else
@@ -1225,7 +1225,7 @@ bool CNotificationHelper::CheckAndHandleRainNotification(
 		//value is already total rain
 		double total_real = mvalue;
 		total_real *= AddjMulti;
-		CheckAndHandleNotification(Idx, devicename, devType, subType, NTYPE_RAIN, (float)total_real);
+		CheckAndHandleNotification(Idx, devicename, devType, subType, device::notification::type::RAIN, (float)total_real);
 	}
 	return false;
 }
@@ -1251,7 +1251,7 @@ void CNotificationHelper::CheckAndHandleLastUpdateNotification()
 				StringSplit(itt2->Params, ";", splitresults);
 				if (splitresults.size() < 3)
 					continue;
-				std::string ttype = Notification_Type_Desc(NTYPE_LASTUPDATE, 1);
+				std::string ttype = device::notification::type::Description(device::notification::type::LASTUPDATE, 1);
 				if (splitresults[0] == ttype)
 				{
 					std::string recoverymsg;
@@ -1281,8 +1281,8 @@ void CNotificationHelper::CheckAndHandleLastUpdateNotification()
 						if (result.empty())
 							continue;
 						szExtraData = "|Name=" + itt2->DeviceName + "|SwitchType=" + result[0][0] + "|";
-						std::string ltype = Notification_Type_Desc(NTYPE_LASTUPDATE, 0);
-						std::string label = Notification_Type_Label(NTYPE_LASTUPDATE);
+						std::string ltype = device::notification::type::Description(device::notification::type::LASTUPDATE, 0);
+						std::string label = device::notification::type::Label(device::notification::type::LASTUPDATE);
 						char szDate[50];
 						char szTmp[300];
 						struct tm ltime;
@@ -1570,7 +1570,7 @@ void CNotificationHelper::ReloadNotifications()
 			struct tm ntime;
 			ParseSQLdatetime(notification.LastSend, ntime, stime, atime.tm_isdst);
 		}
-		std::string ttype = Notification_Type_Desc(NTYPE_LASTUPDATE, 1);
+		std::string ttype = device::notification::type::Description(device::notification::type::LASTUPDATE, 1);
 		StringSplit(notification.Params, ";", splitresults);
 		if (splitresults[0] == ttype) {
 			std::vector<std::vector<std::string> > result2;

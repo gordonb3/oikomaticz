@@ -19,7 +19,7 @@ class CLogitechMediaServer : public CDomoticzHardwareBase
 		std::string		Name;
 		std::string		IP;
 		time_t			LastOK;
-		_eMediaStatus	nStatus;
+		device::media::status::value	nStatus;
 		std::string		sStatus;
 		std::string		sShortStatus;
 	};
@@ -44,7 +44,7 @@ public:
 	void SendText(const std::string &playerIP, const std::string &subject, const std::string &text, const int duration);
 	int GetPlaylistRefID(const std::string &name);
 private:
-	_eNotificationTypes	NotificationType(_eMediaStatus nStatus);
+	device::notification::type::value	NotificationType(device::media::status::value nStatus);
 	void Do_Work();
 	void GetPlayerInfo();
 	void UpsertPlayer(const std::string &Name, const std::string &IPAddress, const std::string &MacAddress);
@@ -53,7 +53,7 @@ private:
 	bool StopHardware() override;
 	Json::Value Query(const std::string &sIP, const int iPort, const std::string &sPostdata);
 	void Do_Node_Work(const LogitechMediaServerNode &Node);
-	void UpdateNodeStatus(const LogitechMediaServerNode &Node, const _eMediaStatus nStatus, const std::string &sStatus, const bool bPingOK);
+	void UpdateNodeStatus(const LogitechMediaServerNode &Node, const device::media::status::value nStatus, const std::string &sStatus, const bool bPingOK);
 	void ReloadNodes();
 	void ReloadPlaylists();
 	std::string GetPlaylistByRefID(const int ID);

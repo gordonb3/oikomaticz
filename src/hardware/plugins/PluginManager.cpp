@@ -389,7 +389,7 @@ namespace Plugins {
 			std::vector<std::string> sd = result[0];
 			std::string sHwdID = sd[0];
 			std::string Unit = sd[1];
-			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardwareByIDType(sHwdID, HTYPE_PythonPlugin);
+			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardwareByIDType(sHwdID, hardware::type::PythonPlugin);
 			if (pHardware != NULL)
 			{
 				//std::vector<std::string> sd = result[0];
@@ -427,7 +427,7 @@ namespace http {
 						TiXmlElement* pXmlEle = pXmlNode->ToElement();
 						if (pXmlEle)
 						{
-							root[iPluginCnt]["idx"] = HTYPE_PythonPlugin;
+							root[iPluginCnt]["idx"] = hardware::type::PythonPlugin;
 							ATTRIBUTE_VALUE(pXmlEle, "key", root[iPluginCnt]["key"]);
 							ATTRIBUTE_VALUE(pXmlEle, "name", root[iPluginCnt]["name"]);
 							ATTRIBUTE_VALUE(pXmlEle, "author", root[iPluginCnt]["author"]);
@@ -501,7 +501,7 @@ namespace http {
 		{
 			Plugins::CPluginSystem Plugins;
 			std::map<int, CDomoticzHardwareBase*>*	PluginHwd = Plugins.GetHardware();
-			std::string		sRetVal = Hardware_Type_Desc(HTYPE_PythonPlugin);
+			std::string		sRetVal = hardware::type::Long_Desc(hardware::type::PythonPlugin);
 			Plugins::CPlugin*	pPlugin = NULL;
 
 			// Disabled plugins will not be in plugin hardware map

@@ -33,7 +33,7 @@ bool CNotificationLogitechMediaServer::SendMessageImplementation(
 		sSubject = Subject;
 	}
 
-	CDomoticzHardwareBase *pHardware = m_mainworker.GetHardwareByType(HTYPE_LogitechMediaServer);
+	CDomoticzHardwareBase *pHardware = m_mainworker.GetHardwareByType(hardware::type::LogitechMediaServer);
 	CLogitechMediaServer* pLMS = dynamic_cast<CLogitechMediaServer*>(pHardware);
 
 	if (pHardware == NULL) {

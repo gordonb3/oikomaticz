@@ -24,13 +24,13 @@ struct STR_DEVICE {
 
 const STR_DEVICE DevicesType[TOT_DEVICE_TYPES] =
 {
-	{ 0, "switchBox", "Switch Box",pTypeLighting2, sTypeAC, STYPE_OnOff, "relay" },
-	{ 1, "shutterBox", "Shutter Box", pTypeLighting2, sTypeAC, STYPE_BlindsPercentageInverted, "shutter" },
-	{ 2, "wLightBoxS", "Light Box S", pTypeLighting2, sTypeAC, STYPE_Dimmer, "light" },
-	{ 3, "wLightBox", "Light Box", pTypeColorSwitch, sTypeColor_RGB_W, STYPE_Dimmer, "rgbw" },
+	{ 0, "switchBox", "Switch Box",pTypeLighting2, sTypeAC, device::_switch::type::OnOff, "relay" },
+	{ 1, "shutterBox", "Shutter Box", pTypeLighting2, sTypeAC, device::_switch::type::BlindsPercentageInverted, "shutter" },
+	{ 2, "wLightBoxS", "Light Box S", pTypeLighting2, sTypeAC, device::_switch::type::Dimmer, "light" },
+	{ 3, "wLightBox", "Light Box", pTypeColorSwitch, sTypeColor_RGB_W, device::_switch::type::Dimmer, "rgbw" },
 	{ 4, "gateBox", "Gate Box", pTypeGeneral, sTypePercentage, 0, "gate" },
-	{ 5, "dimmerBox", "Dimmer Box", pTypeLighting2, sTypeAC, STYPE_Dimmer, "dimmer" },
-	{ 6, "switchBoxD", "Switch Box D", pTypeLighting2, sTypeAC, STYPE_OnOff, "relay" }
+	{ 5, "dimmerBox", "Dimmer Box", pTypeLighting2, sTypeAC, device::_switch::type::Dimmer, "dimmer" },
+	{ 6, "switchBoxD", "Switch Box D", pTypeLighting2, sTypeAC, device::_switch::type::OnOff, "relay" }
 };
 
 BleBox::BleBox(const int id, const int pollIntervalsec)
@@ -734,7 +734,7 @@ namespace http {
 			}
 
 			std::string hwid = request::findValue(&req, "idx");
-			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
+			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, hardware::type::BleBox);
 			if (pBaseHardware == NULL)
 				return;
 
@@ -806,7 +806,7 @@ namespace http {
 				(mode2 == "")
 				)
 				return;
-			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
+			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, hardware::type::BleBox);
 			if (pBaseHardware == NULL)
 				return;
 			BleBox *pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
@@ -840,7 +840,7 @@ namespace http {
 				(ip == "")
 				)
 				return;
-			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
+			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, hardware::type::BleBox);
 			if (pBaseHardware == NULL)
 				return;
 			BleBox *pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
@@ -865,7 +865,7 @@ namespace http {
 				(nodeid == "")
 				)
 				return;
-			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
+			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, hardware::type::BleBox);
 			if (pBaseHardware == NULL)
 				return;
 			BleBox *pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
@@ -885,7 +885,7 @@ namespace http {
 			}
 
 			std::string hwid = request::findValue(&req, "idx");
-			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
+			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, hardware::type::BleBox);
 			if (pBaseHardware == NULL)
 				return;
 			BleBox *pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
@@ -910,7 +910,7 @@ namespace http {
 				(ipmask == "")
 				)
 				return;
-			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
+			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, hardware::type::BleBox);
 			if (pBaseHardware == NULL)
 				return;
 			BleBox *pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
@@ -929,7 +929,7 @@ namespace http {
 			}
 
 			std::string hwid = request::findValue(&req, "idx");
-			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
+			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, hardware::type::BleBox);
 			if (pBaseHardware == NULL)
 				return;
 			BleBox *pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
@@ -1076,8 +1076,8 @@ void BleBox::AddNode(const std::string &name, const std::string &IPAddress)
 	if (deviceType.unit == 4) // gatebox
 	{
 		m_sql.InsertDevice(m_HwdID, szIdx.c_str(), 1, (uint8_t)deviceType.deviceID, deviceType.subType, deviceType.switchType, 0, "Unavailable", name);
-		m_sql.InsertDevice(m_HwdID, szIdx.c_str(), 2, pTypeGeneralSwitch, sTypeAC, STYPE_PushOn, 0, "Unavailable", name);
-		m_sql.InsertDevice(m_HwdID, szIdx.c_str(), 3, pTypeGeneralSwitch, sTypeAC, STYPE_PushOn, 0, "Unavailable", name);
+		m_sql.InsertDevice(m_HwdID, szIdx.c_str(), 2, pTypeGeneralSwitch, sTypeAC, device::_switch::type::PushOn, 0, "Unavailable", name);
+		m_sql.InsertDevice(m_HwdID, szIdx.c_str(), 3, pTypeGeneralSwitch, sTypeAC, device::_switch::type::PushOn, 0, "Unavailable", name);
 	}
 	else
 		if (deviceType.unit == 6) // switchboxd

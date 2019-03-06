@@ -195,7 +195,7 @@ private:
 	void Do_Work();
 	void ProcessMinute();
 	void GetCurrentMeasurementStates();
-	std::string UpdateSingleState(const uint64_t ulDevID, const std::string &devname, const int nValue, const char* sValue, const unsigned char devType, const unsigned char subType, const _eSwitchType switchType, const std::string &lastUpdate, const unsigned char lastLevel, const std::map<std::string, std::string> & options);
+	std::string UpdateSingleState(const uint64_t ulDevID, const std::string &devname, const int nValue, const char* sValue, const unsigned char devType, const unsigned char subType, const device::_switch::type::value switchType, const std::string &lastUpdate, const unsigned char lastLevel, const std::map<std::string, std::string> & options);
 	void EvaluateEvent(const std::vector<_tEventQueue> &items);
 	void EvaluateDatabaseEvents(const _tEventQueue &item);
 	lua_State *ParseBlocklyLua(lua_State *lua_state, const _tEventItem &item);
@@ -209,7 +209,7 @@ private:
 	void EvaluateLua(const std::vector<_tEventQueue> &items, const std::string &filename, const std::string &LuaString);
 	void luaThread(lua_State *lua_state, const std::string &filename);
 	static void luaStop(lua_State *L, lua_Debug *ar);
-	std::string nValueToWording(const uint8_t dType, const uint8_t dSubType, const _eSwitchType switchtype, const int nValue, const std::string &sValue, const std::map<std::string, std::string> & options);
+	std::string nValueToWording(const uint8_t dType, const uint8_t dSubType, const device::_switch::type::value switchtype, const int nValue, const std::string &sValue, const std::map<std::string, std::string> & options);
 	static int l_domoticz_print(lua_State* lua_state);
 	void OpenURL(const float delay, const std::string &URL);
 	void WriteToLog(const std::string &devNameNoQuotes, const std::string &doWhat);

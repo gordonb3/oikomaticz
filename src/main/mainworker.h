@@ -32,10 +32,10 @@ public:
 	void RemoveDomoticzHardware(CDomoticzHardwareBase *pHardware);
 	void RemoveDomoticzHardware(int HwdId);
 	int FindDomoticzHardware(int HwdId);
-	int FindDomoticzHardwareByType(const _eHardwareTypes HWType);
+	int FindDomoticzHardwareByType(const hardware::type::value HWType);
 	CDomoticzHardwareBase* GetHardware(int HwdId);
-	CDomoticzHardwareBase* GetHardwareByIDType(const std::string &HwdId, const _eHardwareTypes HWType);
-	CDomoticzHardwareBase* GetHardwareByType(const _eHardwareTypes HWType);
+	CDomoticzHardwareBase* GetHardwareByIDType(const std::string &HwdId, const hardware::type::value HWType);
+	CDomoticzHardwareBase* GetHardwareByType(const hardware::type::value HWType);
 
 	void HeartbeatUpdate(const std::string &component, bool critical = true);
 	void HeartbeatRemove(const std::string &component);
@@ -84,7 +84,7 @@ public:
 		const int ID,
 		const std::string &Name,
 		const bool Enabled,
-		const _eHardwareTypes Type,
+		const hardware::type::value Type,
 		const std::string &Address, const unsigned short Port, const std::string &SerialPort,
 		const std::string &Username, const std::string &Password,
 		const std::string &Extra,
@@ -180,7 +180,7 @@ private:
 
 	//message decoders
 	void decode_BateryLevel(bool bIsInPercentage, unsigned char level);
-	unsigned char get_BateryLevel(const _eHardwareTypes HwdType, bool bIsInPercentage, unsigned char level);
+	unsigned char get_BateryLevel(const hardware::type::value HwdType, bool bIsInPercentage, unsigned char level);
 
 	// RxMessage queue resources
 	volatile unsigned long m_rxMessageIdx;
@@ -209,73 +209,73 @@ private:
 	};
 
 	//(RFX) Message decoders
-	void decode_InterfaceMessage(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_InterfaceControl(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_UNDECODED(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_RecXmitMessage(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Rain(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Wind(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Temp(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Hum(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_TempHum(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_TempRain(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_UV(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Lighting1(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Lighting2(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Lighting3(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Lighting4(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Lighting5(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Lighting6(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Fan(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Curtain(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_BLINDS1(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_RFY(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Security1(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Security2(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Camera1(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Remote(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Thermostat1(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Thermostat2(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Thermostat3(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Thermostat4(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Radiator1(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Baro(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_TempHumBaro(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_TempBaro(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_DateTime(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Current(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Energy(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Current_Energy(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Gas(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Water(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Weight(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_RFXSensor(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_RFXMeter(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_P1MeterPower(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_P1MeterGas(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_YouLessMeter(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_AirQuality(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_FS20(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Rego6XXTemp(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Rego6XXValue(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Usage(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Lux(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_General(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult, const unsigned char SignalLevel = 12, const unsigned char BatteryLevel = 255);
-	void decode_GeneralSwitch(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_HomeConfort(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Thermostat(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Chime(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_BBQ(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Power(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_ColorSwitch(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_evohome1(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_evohome2(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_evohome3(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Cartelectronic(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_InterfaceMessage(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_InterfaceControl(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_UNDECODED(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_RecXmitMessage(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Rain(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Wind(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Temp(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Hum(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_TempHum(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_TempRain(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_UV(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Lighting1(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Lighting2(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Lighting3(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Lighting4(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Lighting5(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Lighting6(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Fan(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Curtain(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_BLINDS1(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_RFY(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Security1(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Security2(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Camera1(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Remote(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Thermostat1(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Thermostat2(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Thermostat3(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Thermostat4(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Radiator1(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Baro(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_TempHumBaro(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_TempBaro(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_DateTime(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Current(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Energy(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Current_Energy(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Gas(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Water(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Weight(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_RFXSensor(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_RFXMeter(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_P1MeterPower(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_P1MeterGas(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_YouLessMeter(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_AirQuality(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_FS20(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Rego6XXTemp(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Rego6XXValue(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Usage(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Lux(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_General(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult, const unsigned char SignalLevel = 12, const unsigned char BatteryLevel = 255);
+	void decode_GeneralSwitch(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_HomeConfort(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Thermostat(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Chime(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_BBQ(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Power(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_ColorSwitch(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_evohome1(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_evohome2(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_evohome3(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Cartelectronic(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_CartelectronicTIC(const int HwdID, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_CartelectronicEncoder(const int HwdID, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_ASyncPort(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_ASyncData(const int HwdID, const _eHardwareTypes HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_ASyncPort(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_ASyncData(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 };
 
 extern MainWorker m_mainworker;

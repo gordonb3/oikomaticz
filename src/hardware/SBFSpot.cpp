@@ -653,7 +653,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(hardwareID);
 			if (pHardware != NULL)
 			{
-				if (pHardware->HwdType == HTYPE_SBFSpot)
+				if (pHardware->HwdType == hardware::type::SBFSpot)
 				{
 					CSBFSpot *pSBFSpot = reinterpret_cast<CSBFSpot *>(pHardware);
 					pSBFSpot->ImportOldMonthData();

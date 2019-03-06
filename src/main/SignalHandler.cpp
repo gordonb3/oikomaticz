@@ -51,6 +51,7 @@ static bool printRegInfo(siginfo_t * info, ucontext_t * ucontext)
 #else // unknown
 	_log.Log(LOG_ERROR, "siginfo address=%p", info->si_addr);
 #endif
+	return true;
 }
 
 static bool printSingleThreadInfo(FILE* f, const char* pattern, bool& foundThread, bool& gdbSuccess)
@@ -80,6 +81,7 @@ static bool printSingleThreadInfo(FILE* f, const char* pattern, bool& foundThrea
 		free(line);
 		line = NULL;
 	}
+	return true;
 }
 
 static bool printSingleCallStack(FILE* f, const char* pattern, bool& foundThread, bool& gdbSuccess)
@@ -113,6 +115,7 @@ static bool printSingleCallStack(FILE* f, const char* pattern, bool& foundThread
 		free(line);
 		line = NULL;
 	}
+	return true;
 }
 
 // Try to attach gdb to print stack trace (Linux only).

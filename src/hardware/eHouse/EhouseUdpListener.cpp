@@ -1581,7 +1581,7 @@ void eHouseTCP::GetUDPNamesRS485(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHn[nr]->Outs[i], (char *)&m_GetLine, sizeof(m_eHn[nr]->Outs[i]));
-		UpdateSQLState(data[1], data[2], EH_RS485, pTypeGeneralSwitch, sSwitchTypeAC, STYPE_OnOff, 0x21, i + 1, 1, 0, "0", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_RS485, pTypeGeneralSwitch, sSwitchTypeAC, device::_switch::type::OnOff, 0x21, i + 1, 1, 0, "0", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 	GetStr(data);
@@ -1590,7 +1590,7 @@ void eHouseTCP::GetUDPNamesRS485(unsigned char *data, int nbytes)
 		GetStr(data);
 		strncpy((char *)&m_eHn[nr]->Inputs[i], (char *)&m_GetLine, sizeof(m_eHn[nr]->Inputs[i]));
 		if (nr != 0) UpdateSQLState(data[1], data[2], EH_RS485, pTypeGeneralSwitch, sSwitchGeneralSwitch,    //not HM
-			STYPE_Contact, VISUAL_INPUT_IN, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+			device::_switch::type::Contact, VISUAL_INPUT_IN, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 
@@ -1599,15 +1599,15 @@ void eHouseTCP::GetUDPNamesRS485(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHn[nr]->Dimmers[i], (char *)&m_GetLine, sizeof(m_eHn[nr]->Dimmers[i]));
-		UpdateSQLState(data[1], data[2], EH_RS485, pTypeLighting2, sTypeAC, STYPE_Dimmer, VISUAL_DIMMER_OUT, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_RS485, pTypeLighting2, sTypeAC, device::_switch::type::Dimmer, VISUAL_DIMMER_OUT, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
-	UpdateSQLState(data[1], data[2], EH_RS485, pTypeColorSwitch, sTypeColor_RGB_W, STYPE_Dimmer, VISUAL_DIMMER_RGB, 1, 1, 0, "", Name, "RGB", true, 100, m_PlanID);  //RGB dimmer
+	UpdateSQLState(data[1], data[2], EH_RS485, pTypeColorSwitch, sTypeColor_RGB_W, device::_switch::type::Dimmer, VISUAL_DIMMER_RGB, 1, 1, 0, "", Name, "RGB", true, 100, m_PlanID);  //RGB dimmer
 	GetStr(data);	//rollers names
 
 	for (i = 0; i < sizeof(m_eHn[nr]->Outs) / sizeof(m_eHn[nr]->Outs[0]); i += 2)    //Blinds Names (use twin - single outputs) out #1,#2=> blind #1
 	{
 		GetStr(data);
-		if (nr == STATUS_ARRAYS_SIZE) UpdateSQLState(data[1], data[2], EH_RS485, pTypeLighting2, sTypeAC, STYPE_BlindsPercentage, VISUAL_BLINDS, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		if (nr == STATUS_ARRAYS_SIZE) UpdateSQLState(data[1], data[2], EH_RS485, pTypeLighting2, sTypeAC, device::_switch::type::BlindsPercentage, VISUAL_BLINDS, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 	int k = 0;
@@ -1630,8 +1630,8 @@ void eHouseTCP::GetUDPNamesRS485(unsigned char *data, int nbytes)
 
 	PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
 
-	k = UpdateSQLState(data[1], data[2], EH_RS485, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
-	k = UpdateSQLState(data[1], data[2], EH_RS485, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
+	k = UpdateSQLState(data[1], data[2], EH_RS485, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
+	k = UpdateSQLState(data[1], data[2], EH_RS485, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
 	UpdatePGM(data[1], data[2], VISUAL_PGM, PGMs, k);
 	k = 0;
 	/*    strcpy(PGMs,"SelectorStyle:1;LevelNames:"); //Add Regulation Program Selector
@@ -1649,8 +1649,8 @@ void eHouseTCP::GetUDPNamesRS485(unsigned char *data, int nbytes)
 					}
 			}
 		PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
-		k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100);
-		k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100);
+		k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100);
+		k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100);
 		UpdatePGM(data[1], data[2], VISUAL_APGM, PGMs,k);
 	*/
 	/*strcat(Names,"#Secu Programs Names\r\n"); //CM only
@@ -1725,7 +1725,7 @@ void eHouseTCP::GetUDPNamesLAN(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHEn[nr]->Outs[i], (char *)&m_GetLine, sizeof(m_eHEn[nr]->Outs[i]));
-		UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeAC, STYPE_OnOff, 0x21, i, 1, 0, "0", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeAC, device::_switch::type::OnOff, 0x21, i, 1, 0, "0", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 	GetStr(data);
@@ -1733,7 +1733,7 @@ void eHouseTCP::GetUDPNamesLAN(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHEn[nr]->Inputs[i], (char *)&m_GetLine, sizeof(m_eHEn[nr]->Inputs[i]));
-		UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchGeneralSwitch, STYPE_Contact, VISUAL_INPUT_IN, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchGeneralSwitch, device::_switch::type::Contact, VISUAL_INPUT_IN, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 
@@ -1742,15 +1742,15 @@ void eHouseTCP::GetUDPNamesLAN(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHEn[nr]->Dimmers[i], (char *)&m_GetLine, sizeof(m_eHEn[nr]->Dimmers[i]));
-		UpdateSQLState(data[1], data[2], EH_LAN, pTypeLighting2, sTypeAC, STYPE_Dimmer, VISUAL_DIMMER_OUT, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_LAN, pTypeLighting2, sTypeAC, device::_switch::type::Dimmer, VISUAL_DIMMER_OUT, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
-	UpdateSQLState(data[1], data[2], EH_LAN, pTypeColorSwitch, sTypeColor_RGB_W, STYPE_Dimmer, VISUAL_DIMMER_RGB, 0, 1, 0, "", Name, "RGB", true, 100, m_PlanID);  //RGB dimmer
+	UpdateSQLState(data[1], data[2], EH_LAN, pTypeColorSwitch, sTypeColor_RGB_W, device::_switch::type::Dimmer, VISUAL_DIMMER_RGB, 0, 1, 0, "", Name, "RGB", true, 100, m_PlanID);  //RGB dimmer
 	GetStr(data);		//rollers names
 
 	for (i = 0; i < sizeof(m_eHEn[nr]->Rollers) / sizeof(m_eHEn[nr]->Rollers[0]); i++)    //Blinds Names (use twin - single outputs) out #1,#2=> blind #1
 	{
 		GetStr(data);
-		UpdateSQLState(data[1], data[2], EH_LAN, pTypeLighting2, sTypeAC, STYPE_BlindsPercentage, VISUAL_BLINDS, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_LAN, pTypeLighting2, sTypeAC, device::_switch::type::BlindsPercentage, VISUAL_BLINDS, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	
 	}
 
@@ -1777,8 +1777,8 @@ void eHouseTCP::GetUDPNamesLAN(unsigned char *data, int nbytes)
 	PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
 	//_log.Log(LOG_ERROR, "[PRG %d] %s", strlen(PGMs), PGMs);
 
-	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
-	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
+	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
+	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
 	//ISO2UTF8(PGMs);
 	UpdatePGM(data[1], data[2], VISUAL_PGM, PGMs, k);
 	k = 0;
@@ -1805,8 +1805,8 @@ void eHouseTCP::GetUDPNamesLAN(unsigned char *data, int nbytes)
 	//_log.Log(LOG_ERROR, "[PRG %d] %s", strlen(PGMs), PGMs);
 
 
-	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
-	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
+	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
+	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
 	//ISO2UTF8(PGMs);
 	UpdatePGM(data[1], data[2], VISUAL_APGM, PGMs, k);
 
@@ -1877,7 +1877,7 @@ void eHouseTCP::GetUDPNamesCM(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_ECMn->Outs[i], (char *)&m_GetLine, sizeof(m_ECMn->Outs[i]));
-		UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeAC, STYPE_OnOff, 0x21, i, 1, 0, "0", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeAC, device::_switch::type::OnOff, 0x21, i, 1, 0, "0", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 	GetStr(data);
@@ -1885,7 +1885,7 @@ void eHouseTCP::GetUDPNamesCM(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_ECMn->Inputs[i], (char *)&m_GetLine, sizeof(m_ECMn->Inputs[i]));
-		UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchGeneralSwitch, STYPE_Contact, VISUAL_INPUT_IN, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchGeneralSwitch, device::_switch::type::Contact, VISUAL_INPUT_IN, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 
@@ -1894,15 +1894,15 @@ void eHouseTCP::GetUDPNamesCM(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_ECMn->Dimmers[i], (char *)&m_GetLine, sizeof(m_ECMn->Dimmers[i]));
-		UpdateSQLState(data[1], data[2], EH_LAN, pTypeLighting2, sTypeAC, STYPE_Dimmer, VISUAL_DIMMER_OUT, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_LAN, pTypeLighting2, sTypeAC, device::_switch::type::Dimmer, VISUAL_DIMMER_OUT, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
-	UpdateSQLState(data[1], data[2], EH_LAN, pTypeColorSwitch, sTypeColor_RGB_W, STYPE_Dimmer, VISUAL_DIMMER_RGB, 0, 1, 0, "", Name, "RGB", true, 100, m_PlanID);  //RGB dimmer
+	UpdateSQLState(data[1], data[2], EH_LAN, pTypeColorSwitch, sTypeColor_RGB_W, device::_switch::type::Dimmer, VISUAL_DIMMER_RGB, 0, 1, 0, "", Name, "RGB", true, 100, m_PlanID);  //RGB dimmer
 	GetStr(data);//rolers names
 
 	for (i = 0; i < sizeof(m_ECMn->Rollers) / sizeof(m_ECMn->Rollers[0]); i++)    //Blinds Names (use twin - single outputs) out #1,#2=> blind #1
 	{
 		GetStr(data);
-		UpdateSQLState(data[1], data[2], EH_LAN, pTypeLighting2, sTypeAC, STYPE_BlindsPercentage, VISUAL_BLINDS, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_LAN, pTypeLighting2, sTypeAC, device::_switch::type::BlindsPercentage, VISUAL_BLINDS, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 	int k = 0;
@@ -1927,8 +1927,8 @@ void eHouseTCP::GetUDPNamesCM(unsigned char *data, int nbytes)
 
 	PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
 
-	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
-	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
+	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
+	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
 	//ISO2UTF8(PGMs);
 	UpdatePGM(data[1], data[2], VISUAL_PGM, PGMs, k);
 	k = 0;
@@ -1952,8 +1952,8 @@ void eHouseTCP::GetUDPNamesCM(unsigned char *data, int nbytes)
 	}
 	PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
 
-	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
-	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
+	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
+	k = UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
 	//ISO2UTF8(PGMs);
 	UpdatePGM(data[1], data[2], VISUAL_APGM, PGMs, k);
 
@@ -2036,7 +2036,7 @@ void eHouseTCP::GetUDPNamesPRO(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHouseProN->Outs[i], (char *)&m_GetLine, sizeof(m_eHouseProN->Outs[i]));
-		UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeAC, STYPE_OnOff, 0x21, i, 1, 0, "0", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeAC, device::_switch::type::OnOff, 0x21, i, 1, 0, "0", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 	GetStr(data);
@@ -2044,7 +2044,7 @@ void eHouseTCP::GetUDPNamesPRO(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHouseProN->Inputs[i], (char *)&m_GetLine, sizeof(m_eHouseProN->Inputs[i]));
-		UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchGeneralSwitch, STYPE_Contact, VISUAL_INPUT_IN, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchGeneralSwitch, device::_switch::type::Contact, VISUAL_INPUT_IN, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 
@@ -2053,15 +2053,15 @@ void eHouseTCP::GetUDPNamesPRO(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHouseProN->Dimmers[i], (char *)&m_GetLine, sizeof(m_eHouseProN->Dimmers[i]));
-		//    UpdateSQLState(data[1], data[2], EH_PRO, pTypeLighting2, sTypeAC, STYPE_Dimmer, VISUAL_DIMMER_OUT, i, 1, 0, "", Name, (char *) &GetLine, true, 100);
+		//    UpdateSQLState(data[1], data[2], EH_PRO, pTypeLighting2, sTypeAC, device::_switch::type::Dimmer, VISUAL_DIMMER_OUT, i, 1, 0, "", Name, (char *) &GetLine, true, 100);
 	}
-	//UpdateSQLState(data[1], data[2], EH_LAN, pTypeColorSwitch, sTypeColor_RGB_W, STYPE_Dimmer, VISUAL_DIMMER_RGB, 0, 1, 0, "", Name, "RGB", true, 100);  //RGB dimmer
+	//UpdateSQLState(data[1], data[2], EH_LAN, pTypeColorSwitch, sTypeColor_RGB_W, device::_switch::type::Dimmer, VISUAL_DIMMER_RGB, 0, 1, 0, "", Name, "RGB", true, 100);  //RGB dimmer
 	GetStr(data);//rollers names
 
 	for (i = 0; i < sizeof(m_eHouseProN->Rollers) / sizeof(m_eHouseProN->Rollers[0]); i++)    //Blinds Names (use twin - single outputs) out #1,#2=> blind #1
 	{
 		GetStr(data);
-		UpdateSQLState(data[1], data[2], EH_PRO, pTypeLighting2, sTypeAC, STYPE_BlindsPercentage, VISUAL_BLINDS, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_PRO, pTypeLighting2, sTypeAC, device::_switch::type::BlindsPercentage, VISUAL_BLINDS, i, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 	int k = 0;
@@ -2088,8 +2088,8 @@ void eHouseTCP::GetUDPNamesPRO(unsigned char *data, int nbytes)
 	PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
 	if (k > 0)
 	{
-		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
-		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
+		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
+		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100, m_PlanID);
 		//ISO2UTF8(PGMs);
 		UpdatePGM(data[1], data[2], VISUAL_PGM, PGMs, k);
 	}
@@ -2117,8 +2117,8 @@ void eHouseTCP::GetUDPNamesPRO(unsigned char *data, int nbytes)
 	PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
 	if (k > 0)
 	{
-		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
-		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
+		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
+		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100, m_PlanID);
 		//ISO2UTF8(PGMs);
 		UpdatePGM(data[1], data[2], VISUAL_APGM, PGMs, k);
 	}
@@ -2150,8 +2150,8 @@ void eHouseTCP::GetUDPNamesPRO(unsigned char *data, int nbytes)
 	PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
 	if (k > 0)
 	{
-		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_SECUPGM, 1, 1, 0, "0", Name, "Pgm. Secu", true, 100, m_PlanID);
-		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_SECUPGM, 1, 1, 0, "0", Name, "Pgm. Secu", true, 100, m_PlanID);
+		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_SECUPGM, 1, 1, 0, "0", Name, "Pgm. Secu", true, 100, m_PlanID);
+		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_SECUPGM, 1, 1, 0, "0", Name, "Pgm. Secu", true, 100, m_PlanID);
 		//ISO2UTF8(PGMs);
 		UpdatePGM(data[1], data[2], VISUAL_SECUPGM, PGMs, k);
 	}
@@ -2182,8 +2182,8 @@ void eHouseTCP::GetUDPNamesPRO(unsigned char *data, int nbytes)
 	PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
 	if (k > 0)
 	{
-		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_ZONEPGM, 1, 1, 0, "0", Name, "Zones", true, 100, m_PlanID);
-		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_ZONEPGM, 1, 1, 0, "0", Name, "Zones", true, 100, m_PlanID);
+		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_ZONEPGM, 1, 1, 0, "0", Name, "Zones", true, 100, m_PlanID);
+		k = UpdateSQLState(data[1], data[2], EH_PRO, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_ZONEPGM, 1, 1, 0, "0", Name, "Zones", true, 100, m_PlanID);
 		//ISO2UTF8(PGMs);
 		UpdatePGM(data[1], data[2], VISUAL_ZONEPGM, PGMs, k);
 	}
@@ -2244,7 +2244,7 @@ void eHouseTCP::GetUDPNamesWiFi(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHWIFIn[nr]->Outs[i], (char *)&m_GetLine, sizeof(m_eHWIFIn[nr]->Outs[i]));
-		UpdateSQLState(data[1], data[2], EH_WIFI, pTypeGeneralSwitch, sSwitchTypeAC, STYPE_OnOff, 0x21, i + 1, 1, 0, "0", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_WIFI, pTypeGeneralSwitch, sSwitchTypeAC, device::_switch::type::OnOff, 0x21, i + 1, 1, 0, "0", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 	GetStr(data);
@@ -2252,7 +2252,7 @@ void eHouseTCP::GetUDPNamesWiFi(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHWIFIn[nr]->Inputs[i], (char *)&m_GetLine, sizeof(m_eHWIFIn[nr]->Inputs[i]));
-		UpdateSQLState(data[1], data[2], EH_WIFI, pTypeGeneralSwitch, sSwitchGeneralSwitch, STYPE_Contact, VISUAL_INPUT_IN, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_WIFI, pTypeGeneralSwitch, sSwitchGeneralSwitch, device::_switch::type::Contact, VISUAL_INPUT_IN, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 
@@ -2261,15 +2261,15 @@ void eHouseTCP::GetUDPNamesWiFi(unsigned char *data, int nbytes)
 	{
 		GetStr(data);
 		strncpy((char *)&m_eHWIFIn[nr]->Dimmers[i], (char *)&m_GetLine, sizeof(m_eHWIFIn[nr]->Dimmers[i]));
-		UpdateSQLState(data[1], data[2], EH_WIFI, pTypeLighting2, sTypeAC, STYPE_Dimmer, VISUAL_DIMMER_OUT, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_WIFI, pTypeLighting2, sTypeAC, device::_switch::type::Dimmer, VISUAL_DIMMER_OUT, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
-	UpdateSQLState(data[1], data[2], EH_WIFI, pTypeColorSwitch, sTypeColor_RGB_W, STYPE_Dimmer, VISUAL_DIMMER_RGB, 1, 1, 0, "", Name, "RGB", true, 100, m_PlanID);  //RGB dimmer
+	UpdateSQLState(data[1], data[2], EH_WIFI, pTypeColorSwitch, sTypeColor_RGB_W, device::_switch::type::Dimmer, VISUAL_DIMMER_RGB, 1, 1, 0, "", Name, "RGB", true, 100, m_PlanID);  //RGB dimmer
 	GetStr(data);//rollers names
 
 	for (i = 0; i < sizeof(m_eHWIFIn[nr]->Rollers) / sizeof(m_eHWIFIn[nr]->Rollers[0]); i++)    //Blinds Names (use twin - single outputs) out #1,#2=> blind #1
 	{
 		GetStr(data);
-		UpdateSQLState(data[1], data[2], EH_WIFI, pTypeLighting2, sTypeAC, STYPE_BlindsPercentage, VISUAL_BLINDS, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
+		UpdateSQLState(data[1], data[2], EH_WIFI, pTypeLighting2, sTypeAC, device::_switch::type::BlindsPercentage, VISUAL_BLINDS, i + 1, 1, 0, "", Name, (char *)&m_GetLine, true, 100, m_PlanID);
 	}
 
 	int k = 0;
@@ -2292,8 +2292,8 @@ void eHouseTCP::GetUDPNamesWiFi(unsigned char *data, int nbytes)
 	*/
 	/*PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
 
-	k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100);
-	k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100);
+	k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100);
+	k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_PGM, 1, 1, 0, "0", Name, "Scene", true, 100);
 	//ISO2UTF8(PGMs);
 	UpdatePGM(data[1], data[2], VISUAL_PGM, PGMs,k);
 	k= 0;
@@ -2313,8 +2313,8 @@ void eHouseTCP::GetUDPNamesWiFi(unsigned char *data, int nbytes)
 		}
 	PGMs[strlen(PGMs) - 1] = 0; //remove last '|'
 
-	k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100);
-	k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, STYPE_Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100);
+	k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100);
+	k=UpdateSQLState(data[1], data[2], EH_LAN, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector, VISUAL_APGM, 1, 1, 0, "0", Name, "Reg. Scene", true, 100);
 	//ISO2UTF8(PGMs);
 	UpdatePGM(data[1], data[2], VISUAL_APGM, PGMs,k);
 */

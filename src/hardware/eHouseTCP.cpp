@@ -255,7 +255,7 @@ int eHouseTCP::UpdateSQLState(int devh, const uint8_t devl, int devtype, const u
 		devname.append(Name, strlen(Name));
 		devname.append(" - ");
 	}
-	if (swtype != STYPE_Selector)
+	if (swtype != device::_switch::type::Selector)
 		if ((strstr(SignalName, "@") != NULL) || (strlen(SignalName) < 1))
 		{
 			return -1;

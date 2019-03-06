@@ -442,7 +442,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pHardware == NULL)
 				return;
-			if (pHardware->HwdType != HTYPE_Pinger)
+			if (pHardware->HwdType != hardware::type::Pinger)
 				return;
 
 			root["status"] = "OK";
@@ -488,7 +488,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if (pBaseHardware->HwdType != HTYPE_Pinger)
+			if (pBaseHardware->HwdType != hardware::type::Pinger)
 				return;
 			CPinger *pHardware = reinterpret_cast<CPinger*>(pBaseHardware);
 
@@ -531,7 +531,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if (pBaseHardware->HwdType != HTYPE_Pinger)
+			if (pBaseHardware->HwdType != hardware::type::Pinger)
 				return;
 			CPinger *pHardware = reinterpret_cast<CPinger*>(pBaseHardware);
 
@@ -565,7 +565,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if (pBaseHardware->HwdType != HTYPE_Pinger)
+			if (pBaseHardware->HwdType != hardware::type::Pinger)
 				return;
 			CPinger *pHardware = reinterpret_cast<CPinger*>(pBaseHardware);
 
@@ -594,7 +594,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if (pBaseHardware->HwdType != HTYPE_Pinger)
+			if (pBaseHardware->HwdType != hardware::type::Pinger)
 				return;
 			CPinger *pHardware = reinterpret_cast<CPinger*>(pBaseHardware);
 
@@ -619,7 +619,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if (pBaseHardware->HwdType != HTYPE_Pinger)
+			if (pBaseHardware->HwdType != hardware::type::Pinger)
 				return;
 			CPinger *pHardware = reinterpret_cast<CPinger*>(pBaseHardware);
 

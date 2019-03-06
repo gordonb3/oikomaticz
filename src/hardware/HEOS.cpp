@@ -103,16 +103,16 @@ void CHEOS::ParseLine()
 										std::string pid = SplitMessagePlayer[1];
 										std::string state = SplitMessageState[1];
 
-										_eMediaStatus nStatus = MSTAT_UNKNOWN;
+										device::media::status::value nStatus = device::media::status::UNKNOWN;
 
 										if (state == "play")
-											nStatus = MSTAT_PLAYING;
+											nStatus = device::media::status::PLAYING;
 										else if (state == "pause")
-											nStatus = MSTAT_PAUSED;
+											nStatus = device::media::status::PAUSED;
 										else if (state == "stop")
-											nStatus = MSTAT_STOPPED;
+											nStatus = device::media::status::STOPPED;
 										else
-											nStatus = MSTAT_ON;
+											nStatus = device::media::status::ON;
 
 										std::string	sStatus = "";
 
@@ -205,16 +205,16 @@ void CHEOS::ParseLine()
 									std::string pid = SplitMessagePlayer[1];
 									std::string state = SplitMessageState[1];
 
-									_eMediaStatus nStatus = MSTAT_UNKNOWN;
+									device::media::status::value nStatus = device::media::status::UNKNOWN;
 
 									if (state == "play")
-										nStatus = MSTAT_PLAYING;
+										nStatus = device::media::status::PLAYING;
 									else if (state == "pause")
-										nStatus = MSTAT_PAUSED;
+										nStatus = device::media::status::PAUSED;
 									else if (state == "stop")
-										nStatus = MSTAT_STOPPED;
+										nStatus = device::media::status::STOPPED;
 									else
-										nStatus = MSTAT_ON;
+										nStatus = device::media::status::ON;
 
 									std::string	sStatus = "";
 
@@ -543,16 +543,16 @@ void CHEOS::Do_Work()
 
 }
 
-_eNotificationTypes	CHEOS::NotificationType(_eMediaStatus nStatus)
+device::notification::type::value	CHEOS::NotificationType(device::media::status::value nStatus)
 {
 	switch (nStatus)
 	{
-	case MSTAT_OFF:		return NTYPE_SWITCH_OFF;
-	case MSTAT_ON:		return NTYPE_SWITCH_ON;
-	case MSTAT_PAUSED:	return NTYPE_PAUSED;
-	case MSTAT_STOPPED:	return NTYPE_STOPPED;
-	case MSTAT_PLAYING:	return NTYPE_PLAYING;
-	default:			return NTYPE_SWITCH_OFF;
+	case device::media::status::OFF:		return device::notification::type::SWITCH_OFF;
+	case device::media::status::ON:		return device::notification::type::SWITCH_ON;
+	case device::media::status::PAUSED:	return device::notification::type::PAUSED;
+	case device::media::status::STOPPED:	return device::notification::type::STOPPED;
+	case device::media::status::PLAYING:	return device::notification::type::PLAYING;
+	default:			return device::notification::type::SWITCH_OFF;
 	}
 }
 
@@ -685,7 +685,7 @@ bool CHEOS::WriteInt(const std::string &sendStr)
 	return true;
 }
 
-void CHEOS::UpdateNodeStatus(const std::string &DevID, const _eMediaStatus nStatus, const std::string &sStatus)
+void CHEOS::UpdateNodeStatus(const std::string &DevID, const device::media::status::value nStatus, const std::string &sStatus)
 {
 	std::vector<std::vector<std::string> > result;
 
@@ -697,7 +697,7 @@ void CHEOS::UpdateNodeStatus(const std::string &DevID, const _eMediaStatus nStat
 	sprintf(szLastUpdate, "%04d-%02d-%02d %02d:%02d:%02d", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
 
 	result = m_sql.safe_query("UPDATE DeviceStatus SET nValue=%d, sValue='%q', LastUpdate='%q' WHERE (HardwareID == %d) AND (DeviceID == '%q') AND (Unit == 1) AND (SwitchType == %d)",
-		int(nStatus), sStatus.c_str(), szLastUpdate, m_HwdID, DevID.c_str(), STYPE_Media);
+		int(nStatus), sStatus.c_str(), szLastUpdate, m_HwdID, DevID.c_str(), device::_switch::type::Media);
 }
 
 void CHEOS::UpdateNodesStatus(const std::string &DevID, const std::string &sStatus)
@@ -712,7 +712,7 @@ void CHEOS::UpdateNodesStatus(const std::string &DevID, const std::string &sStat
 	sprintf(szLastUpdate, "%04d-%02d-%02d %02d:%02d:%02d", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
 
 	result = m_sql.safe_query("UPDATE DeviceStatus SET sValue='%q', LastUpdate='%q' WHERE (HardwareID == %d) AND (DeviceID == '%q') AND (Unit == 1) AND (SwitchType == %d)",
-		sStatus.c_str(), szLastUpdate, m_HwdID, DevID.c_str(), STYPE_Media);
+		sStatus.c_str(), szLastUpdate, m_HwdID, DevID.c_str(), device::_switch::type::Media);
 }
 
 void CHEOS::AddNode(const std::string &Name, const std::string &PlayerID)
@@ -726,7 +726,7 @@ void CHEOS::AddNode(const std::string &Name, const std::string &PlayerID)
 		return;
 	}
 
-	m_sql.InsertDevice(m_HwdID, PlayerID.c_str(), 1, pTypeLighting2, sTypeAC, STYPE_Media, 0, "Unavailable", Name, 12, 255, 1);
+	m_sql.InsertDevice(m_HwdID, PlayerID.c_str(), 1, pTypeLighting2, sTypeAC, device::_switch::type::Media, 0, "Unavailable", Name, 12, 255, 1);
 
 	ReloadNodes();
 }
@@ -816,7 +816,7 @@ void CHEOS::ReloadNodes()
 			pnode.ID = atoi(sd[0].c_str());
 			pnode.DevID = atoi(sd[1].c_str());
 			pnode.Name = sd[2];
-			pnode.nStatus = (_eMediaStatus)atoi(sd[3].c_str());
+			pnode.nStatus = (device::media::status::value)atoi(sd[3].c_str());
 			pnode.sStatus = sd[4];
 			pnode.LastOK = mytime(NULL);
 
@@ -853,7 +853,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if (pBaseHardware->HwdType != HTYPE_HEOS)
+			if (pBaseHardware->HwdType != hardware::type::HEOS)
 				return;
 			CHEOS *pHardware = reinterpret_cast<CHEOS*>(pBaseHardware);
 
@@ -883,16 +883,16 @@ namespace http {
 
 			if (result.size() == 1)
 			{
-				_eSwitchType	sType = (_eSwitchType)atoi(result[0][0].c_str());
+				device::_switch::type::value	sType = (device::_switch::type::value)atoi(result[0][0].c_str());
 				int PlayerID = atoi(result[0][1].c_str());
-				_eHardwareTypes	hType = (_eHardwareTypes)atoi(result[0][2].c_str());
+				hardware::type::value	hType = (hardware::type::value)atoi(result[0][2].c_str());
 				//int HwID = atoi(result[0][3].c_str());
 				// Is the device a media Player?
-				if (sType == STYPE_Media)
+				if (sType == device::_switch::type::Media)
 				{
 					switch (hType) {
-					case HTYPE_HEOS:
-						CDomoticzHardwareBase * pBaseHardware = m_mainworker.GetHardwareByIDType(result[0][3].c_str(), HTYPE_HEOS);
+					case hardware::type::HEOS:
+						CDomoticzHardwareBase * pBaseHardware = m_mainworker.GetHardwareByIDType(result[0][3].c_str(), hardware::type::HEOS);
 						if (pBaseHardware == NULL)
 							return;
 						CHEOS *pHEOS = reinterpret_cast<CHEOS*>(pBaseHardware);

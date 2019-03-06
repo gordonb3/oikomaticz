@@ -592,13 +592,13 @@ bool SatelIntegra::ReadOutputsState(const bool firstTime)
 								if (findBlindOutput == false)
 								{
 									ReportOutputState(index + 1 + 1024, outputState);
-									UpdateOutputName(index + 1 + 1024, &buffer[4], STYPE_Blinds);
+									UpdateOutputName(index + 1 + 1024, &buffer[4], device::_switch::type::Blinds);
 								}
 								findBlindOutput = !findBlindOutput;
 							}
 
 							ReportOutputState(index + 1, outputState);
-							UpdateOutputName(index + 1, &buffer[4], m_isOutputSwitch[index] ? STYPE_OnOff : STYPE_Contact);
+							UpdateOutputName(index + 1, &buffer[4], m_isOutputSwitch[index] ? device::_switch::type::OnOff : device::_switch::type::Contact);
 						}
 						else
 						{
@@ -993,7 +993,7 @@ void SatelIntegra::UpdateZoneName(const int Idx, const unsigned char* name, cons
 #ifdef DEBUG_SatelIntegra
 		_log.Log(LOG_STATUS, "Satel Integra: update name for %d to '%s:%s'", Idx, namePrefix.c_str(), shortName.c_str());
 #endif
-		m_sql.safe_query("UPDATE DeviceStatus SET Name='%q:%q', SwitchType=%d, Unit=%d WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit=1)", namePrefix.c_str(), shortName.c_str(), STYPE_Contact, partition, m_HwdID, szTmp);
+		m_sql.safe_query("UPDATE DeviceStatus SET Name='%q:%q', SwitchType=%d, Unit=%d WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit=1)", namePrefix.c_str(), shortName.c_str(), device::_switch::type::Contact, partition, m_HwdID, szTmp);
 	}
 }
 
@@ -1016,11 +1016,11 @@ void SatelIntegra::UpdateTempName(const int Idx, const unsigned char* name, cons
 #ifdef DEBUG_SatelIntegra
 		_log.Log(LOG_STATUS, "Satel Integra: update name for %d to 'Temp:%s'", Idx, shortName.c_str());
 #endif
-		m_sql.safe_query("UPDATE DeviceStatus SET Name='Temp:%q', SwitchType=%d, Unit=%d WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit=0)", shortName.c_str(), STYPE_Contact, partition, m_HwdID, szTmp);
+		m_sql.safe_query("UPDATE DeviceStatus SET Name='Temp:%q', SwitchType=%d, Unit=%d WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit=0)", shortName.c_str(), device::_switch::type::Contact, partition, m_HwdID, szTmp);
 	}
 }
 
-void SatelIntegra::UpdateOutputName(const int Idx, const unsigned char* name, const _eSwitchType switchType)
+void SatelIntegra::UpdateOutputName(const int Idx, const unsigned char* name, const device::_switch::type::value switchType)
 {
 	std::vector<std::vector<std::string> > result;
 

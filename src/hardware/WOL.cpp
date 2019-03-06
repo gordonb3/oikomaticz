@@ -189,7 +189,7 @@ void CWOL::AddNode(const std::string &Name, const std::string &MACAddress)
 	sprintf(szID, "%X%02X%02X%02X", 0, 0, (ID & 0xFF00) >> 8, ID & 0xFF);
 
 	//Also add a light (push) device
-	m_sql.InsertDevice(m_HwdID, szID, 1, pTypeLighting2, sTypeAC, STYPE_PushOn, 1, " ", Name, 12, 255, 1);
+	m_sql.InsertDevice(m_HwdID, szID, 1, pTypeLighting2, sTypeAC, device::_switch::type::PushOn, 1, " ", Name, 12, 255, 1);
 }
 
 bool CWOL::UpdateNode(const int ID, const std::string &Name, const std::string &MACAddress)
@@ -255,7 +255,7 @@ namespace http {
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pHardware == NULL)
 				return;
-			if (pHardware->HwdType != HTYPE_WOL)
+			if (pHardware->HwdType != hardware::type::WOL)
 				return;
 
 			root["status"] = "OK";
@@ -301,7 +301,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if (pBaseHardware->HwdType != HTYPE_WOL)
+			if (pBaseHardware->HwdType != hardware::type::WOL)
 				return;
 			CWOL *pHardware = reinterpret_cast<CWOL*>(pBaseHardware);
 
@@ -333,7 +333,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if (pBaseHardware->HwdType != HTYPE_WOL)
+			if (pBaseHardware->HwdType != hardware::type::WOL)
 				return;
 			CWOL *pHardware = reinterpret_cast<CWOL*>(pBaseHardware);
 
@@ -362,7 +362,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if (pBaseHardware->HwdType != HTYPE_WOL)
+			if (pBaseHardware->HwdType != hardware::type::WOL)
 				return;
 			CWOL *pHardware = reinterpret_cast<CWOL*>(pBaseHardware);
 
@@ -387,7 +387,7 @@ namespace http {
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
 			if (pBaseHardware == NULL)
 				return;
-			if (pBaseHardware->HwdType != HTYPE_WOL)
+			if (pBaseHardware->HwdType != hardware::type::WOL)
 				return;
 			CWOL *pHardware = reinterpret_cast<CWOL*>(pBaseHardware);
 

@@ -91,14 +91,14 @@ void CScheduler::ReloadSchedules()
 				titem.bIsScene = false;
 				titem.bIsThermostat = false;
 
-				_eTimerType timerType = (_eTimerType)atoi(sd[2].c_str());
+				device::timer::type::value timerType = (device::timer::type::value)atoi(sd[2].c_str());
 				titem.RowID = std::stoull(sd[0]);
 				titem.TimerID= std::stoull(sd[14]);
 				titem.startHour = (unsigned char)atoi(sd[1].substr(0, 2).c_str());
 				titem.startMin = (unsigned char)atoi(sd[1].substr(3, 2).c_str());
 				titem.startTime = 0;
 				titem.timerType = timerType;
-				titem.timerCmd = (_eTimerCommand)atoi(sd[3].c_str());
+				titem.timerCmd = (device::timer::command::value)atoi(sd[3].c_str());
 				titem.Level = (unsigned char)atoi(sd[4].c_str());
 				titem.bUseRandomness = (atoi(sd[8].c_str()) != 0);
 				titem.Color = _tColor(sd[9]);
@@ -106,7 +106,7 @@ void CScheduler::ReloadSchedules()
 				titem.Month = 0;
 				titem.Occurence = 0;
 
-				if (timerType == TTYPE_FIXEDDATETIME)
+				if (timerType == device::timer::type::FIXEDDATETIME)
 				{
 					std::string sdate = sd[10];
 					if (sdate.size() != 10)
@@ -115,21 +115,21 @@ void CScheduler::ReloadSchedules()
 					titem.startMonth = (unsigned char)atoi(sdate.substr(5, 2).c_str());
 					titem.startDay = (unsigned char)atoi(sdate.substr(8, 2).c_str());
 				}
-				else if (timerType == TTYPE_MONTHLY)
+				else if (timerType == device::timer::type::MONTHLY)
 				{
 					std::string smday = sd[11];
 					if (smday == "0")
 						continue; //invalid
 					titem.MDay = atoi(smday.c_str());
 				}
-				else if (timerType == TTYPE_MONTHLY_WD)
+				else if (timerType == device::timer::type::MONTHLY_WD)
 				{
 					std::string socc = sd[13];
 					if (socc == "0")
 						continue; //invalid
 					titem.Occurence = atoi(socc.c_str());
 				}
-				else if (timerType == TTYPE_YEARLY)
+				else if (timerType == device::timer::type::YEARLY)
 				{
 					std::string smday = sd[11];
 					std::string smonth = sd[12];
@@ -138,7 +138,7 @@ void CScheduler::ReloadSchedules()
 					titem.MDay = atoi(smday.c_str());
 					titem.Month = atoi(smonth.c_str());
 				}
-				else if (timerType == TTYPE_YEARLY_WD)
+				else if (timerType == device::timer::type::YEARLY_WD)
 				{
 					std::string smonth = sd[12];
 					std::string socc = sd[13];
@@ -148,7 +148,7 @@ void CScheduler::ReloadSchedules()
 					titem.Occurence = atoi(socc.c_str());
 				}
 
-				if ((titem.timerCmd == TCMD_ON) && (titem.Level == 0))
+				if ((titem.timerCmd == device::timer::command::ON) && (titem.Level == 0))
 				{
 					titem.Level = 100;
 				}
@@ -196,9 +196,9 @@ void CScheduler::ReloadSchedules()
 				std::stringstream s_str(sd[12]);
 				s_str >> titem.TimerID; }
 
-			_eTimerType timerType = (_eTimerType)atoi(sd[2].c_str());
+			device::timer::type::value timerType = (device::timer::type::value)atoi(sd[2].c_str());
 
-			if (timerType == TTYPE_FIXEDDATETIME)
+			if (timerType == device::timer::type::FIXEDDATETIME)
 			{
 				std::string sdate = sd[8];
 				if (sdate.size() != 10)
@@ -207,21 +207,21 @@ void CScheduler::ReloadSchedules()
 				titem.startMonth = (unsigned char)atoi(sdate.substr(5, 2).c_str());
 				titem.startDay = (unsigned char)atoi(sdate.substr(8, 2).c_str());
 			}
-			else if (timerType == TTYPE_MONTHLY)
+			else if (timerType == device::timer::type::MONTHLY)
 			{
 				std::string smday = sd[9];
 				if (smday == "0")
 					continue; //invalid
 				titem.MDay = atoi(smday.c_str());
 			}
-			else if (timerType == TTYPE_MONTHLY_WD)
+			else if (timerType == device::timer::type::MONTHLY_WD)
 			{
 				std::string socc = sd[11];
 				if (socc == "0")
 					continue; //invalid
 				titem.Occurence = atoi(socc.c_str());
 			}
-			else if (timerType == TTYPE_YEARLY)
+			else if (timerType == device::timer::type::YEARLY)
 			{
 				std::string smday = sd[9];
 				std::string smonth = sd[10];
@@ -230,7 +230,7 @@ void CScheduler::ReloadSchedules()
 				titem.MDay = atoi(smday.c_str());
 				titem.Month = atoi(smonth.c_str());
 			}
-			else if (timerType == TTYPE_YEARLY_WD)
+			else if (timerType == device::timer::type::YEARLY_WD)
 			{
 				std::string smonth = sd[10];
 				std::string socc = sd[11];
@@ -244,10 +244,10 @@ void CScheduler::ReloadSchedules()
 			titem.startMin = (unsigned char)atoi(sd[1].substr(3, 2).c_str());
 			titem.startTime = 0;
 			titem.timerType = timerType;
-			titem.timerCmd = (_eTimerCommand)atoi(sd[3].c_str());
+			titem.timerCmd = (device::timer::command::value)atoi(sd[3].c_str());
 			titem.Level = (unsigned char)atoi(sd[4].c_str());
 			titem.bUseRandomness = (atoi(sd[7].c_str()) != 0);
-			if ((titem.timerCmd == TCMD_ON) && (titem.Level == 0))
+			if ((titem.timerCmd == device::timer::command::ON) && (titem.Level == 0))
 			{
 				titem.Level = 100;
 			}
@@ -288,9 +288,9 @@ void CScheduler::ReloadSchedules()
 				std::stringstream s_str(sd[10]);
 				s_str >> titem.TimerID; }
 
-			_eTimerType timerType = (_eTimerType)atoi(sd[2].c_str());
+			device::timer::type::value timerType = (device::timer::type::value)atoi(sd[2].c_str());
 
-			if (timerType == TTYPE_FIXEDDATETIME)
+			if (timerType == device::timer::type::FIXEDDATETIME)
 			{
 				std::string sdate = sd[6];
 				if (sdate.size() != 10)
@@ -299,21 +299,21 @@ void CScheduler::ReloadSchedules()
 				titem.startMonth = (unsigned char)atoi(sdate.substr(5, 2).c_str());
 				titem.startDay = (unsigned char)atoi(sdate.substr(8, 2).c_str());
 			}
-			else if (timerType == TTYPE_MONTHLY)
+			else if (timerType == device::timer::type::MONTHLY)
 			{
 				std::string smday = sd[7];
 				if (smday == "0")
 					continue; //invalid
 				titem.MDay = atoi(smday.c_str());
 			}
-			else if (timerType == TTYPE_MONTHLY_WD)
+			else if (timerType == device::timer::type::MONTHLY_WD)
 			{
 				std::string socc = sd[9];
 				if (socc == "0")
 					continue; //invalid
 				titem.Occurence = atoi(socc.c_str());
 			}
-			else if (timerType == TTYPE_YEARLY)
+			else if (timerType == device::timer::type::YEARLY)
 			{
 				std::string smday = sd[7];
 				std::string smonth = sd[8];
@@ -322,7 +322,7 @@ void CScheduler::ReloadSchedules()
 				titem.MDay = atoi(smday.c_str());
 				titem.Month = atoi(smonth.c_str());
 			}
-			else if (timerType == TTYPE_YEARLY_WD)
+			else if (timerType == device::timer::type::YEARLY_WD)
 			{
 				std::string smonth = sd[8];
 				std::string socc = sd[9];
@@ -336,7 +336,7 @@ void CScheduler::ReloadSchedules()
 			titem.startMin = (unsigned char)atoi(sd[1].substr(3, 2).c_str());
 			titem.startTime = 0;
 			titem.timerType = timerType;
-			titem.timerCmd = TCMD_ON;
+			titem.timerCmd = device::timer::command::ON;
 			titem.Temperature = static_cast<float>(atof(sd[3].c_str()));
 			titem.Level = 100;
 			titem.bUseRandomness = false;
@@ -407,34 +407,34 @@ bool CScheduler::AdjustScheduleItem(tScheduleItem *pItem, bool bForceAddDay)
 	int roffset = 0;
 	if (pItem->bUseRandomness)
 	{
-		if ((pItem->timerType == TTYPE_BEFORESUNRISE) ||
-			(pItem->timerType == TTYPE_AFTERSUNRISE) ||
-			(pItem->timerType == TTYPE_BEFORESUNSET) ||
-			(pItem->timerType == TTYPE_AFTERSUNSET) ||
+		if ((pItem->timerType == device::timer::type::BEFORESUNRISE) ||
+			(pItem->timerType == device::timer::type::AFTERSUNRISE) ||
+			(pItem->timerType == device::timer::type::BEFORESUNSET) ||
+			(pItem->timerType == device::timer::type::AFTERSUNSET) ||
 
-			(pItem->timerType == TTYPE_BEFORESUNATSOUTH) ||
-			(pItem->timerType == TTYPE_AFTERSUNATSOUTH) ||
-			(pItem->timerType == TTYPE_BEFORECIVTWSTART) ||
-			(pItem->timerType == TTYPE_AFTERCIVTWSTART) ||
-			(pItem->timerType == TTYPE_BEFORECIVTWEND) ||
-			(pItem->timerType == TTYPE_AFTERCIVTWEND) ||
-			(pItem->timerType == TTYPE_BEFORENAUTTWSTART) ||
-			(pItem->timerType == TTYPE_AFTERNAUTTWSTART) ||
-			(pItem->timerType == TTYPE_BEFORENAUTTWEND) ||
-			(pItem->timerType == TTYPE_AFTERNAUTTWEND) ||
-			(pItem->timerType == TTYPE_BEFOREASTTWSTART) ||
-			(pItem->timerType == TTYPE_AFTERASTTWSTART) ||
-			(pItem->timerType == TTYPE_BEFOREASTTWEND) ||
-			(pItem->timerType == TTYPE_AFTERASTTWEND))
+			(pItem->timerType == device::timer::type::BEFORESUNATSOUTH) ||
+			(pItem->timerType == device::timer::type::AFTERSUNATSOUTH) ||
+			(pItem->timerType == device::timer::type::BEFORECIVTWSTART) ||
+			(pItem->timerType == device::timer::type::AFTERCIVTWSTART) ||
+			(pItem->timerType == device::timer::type::BEFORECIVTWEND) ||
+			(pItem->timerType == device::timer::type::AFTERCIVTWEND) ||
+			(pItem->timerType == device::timer::type::BEFORENAUTTWSTART) ||
+			(pItem->timerType == device::timer::type::AFTERNAUTTWSTART) ||
+			(pItem->timerType == device::timer::type::BEFORENAUTTWEND) ||
+			(pItem->timerType == device::timer::type::AFTERNAUTTWEND) ||
+			(pItem->timerType == device::timer::type::BEFOREASTTWSTART) ||
+			(pItem->timerType == device::timer::type::AFTERASTTWSTART) ||
+			(pItem->timerType == device::timer::type::BEFOREASTTWEND) ||
+			(pItem->timerType == device::timer::type::AFTERASTTWEND))
 			roffset = rand() % (nRandomTimerFrame);
 		else
 			roffset = rand() % (nRandomTimerFrame * 2) - nRandomTimerFrame;
 	}
-	if ((pItem->timerType == TTYPE_ONTIME) ||
-		(pItem->timerType == TTYPE_DAYSODD) ||
-		(pItem->timerType == TTYPE_DAYSEVEN) ||
-		(pItem->timerType == TTYPE_WEEKSODD) ||
-		(pItem->timerType == TTYPE_WEEKSEVEN))
+	if ((pItem->timerType == device::timer::type::ONTIME) ||
+		(pItem->timerType == device::timer::type::DAYSODD) ||
+		(pItem->timerType == device::timer::type::DAYSEVEN) ||
+		(pItem->timerType == device::timer::type::WEEKSODD) ||
+		(pItem->timerType == device::timer::type::WEEKSEVEN))
 	{
 		constructTime(rtime,tm1,ltime.tm_year+1900,ltime.tm_mon+1,ltime.tm_mday,pItem->startHour,pItem->startMin,roffset*60,isdst);
 		while (rtime < atime + 60)
@@ -445,7 +445,7 @@ bool CScheduler::AdjustScheduleItem(tScheduleItem *pItem, bool bForceAddDay)
 		pItem->startTime = rtime;
 		return true;
 	}
-	else if (pItem->timerType == TTYPE_FIXEDDATETIME)
+	else if (pItem->timerType == device::timer::type::FIXEDDATETIME)
 	{
 		constructTime(rtime,tm1,pItem->startYear,pItem->startMonth,pItem->startDay,pItem->startHour,pItem->startMin,roffset*60,isdst);
 		if (rtime < atime)
@@ -453,115 +453,115 @@ bool CScheduler::AdjustScheduleItem(tScheduleItem *pItem, bool bForceAddDay)
 		pItem->startTime = rtime;
 		return true;
 	}
-	else if (pItem->timerType == TTYPE_BEFORESUNSET)
+	else if (pItem->timerType == device::timer::type::BEFORESUNSET)
 	{
 		if (m_tSunSet == 0)
 			return false;
 		rtime = m_tSunSet - HourMinuteOffset - (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_AFTERSUNSET)
+	else if (pItem->timerType == device::timer::type::AFTERSUNSET)
 	{
 		if (m_tSunSet == 0)
 			return false;
 		rtime = m_tSunSet + HourMinuteOffset + (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_BEFORESUNRISE)
+	else if (pItem->timerType == device::timer::type::BEFORESUNRISE)
 	{
 		if (m_tSunRise == 0)
 			return false;
 		rtime = m_tSunRise - HourMinuteOffset - (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_AFTERSUNRISE)
+	else if (pItem->timerType == device::timer::type::AFTERSUNRISE)
 	{
 		if (m_tSunRise == 0)
 			return false;
 		rtime = m_tSunRise + HourMinuteOffset + (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_BEFORESUNATSOUTH)
+	else if (pItem->timerType == device::timer::type::BEFORESUNATSOUTH)
 	{
 		if (m_tSunAtSouth == 0)
 			return false;
 		rtime = m_tSunAtSouth - HourMinuteOffset - (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_AFTERSUNATSOUTH)
+	else if (pItem->timerType == device::timer::type::AFTERSUNATSOUTH)
 	{
 		if (m_tSunAtSouth == 0)
 			return false;
 		rtime = m_tSunAtSouth + HourMinuteOffset + (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_BEFORECIVTWSTART)
+	else if (pItem->timerType == device::timer::type::BEFORECIVTWSTART)
 	{
 		if (m_tCivTwStart == 0)
 			return false;
 		rtime = m_tCivTwStart - HourMinuteOffset - (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_AFTERCIVTWSTART)
+	else if (pItem->timerType == device::timer::type::AFTERCIVTWSTART)
 	{
 		if (m_tCivTwStart == 0)
 			return false;
 		rtime = m_tCivTwStart + HourMinuteOffset + (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_BEFORECIVTWEND)
+	else if (pItem->timerType == device::timer::type::BEFORECIVTWEND)
 	{
 		if (m_tCivTwEnd == 0)
 			return false;
 		rtime = m_tCivTwEnd - HourMinuteOffset - (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_AFTERCIVTWEND)
+	else if (pItem->timerType == device::timer::type::AFTERCIVTWEND)
 	{
 		if (m_tCivTwEnd == 0)
 			return false;
 		rtime = m_tCivTwEnd + HourMinuteOffset + (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_BEFORENAUTTWSTART)
+	else if (pItem->timerType == device::timer::type::BEFORENAUTTWSTART)
 	{
 		if (m_tNautTwStart == 0)
 			return false;
 		rtime = m_tNautTwStart - HourMinuteOffset - (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_AFTERNAUTTWSTART)
+	else if (pItem->timerType == device::timer::type::AFTERNAUTTWSTART)
 	{
 		if (m_tNautTwStart == 0)
 			return false;
 		rtime = m_tNautTwStart + HourMinuteOffset + (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_BEFORENAUTTWEND)
+	else if (pItem->timerType == device::timer::type::BEFORENAUTTWEND)
 	{
 		if (m_tNautTwEnd == 0)
 			return false;
 		rtime = m_tNautTwEnd - HourMinuteOffset - (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_AFTERNAUTTWEND)
+	else if (pItem->timerType == device::timer::type::AFTERNAUTTWEND)
 	{
 		if (m_tNautTwEnd == 0)
 			return false;
 		rtime = m_tNautTwEnd + HourMinuteOffset + (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_BEFOREASTTWSTART)
+	else if (pItem->timerType == device::timer::type::BEFOREASTTWSTART)
 	{
 		if (m_tAstTwStart == 0)
 			return false;
 		rtime = m_tAstTwStart - HourMinuteOffset - (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_AFTERASTTWSTART)
+	else if (pItem->timerType == device::timer::type::AFTERASTTWSTART)
 	{
 		if (m_tAstTwStart == 0)
 			return false;
 		rtime = m_tAstTwStart + HourMinuteOffset + (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_BEFOREASTTWEND)
+	else if (pItem->timerType == device::timer::type::BEFOREASTTWEND)
 	{
 		if (m_tAstTwEnd == 0)
 			return false;
 		rtime = m_tAstTwEnd - HourMinuteOffset - (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_AFTERASTTWEND)
+	else if (pItem->timerType == device::timer::type::AFTERASTTWEND)
 	{
 		if (m_tAstTwEnd == 0)
 			return false;
 		rtime = m_tAstTwEnd + HourMinuteOffset + (roffset * 60);
 	}
-	else if (pItem->timerType == TTYPE_MONTHLY)
+	else if (pItem->timerType == device::timer::type::MONTHLY)
 	{
 		constructTime(rtime,tm1,ltime.tm_year+1900,ltime.tm_mon+1,pItem->MDay,pItem->startHour,pItem->startMin,0,isdst);
 
@@ -575,7 +575,7 @@ bool CScheduler::AdjustScheduleItem(tScheduleItem *pItem, bool bForceAddDay)
 		pItem->startTime = rtime;
 		return true;
 	}
-	else if (pItem->timerType == TTYPE_MONTHLY_WD)
+	else if (pItem->timerType == device::timer::type::MONTHLY_WD)
 	{
 		//pItem->Days: mon=1 .. sat=32, sun=64
 		//convert to : sun=0, mon=1 .. sat=6
@@ -612,7 +612,7 @@ bool CScheduler::AdjustScheduleItem(tScheduleItem *pItem, bool bForceAddDay)
 		pItem->startTime = rtime;
 		return true;
 	}
-	else if (pItem->timerType == TTYPE_YEARLY)
+	else if (pItem->timerType == device::timer::type::YEARLY)
 	{
 		constructTime(rtime,tm1,ltime.tm_year+1900,pItem->Month,pItem->MDay,pItem->startHour,pItem->startMin,0,isdst);
 
@@ -627,7 +627,7 @@ bool CScheduler::AdjustScheduleItem(tScheduleItem *pItem, bool bForceAddDay)
 		pItem->startTime = rtime;
 		return true;
 	}
-	else if (pItem->timerType == TTYPE_YEARLY_WD)
+	else if (pItem->timerType == device::timer::type::YEARLY_WD)
 	{
 		//pItem->Days: mon=1 .. sat=32, sun=64
 		//convert to : sun=0, mon=1 .. sat=6
@@ -732,15 +732,15 @@ void CScheduler::CheckSchedules()
 		{
 			//check if we are on a valid day
 			bool bOkToFire = false;
-			if (itt.timerType == TTYPE_FIXEDDATETIME)
+			if (itt.timerType == device::timer::type::FIXEDDATETIME)
 			{
 				bOkToFire = true;
 			}
-			else if (itt.timerType == TTYPE_DAYSODD)
+			else if (itt.timerType == device::timer::type::DAYSODD)
 			{
 				bOkToFire = (ltime.tm_mday % 2 != 0);
 			}
-			else if (itt.timerType == TTYPE_DAYSEVEN)
+			else if (itt.timerType == device::timer::type::DAYSEVEN)
 			{
 				bOkToFire = (ltime.tm_mday % 2 == 0);
 			}
@@ -783,8 +783,8 @@ void CScheduler::CheckSchedules()
 				}
 				if (bOkToFire)
 				{
-					if ((itt.timerType == TTYPE_WEEKSODD) ||
-						(itt.timerType == TTYPE_WEEKSEVEN))
+					if ((itt.timerType == device::timer::type::WEEKSODD) ||
+						(itt.timerType == device::timer::type::WEEKSEVEN))
 					{
 						struct tm timeinfo;
 						localtime_r(&itt.startTime, &timeinfo);
@@ -795,7 +795,7 @@ void CScheduler::CheckSchedules()
 							timeinfo.tm_mday);
 						int w = d.week_number();
 
-						if (itt.timerType == TTYPE_WEEKSODD)
+						if (itt.timerType == device::timer::type::WEEKSODD)
 							bOkToFire = (w % 2 != 0);
 						else
 							bOkToFire = (w % 2 == 0);
@@ -808,15 +808,15 @@ void CScheduler::CheckSchedules()
 				strftime(ltimeBuf, sizeof(ltimeBuf), "%Y-%m-%d %H:%M:%S", &ltime);
 
 				if (itt.bIsScene == true)
-					_log.Log(LOG_STATUS, "Schedule item started! Name: %s, Type: %s, SceneID: %" PRIu64 ", Time: %s", itt.DeviceName.c_str(), Timer_Type_Desc(itt.timerType), itt.RowID, ltimeBuf);
+					_log.Log(LOG_STATUS, "Schedule item started! Name: %s, Type: %s, SceneID: %" PRIu64 ", Time: %s", itt.DeviceName.c_str(), device::timer::type::Description(itt.timerType), itt.RowID, ltimeBuf);
 				else if (itt.bIsThermostat == true)
-					_log.Log(LOG_STATUS, "Schedule item started! Name: %s, Type: %s, ThermostatID: %" PRIu64 ", Time: %s", itt.DeviceName.c_str(), Timer_Type_Desc(itt.timerType), itt.RowID, ltimeBuf);
+					_log.Log(LOG_STATUS, "Schedule item started! Name: %s, Type: %s, ThermostatID: %" PRIu64 ", Time: %s", itt.DeviceName.c_str(), device::timer::type::Description(itt.timerType), itt.RowID, ltimeBuf);
 				else
-					_log.Log(LOG_STATUS, "Schedule item started! Name: %s, Type: %s, DevID: %" PRIu64 ", Time: %s", itt.DeviceName.c_str(), Timer_Type_Desc(itt.timerType), itt.RowID, ltimeBuf);
+					_log.Log(LOG_STATUS, "Schedule item started! Name: %s, Type: %s, DevID: %" PRIu64 ", Time: %s", itt.DeviceName.c_str(), device::timer::type::Description(itt.timerType), itt.RowID, ltimeBuf);
 				std::string switchcmd = "";
-				if (itt.timerCmd == TCMD_ON)
+				if (itt.timerCmd == device::timer::command::ON)
 					switchcmd = "On";
-				else if (itt.timerCmd == TCMD_OFF)
+				else if (itt.timerCmd == device::timer::command::OFF)
 					switchcmd = "Off";
 				if (switchcmd == "")
 				{
@@ -828,10 +828,10 @@ void CScheduler::CheckSchedules()
 					{
 /*
 						if (
-							(itt.timerType == TTYPE_BEFORESUNRISE) ||
-							(itt.timerType == TTYPE_AFTERSUNRISE) ||
-							(itt.timerType == TTYPE_BEFORESUNSET) ||
-							(itt.timerType == TTYPE_AFTERSUNSET)
+							(itt.timerType == device::timer::type::BEFORESUNRISE) ||
+							(itt.timerType == device::timer::type::AFTERSUNRISE) ||
+							(itt.timerType == device::timer::type::BEFORESUNSET) ||
+							(itt.timerType == device::timer::type::AFTERSUNSET)
 							)
 						{
 
@@ -863,7 +863,7 @@ void CScheduler::CheckSchedules()
 
 							unsigned char dType = atoi(sd[0].c_str());
 							unsigned char dSubType = atoi(sd[1].c_str());
-							_eSwitchType switchtype = (_eSwitchType)atoi(sd[2].c_str());
+							device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[2].c_str());
 							std::string lstatus = "";
 							int llevel = 0;
 							bool bHaveDimmer = false;
@@ -872,9 +872,9 @@ void CScheduler::CheckSchedules()
 
 							GetLightStatus(dType, dSubType, switchtype, 0, "", lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 							int ilevel = maxDimLevel;
-							if ((switchtype == STYPE_BlindsPercentage) || (switchtype == STYPE_BlindsPercentageInverted))
+							if ((switchtype == device::_switch::type::BlindsPercentage) || (switchtype == device::_switch::type::BlindsPercentageInverted))
 							{
-								if (itt.timerCmd == TCMD_ON)
+								if (itt.timerCmd == device::timer::command::ON)
 								{
 									switchcmd = "Set Level";
 									float fLevel = (maxDimLevel / 100.0f)*itt.Level;
@@ -882,12 +882,12 @@ void CScheduler::CheckSchedules()
 										fLevel = 100;
 									ilevel = int(fLevel);
 								}
-								else if (itt.timerCmd == TCMD_OFF)
+								else if (itt.timerCmd == device::timer::command::OFF)
 									ilevel = 0;
 							}
-							else if ((switchtype == STYPE_Dimmer) && (maxDimLevel != 0))
+							else if ((switchtype == device::_switch::type::Dimmer) && (maxDimLevel != 0))
 							{
-								if (itt.timerCmd == TCMD_ON)
+								if (itt.timerCmd == device::timer::command::ON)
 								{
 									switchcmd = "Set Level";
 									float fLevel = (maxDimLevel / 100.0f)*itt.Level;
@@ -895,11 +895,11 @@ void CScheduler::CheckSchedules()
 										fLevel = 100;
 									ilevel = int(fLevel);
 								}
-							} else if (switchtype == STYPE_Selector) {
-								if (itt.timerCmd == TCMD_ON) {
+							} else if (switchtype == device::_switch::type::Selector) {
+								if (itt.timerCmd == device::timer::command::ON) {
 									switchcmd = "Set Level";
 									ilevel = itt.Level;
-								} else if (itt.timerCmd == TCMD_OFF) {
+								} else if (itt.timerCmd == device::timer::command::OFF) {
 									ilevel = 0; // force level to a valid value for Selector
 								}
 							}
@@ -914,7 +914,7 @@ void CScheduler::CheckSchedules()
 			if (!AdjustScheduleItem(&itt, true))
 			{
 				//something is wrong, probably no sunset/rise
-				if (itt.timerType != TTYPE_FIXEDDATETIME)
+				if (itt.timerType != device::timer::type::FIXEDDATETIME)
 				{
 					itt.startTime += atime + (24 * 3600);
 				}
@@ -941,14 +941,14 @@ void CScheduler::DeleteExpiredTimers()
 	std::vector<std::vector<std::string> > result;
 	// Check Timers
 	result = m_sql.safe_query("SELECT ID FROM Timers WHERE (Type == %i AND ((Date < '%q') OR (Date == '%q' AND Time < '%q')))",
-		TTYPE_FIXEDDATETIME,
+		device::timer::type::FIXEDDATETIME,
 		szDate,
 		szDate,
 		szTime
 		);
 	if (!result.empty()) {
 		m_sql.safe_query("DELETE FROM Timers WHERE (Type == %i AND ((Date < '%q') OR (Date == '%q' AND Time < '%q')))",
-			TTYPE_FIXEDDATETIME,
+			device::timer::type::FIXEDDATETIME,
 			szDate,
 			szDate,
 			szTime
@@ -958,14 +958,14 @@ void CScheduler::DeleteExpiredTimers()
 
 	// Check SceneTimers
 	result = m_sql.safe_query("SELECT ID FROM SceneTimers WHERE (Type == %i AND ((Date < '%q') OR (Date == '%q' AND Time < '%q')))",
-		TTYPE_FIXEDDATETIME,
+		device::timer::type::FIXEDDATETIME,
 		szDate,
 		szDate,
 		szTime
 		);
 	if (!result.empty()) {
 		m_sql.safe_query("DELETE FROM SceneTimers WHERE (Type == %i AND ((Date < '%q') OR (Date == '%q' AND Time < '%q')))",
-			TTYPE_FIXEDDATETIME,
+			device::timer::type::FIXEDDATETIME,
 			szDate,
 			szDate,
 			szTime
@@ -1073,7 +1073,7 @@ namespace http {
 
 					int iTimerType = atoi(sd[8].c_str());
 					std::string sdate = sd[6];
-					if ((iTimerType == TTYPE_FIXEDDATETIME) && (sdate.size() == 10))
+					if ((iTimerType == device::timer::type::FIXEDDATETIME) && (sdate.size() == 10))
 					{
 						char szTmp[30];
 						int Year = atoi(sdate.substr(0, 4).c_str());
@@ -1094,7 +1094,7 @@ namespace http {
 					root["result"][ii]["Date"] = sdate;
 					root["result"][ii]["Time"] = sd[7];
 					root["result"][ii]["TimerType"] = iTimerType;
-					root["result"][ii]["TimerTypeStr"] = Timer_Type_Desc(iTimerType);
+					root["result"][ii]["TimerTypeStr"] = device::timer::type::Description(iTimerType);
 					root["result"][ii]["Days"] = iDays;
 					root["result"][ii]["MDay"] = atoi(sd[15].c_str());
 					root["result"][ii]["Month"] = atoi(sd[16].c_str());
@@ -1144,7 +1144,7 @@ namespace http {
 
 					int iTimerType = atoi(sd[4].c_str());
 					std::string sdate = sd[2];
-					if ((iTimerType == TTYPE_FIXEDDATETIME) && (sdate.size() == 10))
+					if ((iTimerType == device::timer::type::FIXEDDATETIME) && (sdate.size() == 10))
 					{
 						int Year = atoi(sdate.substr(0, 4).c_str());
 						int Month = atoi(sdate.substr(5, 2).c_str());
@@ -1243,7 +1243,7 @@ namespace http {
 			int Month = tm1.tm_mon + 1;
 			int Day = tm1.tm_mday;
 
-			if (iTimerType == TTYPE_FIXEDDATETIME)
+			if (iTimerType == device::timer::type::FIXEDDATETIME)
 			{
 				if (sdate.size() == 10)
 				{
@@ -1252,23 +1252,23 @@ namespace http {
 					Day = atoi(sdate.substr(8, 2).c_str());
 				}
 			}
-			else if (iTimerType == TTYPE_MONTHLY)
+			else if (iTimerType == device::timer::type::MONTHLY)
 			{
 				smday = request::findValue(&req, "mday");
 				if (smday == "") return;
 			}
-			else if (iTimerType == TTYPE_MONTHLY_WD)
+			else if (iTimerType == device::timer::type::MONTHLY_WD)
 			{
 				soccurence = request::findValue(&req, "occurence");
 				if (soccurence == "") return;
 			}
-			else if (iTimerType == TTYPE_YEARLY)
+			else if (iTimerType == device::timer::type::YEARLY)
 			{
 				smday = request::findValue(&req, "mday");
 				smonth = request::findValue(&req, "month");
 				if ((smday == "") || (smonth == "")) return;
 			}
-			else if (iTimerType == TTYPE_YEARLY_WD)
+			else if (iTimerType == device::timer::type::YEARLY_WD)
 			{
 				smonth = request::findValue(&req, "month");
 				soccurence = request::findValue(&req, "occurence");
@@ -1348,7 +1348,7 @@ namespace http {
 			int Month = tm1.tm_mon + 1;
 			int Day = tm1.tm_mday;
 
-			if (iTimerType == TTYPE_FIXEDDATETIME)
+			if (iTimerType == device::timer::type::FIXEDDATETIME)
 			{
 				if (sdate.size() == 10)
 				{
@@ -1357,23 +1357,23 @@ namespace http {
 					Day = atoi(sdate.substr(8, 2).c_str());
 				}
 			}
-			else if (iTimerType == TTYPE_MONTHLY)
+			else if (iTimerType == device::timer::type::MONTHLY)
 			{
 				smday = request::findValue(&req, "mday");
 				if (smday == "") return;
 			}
-			else if (iTimerType == TTYPE_MONTHLY_WD)
+			else if (iTimerType == device::timer::type::MONTHLY_WD)
 			{
 				soccurence = request::findValue(&req, "occurence");
 				if (soccurence == "") return;
 			}
-			else if (iTimerType == TTYPE_YEARLY)
+			else if (iTimerType == device::timer::type::YEARLY)
 			{
 				smday = request::findValue(&req, "mday");
 				smonth = request::findValue(&req, "month");
 				if ((smday == "") || (smonth == "")) return;
 			}
-			else if (iTimerType == TTYPE_YEARLY_WD)
+			else if (iTimerType == device::timer::type::YEARLY_WD)
 			{
 				smonth = request::findValue(&req, "month");
 				soccurence = request::findValue(&req, "occurence");
@@ -1515,7 +1515,7 @@ namespace http {
 
 					int iTimerType = atoi(sd[4].c_str());
 					std::string sdate = sd[2];
-					if ((iTimerType == TTYPE_FIXEDDATETIME) && (sdate.size() == 10))
+					if ((iTimerType == device::timer::type::FIXEDDATETIME) && (sdate.size() == 10))
 					{
 						int Year = atoi(sdate.substr(0, 4).c_str());
 						int Month = atoi(sdate.substr(5, 2).c_str());
@@ -1578,7 +1578,7 @@ namespace http {
 			int Month = tm1.tm_mon + 1;
 			int Day = tm1.tm_mday;
 
-			if (iTimerType == TTYPE_FIXEDDATETIME)
+			if (iTimerType == device::timer::type::FIXEDDATETIME)
 			{
 				if (sdate.size() == 10)
 				{
@@ -1587,23 +1587,23 @@ namespace http {
 					Day = atoi(sdate.substr(8, 2).c_str());
 				}
 			}
-			else if (iTimerType == TTYPE_MONTHLY)
+			else if (iTimerType == device::timer::type::MONTHLY)
 			{
 				smday = request::findValue(&req, "mday");
 				if (smday == "") return;
 			}
-			else if (iTimerType == TTYPE_MONTHLY_WD)
+			else if (iTimerType == device::timer::type::MONTHLY_WD)
 			{
 				soccurence = request::findValue(&req, "occurence");
 				if (soccurence == "") return;
 			}
-			else if (iTimerType == TTYPE_YEARLY)
+			else if (iTimerType == device::timer::type::YEARLY)
 			{
 				smday = request::findValue(&req, "mday");
 				smonth = request::findValue(&req, "month");
 				if ((smday == "") || (smonth == "")) return;
 			}
-			else if (iTimerType == TTYPE_YEARLY_WD)
+			else if (iTimerType == device::timer::type::YEARLY_WD)
 			{
 				smonth = request::findValue(&req, "month");
 				soccurence = request::findValue(&req, "occurence");
@@ -1674,7 +1674,7 @@ namespace http {
 			int Month = tm1.tm_mon + 1;
 			int Day = tm1.tm_mday;
 
-			if (iTimerType == TTYPE_FIXEDDATETIME)
+			if (iTimerType == device::timer::type::FIXEDDATETIME)
 			{
 				if (sdate.size() == 10)
 				{
@@ -1683,23 +1683,23 @@ namespace http {
 					Day = atoi(sdate.substr(8, 2).c_str());
 				}
 			}
-			else if (iTimerType == TTYPE_MONTHLY)
+			else if (iTimerType == device::timer::type::MONTHLY)
 			{
 				smday = request::findValue(&req, "mday");
 				if (smday == "") return;
 			}
-			else if (iTimerType == TTYPE_MONTHLY_WD)
+			else if (iTimerType == device::timer::type::MONTHLY_WD)
 			{
 				soccurence = request::findValue(&req, "occurence");
 				if (soccurence == "") return;
 			}
-			else if (iTimerType == TTYPE_YEARLY)
+			else if (iTimerType == device::timer::type::YEARLY)
 			{
 				smday = request::findValue(&req, "mday");
 				smonth = request::findValue(&req, "month");
 				if ((smday == "") || (smonth == "")) return;
 			}
-			else if (iTimerType == TTYPE_YEARLY_WD)
+			else if (iTimerType == device::timer::type::YEARLY_WD)
 			{
 				smonth = request::findValue(&req, "month");
 				soccurence = request::findValue(&req, "occurence");
@@ -1841,7 +1841,7 @@ namespace http {
 
 					int iTimerType = atoi(sd[4].c_str());
 					std::string sdate = sd[2];
-					if ((iTimerType == TTYPE_FIXEDDATETIME) && (sdate.size() == 10))
+					if ((iTimerType == device::timer::type::FIXEDDATETIME) && (sdate.size() == 10))
 					{
 						int Year = atoi(sdate.substr(0, 4).c_str());
 						int Month = atoi(sdate.substr(5, 2).c_str());
@@ -1910,7 +1910,7 @@ namespace http {
 			int Month = tm1.tm_mon + 1;
 			int Day = tm1.tm_mday;
 
-			if (iTimerType == TTYPE_FIXEDDATETIME)
+			if (iTimerType == device::timer::type::FIXEDDATETIME)
 			{
 				if (sdate.size() == 10)
 				{
@@ -1919,23 +1919,23 @@ namespace http {
 					Day = atoi(sdate.substr(8, 2).c_str());
 				}
 			}
-			else if (iTimerType == TTYPE_MONTHLY)
+			else if (iTimerType == device::timer::type::MONTHLY)
 			{
 				smday = request::findValue(&req, "mday");
 				if (smday == "") return;
 			}
-			else if (iTimerType == TTYPE_MONTHLY_WD)
+			else if (iTimerType == device::timer::type::MONTHLY_WD)
 			{
 				soccurence = request::findValue(&req, "occurence");
 				if (soccurence == "") return;
 			}
-			else if (iTimerType == TTYPE_YEARLY)
+			else if (iTimerType == device::timer::type::YEARLY)
 			{
 				smday = request::findValue(&req, "mday");
 				smonth = request::findValue(&req, "month");
 				if ((smday == "") || (smonth == "")) return;
 			}
-			else if (iTimerType == TTYPE_YEARLY_WD)
+			else if (iTimerType == device::timer::type::YEARLY_WD)
 			{
 				smonth = request::findValue(&req, "month");
 				soccurence = request::findValue(&req, "occurence");
@@ -2013,7 +2013,7 @@ namespace http {
 			int Month = tm1.tm_mon + 1;
 			int Day = tm1.tm_mday;
 
-			if (iTimerType == TTYPE_FIXEDDATETIME)
+			if (iTimerType == device::timer::type::FIXEDDATETIME)
 			{
 				if (sdate.size() == 10)
 				{
@@ -2022,23 +2022,23 @@ namespace http {
 					Day = atoi(sdate.substr(8, 2).c_str());
 				}
 			}
-			else if (iTimerType == TTYPE_MONTHLY)
+			else if (iTimerType == device::timer::type::MONTHLY)
 			{
 				smday = request::findValue(&req, "mday");
 				if (smday == "") return;
 			}
-			else if (iTimerType == TTYPE_MONTHLY_WD)
+			else if (iTimerType == device::timer::type::MONTHLY_WD)
 			{
 				soccurence = request::findValue(&req, "occurence");
 				if (soccurence == "") return;
 			}
-			else if (iTimerType == TTYPE_YEARLY)
+			else if (iTimerType == device::timer::type::YEARLY)
 			{
 				smday = request::findValue(&req, "mday");
 				smonth = request::findValue(&req, "month");
 				if ((smday == "") || (smonth == "")) return;
 			}
-			else if (iTimerType == TTYPE_YEARLY_WD)
+			else if (iTimerType == device::timer::type::YEARLY_WD)
 			{
 				smonth = request::findValue(&req, "month");
 				soccurence = request::findValue(&req, "occurence");
