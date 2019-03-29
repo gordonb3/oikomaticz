@@ -51,6 +51,13 @@ protected:
 protected:
 	boost::asio::io_service			mIos; // protected to allow derived classes to attach timers etc.
 
+	// State variables
+	bool					mIsConnected;
+	bool					mIsClosing;
+	bool					mDoReconnect;
+	bool					mIsReconnecting;
+	bool					mAllowCallbacks;
+
 private:
 	// Internal helper functions
 	void connect(boost::asio::ip::tcp::endpoint& endpoint);
@@ -66,13 +73,6 @@ private:
 	void do_close();
 	void do_reconnect(const boost::system::error_code& error);
 	void do_write(const std::string &msg);
-
-	// State variables
-	bool							mIsConnected;
-	bool							mIsClosing;
-	bool							mDoReconnect;
-	bool							mIsReconnecting;
-	bool							mAllowCallbacks;
 
 	// Internal
 	unsigned char 					m_rx_buffer[1024];
