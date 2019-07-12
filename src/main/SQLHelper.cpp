@@ -30,7 +30,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#define DB_VERSION 134
+#define DB_VERSION 135
 
 extern http::server::CWebServerHelper m_webservers;
 extern std::string szWWWFolder;
@@ -237,7 +237,8 @@ const char *sqlCreateHardware =
 "[Mode4] CHAR DEFAULT 0, "
 "[Mode5] CHAR DEFAULT 0, "
 "[Mode6] CHAR DEFAULT 0, "
-"[DataTimeout] INTEGER DEFAULT 0);";
+"[DataTimeout] INTEGER DEFAULT 0, "
+"[Configuration] TEXT DEFAULT (''));";
 
 const char *sqlCreateUsers =
 "CREATE TABLE IF NOT EXISTS [Users] ("
@@ -630,6 +631,7 @@ CSQLHelper::CSQLHelper(void)
 	m_bAcceptHardwareTimerActive = false;
 	m_iAcceptHardwareTimerCounter = 0;
 	m_bEnableEventSystem = true;
+	m_bEnableEventSystemFullURLLog = true;
 	m_bDisableDzVentsSystem = false;
 	m_ShortLogInterval = 5;
 	m_bPreviousAcceptNewHardware = false;
@@ -2622,6 +2624,20 @@ bool CSQLHelper::OpenDatabase()
 				query("DELETE FROM UserVariables WHERE (Name='P1GasMeterChannel')");
 			}
 		}
+		if (dbversion < 135)
+		{
+			//OpenZWave COMMAND_CLASS_METER new index, need to delete the cache!
+			std::vector<std::string> root_files_;
+			DirectoryListing(root_files_, szUserDataFolder + "Config", false, true);
+			for (auto itt : root_files_)
+			{
+				if (itt.find("ozwcache_0x") != std::string::npos)
+				{
+					std::string dfile = szUserDataFolder + "Config/" + itt;
+					std::remove(dfile.c_str());
+				}
+			}
+		}
 
 	}
 	else if (bNewInstall)
@@ -2961,6 +2977,14 @@ bool CSQLHelper::OpenDatabase()
 	m_bEnableEventSystem = (nValue == 1);
 
 	nValue = 0;
+	if (!GetPreferencesVar("EventSystemLogFullURL", nValue))
+	{
+		UpdatePreferencesVar("EventSystemLogFullURL", 1);
+		nValue = 1;
+	}
+	m_bEnableEventSystemFullURLLog = (nValue == 1);
+
+	nValue = 0;
 	if (!GetPreferencesVar("DisableDzVentsSystem", nValue))
 	{
 		UpdatePreferencesVar("DisableDzVentsSystem", 0);
@@ -3287,13 +3311,11 @@ void CSQLHelper::Do_Work()
 				}
 				else if (method == HTTPClient::HTTP_METHOD_POST)
 				{
-					ret = HTTPClient::POST(itt->_sValue, postData, extraHeaders, response, headerData);
+					ret = HTTPClient::POST(itt->_sValue, postData, extraHeaders, response, headerData, true, true);
 				}
 
 				if (m_bEnableEventSystem && !callback.empty())
 				{
-					if (ret)
-						headerData.push_back("200");
 					m_mainworker.m_eventsystem.TriggerURL(response, headerData, callback);
 				}
 
@@ -4587,7 +4609,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 					/* Smoke detectors are manually reset!
 									else if (
 										(devType==pTypeSecurity1)&&
-										((subType==sTypeKD101)||(subType==sTypeSA30))
+										((subType==sTypeKD101)||(subType==sTypeSA30)||(subType==sTypeRM174RF))
 										)
 									{
 										cmd=sStatusPanicOff;
@@ -5995,9 +6017,9 @@ void CSQLHelper::AddCalendarUpdateRain()
 
 		unsigned char subType = atoi(sd[0].c_str());
 
-		if (subType != sTypeRAINWU)
+		if (subType == sTypeRAINWU || subType == sTypeRAINByRate)
 		{
-			result = safe_query("SELECT MIN(Total), MAX(Total), MAX(Rate) FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
+			result = safe_query("SELECT Total, Total, Rate FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q') ORDER BY ROWID DESC LIMIT 1",
 				ID,
 				szDateStart,
 				szDateEnd
@@ -6005,7 +6027,7 @@ void CSQLHelper::AddCalendarUpdateRain()
 		}
 		else
 		{
-			result = safe_query("SELECT Total, Total, Rate FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q') ORDER BY ROWID DESC LIMIT 1",
+			result = safe_query("SELECT MIN(Total), MAX(Total), MAX(Rate) FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
 				ID,
 				szDateStart,
 				szDateEnd
@@ -6021,13 +6043,13 @@ void CSQLHelper::AddCalendarUpdateRain()
 			int rate = atoi(sd[2].c_str());
 
 			float total_real = 0;
-			if (subType != sTypeRAINWU)
+			if (subType == sTypeRAINWU || subType == sTypeRAINByRate)
 			{
-				total_real = total_max - total_min;
+				total_real = total_max;
 			}
 			else
 			{
-				total_real = total_max;
+				total_real = total_max - total_min;
 			}
 
 
@@ -6771,6 +6793,8 @@ void CSQLHelper::DeleteDevices(const std::string &idx)
 				safe_exec_no_return("DELETE FROM MultiMeter_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
 				safe_exec_no_return("DELETE FROM Percentage WHERE (DeviceRowID == '%q')", itt.c_str());
 				safe_exec_no_return("DELETE FROM Percentage_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Fan WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Fan_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
 				safe_exec_no_return("DELETE FROM SceneDevices WHERE (DeviceRowID == '%q')", itt.c_str());
 				safe_exec_no_return("DELETE FROM DeviceToPlansMap WHERE (DeviceRowID == '%q')", itt.c_str());
 				safe_exec_no_return("DELETE FROM CamerasActiveDevices WHERE (DevSceneType==0) AND (DevSceneRowID == '%q')", itt.c_str());
@@ -6896,6 +6920,20 @@ void CSQLHelper::TransferDevice(const std::string &idx, const std::string &newid
 		safe_query("UPDATE MultiMeter_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date<'%q')", newidx.c_str(), idx.c_str(), result[0][0].c_str());
 	else
 		safe_query("UPDATE MultiMeter_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q')", newidx.c_str(), idx.c_str());
+
+	//Fan
+	result = safe_query("SELECT Date FROM Fan WHERE (DeviceRowID == '%q') ORDER BY Date ASC LIMIT 1", newidx.c_str());
+	if (!result.empty())
+		safe_query("UPDATE Fan SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date<'%q')", newidx.c_str(), idx.c_str(), result[0][0].c_str());
+	else
+		safe_query("UPDATE Fan SET DeviceRowID='%q' WHERE (DeviceRowID == '%q')", newidx.c_str(), idx.c_str());
+
+	result = safe_query("SELECT Date FROM Fan_Calendar WHERE (DeviceRowID == '%q') ORDER BY Date ASC LIMIT 1", newidx.c_str());
+	if (!result.empty())
+		safe_query("UPDATE Fan_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date<'%q')", newidx.c_str(), idx.c_str(), result[0][0].c_str());
+	else
+		safe_query("UPDATE Fan_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q')", newidx.c_str(), idx.c_str());
+
 
 	//Percentage
 	result = safe_query("SELECT Date FROM Percentage WHERE (DeviceRowID == '%q') ORDER BY Date ASC LIMIT 1", newidx.c_str());
@@ -7458,11 +7496,11 @@ bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string &OnAction
 		if (OnAction.empty())
 			return true;
 
-		if ((OnAction.find("http://") != std::string::npos) || (OnAction.find("https://") != std::string::npos))
+		if ((OnAction.find("http://") == 0) || (OnAction.find("https://") == 0))
 		{
 			AddTaskItem(_tTaskItem::GetHTTPPage(0.2f, OnAction, "SwitchActionOn"));
 		}
-		else if (OnAction.find("script://") != std::string::npos)
+		else if (OnAction.find("script://") == 0)
 		{
 			//Execute possible script
 			if (OnAction.find("../") != std::string::npos)
@@ -7498,11 +7536,11 @@ bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string &OnAction
 	if (OffAction.empty())
 		return true;
 
-	if ((OffAction.find("http://") != std::string::npos) || (OffAction.find("https://") != std::string::npos))
+	if ((OffAction.find("http://") == 0) || (OffAction.find("https://") == 0))
 	{
 		AddTaskItem(_tTaskItem::GetHTTPPage(0.2f, OffAction, "SwitchActionOff"));
 	}
-	else if (OffAction.find("script://") != std::string::npos)
+	else if (OffAction.find("script://") == 0)
 	{
 		//Execute possible script
 		if (OffAction.find("../") != std::string::npos)
@@ -8510,4 +8548,3 @@ float CSQLHelper::GetCounterDivider(const int metertype, const int dType, const 
 	}
 	return divider;
 }
-

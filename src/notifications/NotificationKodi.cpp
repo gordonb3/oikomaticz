@@ -131,7 +131,7 @@ std::string CNotificationKodi::GetIconFile(const std::string &ExtraData)
 				szTypeImage = "doorbell48";
 				break;
 			case device::_switch::type::Contact:
-				szTypeImage = "contact48";
+				szTypeImage = "Contact48";
 				break;
 			case device::_switch::type::Blinds:
 			case device::_switch::type::BlindsPercentage:

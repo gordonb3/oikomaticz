@@ -28,22 +28,19 @@ local function EventHelpers(domoticz, mainMethod)
 	local webRoot = globalvariables['domoticz_webroot']
 	local _url = 'http://127.0.0.1:' .. (tostring(globalvariables['domoticz_listening_port']) or "8080")
 
-
-	local settings =
-	{
-		['Log level']           = tonumber(globalvariables['dzVents_log_level']) or  1,
-		['Domoticz url']        = _url,
-		url                     = url,
-		webRoot                 = tostring(webRoot),
-		serverPort              = globalvariables['domoticz_listening_port'] or '8080',
-		dzVentsVersion          = globalvariables.dzVents_version,
-		domoticzVersion         = globalvariables.domoticz_version,
-		location                =
-									{
-										name        = utils.urlDecode(globalvariables['domoticz_title'] or "Domoticz"),
-										latitude    = globalvariables.latitude or 0,
-										longitude   = globalvariables.longitude or 0,
-									},
+	local settings = {
+		['Log level'] = tonumber(globalvariables['dzVents_log_level']) or  1,
+		['Domoticz url'] = _url,
+		url = url,
+		webRoot = tostring(webRoot),
+		serverPort = globalvariables['domoticz_listening_port'] or '8080',
+		dzVentsVersion = globalvariables.dzVents_version,
+		domoticzVersion = globalvariables.domoticz_version,
+		location = {
+			name = utils.urlDecode(globalvariables['domoticz_title'] or "Domoticz"),
+			latitude = globalvariables.latitude or 0,
+			longitude = globalvariables.longitude or 0,
+		}
 	}
 
 	if (webRoot ~= '' and webRoot ~= nil) then
@@ -280,7 +277,7 @@ local function EventHelpers(domoticz, mainMethod)
 
 				return res
 			else
-				utils.log('An error occured when calling event handler ' .. eventHandler.name, utils.LOG_ERROR)
+				utils.log('An error occurred when calling event handler ' .. eventHandler.name, utils.LOG_ERROR)
 				utils.log(res, utils.LOG_ERROR) -- error info
 			end
 		else
@@ -773,13 +770,12 @@ local function EventHelpers(domoticz, mainMethod)
 		-- id is done later
 
 		for scriptTrigger, scripts in pairs(allEventScripts) do
-			if (string.find(scriptTrigger, '*')) then -- a wild-card was use
-				-- turn it into a valid regexp
-				scriptTrigger = '^' .. string.gsub(scriptTrigger, "*", ".*") .. '$'
+
+			if (string.find(scriptTrigger, '*')) then -- a wild-card was used
+				-- substitute 'magical chars' with a dot (a dot matches every char) and then turn it into a valid regexp and 
+				scriptTrigger = ('^' .. scriptTrigger:gsub("[%^$]","."):gsub("*", ".*") .. '$'):gsub('[^%w%s~{\\}:&(/)<>,?@#|_^*$]','.')
 
 				if (string.match(target, scriptTrigger)) then
-					-- there is trigger for this target
-
 					if modules == nil then modules = {} end
 
 					for i, mod in pairs(scripts) do

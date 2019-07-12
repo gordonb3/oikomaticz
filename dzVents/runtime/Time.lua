@@ -16,18 +16,11 @@ local function getTimezone()
 	return diff
 end
 
-function string:split(sep)
-	local sep, fields = sep or ":", {}
-	local pattern = string.format("([^%s]+)", sep)
-	self:gsub(pattern, function(c) fields[#fields + 1] = c end)
-	return fields
-end
-
 local LOOKUP = { 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat' }
 
 local function getSMs(s)
 	local ms = 0
-	local parts = string.split(s, '.') -- do string splittin instead of math stuff.. can't seem to get the floating points right
+	local parts = utils.stringSplit(s, '.') -- do string splittin instead of math stuff.. can't seem to get the floating points right
 	s = tonumber(parts[1])
 	if (parts[2] ~= nil) then
 		-- should always be three digits!!
@@ -238,6 +231,7 @@ local function Time(sDate, isUTC, _testMS)
 
 	self.rawDate = self.year .. '-' .. string.format("%02d", self.month) .. '-' .. string.format("%02d", self.day)
 	self.rawTime = string.format("%02d", self.hour) .. ':' .. string.format("%02d", self.min) .. ':' .. string.format("%02d", self.sec)
+	self.rawDateTime = self.rawDate .. ' ' .. self.rawTime
 	self.milliSeconds = ms
 	self.milliseconds = ms
 	self.dayAbbrOfWeek = LOOKUP[self.wday]
@@ -431,7 +425,7 @@ local function Time(sDate, isUTC, _testMS)
 		elseif (string.find(rule, 'every even week') and ((self.week % 2) == 0)) then
 			return true
 		elseif string.find(rule, 'every even week') or string.find(rule, 'every odd week') then
-        	return false
+			return false
 		end
 
 		local weeks = string.match(rule, 'in week% ([0-9%-%,% ]*)')
@@ -513,12 +507,12 @@ local function Time(sDate, isUTC, _testMS)
 		end
 
 		local getParts = function(set)
-			local day, month = string.match(set, '([0-9]+)/([0-9]+)')
-			return tonumber(day), tonumber(month)
+			local day, month = string.match(set, '([0-9%*]+)/([0-9%*]+)')
+			return day and tonumber( day ), month and tonumber( month )
 		end
 
 		--now get the ranges
-		for fromSet, toSet in string.gmatch(dates, '([0-9%/]*)-([0-9%/]*)') do
+		for fromSet, toSet in string.gmatch(dates, '([0-9%/%*]*)-([0-9%/%*]*)') do
 			local fromDay, toDay, fromMonth, toMonth
 
 			if (isEmpty(fromSet) and not isEmpty(toSet)) then
@@ -727,9 +721,9 @@ local function Time(sDate, isUTC, _testMS)
 	end
 
 	-- returns true if self.time is after civil twilight start and before civil twilight end
-	function self.ruleIsAtCivilNight(rule)
+	function self.ruleIsAtCivilNightTime(rule)
 		if (string.find(rule, 'at civilnighttime')) then
-			return _G.timeofday['Civilnighttime'] -- coming from domotic
+			return _G.timeofday['Civilnighttime'] -- coming from domoticz
 		end
 		return nil -- no 'at civilnighttime' was specified in the rule
 	end
@@ -737,7 +731,7 @@ local function Time(sDate, isUTC, _testMS)
 	-- return true if self.time is after civil twilight end and before civil twilight start
 	function self.ruleIsAtCivilDayTime(rule)
 		if (string.find(rule, 'at civildaytime')) then
-			return _G.timeofday['Civildaytime'] -- coming from domotic
+			return _G.timeofday['Civildaytime'] -- coming from domoticz
 		end
 		return nil -- no 'at civildaytime' was specified
 	end
@@ -745,7 +739,7 @@ local function Time(sDate, isUTC, _testMS)
 	-- returns true if self.time is after sunset and before sunrise
 	function self.ruleIsAtNight(rule)
 		if (string.find(rule, 'at nighttime')) then
-			return _G.timeofday['Nighttime'] -- coming from domotic
+			return _G.timeofday['Nighttime'] -- coming from domoticz
 		end
 		return nil -- no 'at nighttime' was specified in the rule
 	end
@@ -753,7 +747,7 @@ local function Time(sDate, isUTC, _testMS)
 	-- return true if self.time is after sunrise and before sunset (daytime)
 	function self.ruleIsAtDayTime(rule)
 		if (string.find(rule, 'at daytime')) then
-			return _G.timeofday['Daytime'] -- coming from domotic
+			return _G.timeofday['Daytime'] -- coming from domoticz
 		end
 		return nil -- no 'at daytime' was specified
 	end
@@ -1010,8 +1004,6 @@ local function Time(sDate, isUTC, _testMS)
 		end
 		updateTotal(res)
 
-
-
 		res = self.ruleIsOnDay(rule) -- range
 		if (res == false) then
 			-- on <days> was specified but 'now' is not
@@ -1038,7 +1030,6 @@ local function Time(sDate, isUTC, _testMS)
 
 			res = self.ruleIsBeforeSunset(rule) -- moment
 			if (res == false) then
-				-- rule has xx minutes before sunset and now is not at that time
 				return false
 			end
 			updateTotal(res)
@@ -1046,49 +1037,42 @@ local function Time(sDate, isUTC, _testMS)
 
 			res = self.ruleIsAfterSunset(rule) -- moment
 			if (res == false) then
-				-- rule has xx minutes after sunset and now is not at that time
 				return false
 			end
 			updateTotal(res)
 
 			res = self.ruleIsBeforeCivilTwilightStart(rule) -- moment
 			if (res == false) then
-				-- rule has xx minutes before civil twilight start and now is not at that time
 				return false
 			end
 			updateTotal(res)
 
 			res = self.ruleIsAfterCivilTwilightStart(rule) -- moment
 			if (res == false) then
-				-- rule has xx minutes after civil twilight start and now is not at that time
 				return false
 			end
 			updateTotal(res)
 
 			res = self.ruleIsBeforeCivilTwilightEnd(rule) -- moment
 			if (res == false) then
-				-- rule has xx minutes before civil twilight end now is not at that time
 				return false
 			end
 			updateTotal(res)
 
 			res = self.ruleIsAfterCivilTwilightEnd(rule) -- moment
 			if (res == false) then
-				-- rule has xx minutes after civil twilight end now is not at that time
 				return false
 			end
 			updateTotal(res)
 
 			res = self.ruleIsBeforeSunrise(rule) -- moment
 			if (res == false) then
-				-- rule has xx minutes before sunrise and now is not at that time
 				return false
 			end
 			updateTotal(res)
 
 			res = self.ruleIsAfterSunrise(rule) -- moment
 			if (res == false) then
-				-- rule has xx minutes after sunrise and now is not at that time
 				return false
 			end
 			updateTotal(res)
@@ -1096,42 +1080,54 @@ local function Time(sDate, isUTC, _testMS)
 
 		res = self.ruleIsAtCivilTwilightStart(rule) -- moment
 		if (res == false) then
-			-- rule has at civil twilight start and now is not at that time
 			return false
 		end
 		updateTotal(res)
 
 		res = self.ruleIsAtCivilTwilightEnd(rule) -- moment
 		if (res == false) then
-			-- rule has at civil twilight end and now is not at that time
 			return false
 		end
 		updateTotal(res)
 
 		res = self.ruleIsAtSunset(rule) -- moment
 		if (res == false) then
-			-- rule has at sunset and now is not at that time
 			return false
 		end
 		updateTotal(res)
 
 		res = self.ruleIsAtSunrise(rule) -- moment
 		if (res == false) then
-			-- rule has at sunrise and now is not at that time
 			return false
 		end
 		updateTotal(res)
 
 		res = self.ruleIsAtNight(rule) -- range
 		if (res == false) then
-			-- rule has at nighttime but it is not night time now
 			return false
 		end
 		updateTotal(res)
 
 		res = self.ruleIsAtDayTime(rule) -- range
 		if (res == false) then
-			-- rule has at daytime but it is at night now
+			return false
+		end
+		updateTotal(res)
+		
+		res = self.ruleIsAtCivilNightTime(rule) -- range
+		if (res == false) then
+			return false
+		end
+		updateTotal(res)
+
+		res = self.ruleIsAtCivilDayTime(rule) -- range
+		if (res == false) then
+			return false
+		end
+		updateTotal(res)
+
+		res = self.ruleIsAtDayTime(rule) -- range
+		if (res == false) then
 			return false
 		end
 		updateTotal(res)

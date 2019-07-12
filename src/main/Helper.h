@@ -14,8 +14,22 @@ void stdreplace(
 	std::string &inoutstring,
 	const std::string& replaceWhat,
 	const std::string& replaceWithWhat);
-void stdupper(std::string &inoutstring);
-void stdlower(std::string &inoutstring);
+void stdupper(std::string& inoutstring);
+void stdlower(std::string& inoutstring);
+void stdupper(std::wstring& inoutstring);
+void stdlower(std::wstring& inoutstring);
+
+template< typename T > inline
+std::string int_to_hex(T i)
+{
+	std::stringstream stream;
+	stream << "0x"
+		<< std::setfill('0') << std::setw(sizeof(T) * 2)
+		<< std::hex << i;
+	return stream.str();
+}
+
+
 bool file_exist (const char *filename);
 std::vector<std::string> GetSerialPorts(bool &bUseDirectPath);
 double CalculateAltitudeFromPressure(double pressure);

@@ -38,7 +38,7 @@ extern bool g_bRunAsDaemon;
 extern time_t m_LastHeartbeat;
 
 #if defined(__linux__)
-static bool printRegInfo(siginfo_t * info, ucontext_t * ucontext)
+static void printRegInfo(siginfo_t * info, ucontext_t * ucontext)
 {
 #if defined(REG_RIP) //x86_64
 	_log.Log(LOG_ERROR, "siginfo address=%p, address=%p", info->si_addr, (void*)((ucontext_t *)ucontext)->uc_mcontext.gregs[REG_RIP]);
@@ -51,10 +51,9 @@ static bool printRegInfo(siginfo_t * info, ucontext_t * ucontext)
 #else // unknown
 	_log.Log(LOG_ERROR, "siginfo address=%p", info->si_addr);
 #endif
-	return true;
 }
 
-static bool printSingleThreadInfo(FILE* f, const char* pattern, bool& foundThread, bool& gdbSuccess)
+static void printSingleThreadInfo(FILE* f, const char* pattern, bool& foundThread, bool& gdbSuccess)
 {
 	char * line = NULL;
 	size_t len = 0;
@@ -81,10 +80,9 @@ static bool printSingleThreadInfo(FILE* f, const char* pattern, bool& foundThrea
 		free(line);
 		line = NULL;
 	}
-	return true;
 }
 
-static bool printSingleCallStack(FILE* f, const char* pattern, bool& foundThread, bool& gdbSuccess)
+static void printSingleCallStack(FILE* f, const char* pattern, bool& foundThread, bool& gdbSuccess)
 {
 	char * line = NULL;
 	size_t len = 0;
@@ -115,7 +113,6 @@ static bool printSingleCallStack(FILE* f, const char* pattern, bool& foundThread
 		free(line);
 		line = NULL;
 	}
-	return true;
 }
 
 // Try to attach gdb to print stack trace (Linux only).

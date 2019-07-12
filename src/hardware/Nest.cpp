@@ -124,6 +124,7 @@ void CNest::Do_Work()
 void CNest::SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
 {
 	_tThermostat thermos;
+	thermos.type=pTypeThermostat;
 	thermos.subtype=sTypeThermSetpoint;
 	thermos.id1=0;
 	thermos.id2=0;

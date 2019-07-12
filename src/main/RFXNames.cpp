@@ -215,6 +215,8 @@ const char *RFX_Type_Desc(const unsigned char i, const unsigned char snum)
 	{ pTypeEvohomeWater, "Heating" , "evohome" },
 	{ pTypeEvohomeRelay, "Heating" , "evohome" },
 	{ pTypeGeneralSwitch, "Light/Switch", "lightbulb" },
+	{ pTypeWEATHER, "Weather" , "weather" },
+	{ pTypeSOLAR, "Solar" , "solar" },
 	{ 0, NULL, NULL }
 	};
 	if (snum == 1)
@@ -259,7 +261,6 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 	{ pTypeTEMP_HUM, sTypeTH14, "Alecto" },
 	{ pTypeTEMP_HUM, sTypeTH_LC_TC, "LaCrosse TX3" },
 
-
 	{ pTypeTEMP_HUM_BARO, sTypeTHB1, "THB1 - BTHR918, BTHGN129" },
 	{ pTypeTEMP_HUM_BARO, sTypeTHB2, "THB2 - BTHR918N, BTHR968" },
 	{ pTypeTEMP_HUM_BARO, sTypeTHBFloat, "Weather Station" },
@@ -272,8 +273,8 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 	{ pTypeRAIN, sTypeRAIN6, "LaCrosse TX5" },
 	{ pTypeRAIN, sTypeRAIN7, "Alecto" },
 	{ pTypeRAIN, sTypeRAIN8, "Davis" },
-	{ pTypeRAIN, sTypeRAIN9, "Alecto WCH2010" },
 	{ pTypeRAIN, sTypeRAINWU, "WWW" },
+	{ pTypeRAIN, sTypeRAINByRate, "RainByRate" },
 
 	{ pTypeWIND, sTypeWIND1, "WTGR800" },
 	{ pTypeWIND, sTypeWIND2, "WGR800" },
@@ -282,13 +283,17 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 	{ pTypeWIND, sTypeWIND5, "UPM WDS500" },
 	{ pTypeWIND, sTypeWIND6, "LaCrosse WS2300" },
 	{ pTypeWIND, sTypeWIND7, "Alecto WS4500" },
-	{ pTypeWIND, sTypeWIND8, "Alecto ACH2010" },
 	{ pTypeWIND, sTypeWINDNoTemp, "Weather Station" },
 	{ pTypeWIND, sTypeWINDNoTempNoChill, "Wind" },
 
 	{ pTypeUV, sTypeUV1, "UVN128,UV138" },
 	{ pTypeUV, sTypeUV2, "UVN800" },
 	{ pTypeUV, sTypeUV3, "TFA" },
+
+	{ pTypeWEATHER, sTypeWEATHER1, "Alecto ACH2010" },
+	{ pTypeWEATHER, sTypeWEATHER2, "Alecto WS5500" },
+
+	{ pTypeSOLAR, sTypeSOLAR1, "Davis" },
 
 	{ pTypeLighting1, sTypeX10, "X10" },
 	{ pTypeLighting1, sTypeARC, "ARC" },
@@ -365,6 +370,7 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 	{ pTypeSecurity1, sTypePowercodeAux, "Visonic sensor - auxiliary contact" },
 	{ pTypeSecurity1, sTypeMeiantech, "Meiantech/Atlantic/Aidebao" },
 	{ pTypeSecurity1, sTypeSA30, "Alecto SA30 smoke detector" },
+	{ pTypeSecurity1, sTypeRM174RF, "Smartwares RM174RF smoke detector" },
 	{ pTypeSecurity1, sTypeDomoticzSecurity, "Security Panel" },
 
 	{ pTypeSecurity2, sTypeSec2Classic, "KeeLoq" },
@@ -464,8 +470,9 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 	{ pTypeChime, sTypeByronSX, "ByronSX" },
 	{ pTypeChime, sTypeByronMP001, "Byron MP001" },
 	{ pTypeChime, sTypeSelectPlus, "SelectPlus" },
-	{ pTypeChime, sTypeSelectPlus3, "SelectPlus3" },
+	{ pTypeChime, sTypeByronBY, "SelectPlus3" },
 	{ pTypeChime, sTypeEnvivo, "Envivo" },
+	{ pTypeChime, sTypeAlfawise, "Alfawise" },
 
 	{ pTypeFan, sTypeSiemensSF01 , "Siemens SF01" },
 	{ pTypeFan, sTypeItho , "Itho CVE RFT" },
@@ -506,6 +513,11 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 	{ pTypeFS20, sTypeFS20, "FS20" },
 	{ pTypeFS20, sTypeFHT8V, "FHT 8V valve" },
 	{ pTypeFS20, sTypeFHT80, "FHT80 door/window sensor" },
+
+	{ pTypeWEATHER, sTypeWEATHER1, "Alecto ACH2010" },
+	{ pTypeWEATHER, sTypeWEATHER2, "Alecto WS5500" },
+
+	{ pTypeSOLAR, sTypeSOLAR1, "Davis" },
 
 	{ pTypeGeneralSwitch, sSwitchTypeX10, "X10" },
 	{ pTypeGeneralSwitch, sSwitchTypeARC, "ARC" },
@@ -1295,7 +1307,11 @@ void GetLightStatus(
 			lstatus = "On";
 			break;
 		case Color_SetBrightnessLevel:
-			lstatus = "Set Level";
+			sprintf(szTmp, "Set Level: %d %%", llevel);
+			if (sValue != "0")
+				lstatus = szTmp;
+			else
+				lstatus = "Off";
 			break;
 		case Color_SetColorToWhite:
 			lstatus = "Set to White";
@@ -2627,7 +2643,8 @@ bool GetLightCommand(
 	case pTypeSecurity1:
 		if (
 			(dSubType == sTypeKD101) ||
-			(dSubType == sTypeSA30)
+			(dSubType == sTypeSA30) ||
+			(dSubType == sTypeRM174RF)
 			)
 		{
 			if ((switchcmd == "On") || (switchcmd == "All On"))
@@ -3341,7 +3358,7 @@ void ConvertToGeneralSwitchType(std::string &devid, int &dtype, int &subtype)
 		dtype = pTypeGeneralSwitch;
 		if (subtype == sTypeByronSX) subtype = sSwitchTypeByronSX;
 		if (subtype == sTypeSelectPlus) subtype = sSwitchTypeSelectPlus;
-		if (subtype == sTypeSelectPlus3) subtype = sSwitchTypeSelectPlus3;
+		if (subtype == sTypeByronBY) subtype = sSwitchTypeSelectPlus3;
 		if (subtype == sTypeByronMP001) subtype = sSwitchTypeByronMP001;
 	}
 	else if (dtype == pTypeSecurity1) {

@@ -292,6 +292,44 @@ describe('Domoticz', function()
 
 		end)
 
+		describe('triggerIFTTT', function()
+
+			it('should trigger an IFTTT maker event without extra values', function()
+				domoticz.triggerIFTTT('some maker event')
+				assert.is_same({
+					{
+						['TriggerIFTTT'] = { sID = 'some maker event' }
+					}
+				}, domoticz.commandArray)
+			end)
+
+			it('should trigger an IFTTT maker event with some extra values', function()
+				domoticz.triggerIFTTT('some maker event', 1, 2, 3)
+				assert.is_same({
+					{
+						['TriggerIFTTT'] = { 
+							sID = 'some maker event', 
+							sValue1 = '1',
+							sValue2 = '2',
+							sValue3 = '3',
+					}}
+				}, domoticz.commandArray)
+			end)
+
+			it('should trigger an IFTTT maker event with method afterSec', function()
+				domoticz.triggerIFTTT('some maker event', 1, 'two').afterMin(2)
+				assert.is_same({
+					{
+						['TriggerIFTTT'] = { 
+							_after = 120,
+							sID = 'some maker event', 
+							sValue1 = '1',
+							sValue2 = 'two',
+					}}
+				}, domoticz.commandArray)
+			end)
+		end)
+
 		it('should set a scene', function()
 			local res = domoticz.setScene('scene1', 'on')
 			assert.is_table(res)
@@ -464,7 +502,7 @@ describe('Domoticz', function()
 			collection.forEach(function(scene)
 				table.insert(res, scene.name)
 			end)
-			assert.is_same({ "Scene1", "Scene2" }, res)
+			assert.is_same({ "Scene2", "Scene1" }, res)
 
 
 			local filtered = collection.filter(function(scene)
@@ -587,7 +625,7 @@ describe('Domoticz', function()
 			collection.forEach(function(variable)
 				table.insert(res, variable.name)
 			end)
-			assert.is_same({ "a", "b", "var with spaces", "x", "y", "z"}, values(res))
+			assert.is_same({ "a", "b", "c", "var with spaces", "x", "y", "z"}, values(res))
 
 
 			local filtered = collection.filter(function(variable)
@@ -611,7 +649,7 @@ describe('Domoticz', function()
 				return acc
 			end, 0)
 
-			assert.is_same(21, reduced)
+			assert.is_same(28, reduced)
 
 			local reduced2 = filtered.reduce(function(acc, device)
 				acc = acc + device.id
@@ -711,7 +749,7 @@ describe('Domoticz', function()
 			collection.forEach(function(var)
 				table.insert(res, var.name)
 			end)
-			assert.is_same({ "a", "b", "var with spaces", "x", "z",  }, values(res))
+			assert.is_same({ "a", "b", "c", "var with spaces", "x", "z",  }, values(res))
 
 
 			local filtered = collection.filter(function(var)
@@ -735,7 +773,7 @@ describe('Domoticz', function()
 				return acc
 			end, 0)
 
-			assert.is_same(19, reduced)
+			assert.is_same(26, reduced)
 
 			local reduced2 = filtered.reduce(function(acc, var)
 				acc = acc + var.id
@@ -903,7 +941,6 @@ describe('Domoticz', function()
 	end)
 
 	it('should url encode', function()
-
 		local s = 'a b c'
 		assert.is_same('a+b+c', domoticz.utils.urlEncode(s))
 	end)
@@ -948,6 +985,22 @@ describe('Domoticz', function()
 		}, domoticz.utils.fromJSON(json))
 	end)
 
+	it('should convert a table to json', function()
+		local t = { a= 1 }
+		local res = domoticz.utils.toJSON(t)
+		assert.is_same('{"a":1}', res)
+	end)
+	
+	it('should dump a table to log', function()
+		local t = { a=1,b=2,c={d=3,e=4, "test"} }
+		local res = domoticz.utils.dumpTable(t,"> ")
+		assert.is_nil(res)
+	end)
+
+	it('should split a string ', function()
+		assert.is_same(domoticz.utils.stringSplit("A-B-C", "-")[2],"B")
+		assert.is_same(domoticz.utils.stringSplit("I forgot to include this in Domoticz.lua")[7],"Domoticz.lua")
+	end)
 
 
 end)
