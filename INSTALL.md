@@ -1,19 +1,19 @@
-# Domoticz
+# Oikomaticz
 
 Usage:
 ```
-Domoticz [-www <port>]  [-verbose <0|1>]
+Oikomaticz [-www <port>]  [-verbose <0|1>]
           -www <port>   Default is: -www 8080
           -verbose <0|1> (0 is none, 1 is debug)   Default is: -verbose 0
 ```
 
 Examples:
 ```
-Domoticz            (this is the same as Domoticz -www 8080 -verbose 0)
-Domoticz -www 81 -verbose 1
+Oikomaticz            (this is the same as Oikomaticz -www 8080 -verbose 0)
+Oikomaticz -www 81 -verbose 1
 ```
 
-If Domoticz and the browser are running on the same system you can connect with http://localhost:8080/
+If Oikomaticz and the browser are running on the same system you can connect with http://localhost:8080/
 To stop the application: press Ctrl-C in the application screen (not in the browser)
 
 Compatible browsers:
@@ -24,7 +24,7 @@ Be aware that a Raspberry pi receives its time from an online ntp server.
 If the pi is not connected to a network, the device time will not be updated, resulting in scheduling issues. 
 
 All ports below 1024 on linux systems can only be started by root.
-If you run domoticz on port 80, make sure to run it as root, e.g. : sudo ./domoticz
+If you run oikomaticz on port 80, make sure to run it as root, e.g. : sudo ./oikomaticz
 
 Compiling from source code:
 ---------------------------
@@ -33,25 +33,25 @@ First get get all prerequisites for your operation system. See the section below
 
 Then get the source code:
 ```
-git clone https://github.com/domoticz/domoticz.git
-cd domoticz
+git clone https://github.com/gordonb3/oikomaticz.git
+cd oikomaticz
 
 cmake -DCMAKE_BUILD_TYPE=Release CMakeLists.txt
 make
 ```
 
 Now you should have the binary application, you can start it with
-`./domoticz`
+`./oikomaticz`
 
 For additional parameters type:
-`./domoticz -h`
+`./oikomaticz -h`
 
 Note: Compiling on the Raspberry Pi will take about 15 minutes
 
 To Update to a newer version:
-- stop the application (control-c), or stop the startup script (see below) with `/etc/init.d/domoticz.sh stop`
+- stop the application (control-c), or stop the startup script (see below) with `/etc/init.d/oikomaticz.sh stop`
 
-(from the domoticz folder)
+(from the oikomaticz folder)
 ```
 git pull
 cmake CMakeLists.txt
@@ -59,63 +59,63 @@ make
 ```
 
 Unix startup script:
-To start Domoticz automatically when the system starts perform the following steps:
+To start Oikomaticz automatically when the system starts perform the following steps:
 ```
-sudo cp domoticz.sh /etc/init.d
-sudo chmod +x /etc/init.d/domoticz.sh
-sudo update-rc.d domoticz.sh defaults
+sudo cp oikomaticz.sh /etc/init.d
+sudo chmod +x /etc/init.d/oikomaticz.sh
+sudo update-rc.d oikomaticz.sh defaults
 ```
 
 Edit the startup script and point the DEAMON location to point to the installation folder:
 ```
-sudo vi /etc/init.d/domoticz.sh
+sudo vi /etc/init.d/oikomaticz.sh
 
-DAEMON=/home/pi/domoticz/domoticz
+DAEMON=/home/pi/oikomaticz/oikomaticz
 ```
 
 If you want to use another web interface port change:
 `OPTIONS="-www 8080"`
 
-You can now start domoticz with:
-`sudo /etc/init.d/domoticz.sh start`
+You can now start oikomaticz with:
+`sudo /etc/init.d/oikomaticz.sh start`
 
 To stop:
-`sudo /etc/init.d/domoticz.sh stop`
+`sudo /etc/init.d/oikomaticz.sh stop`
 
-To check if domoticz is running:
-`sudo /etc/init.d/domoticz.sh status`
+To check if oikomaticz is running:
+`sudo /etc/init.d/oikomaticz.sh status`
 
 If your system supports it you can also do
 ```
-sudo service domoticz.sh start
-sudo service domoticz.sh stop
-sudo service domoticz.sh status
+sudo service oikomaticz.sh start
+sudo service oikomaticz.sh stop
+sudo service oikomaticz.sh status
 ```
 
 To update when you have installed it as startup service:
 ```
-cd /home/pi/domoticz # (or where you installed domoticz)
-sudo service domoticz.sh stop
+cd /home/pi/oikomaticz # (or where you installed oikomaticz)
+sudo service oikomaticz.sh stop
 git pull
 make
-sudo service domoticz.sh start
+sudo service oikomaticz.sh start
 ```
 
 Option: Create an update and backup script
 `chmod +x updatedomo`
 
-To update domoticz
+To update oikomaticz
 
 * login to your Raspberry Pi
 ```
-cd domoticz
+cd oikomaticz
 ./updatedomo
 ```
 
 
 ## Prerequisites
 
-All: (Assuming domoticz development is in a subfolder of the user)
+All: (Assuming oikomaticz development is in a subfolder of the user)
 
 `cd ~`
 
@@ -155,12 +155,6 @@ sudo apt-get install libtelldus-core-dev
 make
 
 
-### Windows
-- You need Visual Studio 2015 (Community Edition is OK)
-- The project file for Visual Studio can be found inside the "msbuild" folder
-- You need to download `WindowsLibraries.7z` from https://github.com/domoticz/win32-libraries
-  and unpack the archive inside the "msbuild" folder.
-
 ### Ubuntu / Raspberry Pi (wheezy)
 ```
 sudo apt-get install build-essential -y
@@ -193,7 +187,3 @@ sudo port install libudev-dev
 sudo port install zlib1g-dev
 ```
 
-###  Synology
-
-(Initial setup time is 30 minutes, DSM 5.1+/tested with 212+)]
-Please see Wiki page at: http://www.domoticz.com/wiki/DomoticzSynology
