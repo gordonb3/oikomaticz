@@ -9,23 +9,29 @@
 #include "main/SQLHelper.h"
 #include "protocols/HTTPClient.h"
 #include "main/mainworker.h"
-#include "jsoncpp/json.h"
 #include "webserver/Base64.h"
+
+
+#ifdef OFFLINE
+#include <iostream>
+#include <fstream>
+#endif
+
 
 #define round(a) ( int ) ( a + .5 )
 
 const std::string HONEYWELL_DEFAULT_APIKEY = "atD3jtzXC5z4X8WPbzvo0CBqWi7S81Nh";
 const std::string HONEYWELL_DEFAULT_APISECRET = "TXDzy2aHpAJw6YiO";
-const std::string HONEYWELL_LOCATIONS_PATH = "https://api.honeywell.com/v2/locations?apikey=[apikey]";
-const std::string HONEYWELL_UPDATE_THERMOSTAT = "https://api.honeywell.com/v2/devices/thermostats/[deviceid]?apikey=[apikey]&locationId=[locationid]";
+const std::string HONEYWELL_LOCATIONS_PATH = "https://api.honeywell.com/v2/locations?apikey={apikey}";
+const std::string HONEYWELL_UPDATE_THERMOSTAT = "https://api.honeywell.com/v2/devices/thermostats/{deviceid}?apikey={apikey}&locationId={locationid}";
 const std::string HONEYWELL_TOKEN_PATH = "https://api.honeywell.com/oauth2/token";
 
-const std::string kHeatSetPointDesc = "Target temperature ([devicename])";
-const std::string kHeatingDesc = "Heating ([devicename])";
-const std::string kOperationStatusDesc = "Heating state ([devicename])";
-const std::string kOutdoorTempDesc = "Outdoor temperature ([devicename])";
-const std::string kRoomTempDesc = "Room temperature ([devicename])";
-const std::string kAwayDesc = "Away ([name])";
+const std::string kHeatSetPointDesc = "Target temperature ({devicename})";
+const std::string kHeatingDesc = "Heating ({devicename})";
+const std::string kOperationStatusDesc = "Heating state ({devicename})";
+const std::string kOutdoorTempDesc = "Outdoor temperature ({devicename})";
+const std::string kRoomTempDesc = "Room temperature ({devicename})";
+const std::string kAwayDesc = "Away ({name})";
 
 extern http::server::CWebServerHelper m_webservers;
 
@@ -130,8 +136,7 @@ bool Lyric::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 
 		int nodeID = pCmd->LIGHTING2.id4;
 		int devID = nodeID / 10;
-		std::string deviceName = mDeviceList[devID]["name"].asString();
-
+		std::string deviceName = (*m_lyricDevices[devID].deviceInfo)["name"].asString();
 
 		bool bIsOn = (pCmd->LIGHTING2.cmnd == light2_sOn);
 		if ((nodeID % 10) == 3) {
@@ -139,13 +144,12 @@ bool Lyric::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 			SetPauseStatus(devID, bIsOn, nodeID);
 			return true;
 		}
-
 	}
-	else if (pCmd->ICMND.packettype == pTypeThermostat && pCmd->LIGHTING2.subtype == sTypeThermSetpoint)
+	else if (pCmd->LIGHTING2.packettype == pTypeThermostat && pCmd->LIGHTING2.subtype == sTypeThermSetpoint)
 	{
-		int nodeID = pCmd->LIGHTING2.id4;
+		const tThermostat *therm = reinterpret_cast<const tThermostat*>(pdata);
+		int nodeID = (int)therm->id4;
 		int devID = nodeID / 10;
-		const _tThermostat *therm = reinterpret_cast<const _tThermostat*>(pdata);
 		SetSetpoint(devID, therm->temp, nodeID);
 	}
 	return false;
@@ -156,6 +160,10 @@ bool Lyric::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 //
 bool Lyric::refreshToken()
 {
+#ifdef OFFLINE
+	return true;
+#endif
+
 	if (mRefreshToken.empty())
 		return false;
 
@@ -224,82 +232,126 @@ void Lyric::GetThermostatData()
 
 	std::string sResult;
 	std::string sURL = HONEYWELL_LOCATIONS_PATH;
-	stdreplace(sURL, "[apikey]", mApiKey);
+	stdreplace(sURL, "{apikey}", mApiKey);
 	
+#ifndef OFFLINE
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::GET(sURL, mSessionHeaders, sResult)) {
 		_log.Log(LOG_ERROR, "Honeywell Lyric: Error getting thermostat data!");
 		return;
 	}
+#else
+	std::ifstream myfile ("/tmp/lyricsampledata.json");
+	if ( myfile.is_open() )
+	{
+		std::string line;
+		while ( getline(myfile,line) )
+		{
+			sResult.append(line);
+		}
+		myfile.close();
+	}
+#endif
 
-	Json::Value root;
 	Json::Reader jReader;
-	bool ret = jReader.parse(sResult, root);
+	m_locationInfo.clear();
+
+	bool ret = jReader.parse(sResult, m_locationInfo);
 	if (!ret) {
 		_log.Log(LOG_ERROR, "Honeywell Lyric: Invalid/no data received...");
 		return;
 	}
 
 	int devNr = 0;
-	mDeviceList.clear();
-	mLocationList.clear();
-	for (int locCnt = 0; locCnt < (int)root.size(); locCnt++)
+
+	std::vector<lyricDevice>().swap(m_lyricDevices);
+	for (size_t locCnt = 0; locCnt < m_locationInfo.size(); ++locCnt)
 	{
-		Json::Value location = root[locCnt];
-		Json::Value devices = location["devices"];
-		for (int devCnt = 0; devCnt < (int)devices.size(); devCnt++)
+		Json::Value* jlocation = &m_locationInfo[locCnt];
+		Json::Value* jdevices = &(*jlocation)["devices"];
+
+		std::string locationId = (*jlocation)["locationID"].asString();
+
+		for (size_t devCnt = 0; devCnt < (*jdevices).size(); devCnt++)
 		{
-			Json::Value device = devices[devCnt];
-			std::string deviceName = device["name"].asString();
-			mDeviceList[devNr] = device;
-			mLocationList[devNr] = location["locationID"].asString();
+			Json::Value* currentDevice = &(*jdevices)[(int)(devCnt)];
+			std::string deviceName = (*currentDevice)["name"].asString();
+
+			lyricDevice newdev = lyricDevice();
+			m_lyricDevices.push_back(newdev);
+			m_lyricDevices[devNr].deviceInfo = currentDevice;
+			m_lyricDevices[devNr].locationId = locationId;
+			m_lyricDevices[devNr].deviceName = deviceName;
+
+			std::string unit = (*currentDevice)["units"].asString();
+			if (unit[0] == 'C')
+				m_lyricDevices[devNr].temperatureUnit = device::meter::temperature::unit::CELSIUS;
+			else if (unit[0] == 'F')
+				m_lyricDevices[devNr].temperatureUnit = device::meter::temperature::unit::FAHRENHEIT;
+			else
+				m_lyricDevices[devNr].temperatureUnit = device::meter::temperature::unit::UNSUPPORTED; // shouldn't happen?
 
 			float temperature;
-			temperature = (float)device["indoorTemperature"].asFloat();
+			temperature = (float)(*currentDevice)["indoorTemperature"].asFloat();
 			std::string desc = kRoomTempDesc;
-			stdreplace(desc, "[devicename]", deviceName);
-			SendTempSensor(10 * devNr + 1, 255, temperature, desc);
+			stdreplace(desc, "{devicename}", deviceName);
+			if (m_lyricDevices[devNr].temperatureUnit == device::meter::temperature::unit::FAHRENHEIT)
+				SendTempSensor(10 * devNr + 1, 255, ConvertToCelsius(temperature), desc);
+			else
+				SendTempSensor(10 * devNr + 1, 255, temperature, desc);
 
-			temperature = (float)device["outdoorTemperature"].asFloat();
+			temperature = (float)(*currentDevice)["outdoorTemperature"].asFloat();
 			desc = kOutdoorTempDesc;
-			stdreplace(desc, "[devicename]", deviceName);
-			SendTempSensor(10 * devNr + 2, 255, temperature, desc);
+			stdreplace(desc, "{devicename}", deviceName);
+			if (m_lyricDevices[devNr].temperatureUnit == device::meter::temperature::unit::FAHRENHEIT)
+				SendTempSensor(10 * devNr + 2, 255, ConvertToCelsius(temperature), desc);
+			else
+				SendTempSensor(10 * devNr + 2, 255, temperature, desc);
 
-			std::string mode = device["changeableValues"]["mode"].asString();
+			std::string mode = (*currentDevice)["changeableValues"]["mode"].asString();
 			bool bHeating = (mode == "Heat");
 			desc = kHeatingDesc;
-			stdreplace(desc, "[devicename]", deviceName);
+			stdreplace(desc, "{devicename}", deviceName);
 			SendSwitch(10 * devNr + 3, 1, 255, bHeating, 0, desc);
 
-			temperature = (float)device["changeableValues"]["heatSetpoint"].asFloat();
+			temperature = (float)(*currentDevice)["changeableValues"]["heatSetpoint"].asFloat();
 			desc = kHeatSetPointDesc;
-			stdreplace(desc, "[devicename]", deviceName);
-			SendSetPointSensor((uint8_t)(10 * devNr + 4), temperature, desc);
+			stdreplace(desc, "{devicename}", deviceName);
+			if (m_lyricDevices[devNr].temperatureUnit == device::meter::temperature::unit::FAHRENHEIT)
+				SendSetPointSensor((uint8_t)(10 * devNr + 4), ConvertToCelsius(temperature), desc);
+			else
+				SendSetPointSensor((uint8_t)(10 * devNr + 4), temperature, desc);
+
 			devNr++;
 			
-			std::string operationstatus = device["operationStatus"]["mode"].asString();
+// FIXME: devNr is already incremented, so within the used logic this ends up belonging to the next location
+			std::string operationstatus = (*currentDevice)["operationStatus"]["mode"].asString();
 			bool bStatus = (operationstatus != "EquipmentOff");
 			desc = kOperationStatusDesc;
-			stdreplace(desc, "[devicename]", deviceName);
+			stdreplace(desc, "{devicename}", deviceName);
 			SendSwitch(10 * devNr + 5, 1, 255, bStatus, 0, desc);
 		}
-		
-		bool geoFenceEnabled = location["geoFenceEnabled"].asBool();
-		if (geoFenceEnabled) {
+
+
+// FIXME: this is wrong as multiple geofences for a single location will write to the same switch ID
+		bool geoFenceEnabled = (*jlocation)["geoFenceEnabled"].asBool();
+		if (geoFenceEnabled)
+		{
 			
-			Json::Value geofences = location["geoFences"];
+			Json::Value* geofences = &(*jlocation)["geoFences"];
+			std::string locationName = (*jlocation)["name"].asString();
 			bool bAway = true;
-			for (int geofCnt = 0; geofCnt < (int)geofences.size(); geofCnt++)
+			for (size_t geofCnt = 0; geofCnt < (*geofences).size(); geofCnt++)
 			{
-				int withinFence = geofences[geofCnt]["geoOccupancy"]["withinFence"].asInt();
+				int withinFence = (*geofences)[(int)geofCnt]["geoOccupancy"]["withinFence"].asInt();
 				if (withinFence > 0) {
 					bAway = false;
 					break;
 				}
 			}
 			std::string desc = kAwayDesc;
-			stdreplace(desc, "[name]", location["name"].asString());
+			stdreplace(desc, "{name}", locationName);
 			SendSwitch(10 * devNr + 6, 1, 255, bAway, 0, desc);
 		}
 	}
@@ -310,7 +362,7 @@ void Lyric::GetThermostatData()
 //
 void Lyric::SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
 {
-	_tThermostat thermos;
+	tThermostat thermos;
 	thermos.subtype = sTypeThermSetpoint;
 	thermos.id1 = 0;
 	thermos.id2 = 0;
@@ -334,29 +386,30 @@ void Lyric::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid*/)
 	}
 
 	std::string url = HONEYWELL_UPDATE_THERMOSTAT;
-	std::string deviceID = mDeviceList[idx]["deviceID"].asString();
+	std::string deviceID = (*m_lyricDevices[idx].deviceInfo)["deviceID"].asString();
 
-	stdreplace(url, "[deviceid]", deviceID);
-	stdreplace(url, "[apikey]", mApiKey);
-	stdreplace(url, "[locationid]", mLocationList[idx]);
+	stdreplace(url, "{deviceid}", deviceID);
+	stdreplace(url, "{apikey}", mApiKey);
+	stdreplace(url, "{locationid}", m_lyricDevices[idx].locationId);
 
 	Json::Value reqRoot;
 	reqRoot["mode"] = bHeating ? "Heat" : "Off";
-	reqRoot["heatSetpoint"] = mDeviceList[idx]["changeableValues"]["coolHeatpoint"].asInt();
-	reqRoot["coolSetpoint"] = mDeviceList[idx]["changeableValues"]["coolSetpoint"].asInt();
+	reqRoot["heatSetpoint"] = (*m_lyricDevices[idx].deviceInfo)["changeableValues"]["coolHeatpoint"].asInt();
+	reqRoot["coolSetpoint"] = (*m_lyricDevices[idx].deviceInfo)["changeableValues"]["coolSetpoint"].asInt();
 	reqRoot["thermostatSetpointStatus"] = "TemporaryHold";
 	Json::FastWriter writer;
 
 	std::string sResult;
+#ifndef OFFLINE
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::POST(url, writer.write(reqRoot), mSessionHeaders, sResult, true, true)) {
 		_log.Log(LOG_ERROR, "Honeywell Lyric: Error setting thermostat data!");
 		return;
 	}
-
+#endif
 	std::string desc = kHeatingDesc;
-	stdreplace(desc, "[devicename]", mDeviceList[idx]["name"].asString());
+	stdreplace(desc, "{devicename}", m_lyricDevices[idx].deviceName);
 	SendSwitch(10 * idx + 3, 1, 255, bHeating, 0, desc);
 }
 
@@ -365,38 +418,46 @@ void Lyric::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid*/)
 //
 void Lyric::SetSetpoint(const int idx, const float temp, const int /*nodeid*/)
 {
+
 	if (!refreshToken()) {
 		_log.Log(LOG_ERROR, "Honeywell Lyric: No token available. Error setting thermostat data!");
 		return;
 	}
 
 	std::string url = HONEYWELL_UPDATE_THERMOSTAT;
-	std::string deviceID = mDeviceList[idx]["deviceID"].asString();
+	std::string deviceID = (*m_lyricDevices[idx].deviceInfo)["deviceID"].asString();
 
-	stdreplace(url, "[deviceid]", deviceID);
-	stdreplace(url, "[apikey]", mApiKey);
-	stdreplace(url, "[locationid]", mLocationList[idx]);
+	stdreplace(url, "{deviceid}", deviceID);
+	stdreplace(url, "{apikey}", mApiKey);
+	stdreplace(url, "{locationid}", m_lyricDevices[idx].locationId);
 
 	Json::Value reqRoot;
 	reqRoot["mode"] = "Heat";
-	reqRoot["heatSetpoint"] = temp;
-	reqRoot["coolSetpoint"] = mDeviceList[idx]["changeableValues"]["coolSetpoint"].asInt();
+	if (m_lyricDevices[idx].temperatureUnit == device::meter::temperature::unit::FAHRENHEIT)
+		reqRoot["heatSetpoint"] = ConvertToFahrenheit(temp);
+	else
+		reqRoot["heatSetpoint"] = temp;
+	reqRoot["coolSetpoint"] = (*m_lyricDevices[idx].deviceInfo)["changeableValues"]["coolSetpoint"].asInt();
 	reqRoot["thermostatSetpointStatus"] = "TemporaryHold";
 	Json::FastWriter writer;
 
+
+std::cout << writer.write(reqRoot);
+
 	std::string sResult;
+#ifndef OFFLINE
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::POST(url, writer.write(reqRoot), mSessionHeaders, sResult, true, true)) {
 		_log.Log(LOG_ERROR, "Honeywell Lyric: Error setting thermostat data!");
 		return;
 	}
-
+#endif
 	std::string desc = kHeatSetPointDesc;
-	stdreplace(desc, "[devicename]", mDeviceList[idx]["name"].asString());
+	stdreplace(desc, "{devicename}", m_lyricDevices[idx].deviceName);
 	SendSetPointSensor((uint8_t)(10 * idx + 4), temp, desc);
 
 	desc = kHeatingDesc;
-	stdreplace(desc, "[devicename]", mDeviceList[idx]["name"].asString());
+	stdreplace(desc, "{devicename}", m_lyricDevices[idx].deviceName);
 	SendSwitch(10 * idx + 3, 1, 255, true, 0, desc);
 }

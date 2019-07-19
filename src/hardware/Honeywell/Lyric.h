@@ -2,6 +2,9 @@
 
 #include "hardware/DomoticzHardware.h"
 #include "hardware/hardwaretypes.h"
+#include "typedef/metertypes.hpp"
+#include "jsoncpp/json.h"
+
 
 namespace Json
 {
@@ -35,7 +38,17 @@ private:
 	bool mIsStarted;
 	std::shared_ptr<std::thread> m_thread;
 	std::vector<std::string> mSessionHeaders;
-	std::map<int, Json::Value> mDeviceList;
-	std::map<int, std::string> mLocationList;
 	int mLastMinute;
+
+	struct lyricDevice
+	{
+		Json::Value *deviceInfo;
+		int devNr;
+		std::string locationId;
+		std::string deviceName;
+		device::meter::temperature::unit::value temperatureUnit;
+	};
+
+	Json::Value m_locationInfo;
+	std::vector<lyricDevice> m_lyricDevices;
 };
