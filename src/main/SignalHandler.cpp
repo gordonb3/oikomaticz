@@ -153,7 +153,7 @@ static bool dumpstack_gdb(bool printAllThreads) {
 	// Block signals to child processes
 	sigprocmask(SIG_BLOCK, &signal_set, NULL);
 
-	// Spawn helper process which will keep running when gdb is attached to main Domoticz process
+	// Spawn helper process which will keep running when gdb is attached to main Oikomaticz process
 	pid_t intermediate_pid = fork();
 	if (intermediate_pid == -1)
 	{

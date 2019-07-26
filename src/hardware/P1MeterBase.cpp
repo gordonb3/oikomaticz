@@ -620,7 +620,7 @@ bool P1MeterBase::CheckCRC()
 /	datagram is DSMR 4.0+ of course.
 /
 /	Because older DSMR standard does not contain a CRC we still need the validation rules
-/	in Matchline(). In fact, one of them is essential for keeping Domoticz from crashing
+/	in Matchline(). In fact, one of them is essential for keeping Oikomaticz from crashing
 /	in specific cases of bad data. This means that a CRC check will only be done if the
 /	datagram passes all other validation rules
 */

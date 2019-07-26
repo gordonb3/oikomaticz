@@ -1107,7 +1107,7 @@ namespace http {
 
 				if (htype == hardware::type::TeleinfoMeter) {
 					// Teleinfo always has decimals. Chances to have a P1 and a Teleinfo device on the same
-					// Domoticz instance are very low as both are national standards (NL and FR)
+					// Oikomaticz instance are very low as both are national standards (NL and FR)
 					m_sql.UpdatePreferencesVar("SmartMeterType", 0);
 				}
 			}
@@ -1126,7 +1126,7 @@ namespace http {
 
 				if (htype == hardware::type::ECODEVICES) {
 					// EcoDevices always have decimals. Chances to have a P1 and a EcoDevice/Teleinfo device on the same
-					// Domoticz instance are very low as both are national standards (NL and FR)
+					// Oikomaticz instance are very low as both are national standards (NL and FR)
 					m_sql.UpdatePreferencesVar("SmartMeterType", 0);
 				}
 			}
@@ -6407,7 +6407,7 @@ namespace http {
 				std::string until = request::findValue(&req, "until");//optional until date / time as applicable
 				std::string action = request::findValue(&req, "action");//Run action or not (update status only)
 				std::string onlyonchange = request::findValue(&req, "ooc");//No update unless the value changed (check if updated)
-				//The on action is used to call a script to update the real device so we only want to use it when altering the status in the Domoticz Web Client
+				//The on action is used to call a script to update the real device so we only want to use it when altering the status in the Oikomaticz Web Client
 				//If we're posting the status from the real device to domoticz we don't want to run the on action script ("action"!=1) to avoid loops and contention
 				//""... we only want to log a change (and trigger an event) when the status has actually changed ("ooc"==1) i.e. suppress non transient updates
 				if ((idx.empty()) || (switchcmd.empty()))

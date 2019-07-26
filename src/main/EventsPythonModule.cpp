@@ -22,7 +22,7 @@
         };
 
         static PyMethodDef DomoticzEventsMethods[] = {
-            { "Log", PyDomoticz_EventsLog, METH_VARARGS, "Write message to Domoticz log." },
+            { "Log", PyDomoticz_EventsLog, METH_VARARGS, "Write message to Oikomaticz log." },
             { "Command", PyDomoticz_EventsCommand, METH_VARARGS, "Schedule a command." },
             { NULL, NULL, 0, NULL }
         };

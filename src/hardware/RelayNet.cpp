@@ -476,7 +476,7 @@ void RelayNet::UpdateDomoticzInput(int InputNumber, bool State)
 		m_Packet.LIGHTING2.unitcode = 100 + (char) InputNumber;
 		m_Packet.LIGHTING2.seqnbr++;
 
-		/* send packet to Domoticz */
+		/* send packet to Oikomaticz */
 		sDecodeRXMessage(this, (const unsigned char *)&m_Packet.LIGHTING2, "Input", 255);
 	}
 }
@@ -528,7 +528,7 @@ void RelayNet::UpdateDomoticzRelay(int RelayNumber, bool State)
 		m_Packet.LIGHTING2.unitcode = (char) RelayNumber;
 		m_Packet.LIGHTING2.seqnbr++;
 
-		/* send packet to Domoticz */
+		/* send packet to Oikomaticz */
 		sDecodeRXMessage(this, (const unsigned char *)&m_Packet.LIGHTING2, "Relay", 255);
 	}
 }

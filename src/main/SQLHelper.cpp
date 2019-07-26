@@ -672,9 +672,9 @@ bool CSQLHelper::OpenDatabase()
 		GetPreferencesVar("DB_Version", dbversion);
 		if (dbversion > DB_VERSION)
 		{
-			//User is using a newer database on a old Domoticz version
+			//User is using a newer database on a old Oikomaticz version
 			//This is very dangerous and should not be allowed
-			_log.Log(LOG_ERROR, "Database incompatible with this Domoticz version. (You cannot downgrade to an old Domoticz version!)");
+			_log.Log(LOG_ERROR, "Database incompatible with this Oikomaticz version. (You cannot downgrade to an old Oikomaticz version!)");
 			sqlite3_close(m_dbase);
 			m_dbase = NULL;
 			return false;
@@ -4188,7 +4188,7 @@ uint64_t CSQLHelper::InsertDevice(const int HardwareID, const char* ID, const un
 	if (!m_bAcceptNewHardware)
 	{
 #ifdef _DEBUG
-		_log.Log(LOG_STATUS, "Device creation failed, Domoticz settings prevent accepting new devices.");
+		_log.Log(LOG_STATUS, "Device creation failed, Oikomaticz settings prevent accepting new devices.");
 #endif
 		return -1; //We do not allow new devices
 	}
@@ -4503,9 +4503,9 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 				//Execute possible script
 				std::string scriptname;
 #ifdef WIN32
-				scriptname = szUserDataFolder + "scripts\\domoticz_main.bat";
+				scriptname = szUserDataFolder + "scripts\\oikomaticz_main.bat";
 #else
-				scriptname = szUserDataFolder + "scripts/domoticz_main";
+				scriptname = szUserDataFolder + "scripts/oikomaticz_main";
 #endif
 				if (file_exist(scriptname.c_str()))
 				{

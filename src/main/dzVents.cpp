@@ -32,7 +32,7 @@ const std::string CdzVents::GetVersion()
 
 void CdzVents::EvaluateDzVents(lua_State *lua_state, const std::vector<CEventSystem::_tEventQueue> &items, const int secStatus)
 {
-	// reroute print library to Domoticz logger
+	// reroute print library to Oikomaticz logger
 	luaL_openlibs(lua_state);
 	lua_pushcfunction(lua_state, l_domoticz_print);
 	lua_setglobal(lua_state, "print");

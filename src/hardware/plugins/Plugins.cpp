@@ -550,10 +550,10 @@ namespace Plugins {
 	}
 
 	static PyMethodDef DomoticzMethods[] = {
-		{ "Debug", PyDomoticz_Debug, METH_VARARGS, "Write a message to Domoticz log only if verbose logging is turned on." },
-		{ "Log", PyDomoticz_Log, METH_VARARGS, "Write a message to Domoticz log." },
-		{ "Status", PyDomoticz_Status, METH_VARARGS, "Write a status message to Domoticz log." },
-		{ "Error", PyDomoticz_Error, METH_VARARGS, "Write an error message to Domoticz log." },
+		{ "Debug", PyDomoticz_Debug, METH_VARARGS, "Write a message to Oikomaticz log only if verbose logging is turned on." },
+		{ "Log", PyDomoticz_Log, METH_VARARGS, "Write a message to Oikomaticz log." },
+		{ "Status", PyDomoticz_Status, METH_VARARGS, "Write a status message to Oikomaticz log." },
+		{ "Error", PyDomoticz_Error, METH_VARARGS, "Write an error message to Oikomaticz log." },
 		{ "Debugging", PyDomoticz_Debugging, METH_VARARGS, "Set logging level. 1 set verbose logging, all other values use default level" },
 		{ "Heartbeat", PyDomoticz_Heartbeat, METH_VARARGS, "Set the heartbeat interval, default 10 seconds." },
 		{ "Notifier", PyDomoticz_Notifier, METH_VARARGS, "Enable notification handling with supplied name." },
@@ -1158,11 +1158,11 @@ namespace Plugins {
 				PyErr_Clear();
 			}
 
-			// Domoticz callbacks need state so they know which plugin to act on
+			// Oikomaticz callbacks need state so they know which plugin to act on
 			PyObject* pMod = PyState_FindModule(&DomoticzModuleDef);
 			if (!pMod)
 			{
-				_log.Log(LOG_ERROR, "(%s) start up failed, Domoticz module not found in interpreter.", m_PluginKey.c_str());
+				_log.Log(LOG_ERROR, "(%s) start up failed, Oikomaticz module not found in interpreter.", m_PluginKey.c_str());
 				goto Error;
 			}
 			module_state*	pModState = ((struct module_state*)PyModule_GetState(pMod));

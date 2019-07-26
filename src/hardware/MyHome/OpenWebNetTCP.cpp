@@ -1,6 +1,6 @@
 /************************************************************************
 
-Legrand MyHome / OpenWebNet Interface board driver for Domoticz (with LAN interface)
+Legrand MyHome / OpenWebNet Interface board driver for Oikomaticz (with LAN interface)
 Date: 24-01-2016
 Written by: Stéphane Lebrasseur
 

@@ -1096,7 +1096,7 @@ bool ZWaveBase::WriteToHardware(const char *pdata, const unsigned char length)
 				}
 				else
 				{
-					_log.Log(LOG_STATUS, "ZWave: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Oikomaticz forum", pLed->color.mode);
+					_log.Log(LOG_STATUS, "ZWave: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum", pLed->color.mode);
 					return false;
 				}
 				instanceID = 2;//brightness
@@ -1181,7 +1181,7 @@ bool ZWaveBase::WriteToHardware(const char *pdata, const unsigned char length)
 					}
 					else
 					{
-						_log.Log(LOG_STATUS, "ZWave: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Oikomaticz forum", pLed->color.mode);
+						_log.Log(LOG_STATUS, "ZWave: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum", pLed->color.mode);
 						return false;
 					}
 

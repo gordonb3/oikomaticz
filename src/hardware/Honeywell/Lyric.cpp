@@ -125,7 +125,7 @@ void Lyric::Do_Work()
 
 
 //
-// callback from Domoticz backend to update the Honeywell Lyric thermostat
+// callback from Oikomaticz backend to update the Honeywell Lyric thermostat
 //
 bool Lyric::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 {

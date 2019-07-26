@@ -83,7 +83,7 @@ PyDomoticz_log(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef DomoticzMethods[] = {
-	{ "log", PyDomoticz_log, METH_VARARGS,  "log to Domoticz." },
+	{ "log", PyDomoticz_log, METH_VARARGS,  "log to Oikomaticz." },
 	{ NULL, NULL, 0, NULL }
 };
 

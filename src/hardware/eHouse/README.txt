@@ -1,4 +1,4 @@
-#eHouse BMS integration with Domoticz Rev.1
+#eHouse BMS integration with Oikomaticz Rev.1
 
 eHouse BMS is Building Management System and Home, Office, Hotel Automation -  from DIY to PRO (controllers, accessories, switchboards, software)
 
@@ -15,21 +15,21 @@ eHouse BMS is Building Management System and Home, Office, Hotel Automation -  f
 - Password - password wchich will be used for dynamic code authorization to controllers 6 ascii chars. Default: "abBrac"
 - AutoDiscovery - This mode automatically discover all eHouse Devices in the installation. 
 - EnablePRO - Enable eHouse PRO direclty connected I/O buffers and BMS hardware (thermostats, temp sensors, RFID, etc)
-- Enable Alam Inputs - future use. Add Alarm signals for each inputs (Early Warning, Monitoring, Silent Alarm, Horn, Warning Light). Increase Domoticz Input objects (~5..6 times)
+- Enable Alam Inputs - future use. Add Alarm signals for each inputs (Early Warning, Monitoring, Silent Alarm, Horn, Warning Light). Increase Oikomaticz Input objects (~5..6 times)
 - Option A - additional options (bitwise). Administrative purposes keep it to 0 - don't modify it unless you know exaclty what You are doing
 - Option B - additional options (bitwise). Administrative purposes keep it to 0 - don't modify it unless you know exaclty what You are doing
  
  
 #Integration/Connection of various eHouse IP Controllers:
-- eHouse Ethernet: directly on LAN/WiFi Network. Do not require eHouse PRO server in LAN Network for continuous work of Domoticz - after complete auto-discovery of all controllers
-- eHouse WiFi: directly on WiFi/LAN Network. Do not require eHouse PRO server in LAN Network for continuous work of Domoticz - after complete auto-discovery of all controllers
+- eHouse Ethernet: directly on LAN/WiFi Network. Do not require eHouse PRO server in LAN Network for continuous work of Oikomaticz - after complete auto-discovery of all controllers
+- eHouse WiFi: directly on WiFi/LAN Network. Do not require eHouse PRO server in LAN Network for continuous work of Oikomaticz - after complete auto-discovery of all controllers
 - eHouse PRO: directly on WiFi/LAN Network.
 
 #Integration of various eHouse NON IP Controllers (VIA eHouse PRO Server & Communication gateways):
-- eHouse RS-485: must work under Main Host Supervision: CommManager, LevelManager, eHouse.Exe or eHousePRO. Require eHouse PRO server (or other host) for continuous work for integration with Domoticz 
-- eHouse Aura: Thermostats must work under Main Host Supervision: eHousePRO connected thru USB->AURA-485 gateway. Require eHouse PRO server for continuous work for integration with Domoticz 
-- eHouse CAN/RF: currently not implemented (future) must work under Main Host Supervision: eHousePRO. Require eHouse PRO server (or other host) for continuous work for integration with Domoticz 
-- eHouse RFID: currently not implemented (future) must work under Main Host Supervision: eHousePRO. Require eHouse PRO server (or other host) for continuous work for integration with Domoticz 
+- eHouse RS-485: must work under Main Host Supervision: CommManager, LevelManager, eHouse.Exe or eHousePRO. Require eHouse PRO server (or other host) for continuous work for integration with Oikomaticz 
+- eHouse Aura: Thermostats must work under Main Host Supervision: eHousePRO connected thru USB->AURA-485 gateway. Require eHouse PRO server for continuous work for integration with Oikomaticz 
+- eHouse CAN/RF: currently not implemented (future) must work under Main Host Supervision: eHousePRO. Require eHouse PRO server (or other host) for continuous work for integration with Oikomaticz 
+- eHouse RFID: currently not implemented (future) must work under Main Host Supervision: eHousePRO. Require eHouse PRO server (or other host) for continuous work for integration with Oikomaticz 
 - eHouse BMS: other systems integrated with eHouse (future)
 
 #eHouse Ethernet controllers are large  ( more than 50 intelligent points) microcontroller based units wchich can work standalone/autonomic after remote configuration via Windows application "eHouseWiFi.exe":
@@ -45,7 +45,7 @@ eHouse BMS is Building Management System and Home, Office, Hotel Automation -  f
 	- 12 ADC Measurement/Regulation Programs
 	- 256 IR codes for reception (learning functionality)
 	- 256 IR codes for transmission (learning functionality)
-	- Domoticz Support: 
+	- Oikomaticz Support: 
 		- Single Outputs: on/off
 		- Double Outputs (blinds):  open/close/set value
 		- Dimmer (on/off/set value)
@@ -65,7 +65,7 @@ eHouse BMS is Building Management System and Home, Office, Hotel Automation -  f
 	- 12 ADC Measurement/Regulation Programs
 	- 24 security zones
 	- 24 roller programs (CM) / 16 scenes (LM)
-	- Domoticz Support: 
+	- Oikomaticz Support: 
 		- Single Outputs: on/off
 		- Double Outputs (blinds):  open/close/set value
 		- Thermostat Regulation Point (+/-/Set value)
@@ -85,7 +85,7 @@ eHouse BMS is Building Management System and Home, Office, Hotel Automation -  f
 	- 24 light scenes/programs (on/off outputs + dimmers)
 	- 12 ADC Measurement/Regulation Programs
 	- 256 IR codes for reception (learning functionality)
-	- Domoticz Support (In the future):
+	- Oikomaticz Support (In the future):
 	
 #eHouse WiFi 2.4GHz b/g/n controllers are medium size ( more than 10 intelligent points) microcontroller based units wchich can work standalone/autonomic after remote configuration via Windows application "eHouseWiFi.exe":
 	http://ehouse.biz/en/wifi/ewifir.html
@@ -98,7 +98,7 @@ eHouse BMS is Building Management System and Home, Office, Hotel Automation -  f
 	- 256 IR codes for reception (learning functionality)
 	- 256 IR codes for transmission (learning functionality)
 	- optional 230V/5V build in power supply
-	- Domoticz Support: 
+	- Oikomaticz Support: 
 		- Single Outputs: on/off
 		- Double Outputs (blinds):  open/close/set value
 		- Dimmer (on/off/set value)
@@ -120,7 +120,7 @@ eHouse PRO server software without I/O buffers can also run on PC computers.
 - TCP/IP Client/Server
 - Modbus Client/Server
 - Integrates (eHouse LAN, WiFi, RS-485, CAN/RF, Aura, RFID, Cloud, Satel Integra) into centralized/decentralized unlimited BMS system
-- Domoticz Support: 
+- Oikomaticz Support: 
 		- Single Outputs: on/off
 		- Double Outputs (blinds):  open/close/set value
 		- Inputs status Show
@@ -140,7 +140,7 @@ eHouse PRO server software without I/O buffers can also run on PC computers.
 	- 24 light scenes/programs (on/off outputs + dimmers) + ADC Measurement/Regulation Programs
 	- 248 IR codes for reception (learning functionality)
 	- 248 IR codes for transmission (learning functionality)
-	- Domoticz Support: 
+	- Oikomaticz Support: 
 		- Single Outputs: on/off
 		- Measurement input show as temperature
 		- 10 Light Scenes/Programs (on/off outs + dimmers)
@@ -173,7 +173,7 @@ eHouse PRO server software without I/O buffers can also run on PC computers.
 #Aura Wireless thermostat + temperature sensor
 	- thermometer with LED Display
 	- Thermostat Preset Local/Server
-	- Domoticz Support: 
+	- Oikomaticz Support: 
 		- Thermostat Regulation Point (+/-/Set value)
 		- Theromoeter associated with Thermostat Preset
 		- Special Inputs status Show
@@ -186,12 +186,12 @@ eHouse PRO server software without I/O buffers can also run on PC computers.
 - Configure all eHouse RS-485 controllers with eHouse.exe application & press Update settings (require eHouse RS-485 full duplex dongle)
 - Configure eHouse PRO server (copy all eHouse LAN, WiFi, RS-485 controller settings if kept in other place)
 - Configure all eHouse Aura Thermostat (require eHouse Aura Dongle connected to eHouse.PRO)
-- Install/Compile Domoticz on eHouse PRO server Hardware (RPI2/3) or PC: recent version of repository :  https://github.com/ehousepro/domoticz/
-- Configure Domoticz (Setup/Hardware/Add) - "eHouse UDP + TCP - LAN Interface"
+- Install/Compile Oikomaticz on eHouse PRO server Hardware (RPI2/3) or PC: recent version of repository :  https://github.com/ehousepro/domoticz/
+- Configure Oikomaticz (Setup/Hardware/Add) - "eHouse UDP + TCP - LAN Interface"
 	- Data Timeout: Disabled
 	- Refresh ms: 1000
 	- Default IP: 192.168.0.200 for eHouse PRO server used in local Ethernet/WiFi network. 
-		In case of entering external public IP not in (192.168.x.x ) network eHouse Gateway for Domoticz will use TCP/IP connection to server instead of UDP.
+		In case of entering external public IP not in (192.168.x.x ) network eHouse Gateway for Oikomaticz will use TCP/IP connection to server instead of UDP.
 	- Port: 9876 (TCP/IP) - to send events or for internet connection via TCP/IP
 	- Password [6 ascii chars] Default:"abBrac". Password must be set the same for all eHouse controllers. Each controller must have "XOR Password" - dynamic authorisation set.
 	- AutoDiscovery=1  - Automatically discover new eHouse controllers on restart of eHouse Service for Domoticz
@@ -199,7 +199,7 @@ eHouse PRO server software without I/O buffers can also run on PC computers.
 	- Alarm Inputs: 0 - Enable Alarm system (5 times more objects for each eHousePRO/CM inputs) - FUTURE
 	- OptA=0,OptB=0 - bitwise administrative options (should be 0 for normal operation)	
 - When all controllers will be automatically discovered AutoDiscovery flag can be disabled (however AutoDiscovery is initiated only on Restart of eHouse Hardware gateway for domoticz)	
-- You can modify discovered names in Domoticz (dont change ID and other fields). Already existed signals (IDs) and names will not be overwriten.
+- You can modify discovered names in Oikomaticz (dont change ID and other fields). Already existed signals (IDs) and names will not be overwriten.
 
 #Domoticz Device ID construction hex coded: <eHouse Addr H> <eHouse Addr L> <Signal Type> <I/O Nr>
 Prerequisities eHouse IP controllers must be on static IP - DHCP Settings  outside eHouse RANGE (LSB=50..99), MSB:0 strongly recomended:
@@ -253,10 +253,10 @@ HW				OS			Compilation 			LAN UDP/TCP		Internet TCP/IP		100% Tested			eHouse Con
 
 Stability and efficiency precautions
 - eHouse Pro Server with eHouse PRO I/O processor utilization (~5-15%) RPI3
-- Domoticz processor utilization (1-5%) 	RPI3
+- Oikomaticz processor utilization (1-5%) 	RPI3
 
 In case of serious efficiency problems:
-- Domoticz software can be installed on another computer (RPI3 or more efficient 8 cores, PC, etc)
+- Oikomaticz software can be installed on another computer (RPI3 or more efficient 8 cores, PC, etc)
 - Disable AutoDiscovery after system setting up system (no changes any longer)
 
 

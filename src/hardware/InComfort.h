@@ -1,6 +1,6 @@
 #pragma once
 
-// Intergas InComfort Domoticz driver v1.0.1.
+// Intergas InComfort Oikomaticz driver v1.0.1.
 // Tested with LAN2RF gateway WebInterface 1.1, Firmware IC3-ICN-V1.12
 // by Erik Tamminga (erik@etamminga.nl)
 //

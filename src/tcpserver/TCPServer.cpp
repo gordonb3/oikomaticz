@@ -102,11 +102,11 @@ void CTCPServerInt::handleAccept(const boost::system::error_code& error)
 
 	if (IsUserHereFirstTime(s))
 	{
-		_log.Log(LOG_STATUS, "Incoming Domoticz connection from: %s", s.c_str());
+		_log.Log(LOG_STATUS, "Incoming Oikomaticz connection from: %s", s.c_str());
 	}
 	else
 	{
-		_log.Debug(DEBUG_NORM, "Incoming Domoticz connection from: %s", s.c_str());
+		_log.Debug(DEBUG_NORM, "Incoming Oikomaticz connection from: %s", s.c_str());
 	}
 
 	connections_.insert(new_connection_);
@@ -311,7 +311,7 @@ bool CTCPServerProxied::OnNewConnection(const std::string &token, const std::str
 		new_connection_.reset(); // deletes new_client
 		return false;
 	}
-	_log.Log(LOG_STATUS, "Incoming Domoticz connection via Proxy accepted for user %s.", username.c_str());
+	_log.Log(LOG_STATUS, "Incoming Oikomaticz connection via Proxy accepted for user %s.", username.c_str());
 	connections_.insert(new_connection_);
 	new_connection_->start();
 	new_connection_.reset(); // invalidate dangling pointer

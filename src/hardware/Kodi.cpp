@@ -331,7 +331,7 @@ void CKodiNode::handleMessage(std::string& pMessage)
 						if (root["result"].isMember("speed"))
 						{
 							if (!root["result"]["speed"].asInt())
-								m_CurrentStatus.Status(device::media::status::PAUSED);	// useful when Domoticz restarts when media aleady paused
+								m_CurrentStatus.Status(device::media::status::PAUSED);	// useful when Oikomaticz restarts when media aleady paused
 							if (root["result"]["speed"].asInt() && m_CurrentStatus.Status() == device::media::status::PAUSED)
 							{
 								// Buffering when playing internet streams show 0 speed but don't trigger OnPause/OnPlay so force a refresh when speed is not 0 again
@@ -419,7 +419,7 @@ void CKodiNode::handleMessage(std::string& pMessage)
 							}
 						}
 						break;
-					case 1005:		//GetPlayers response, normally requried when Domoticz starts up and media is already streaming
+					case 1005:		//GetPlayers response, normally requried when Oikomaticz starts up and media is already streaming
 						if (root["result"][0].isMember("playerid"))
 						{
 							m_CurrentStatus.PlayerID(root["result"][0]["playerid"].asInt());

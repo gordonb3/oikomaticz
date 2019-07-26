@@ -10,7 +10,7 @@
 #include <iostream>
 
 /*
-	This driver allows Domoticz to read sensor data from SM-XXXX sensors from Comm5 Technology
+	This driver allows Oikomaticz to read sensor data from SM-XXXX sensors from Comm5 Technology
 	The SM-1200 sensor provides: Temperature, Humidity, Barometric and Luminosity data.
 	https://www.comm5.com.br/en/sm-1200/
 */

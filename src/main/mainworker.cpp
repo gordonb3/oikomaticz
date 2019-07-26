@@ -12065,7 +12065,7 @@ bool MainWorker::SwitchModal(const std::string &idx, const std::string &status, 
 		s_strid << std::hex << std::dec << sd[1];
 	s_strid >> ID;
 
-	//Update Domoticz evohome Device
+	//Update Oikomaticz evohome Device
 	_tEVOHOME1 tsen;
 	memset(&tsen, 0, sizeof(_tEVOHOME1));
 	tsen.len = sizeof(_tEVOHOME1) - 1;
@@ -12966,7 +12966,7 @@ void MainWorker::SetInternalSecStatus()
 {
 	m_eventsystem.WWWUpdateSecurityState(m_SecStatus);
 
-	//Update Domoticz Security Device
+	//Update Oikomaticz Security Device
 	RBUF tsen;
 	memset(&tsen, 0, sizeof(RBUF));
 	tsen.SECURITY1.packetlength = sizeof(tsen.TEMP) - 1;
@@ -12987,7 +12987,7 @@ void MainWorker::SetInternalSecStatus()
 
 	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
 	{
-		_log.Log(LOG_NORM, "(System) Domoticz Security Status");
+		_log.Log(LOG_NORM, "(System) Oikomaticz Security Status");
 	}
 
 	CDomoticzHardwareBase *pHardware = GetHardwareByType(hardware::type::DomoticzInternal);

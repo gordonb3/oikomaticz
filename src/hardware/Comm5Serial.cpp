@@ -6,7 +6,7 @@
 #include "main/RFXtrx.h"
 
 /*
-	This driver allows Domoticz to control any I/O module from the MA-4xxx Family
+	This driver allows Oikomaticz to control any I/O module from the MA-4xxx Family
 
 	These modules provide relays and digital sensors in the range of 5-30V DC.
 */

@@ -573,7 +573,7 @@ namespace http {
 			{
 				//ok, this could get a very long list when running for years
 				connectedservers_.insert(ip);
-				_log.Log(LOG_STATUS, "PROXY: Incoming Domoticz connection from: %s", ip.c_str());
+				_log.Log(LOG_STATUS, "PROXY: Incoming Oikomaticz connection from: %s", ip.c_str());
 				return true;
 			}
 			return false;

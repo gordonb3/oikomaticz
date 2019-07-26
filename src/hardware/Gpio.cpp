@@ -355,7 +355,7 @@ void CGpio::UpdateStartup()
 			if (IsStopRequested(1000))
 				return;
 		}
-		_log.Log(LOG_NORM, "GPIO: Optional connected Master Domoticz now updates its status");
+		_log.Log(LOG_NORM, "GPIO: Optional connected Master Oikomaticz now updates its status");
 		UpdateDeviceStates(true);
 	}
 	else

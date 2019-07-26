@@ -21,7 +21,7 @@ enum ColorMode {
 	ColorModeTemp,     // White with color temperature. Valid fields: t
 	ColorModeRGB,      // Color. Valid fields: r, g, b.
 	                   // Note: The color will be normalized to full brightness in this mode before sent to HW
-	                   // due to limitations in multiple HW types. Normalization is done automatically by Domoticz MQTT
+	                   // due to limitations in multiple HW types. Normalization is done automatically by Oikomaticz MQTT
 	                   // and WebServer command handlers, and the brightness is adjusted accordingly.
 	ColorModeCustom,   // Custom (color + white). Valid fields: r, g, b, cw, ww, depending on device capabilities
 	ColorModeLast = ColorModeCustom,

@@ -6,7 +6,7 @@ DIY:  http://Smart.eHouse.Pro/
 Author: Robert Jarzabek
 eHouse Home Automation
 
-eHouse BMS & Home Automation system support for Domoticz.
+eHouse BMS & Home Automation system support for Oikomaticz.
 eHouse contains of various communication interfaces and controller sizes to realize any size and complex instalation
 - LAN (Ethernet):
 	- EthernetRoomManager: 12-20 binary inputs, 32 binary outputs, 3 dimmers, InfraRed RX+TX, 2-15 ADC measurement inputs (~59 intelligent points)
@@ -59,7 +59,7 @@ h l O nr
 #include "main/SQLHelper.h"
 //#include <vector>
 //#include <thread>
-#define OPTA_CLR_DB					0x1		//Clear Domoticz DBs on start (for test of device discovery - other devices will also be deleted)
+#define OPTA_CLR_DB					0x1		//Clear Oikomaticz DBs on start (for test of device discovery - other devices will also be deleted)
 #define OPTA_FORCE_TCP				0x2		//Force TCP/IP instead of UDP for LAN connection
 #define OPTA_DEBUG					0x4		//Debug Info
 #define OPTA_DETECT_TCP_PACKETS		0x8		//Perform Multiple TCP Packages
@@ -359,7 +359,7 @@ void eHouseTCP::UpdateSQLStatus(int devh, int devl, int /*devtype*/, int code, i
 		break;
 	case VISUAL_DIMMER_OUT:
 		_state = 0;
-		sprintf(IDX, "%X%02X%02X%02X", devh, devl, code, nr);    //exception for dimmers Domoticz BUG?
+		sprintf(IDX, "%X%02X%02X%02X", devh, devl, code, nr);    //exception for dimmers Oikomaticz BUG?
 		if (nValue == 0)
 		{
 			lastlevel = 0;

@@ -746,7 +746,7 @@ void CSysfsGpio::UpdateDomoticzInputs(bool forceUpdate)
 					}
 				}
 
-				if (updateDatabase) /* send packet to Domoticz */
+				if (updateDatabase) /* send packet to Oikomaticz */
 				{
 					if (state)
 					{

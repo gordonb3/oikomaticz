@@ -31,8 +31,8 @@ namespace Plugins {
 	};
 
 	static PyMethodDef CImage_methods[] = {
-		{ "Create", (PyCFunction)CImage_insert, METH_NOARGS, "Create the device in Domoticz." },
-		{ "Delete", (PyCFunction)CImage_delete, METH_NOARGS, "Delete the device in Domoticz." },
+		{ "Create", (PyCFunction)CImage_insert, METH_NOARGS, "Create the device in Oikomaticz." },
+		{ "Delete", (PyCFunction)CImage_delete, METH_NOARGS, "Delete the device in Oikomaticz." },
 		{ NULL }  /* Sentinel */
 	};
 
@@ -140,10 +140,10 @@ namespace Plugins {
 
 	static PyMethodDef CDevice_methods[] = {
 		{ "Refresh", (PyCFunction)CDevice_refresh, METH_NOARGS, "Refresh device details" },
-		{ "Create", (PyCFunction)CDevice_insert, METH_NOARGS, "Create the device in Domoticz." },
-		{ "Update", (PyCFunction)CDevice_update, METH_VARARGS | METH_KEYWORDS, "Update the device values in Domoticz." },
-		{ "Delete", (PyCFunction)CDevice_delete, METH_NOARGS, "Delete the device in Domoticz." },
-		{ "Touch", (PyCFunction)CDevice_touch, METH_NOARGS, "Notify Domoticz that device has been seen." },
+		{ "Create", (PyCFunction)CDevice_insert, METH_NOARGS, "Create the device in Oikomaticz." },
+		{ "Update", (PyCFunction)CDevice_update, METH_VARARGS | METH_KEYWORDS, "Update the device values in Oikomaticz." },
+		{ "Delete", (PyCFunction)CDevice_delete, METH_NOARGS, "Delete the device in Oikomaticz." },
+		{ "Touch", (PyCFunction)CDevice_touch, METH_NOARGS, "Notify Oikomaticz that device has been seen." },
 		{ NULL }  /* Sentinel */
 	};
 

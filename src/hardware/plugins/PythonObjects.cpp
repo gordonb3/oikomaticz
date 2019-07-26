@@ -126,7 +126,7 @@ namespace Plugins {
 			{
 				CPlugin* pPlugin = NULL;
 				if (pModState) pPlugin = pModState->pPlugin;
-				_log.Log(LOG_ERROR, "Expected: myVar = Domoticz.Image(Filename=\"MyImages.zip\")");
+				_log.Log(LOG_ERROR, "Expected: myVar = Oikomaticz.Image(Filename=\"MyImages.zip\")");
 				LogPythonException(pPlugin, __func__);
 			}
 		}
@@ -203,7 +203,7 @@ namespace Plugins {
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "(%s) Image creation failed, '%s' already exists in Domoticz with Image ID '%d'.", self->pPlugin->m_Name.c_str(), sName.c_str(), self->ImageID);
+				_log.Log(LOG_ERROR, "(%s) Image creation failed, '%s' already exists in Oikomaticz with Image ID '%d'.", self->pPlugin->m_Name.c_str(), sName.c_str(), self->ImageID);
 			}
 		}
 		else
@@ -243,12 +243,12 @@ namespace Plugins {
 				}
 				else
 				{
-					_log.Log(LOG_ERROR, "(%s) Image deletion failed, Image %d not found in Domoticz.", self->pPlugin->m_Name.c_str(), self->ImageID);
+					_log.Log(LOG_ERROR, "(%s) Image deletion failed, Image %d not found in Oikomaticz.", self->pPlugin->m_Name.c_str(), self->ImageID);
 				}
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "(%s) Image deletion failed, '%s' does not represent a Image in Domoticz.", self->pPlugin->m_Name.c_str(), sName.c_str());
+				_log.Log(LOG_ERROR, "(%s) Image deletion failed, '%s' does not represent a Image in Oikomaticz.", self->pPlugin->m_Name.c_str(), sName.c_str());
 			}
 		}
 		else
@@ -598,7 +598,7 @@ namespace Plugins {
 			{
 				CPlugin* pPlugin = NULL;
 				if (pModState) pPlugin = pModState->pPlugin;
-				_log.Log(LOG_ERROR, "Expected: myVar = Domoticz.Device(Name=\"myDevice\", Unit=0, TypeName=\"\", Type=0, Subtype=0, Switchtype=0, Image=0, Options={}, Used=1)");
+				_log.Log(LOG_ERROR, "Expected: myVar = Oikomaticz.Device(Name=\"myDevice\", Unit=0, TypeName=\"\", Type=0, Subtype=0, Switchtype=0, Image=0, Options={}, Used=1)");
 				LogPythonException(pPlugin, __func__);
 			}
 		}
@@ -701,7 +701,7 @@ namespace Plugins {
 
 				if (!m_sql.m_bAcceptNewHardware)
 				{
-					_log.Log(LOG_ERROR, "(%s) Device creation failed, Domoticz settings prevent accepting new devices.", self->pPlugin->m_Name.c_str());
+					_log.Log(LOG_ERROR, "(%s) Device creation failed, Oikomaticz settings prevent accepting new devices.", self->pPlugin->m_Name.c_str());
 				}
 				else
 				{
@@ -770,18 +770,18 @@ namespace Plugins {
 						}
 						else
 						{
-							_log.Log(LOG_ERROR, "(%s) Device creation failed, Hardware/Unit combination (%d:%d) not found in Domoticz.", self->pPlugin->m_Name.c_str(), self->HwdID, self->Unit);
+							_log.Log(LOG_ERROR, "(%s) Device creation failed, Hardware/Unit combination (%d:%d) not found in Oikomaticz.", self->pPlugin->m_Name.c_str(), self->HwdID, self->Unit);
 						}
 					}
 					else
 					{
-						_log.Log(LOG_ERROR, "(%s) Device creation failed, Hardware/Unit combination (%d:%d) already exists in Domoticz.", self->pPlugin->m_Name.c_str(), self->HwdID, self->Unit);
+						_log.Log(LOG_ERROR, "(%s) Device creation failed, Hardware/Unit combination (%d:%d) already exists in Oikomaticz.", self->pPlugin->m_Name.c_str(), self->HwdID, self->Unit);
 					}
 				}
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "(%s) Device creation failed, '%s' already exists in Domoticz with Device ID '%d'.", self->pPlugin->m_Name.c_str(), sName.c_str(), self->ID);
+				_log.Log(LOG_ERROR, "(%s) Device creation failed, '%s' already exists in Oikomaticz with Device ID '%d'.", self->pPlugin->m_Name.c_str(), sName.c_str(), self->ID);
 			}
 		}
 		else
@@ -1018,12 +1018,12 @@ namespace Plugins {
 				}
 				else
 				{
-					_log.Log(LOG_ERROR, "(%s) Device deletion failed, Hardware/Unit combination (%d:%d) not found in Domoticz.", self->pPlugin->m_Name.c_str(), self->HwdID, self->Unit);
+					_log.Log(LOG_ERROR, "(%s) Device deletion failed, Hardware/Unit combination (%d:%d) not found in Oikomaticz.", self->pPlugin->m_Name.c_str(), self->HwdID, self->Unit);
 				}
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "(%s) Device deletion failed, '%s' does not represent a device in Domoticz.", self->pPlugin->m_Name.c_str(), sName.c_str());
+				_log.Log(LOG_ERROR, "(%s) Device deletion failed, '%s' does not represent a device in Oikomaticz.", self->pPlugin->m_Name.c_str(), sName.c_str());
 			}
 		}
 		else
@@ -1219,7 +1219,7 @@ namespace Plugins {
 			{
 				CPlugin* pPlugin = NULL;
 				if (pModState) pPlugin = pModState->pPlugin;
-				_log.Log(LOG_ERROR, "Expected: myVar = Domoticz.Connection(Name=\"<Name>\", Transport=\"<Transport>\", Protocol=\"<Protocol>\", Address=\"<IP-Address>\", Port=\"<Port>\", Baud=0)");
+				_log.Log(LOG_ERROR, "Expected: myVar = Oikomaticz.Connection(Name=\"<Name>\", Transport=\"<Transport>\", Protocol=\"<Protocol>\", Address=\"<IP-Address>\", Port=\"<Port>\", Baud=0)");
 				LogPythonException(pPlugin, __func__);
 			}
 		}
