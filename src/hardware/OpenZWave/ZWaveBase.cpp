@@ -119,7 +119,7 @@ void ZWaveBase::Do_Work()
 std::string ZWaveBase::GenerateDeviceStringID(const _tZWaveDevice *pDevice)
 {
 	std::stringstream sstr;
-	sstr << pDevice->nodeID << ".instance." << pDevice->instanceID << ".index." << pDevice->indexID << ".commandClasses." << pDevice->commandClassID;
+	sstr << pDevice->nodeID << ".instance." << pDevice->orgInstanceID << ".index." << pDevice->orgIndexID << ".commandClasses." << pDevice->commandClassID;
 	return sstr.str();
 }
 
@@ -145,19 +145,6 @@ void ZWaveBase::InsertDevice(_tZWaveDevice device)
 	SendSwitchIfNotExists(&device);
 }
 
-void ZWaveBase::UpdateDeviceBatteryStatus(const int nodeID, const int value)
-{
-	std::map<std::string,_tZWaveDevice>::iterator itt;
-	for (itt=m_devices.begin(); itt!=m_devices.end(); ++itt)
-	{
-		if (itt->second.nodeID==nodeID)
-		{
-			itt->second.batValue=value;
-			itt->second.hasBattery=true;//we got an update, so it should have a battery then...
-		}
-	}
-}
-
 bool ZWaveBase::IsNodeRGBW(const unsigned int homeID, const int nodeID)
 {
 	std::vector<std::vector<std::string> > result;
@@ -181,12 +168,6 @@ void ZWaveBase::SendSwitchIfNotExists(const _tZWaveDevice *pDevice)
 		(pDevice->devType != ZDTYPE_SWITCH_COLOR)
 		)
 		return; //only for switches
-
-	int BatLevel = 255;
-	if (pDevice->hasBattery)
-	{
-		BatLevel = pDevice->batValue;
-	}
 
 	if ((pDevice->devType == ZDTYPE_SWITCH_RGBW) || (pDevice->devType == ZDTYPE_SWITCH_COLOR))
 	{
@@ -239,7 +220,7 @@ void ZWaveBase::SendSwitchIfNotExists(const _tZWaveDevice *pDevice)
 		lcmd.command = Color_LedOff;
 		lcmd.subtype=SubType;
 		lcmd.value = 0;
-		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&lcmd, pDevice->label.c_str(), BatLevel);
+		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&lcmd, pDevice->label.c_str(), pDevice->batValue);
 
 		//Set Switch Type
 		m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (HardwareID==%d) AND (DeviceID=='%q')", device::_switch::type::Dimmer, m_HwdID, szID);
@@ -280,7 +261,7 @@ void ZWaveBase::SendSwitchIfNotExists(const _tZWaveDevice *pDevice)
 		gswitch.seqnbr = pDevice->sequence_number;
 		gswitch.id = lID;
 		gswitch.unitcode = unitcode;
-		gswitch.battery_level = BatLevel;
+		gswitch.battery_level = pDevice->batValue;
 
 		// Get device level to set
 		int level = pDevice->intvalue;
@@ -310,7 +291,7 @@ void ZWaveBase::SendSwitchIfNotExists(const _tZWaveDevice *pDevice)
 
 		gswitch.rssi = 12;
 
-		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&gswitch, pDevice->label.c_str(), BatLevel);
+		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&gswitch, pDevice->label.c_str(), pDevice->batValue);
 
 		int SwitchType = (pDevice->devType == ZDTYPE_SWITCH_DIMMER) ? 7 : 0;
 
@@ -1115,7 +1096,7 @@ bool ZWaveBase::WriteToHardware(const char *pdata, const unsigned char length)
 				}
 				else
 				{
-					_log.Log(LOG_STATUS, "ZWave: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum", pLed->color.mode);
+					_log.Log(LOG_STATUS, "ZWave: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Oikomaticz forum", pLed->color.mode);
 					return false;
 				}
 				instanceID = 2;//brightness
@@ -1200,7 +1181,7 @@ bool ZWaveBase::WriteToHardware(const char *pdata, const unsigned char length)
 					}
 					else
 					{
-						_log.Log(LOG_STATUS, "ZWave: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum", pLed->color.mode);
+						_log.Log(LOG_STATUS, "ZWave: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Oikomaticz forum", pLed->color.mode);
 						return false;
 					}
 
