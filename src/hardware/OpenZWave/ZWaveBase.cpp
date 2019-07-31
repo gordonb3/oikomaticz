@@ -223,7 +223,7 @@ void ZWaveBase::SendSwitchIfNotExists(const _tZWaveDevice *pDevice)
 		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&lcmd, pDevice->label.c_str(), pDevice->batValue);
 
 		//Set Switch Type
-		m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (HardwareID==%d) AND (DeviceID=='%q')", device::_switch::type::Dimmer, m_HwdID, szID);
+		m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (HardwareID==%d) AND (DeviceID=='%q')", device::tswitch::type::Dimmer, m_HwdID, szID);
 	}
 	else
 	{

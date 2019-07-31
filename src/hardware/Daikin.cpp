@@ -745,8 +745,8 @@ void CDaikin::InsertUpdateSwitchSelector(const unsigned char Idx,  const bool bI
 	else {
 		xcmd.cmnd = gswitch_sOff;
 	}
-	device::_switch::type::value switchtype;
-	switchtype = device::_switch::type::Selector;
+	device::tswitch::type::value switchtype;
+	switchtype = device::tswitch::type::Selector;
 
 	xcmd.subtype = sSwitchTypeSelector;
 	if (level > 0) {

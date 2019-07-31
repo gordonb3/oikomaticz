@@ -617,7 +617,7 @@ void MQTT::SendDeviceInfo(const int m_HwdID, const uint64_t DeviceRowIdx, const 
 		int dSubType = atoi(sd[4].c_str());
 		int nvalue = atoi(sd[5].c_str());
 		std::string svalue = sd[6];
-		device::_switch::type::value switchType = (device::_switch::type::value)atoi(sd[7].c_str());
+		device::tswitch::type::value switchType = (device::tswitch::type::value)atoi(sd[7].c_str());
 		int RSSI = atoi(sd[8].c_str());
 		int BatteryLevel = atoi(sd[9].c_str());
 		std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10]);
@@ -635,10 +635,10 @@ void MQTT::SendDeviceInfo(const int m_HwdID, const uint64_t DeviceRowIdx, const 
 		root["stype"] = RFX_Type_SubType_Desc(dType, dSubType);
 
 		if (IsLightOrSwitch(dType, dSubType) == true) {
-			root["switchType"] = device::_switch::type::Description(switchType);
+			root["switchType"] = device::tswitch::type::Description(switchType);
 		}
 		else if ((dType == pTypeRFXMeter) || (dType == pTypeRFXSensor)) {
-			root["meterType"] = device::meter::type::Description((device::meter::type::value)switchType);
+			root["meterType"] = device::tmeter::type::Description((device::tmeter::type::value)switchType);
 		}
 		// Add device options
 		for (const auto & ittOptions : options)
@@ -653,7 +653,7 @@ void MQTT::SendDeviceInfo(const int m_HwdID, const uint64_t DeviceRowIdx, const 
 		root["nvalue"] = nvalue;
 		root["description"] = description;
 
-		if (switchType == device::_switch::type::Dimmer)
+		if (switchType == device::tswitch::type::Dimmer)
 		{
 			root["Level"] = LastLevel;
 			if (dType == pTypeColorSwitch)

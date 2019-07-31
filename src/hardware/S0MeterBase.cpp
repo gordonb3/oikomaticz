@@ -121,11 +121,11 @@ void S0MeterBase::ReloadLastTotals()
 		
 		int metertype = m_meters[ii].m_type;
 		int hardware_type;
-		if (metertype == device::meter::type::ENERGY)
+		if (metertype == device::tmeter::type::ENERGY)
 		{
 			hardware_type = pTypeGeneral;
 		}
-		else if (metertype == device::meter::type::GAS)
+		else if (metertype == device::tmeter::type::GAS)
 		{
 			hardware_type = pTypeP1Gas;
 		}
@@ -187,7 +187,7 @@ void S0MeterBase::SendMeter(unsigned char ID, double musage, double mtotal)
 
 	int meterype=m_meters[ID-1].m_type;
 
-	if (meterype==device::meter::type::ENERGY)
+	if (meterype==device::tmeter::type::ENERGY)
 	{
 		tsen.ENERGY.packettype=pTypeENERGY;
 		tsen.ENERGY.subtype=sTypeELEC2;
@@ -224,7 +224,7 @@ void S0MeterBase::SendMeter(unsigned char ID, double musage, double mtotal)
 		sDecodeRXMessage(this, (const unsigned char *)&tsen.ENERGY, NULL, 255);
 
 	}
-	else if (meterype==device::meter::type::GAS)
+	else if (meterype==device::tmeter::type::GAS)
 	{
 		P1Gas	m_p1gas;
 		m_p1gas.len=sizeof(P1Gas)-1;

@@ -83,7 +83,7 @@ bool P1MeterBase::MatchLine()
 	if ((strlen((const char*)&m_lbuffer) < 1) || (m_lbuffer[0] == 0x0a))
 		return true; // null value (startup)
 
-	device::meter::COSEM::OBIS::type matchtype;
+	device::tmeter::COSEM::OBIS::type matchtype;
 	std::string vString;
 	char value[20] = "";
 	unsigned char phase = 0; // L1..L3
@@ -109,9 +109,9 @@ bool P1MeterBase::MatchLine()
 				{
 					// electric power usage totals
 					if ((m_lbuffer[6] == '7') && (m_lbuffer[8] == '0'))
-						matchtype = device::meter::COSEM::OBIS::activePowerUsage;
+						matchtype = device::tmeter::COSEM::OBIS::activePowerUsage;
 					else if (m_lbuffer[6] == '8')
-						matchtype = device::meter::COSEM::OBIS::electricityUsed;
+						matchtype = device::tmeter::COSEM::OBIS::electricityUsed;
 					else
 						return true;
 				}
@@ -119,9 +119,9 @@ bool P1MeterBase::MatchLine()
 				{
 					// electric power delivery totals
 					if ((m_lbuffer[6] == '7') && (m_lbuffer[8] == '0'))
-						matchtype = device::meter::COSEM::OBIS::activePowerDelivery;
+						matchtype = device::tmeter::COSEM::OBIS::activePowerDelivery;
 					else if (m_lbuffer[6] == '8')
-						matchtype = device::meter::COSEM::OBIS::electricityDelivered;
+						matchtype = device::tmeter::COSEM::OBIS::electricityDelivered;
 					else
 						return true;
 				}
@@ -139,7 +139,7 @@ bool P1MeterBase::MatchLine()
 				if (m_lbuffer[4] & 0x1)
 					return true;	 // instantaneous current has a 1 Ampere resolution which is too rough for our purpose
 				else if (m_phasecount > 0)
-					matchtype = device::meter::COSEM::OBIS::activePowerUsage;
+					matchtype = device::tmeter::COSEM::OBIS::activePowerUsage;
 				else
 					return true;
 			}
@@ -150,9 +150,9 @@ bool P1MeterBase::MatchLine()
 				//    instantaneous voltage L1-L3:	1-0:32.7.0	1-0:52.7.0	1-0:72.7.0
 
 				if (m_lbuffer[4] & 0x1)
-					matchtype = device::meter::COSEM::OBIS::instantaneousVoltage;	// instantaneous voltage
+					matchtype = device::tmeter::COSEM::OBIS::instantaneousVoltage;	// instantaneous voltage
 				else if (m_phasecount > 0)
-					matchtype = device::meter::COSEM::OBIS::activePowerDelivery;	// instantaneous power delivery
+					matchtype = device::tmeter::COSEM::OBIS::activePowerDelivery;	// instantaneous power delivery
 				else
 					return true;
 			}
@@ -166,7 +166,7 @@ bool P1MeterBase::MatchLine()
 			//    P1 version:		1-3:0.2.8
 
 			if (strncmp("0.2.8",(const char*)&m_lbuffer + 4,5) == 0)
-				matchtype = device::meter::COSEM::OBIS::version;
+				matchtype = device::tmeter::COSEM::OBIS::version;
 			else
 				return true;
 		}
@@ -182,7 +182,7 @@ bool P1MeterBase::MatchLine()
 			//    timestamp:		0-0:1.0.0
 			//    tariff indicator:		0-0:96.14.0
 			if (strncmp("96.14.0",(const char*)&m_lbuffer + 4,7) == 0)
-				matchtype = device::meter::COSEM::OBIS::activeTariff;
+				matchtype = device::tmeter::COSEM::OBIS::activeTariff;
 			else
 				return true;
 		}
@@ -192,7 +192,7 @@ bool P1MeterBase::MatchLine()
 			//    device type:		0-n:24.1.0
 
 			if (strncmp("24.1.0",(const char*)&m_lbuffer + 4,6) == 0)
-				matchtype = device::meter::COSEM::OBIS::mBusDeviceType;
+				matchtype = device::tmeter::COSEM::OBIS::mBusDeviceType;
 			else
 				return true;
 		}
@@ -205,7 +205,7 @@ bool P1MeterBase::MatchLine()
 
 			if (strncmp("24.2.",(const char*)&m_lbuffer + 4,5) == 0)
 			{
-				matchtype = device::meter::COSEM::OBIS::gasUsageDSMR4;
+				matchtype = device::tmeter::COSEM::OBIS::gasUsageDSMR4;
 				if (m_lbuffer[2] == '3') // Belgian budget meter apparently uses tariff ID 3 for gas
 				{
 					if (m_p1version == 0)
@@ -218,7 +218,7 @@ bool P1MeterBase::MatchLine()
 					return true;
 			}
 			else if (strncmp("24.3.0",(const char*)&m_lbuffer + 4,6) == 0)
-				matchtype = device::meter::COSEM::OBIS::gasTimestampDSMR2;
+				matchtype = device::tmeter::COSEM::OBIS::gasTimestampDSMR2;
 			else
 				return true;
 		}
@@ -228,20 +228,20 @@ bool P1MeterBase::MatchLine()
 
 	case '/':
 		// header - start of telegram.
-		// matchtype = device::meter::COSEM::OBIS::SMID;
+		// matchtype = device::tmeter::COSEM::OBIS::SMID;
 		m_linecount = 1;
 		return true; // we do not process anything else on this line
 		break;
 
 	case '!':
 		// end of telegram
-		matchtype = device::meter::COSEM::OBIS::endOfTelegram;
+		matchtype = device::tmeter::COSEM::OBIS::endOfTelegram;
 		break;
 
 	case '(':
 		// gas usage DSMR v2
 		if (m_linecount == 18)
-			matchtype = device::meter::COSEM::OBIS::gasUsageDSMR2;
+			matchtype = device::tmeter::COSEM::OBIS::gasUsageDSMR2;
 		else
 			return true;
 		break;
@@ -252,7 +252,7 @@ bool P1MeterBase::MatchLine()
 	}
 
 	// STEP 2: if our telegram is complete, upload the data to mainworker
-	if (matchtype == device::meter::COSEM::OBIS::endOfTelegram)
+	if (matchtype == device::tmeter::COSEM::OBIS::endOfTelegram)
 	{
 		m_lexclmarkfound = 1;
 
@@ -272,7 +272,7 @@ bool P1MeterBase::MatchLine()
 		{
 			m_lastTariff = m_currentTariff;
 			int sstate = (m_currentTariff == 1) ? gswitch_sOn : gswitch_sOff;
-			UpsertSwitch(255, device::_switch::type::OnOff, sstate, "Power Tariff Low");
+			UpsertSwitch(255, device::tswitch::type::OnOff, sstate, "Power Tariff Low");
 		}
 
 		if (m_phasedata.voltage[0])
@@ -371,8 +371,8 @@ bool P1MeterBase::MatchLine()
 	// STEP 3: prepare and validate the data content
 	switch (matchtype)
 	{
-	case device::meter::COSEM::OBIS::electricityUsed:
-	case device::meter::COSEM::OBIS::electricityDelivered:
+	case device::tmeter::COSEM::OBIS::electricityUsed:
+	case device::tmeter::COSEM::OBIS::electricityDelivered:
 		if (m_lbuffer[9] != '(')
 			return true; // no support for tariff id >= 10
 		tariff_id = m_lbuffer[8] ^ 0x30;
@@ -380,12 +380,12 @@ bool P1MeterBase::MatchLine()
 			return true; // currently only supporting tariffs: 0 (LUX: single), 1 (NLD,BEL: low,night), 2 (NLD,BEL: high,day)
 		vString = (const char*)&m_lbuffer + 10;
 		break;
-	case device::meter::COSEM::OBIS::activeTariff:
+	case device::tmeter::COSEM::OBIS::activeTariff:
 		vString = (const char*)&m_lbuffer + 12;
 		break;
-	case device::meter::COSEM::OBIS::activePowerUsage:
-	case device::meter::COSEM::OBIS::activePowerDelivery:
-	case device::meter::COSEM::OBIS::instantaneousVoltage:
+	case device::tmeter::COSEM::OBIS::activePowerUsage:
+	case device::tmeter::COSEM::OBIS::activePowerDelivery:
+	case device::tmeter::COSEM::OBIS::instantaneousVoltage:
 		if (m_lbuffer[9] == '(')
 			vString = (const char*)&m_lbuffer + 10;
 		else
@@ -398,17 +398,17 @@ bool P1MeterBase::MatchLine()
 			vString = (const char*)&m_lbuffer + 11;
 		}
 		break;
-	case device::meter::COSEM::OBIS::gasUsageDSMR4:
+	case device::tmeter::COSEM::OBIS::gasUsageDSMR4:
 		vString = (const char*)&m_lbuffer + 26;
 		break;
-	case device::meter::COSEM::OBIS::gasTimestampDSMR2:
-	case device::meter::COSEM::OBIS::mBusDeviceType:
+	case device::tmeter::COSEM::OBIS::gasTimestampDSMR2:
+	case device::tmeter::COSEM::OBIS::mBusDeviceType:
 		vString = (const char*)&m_lbuffer + 11;
 		break;
-	case device::meter::COSEM::OBIS::version:
+	case device::tmeter::COSEM::OBIS::version:
 		vString = (const char*)&m_lbuffer + 10;
 		break;
-	case device::meter::COSEM::OBIS::gasUsageDSMR2:
+	case device::tmeter::COSEM::OBIS::gasUsageDSMR2:
 		vString = (const char*)&m_lbuffer + 1;
 		break;
 	}
@@ -444,7 +444,7 @@ bool P1MeterBase::MatchLine()
 	// STEP 4: convert and store the cleaned data content
 	switch (matchtype)
 	{
-	case device::meter::COSEM::OBIS::electricityDelivered:
+	case device::tmeter::COSEM::OBIS::electricityDelivered:
 		temp_usage = (unsigned long)(strtod(value, &validate)*1000.0f);
 		if (tariff_id == 2)
 		{
@@ -457,7 +457,7 @@ bool P1MeterBase::MatchLine()
 				m_power.powerdeliv1 = temp_usage;
 		}
 		break;
-	case device::meter::COSEM::OBIS::electricityUsed:
+	case device::tmeter::COSEM::OBIS::electricityUsed:
 		temp_usage = (unsigned long)(strtod(value, &validate)*1000.0f);
 		if (tariff_id == 2)
 		{
@@ -469,10 +469,10 @@ bool P1MeterBase::MatchLine()
 			if (!m_power.powerusage1 || (m_p1version >= 4) || ((temp_usage - m_power.powerusage1) < 10000))
 				m_power.powerusage1 = temp_usage;
 		}
-	case device::meter::COSEM::OBIS::activeTariff:
+	case device::tmeter::COSEM::OBIS::activeTariff:
 		m_currentTariff = static_cast<float>(strtod(value, &validate));
 		break;
-	case device::meter::COSEM::OBIS::activePowerDelivery:
+	case device::tmeter::COSEM::OBIS::activePowerDelivery:
 		if (phase > 0)
 		{
 			m_phasedata.instpwrdel[0] = 1;
@@ -487,7 +487,7 @@ bool P1MeterBase::MatchLine()
 				m_power.delivcurrent = temp_usage;
 		}
 		break;
-	case device::meter::COSEM::OBIS::activePowerUsage:
+	case device::tmeter::COSEM::OBIS::activePowerUsage:
 		if (phase > 0)
 		{
 			m_phasedata.instpwruse[0] = 1;
@@ -502,13 +502,13 @@ bool P1MeterBase::MatchLine()
 				m_power.usagecurrent = temp_usage;
 		}
 		break;
-	case device::meter::COSEM::OBIS::instantaneousVoltage:
+	case device::tmeter::COSEM::OBIS::instantaneousVoltage:
 		m_phasedata.voltage[0] = 1;
 		temp_volt = strtof(value, &validate);
 		if (temp_volt < 300)
 			m_phasedata.voltage[phase] = temp_volt;
 		break;
-	case device::meter::COSEM::OBIS::gasUsageDSMR4:
+	case device::tmeter::COSEM::OBIS::gasUsageDSMR4:
 		m_gas.gasusage = (unsigned long)(strtod(value, &validate)*1000.0f);
 		// need to get timestamp from this line as well
 		vString = (const char*)&m_lbuffer + 11;
@@ -518,16 +518,16 @@ bool P1MeterBase::MatchLine()
 		strcpy(value, vString.substr(0, ePos).c_str());
 		m_gastimestamp = std::string(value);
 		break;
-	case device::meter::COSEM::OBIS::gasTimestampDSMR2:
+	case device::tmeter::COSEM::OBIS::gasTimestampDSMR2:
 		m_gastimestamp = std::string(value);
 		m_linecount = 17;
 		break;
-	case device::meter::COSEM::OBIS::gasUsageDSMR2:
+	case device::tmeter::COSEM::OBIS::gasUsageDSMR2:
 		temp_usage = (unsigned long)(strtod(value, &validate)*1000.0f);
 		if (!m_gas.gasusage || ((temp_usage - m_gas.gasusage) < 20000))
 			m_gas.gasusage = temp_usage;
 		break;
-	case device::meter::COSEM::OBIS::mBusDeviceType:
+	case device::tmeter::COSEM::OBIS::mBusDeviceType:
 		temp_usage = (unsigned long)(strtod(value, &validate));
 		if (temp_usage == 3)
 		{
@@ -535,7 +535,7 @@ bool P1MeterBase::MatchLine()
 			_log.Log(LOG_STATUS, "P1 Smart Meter: Found gas meter on M-Bus channel %c", m_gasmbuschannel);
 		}
 		break;
-	case device::meter::COSEM::OBIS::version:
+	case device::tmeter::COSEM::OBIS::version:
 		_log.Log(LOG_STATUS, "P1 Smart Meter: Meter reports as DSMR %c.%c", value[0], value[1]);
 		m_p1version = value[0] ^ 0x30;
 		if (m_p1version > 9)
@@ -728,7 +728,7 @@ void P1MeterBase::ParseP1Data(const unsigned char *pData, const int Len, const b
 }
 
 
-void P1MeterBase::UpsertSwitch(const int NodeID, const device::_switch::type::value switchtype, const int switchstate, const char* defaultname)
+void P1MeterBase::UpsertSwitch(const int NodeID, const device::tswitch::type::value switchtype, const int switchstate, const char* defaultname)
 {
 	char szID[10];
 	sprintf(szID, "%08X", (unsigned int)NodeID);

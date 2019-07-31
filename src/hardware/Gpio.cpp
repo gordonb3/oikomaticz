@@ -414,7 +414,7 @@ bool CGpio::CreateDomoticzDevices()
 			m_sql.safe_query(
 				"INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, Options) "
 				"VALUES (%d, 0, %d, %d, %d, %d, 0, 12, 255, '%q', %d, '', %d)",
-				m_HwdID, it->GetPin(), pTypeLighting1, sTypeIMPULS, int(device::_switch::type::OnOff), it->GetIsInput() ? "Input" : "Output", GPIORead(it->GetPin(), "value"), it->GetIsInput() ? GPIO_IN : GPIO_OUT);
+				m_HwdID, it->GetPin(), pTypeLighting1, sTypeIMPULS, int(device::tswitch::type::OnOff), it->GetIsInput() ? "Input" : "Output", GPIORead(it->GetPin(), "value"), it->GetIsInput() ? GPIO_IN : GPIO_OUT);
 
 		result = m_sql.safe_query("SELECT Name,nValue,Options FROM DeviceStatus WHERE (HardwareID==%d) AND (Unit==%d)",	m_HwdID, it->GetPin());
 		if (result.empty())

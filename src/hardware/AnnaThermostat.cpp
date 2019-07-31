@@ -677,7 +677,7 @@ void CAnnaThermostat::GetMeterDetails()
 					options_str = m_sql.FormatDeviceOptions(m_sql.BuildDeviceOptions( "SelectorStyle:0;LevelNames:Off|Home|Away|Night|Vacation;LevelOffHidden:true;LevelActions:00|10|20|30|40", false));
 					m_sql.safe_query(
 				"INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, CustomImage, Options) "
-				"VALUES (%d, '%08X', %d, %d, %d, %d, %d, 12, 255, '%q', 0, '%q', %d, '%q')", m_HwdID, sAnnaPresets, 0, pTypeGeneralSwitch, sSwitchTypeSelector, device::_switch::type::Selector,0, "Anna Presets", sPreset, customImage, options_str.c_str());
+				"VALUES (%d, '%08X', %d, %d, %d, %d, %d, 12, 255, '%q', 0, '%q', %d, '%q')", m_HwdID, sAnnaPresets, 0, pTypeGeneralSwitch, sSwitchTypeSelector, device::tswitch::type::Selector,0, "Anna Presets", sPreset, customImage, options_str.c_str());
 				}
 				else
 				{

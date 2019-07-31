@@ -13,10 +13,10 @@ class CKodiNode : public std::enable_shared_from_this<CKodiNode>, StoppableTask
 	{
 	public:
 		CKodiStatus() { Clear(); };
-		device::media::status::value	Status() { return m_nStatus; };
-		device::notification::type::value	NotificationType();
-		std::string		StatusText() { return device::media::status::Description(m_nStatus); };
-		void			Status(device::media::status::value pStatus) { m_nStatus = pStatus; };
+		device::tmedia::status::value	Status() { return m_nStatus; };
+		notification::type::value	NotificationType();
+		std::string		StatusText() { return device::tmedia::status::Description(m_nStatus); };
+		void			Status(device::tmedia::status::value pStatus) { m_nStatus = pStatus; };
 		void			Status(const std::string &pStatus) { m_sStatus = pStatus; };
 		void			PlayerID(int pPlayerID) { m_iPlayerID = pPlayerID; };
 		std::string		PlayerID() { if (m_iPlayerID >= 0) return std::to_string(m_iPlayerID); else return ""; };
@@ -41,10 +41,10 @@ class CKodiNode : public std::enable_shared_from_this<CKodiNode>, StoppableTask
 		bool			LogRequired(CKodiStatus&);
 		bool			UpdateRequired(CKodiStatus&);
 		bool			OnOffRequired(CKodiStatus&);
-		bool			IsOn() { return (m_nStatus != device::media::status::OFF); };
-		bool			IsStreaming() { return ((m_nStatus == device::media::status::VIDEO) || (m_nStatus == device::media::status::AUDIO) || (m_nStatus == device::media::status::PAUSED) || (m_nStatus == device::media::status::PHOTO)); };
+		bool			IsOn() { return (m_nStatus != device::tmedia::status::OFF); };
+		bool			IsStreaming() { return ((m_nStatus == device::tmedia::status::VIDEO) || (m_nStatus == device::tmedia::status::AUDIO) || (m_nStatus == device::tmedia::status::PAUSED) || (m_nStatus == device::tmedia::status::PHOTO)); };
 	private:
-		device::media::status::value	m_nStatus;
+		device::tmedia::status::value	m_nStatus;
 		std::string		m_sStatus;
 		int				m_iPlayerID;
 		std::string		m_sType;
@@ -73,7 +73,7 @@ public:
 	bool			SendShutdown();
 	void			StopRequest() { RequestStop(); };
 	bool			IsBusy() { return m_Busy; };
-	bool			IsOn() { return (m_CurrentStatus.Status() != device::media::status::OFF); };
+	bool			IsOn() { return (m_CurrentStatus.Status() != device::tmedia::status::OFF); };
 
 	int				m_ID;
 	int				m_DevID;

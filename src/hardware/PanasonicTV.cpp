@@ -86,10 +86,10 @@ class CPanasonicNode : public StoppableTask
 	{
 	public:
 		CPanasonicStatus() { Clear(); };
-		device::media::status::value	Status() { return m_nStatus; };
-		device::notification::type::value	NotificationType();
-		std::string		StatusText() { return device::media::status::Description(m_nStatus); };
-		void			Status(device::media::status::value pStatus) { m_nStatus = pStatus; };
+		device::tmedia::status::value	Status() { return m_nStatus; };
+		notification::type::value	NotificationType();
+		std::string		StatusText() { return device::tmedia::status::Description(m_nStatus); };
+		void			Status(device::tmedia::status::value pStatus) { m_nStatus = pStatus; };
 		void			Status(const std::string &pStatus) { m_sStatus = pStatus; };
 		void			LastOK(time_t pLastOK) { m_tLastOK = pLastOK; };
 		std::string		LastOK() { std::string sRetVal;  tm ltime; localtime_r(&m_tLastOK, &ltime); char szLastUpdate[40]; sprintf(szLastUpdate, "%04d-%02d-%02d %02d:%02d:%02d", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec); sRetVal = szLastUpdate; return sRetVal; };
@@ -99,11 +99,11 @@ class CPanasonicNode : public StoppableTask
 		bool			LogRequired(CPanasonicStatus&);
 		bool			UpdateRequired(CPanasonicStatus&);
 		bool			OnOffRequired(CPanasonicStatus&);
-		bool			IsOn() { return (m_nStatus != device::media::status::OFF); };
+		bool			IsOn() { return (m_nStatus != device::tmedia::status::OFF); };
 		void			Volume(int pVolume) { m_VolumeLevel = pVolume; };
 		void			Muted(bool pMuted) { m_Muted = pMuted; };
 	private:
-		device::media::status::value	m_nStatus;
+		device::tmedia::status::value	m_nStatus;
 		std::string		m_sStatus;
 		time_t			m_tLastOK;
 		bool			m_Muted;
@@ -121,7 +121,7 @@ public:
 	void			StopThread();
 	bool			StartThread();
 	bool			IsBusy() { return m_Busy; };
-	bool			IsOn() { return (m_CurrentStatus.Status() == device::media::status::ON); };
+	bool			IsOn() { return (m_CurrentStatus.Status() == device::tmedia::status::ON); };
 
 	int				m_ID;
 	int				m_DevID;
@@ -173,7 +173,7 @@ private:
 
 void CPanasonicNode::CPanasonicStatus::Clear()
 {
-	m_nStatus = device::media::status::UNKNOWN;
+	m_nStatus = device::tmedia::status::UNKNOWN;
 	m_sStatus = "";
 	m_tLastOK = mytime(NULL);
 	m_VolumeLevel = -1;
@@ -201,7 +201,7 @@ bool CPanasonicNode::StartThread()
 std::string	CPanasonicNode::CPanasonicStatus::LogMessage()
 {
 	std::string	sLogText;
-	if (m_nStatus == device::media::status::OFF)
+	if (m_nStatus == device::tmedia::status::OFF)
 		return sLogText;
 	if (m_VolumeLevel != -1)
 		sLogText = "Volume: " + std::to_string(m_VolumeLevel) + (m_Muted ? " - Muted" : "");
@@ -225,16 +225,16 @@ bool CPanasonicNode::CPanasonicStatus::UpdateRequired(CPanasonicStatus& pPreviou
 
 bool CPanasonicNode::CPanasonicStatus::OnOffRequired(CPanasonicStatus& pPrevious)
 {
-	return ((m_nStatus == device::media::status::OFF) || (pPrevious.Status() == device::media::status::OFF)) && (m_nStatus != pPrevious.Status());
+	return ((m_nStatus == device::tmedia::status::OFF) || (pPrevious.Status() == device::tmedia::status::OFF)) && (m_nStatus != pPrevious.Status());
 }
 
-device::notification::type::value	CPanasonicNode::CPanasonicStatus::NotificationType()
+notification::type::value	CPanasonicNode::CPanasonicStatus::NotificationType()
 {
 	switch (m_nStatus)
 	{
-	case device::media::status::OFF:		return device::notification::type::SWITCH_OFF;
-	case device::media::status::ON:		return device::notification::type::SWITCH_ON;
-	default:			return device::notification::type::SWITCH_OFF;
+	case device::tmedia::status::OFF:		return notification::type::SWITCH_OFF;
+	case device::tmedia::status::ON:		return notification::type::SWITCH_ON;
+	default:			return notification::type::SWITCH_OFF;
 	}
 }
 
@@ -260,7 +260,7 @@ CPanasonicNode::CPanasonicNode(const int pHwdID, const int PollIntervalsec, cons
 	if (result2.size() == 1)
 	{
 		m_ID = atoi(result2[0][0].c_str());
-		m_PreviousStatus.Status((device::media::status::value)atoi(result2[0][1].c_str()));
+		m_PreviousStatus.Status((device::tmedia::status::value)atoi(result2[0][1].c_str()));
 		m_PreviousStatus.Status(result2[0][2]);
 	}
 	m_CurrentStatus = m_PreviousStatus;
@@ -281,7 +281,7 @@ void CPanasonicNode::UpdateStatus(bool forceupdate)
 	if (m_CurrentStatus.UpdateRequired(m_PreviousStatus) || forceupdate)
 	{
 		result = m_sql.safe_query("UPDATE DeviceStatus SET nValue=%d, sValue='%q', LastUpdate='%q' WHERE (HardwareID == %d) AND (DeviceID == '%q') AND (Unit == 1) AND (SwitchType == %d)",
-			int(m_CurrentStatus.Status()), m_CurrentStatus.StatusMessage().c_str(), m_CurrentStatus.LastOK().c_str(), m_HwdID, m_szDevID, device::_switch::type::Media);
+			int(m_CurrentStatus.Status()), m_CurrentStatus.StatusMessage().c_str(), m_CurrentStatus.LastOK().c_str(), m_HwdID, m_szDevID, device::tswitch::type::Media);
 	}
 
 	// 2:	Log the event if the actual status has changed
@@ -551,18 +551,18 @@ void CPanasonicNode::Do_Work()
 				{
 					int iVol = handleMessage(_volReply);
 					m_CurrentStatus.Volume(iVol);
-					if (m_CurrentStatus.Status() != device::media::status::ON && iVol > -1)
+					if (m_CurrentStatus.Status() != device::tmedia::status::ON && iVol > -1)
 					{
-						m_CurrentStatus.Status(device::media::status::ON);
+						m_CurrentStatus.Status(device::tmedia::status::ON);
 						UpdateStatus();
 					}
 				}
 				else
 				{
-					if (m_CurrentStatus.Status() != device::media::status::OFF)
+					if (m_CurrentStatus.Status() != device::tmedia::status::OFF)
 					{
 						m_CurrentStatus.Clear();
-						m_CurrentStatus.Status(device::media::status::OFF);
+						m_CurrentStatus.Status(device::tmedia::status::OFF);
 						UpdateStatus();
 					}
 				}
@@ -589,7 +589,7 @@ void CPanasonicNode::SendCommand(const std::string &command)
 {
 	std::string	sPanasonicCall = "";
 
-	if (m_CurrentStatus.Status() == device::media::status::OFF && !m_PowerOnSupported)
+	if (m_CurrentStatus.Status() == device::tmedia::status::OFF && !m_PowerOnSupported)
 	{
 		// no point trying to send a command if we know the device is off
 		// if we get a 400 response when TV is off then Power toggle can be sent
@@ -690,7 +690,7 @@ void CPanasonicNode::SendCommand(const std::string &command)
 			_log.Log(LOG_ERROR, "Panasonic Plugin: (%s) Can't use command: '%s'.", m_Name.c_str(), command.c_str());
 			// Workaround to get the plugin to reset device status, otherwise the UI goes out of sync with plugin
 			m_CurrentStatus.Clear();
-			m_CurrentStatus.Status(device::media::status::UNKNOWN);
+			m_CurrentStatus.Status(device::tmedia::status::UNKNOWN);
 			UpdateStatus(true);
 		}
 	}
@@ -911,7 +911,7 @@ void CPanasonic::AddNode(const std::string &Name, const std::string &IPAddress, 
 	sprintf(szID, "%X%02X%02X%02X", 0, 0, (ID & 0xFF00) >> 8, ID & 0xFF);
 
 	//Also add a light (push) device
-	m_sql.InsertDevice(m_HwdID, szID, 1, pTypeLighting2, sTypeAC, device::_switch::type::Media, 0, "Unavailable", Name, 12, 255, 1);
+	m_sql.InsertDevice(m_HwdID, szID, 1, pTypeLighting2, sTypeAC, device::tswitch::type::Media, 0, "Unavailable", Name, 12, 255, 1);
 
 	ReloadNodes();
 }
@@ -1256,11 +1256,11 @@ namespace http {
 			result = m_sql.safe_query("SELECT DS.SwitchType, H.Type, H.ID FROM DeviceStatus DS, Hardware H WHERE (DS.ID=='%q') AND (DS.HardwareID == H.ID)", sIdx.c_str());
 			if (result.size() == 1)
 			{
-				device::_switch::type::value	sType = (device::_switch::type::value)atoi(result[0][0].c_str());
+				device::tswitch::type::value	sType = (device::tswitch::type::value)atoi(result[0][0].c_str());
 				hardware::type::value	hType = (hardware::type::value)atoi(result[0][1].c_str());
 				int HwID = atoi(result[0][2].c_str());
 				// Is the device a media Player?
-				if (sType == device::_switch::type::Media)
+				if (sType == device::tswitch::type::Media)
 				{
 					switch (hType) {
 					case hardware::type::PanasonicTV:

@@ -487,7 +487,7 @@ std::string CBasePush::ProcessSendValue(const std::string &rawsendValue, const i
 {
 	std::string vType = DropdownOptionsValue(m_DeviceRowIdx, delpos);
 	unsigned char tempsign = m_sql.m_tempsign[0];
-	device::meter::type::value metertype = (device::meter::type::value)metertypein;
+	device::tmeter::type::value metertype = (device::tmeter::type::value)metertypein;
 	char szData[100];
 	szData[0] = 0;
 
@@ -710,7 +710,7 @@ std::string CBasePush::getUnit(const int delpos, const int metertypein)
 {
 	std::string vType = DropdownOptionsValue(m_DeviceRowIdx, delpos);
 	unsigned char tempsign = m_sql.m_tempsign[0];
-	device::meter::type::value metertype = (device::meter::type::value)metertypein;
+	device::tmeter::type::value metertype = (device::tmeter::type::value)metertypein;
 	char szData[100];
 	szData[0] = 0;
 

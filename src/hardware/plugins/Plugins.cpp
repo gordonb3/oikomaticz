@@ -2068,10 +2068,10 @@ Error:
 			posType += 12;
 			std::string	szType = ExtraData.substr(posType, ExtraData.find("|", posType) - posType);
 			std::string	szTypeImage;
-			device::_switch::type::value switchtype = (device::_switch::type::value)atoi(szType.c_str());
+			device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(szType.c_str());
 			switch (switchtype)
 			{
-			case device::_switch::type::OnOff:
+			case device::tswitch::type::OnOff:
 				if (posCustom >= 0)
 				{
 					std::string szCustom = ExtraData.substr(posCustom, ExtraData.find("|", posCustom) - posCustom);
@@ -2080,48 +2080,48 @@ Error:
 				else 
 					szTypeImage = "Light48";
 				break;
-			case device::_switch::type::Doorbell:
+			case device::tswitch::type::Doorbell:
 				szTypeImage = "doorbell48";
 				break;
-			case device::_switch::type::Contact:
+			case device::tswitch::type::Contact:
 				szTypeImage = "Contact48";
 				break;
-			case device::_switch::type::Blinds:
-			case device::_switch::type::BlindsPercentage:
-			case device::_switch::type::VenetianBlindsUS:
-			case device::_switch::type::VenetianBlindsEU:
-			case device::_switch::type::BlindsPercentageInverted:
-			case device::_switch::type::BlindsInverted:
+			case device::tswitch::type::Blinds:
+			case device::tswitch::type::BlindsPercentage:
+			case device::tswitch::type::VenetianBlindsUS:
+			case device::tswitch::type::VenetianBlindsEU:
+			case device::tswitch::type::BlindsPercentageInverted:
+			case device::tswitch::type::BlindsInverted:
 				szTypeImage = "blinds48";
 				break;
-			case device::_switch::type::X10Siren:
+			case device::tswitch::type::X10Siren:
 				szTypeImage = "siren";
 				break;
-			case device::_switch::type::SMOKEDETECTOR:
+			case device::tswitch::type::SMOKEDETECTOR:
 				szTypeImage = "smoke48";
 				break;
-			case device::_switch::type::Dimmer:
+			case device::tswitch::type::Dimmer:
 				szTypeImage = "Dimmer48";
 				break;
-			case device::_switch::type::Motion:
+			case device::tswitch::type::Motion:
 				szTypeImage = "motion48";
 				break;
-			case device::_switch::type::PushOn:
+			case device::tswitch::type::PushOn:
 				szTypeImage = "Push48";
 				break;
-			case device::_switch::type::PushOff:
+			case device::tswitch::type::PushOff:
 				szTypeImage = "Push48";
 				break;
-			case device::_switch::type::DoorContact:
+			case device::tswitch::type::DoorContact:
 				szTypeImage = "Door48";
 				break;
-			case device::_switch::type::DoorLock:
+			case device::tswitch::type::DoorLock:
 				szTypeImage = "Door48";
 				break;
-			case device::_switch::type::DoorLockInverted:
+			case device::tswitch::type::DoorLockInverted:
 				szTypeImage = "Door48";
 				break;
-			case device::_switch::type::Media:
+			case device::tswitch::type::Media:
 				if (posCustom >= 0)
 				{
 					std::string szCustom = ExtraData.substr(posCustom, ExtraData.find("|", posCustom) - posCustom);

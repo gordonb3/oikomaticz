@@ -712,8 +712,8 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 	result = m_sql.safe_query("SELECT SwitchType,LastLevel FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit==%d)", m_HwdID, szDeviceID, int(tsen->LIGHTING2.unitcode));
 	if (result.size()>0)
 	{
-		device::_switch::type::value switchtype=(device::_switch::type::value)atoi(result[0][0].c_str());
-		if (switchtype==device::_switch::type::Dimmer)
+		device::tswitch::type::value switchtype=(device::tswitch::type::value)atoi(result[0][0].c_str());
+		if (switchtype==device::tswitch::type::Dimmer)
 			bIsDimmer=true;
 		LastLevel=(uint8_t)atoi(result[0][1].c_str());
 	}

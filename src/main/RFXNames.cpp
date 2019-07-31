@@ -719,7 +719,7 @@ int Lookup_ZWave_Thermostat_Fan_Modes(const std::string &sMode)
 void GetLightStatus(
 	const unsigned char dType,
 	const unsigned char dSubType,
-	const device::_switch::type::value switchtype,
+	const device::tswitch::type::value switchtype,
 	const unsigned char nValue,
 	const std::string &sValue,
 	std::string &lstatus,
@@ -811,7 +811,7 @@ void GetLightStatus(
 		// Determine max dim level based on switch type
 		maxDimLevel = 15;
 
-		if (switchtype != device::_switch::type::Media) {
+		if (switchtype != device::tswitch::type::Media) {
 			// Calculate % that the light is currently on, taking the maxdimlevel into account.
 			llevel = (int)float((100.0f / float(maxDimLevel))*atof(sValue.c_str()));
 		}
@@ -1514,7 +1514,7 @@ void GetLightStatus(
 		}
 		break;
 	case pTypeRFY:
-		if (switchtype == device::_switch::type::OnOff)
+		if (switchtype == device::tswitch::type::OnOff)
 		{
 			switch (nValue)
 			{
@@ -1543,25 +1543,25 @@ void GetLightStatus(
 				lstatus = "Stop";
 				break;
 			case rfy_s05SecUp:
-				if (switchtype == device::_switch::type::VenetianBlindsUS)
+				if (switchtype == device::tswitch::type::VenetianBlindsUS)
 				{
 					lstatus = "Off";
 				}
 				break;
 			case rfy_s2SecUp:
-				if (switchtype == device::_switch::type::VenetianBlindsEU)
+				if (switchtype == device::tswitch::type::VenetianBlindsEU)
 				{
 					lstatus = "Off";
 				}
 				break;
 			case rfy_s05SecDown:
-				if (switchtype == device::_switch::type::VenetianBlindsUS)
+				if (switchtype == device::tswitch::type::VenetianBlindsUS)
 				{
 					lstatus = "On";
 				}
 				break;
 			case rfy_s2SecDown:
-				if (switchtype == device::_switch::type::VenetianBlindsEU)
+				if (switchtype == device::tswitch::type::VenetianBlindsEU)
 				{
 					lstatus = "On";
 				}
@@ -1861,19 +1861,19 @@ std::string GetSelectorSwitchLevelAction(const std::map<std::string, std::string
 bool GetLightCommand(
 	const unsigned char dType,
 	const unsigned char dSubType,
-	device::_switch::type::value switchtype,
+	device::tswitch::type::value switchtype,
 	std::string switchcmd,
 	unsigned char &cmd,
 	const std::map<std::string, std::string> & options
 )
 {
-	if (switchtype == device::_switch::type::Contact && dType != pTypeGeneralSwitch)
+	if (switchtype == device::tswitch::type::Contact && dType != pTypeGeneralSwitch)
 		return false;	//we can not (or will not) switch this type
 
 	switch (dType)
 	{
 	case pTypeLighting1:
-		if (switchtype == device::_switch::type::Doorbell)
+		if (switchtype == device::tswitch::type::Doorbell)
 		{
 			if (dSubType == sTypeARC)
 			{
@@ -1895,7 +1895,7 @@ bool GetLightCommand(
 			//no other combinations for the door switch
 			return false;
 		}
-		else if (switchtype == device::_switch::type::X10Siren)
+		else if (switchtype == device::tswitch::type::X10Siren)
 		{
 			if ((switchcmd == "On") || (switchcmd == "All On"))
 			{
@@ -1942,7 +1942,7 @@ bool GetLightCommand(
 			return false;
 		break;
 	case pTypeLighting2:
-		if (switchtype == device::_switch::type::Doorbell)
+		if (switchtype == device::tswitch::type::Doorbell)
 		{
 			if ((switchcmd == "On") || (switchcmd == "Group On"))
 			{
@@ -1952,7 +1952,7 @@ bool GetLightCommand(
 			//no other combinations for the door switch
 			return false;
 		}
-		else if (switchtype == device::_switch::type::X10Siren)
+		else if (switchtype == device::tswitch::type::X10Siren)
 		{
 			if ((switchcmd == "On") || (switchcmd == "Group On"))
 			{
@@ -2060,7 +2060,7 @@ bool GetLightCommand(
 			if (switchcmd == "Set Level")
 				switchcmd = "On";
 		}
-		else if ((dSubType == sTypeLightwaveRF) && (switchtype == device::_switch::type::VenetianBlindsEU))
+		else if ((dSubType == sTypeLightwaveRF) && (switchtype == device::tswitch::type::VenetianBlindsEU))
 		{
 			// The LightwaveRF inline relay has to be controlled by Venetian blinds logic as it has a stop setting
 			if (switchcmd == "On")
@@ -2071,7 +2071,7 @@ bool GetLightCommand(
 				switchcmd = "Stop inline relay";
 		}
 
-		if (switchtype == device::_switch::type::Doorbell)
+		if (switchtype == device::tswitch::type::Doorbell)
 		{
 			if ((switchcmd == "On") || (switchcmd == "Group On"))
 			{
@@ -2081,7 +2081,7 @@ bool GetLightCommand(
 			//no other combinations for the door switch
 			return false;
 		}
-		else if (switchtype == device::_switch::type::X10Siren)
+		else if (switchtype == device::tswitch::type::X10Siren)
 		{
 			if ((switchcmd == "On") || (switchcmd == "Group On"))
 			{
@@ -2188,7 +2188,7 @@ bool GetLightCommand(
 			return false;
 		break;
 	case pTypeHomeConfort:
-		if (switchtype == device::_switch::type::Doorbell)
+		if (switchtype == device::tswitch::type::Doorbell)
 		{
 			if ((switchcmd == "On") || (switchcmd == "Group On"))
 			{
@@ -2355,7 +2355,7 @@ bool GetLightCommand(
 		return false;
 		break;
 	case pTypeGeneralSwitch:
-		if (switchtype == device::_switch::type::Doorbell)
+		if (switchtype == device::tswitch::type::Doorbell)
 		{
 			if ((switchcmd == "On") || (switchcmd == "Group On"))
 			{
@@ -2365,7 +2365,7 @@ bool GetLightCommand(
 			//no other combinations for the door switch
 			return false;
 		}
-		else if (switchtype == device::_switch::type::X10Siren)
+		else if (switchtype == device::tswitch::type::X10Siren)
 		{
 			if ((switchcmd == "On") || (switchcmd == "Group On"))
 			{
@@ -2379,7 +2379,7 @@ bool GetLightCommand(
 			}
 			return false;
 		}
-		else if (switchtype == device::_switch::type::Selector) {
+		else if (switchtype == device::tswitch::type::Selector) {
 			if ((switchcmd == "Paused") ||
 				(switchcmd == "Pause") ||
 				(switchcmd == "Playing") ||
@@ -2824,7 +2824,7 @@ bool GetLightCommand(
 	break;
 	case pTypeRFY:
 	{
-		if (switchtype == device::_switch::type::OnOff)
+		if (switchtype == device::tswitch::type::OnOff)
 		{
 			/*
 			Venetian Blind in US mode:
@@ -2857,11 +2857,11 @@ bool GetLightCommand(
 			*/
 			if (switchcmd == "On")
 			{
-				if (switchtype == device::_switch::type::VenetianBlindsUS)
+				if (switchtype == device::tswitch::type::VenetianBlindsUS)
 				{
 					cmd = rfy_s05SecDown;
 				}
-				else if (switchtype == device::_switch::type::VenetianBlindsEU)
+				else if (switchtype == device::tswitch::type::VenetianBlindsEU)
 				{
 					cmd = rfy_s2SecDown;
 				}
@@ -2872,11 +2872,11 @@ bool GetLightCommand(
 			}
 			else if (switchcmd == "Off")
 			{
-				if (switchtype == device::_switch::type::VenetianBlindsUS)
+				if (switchtype == device::tswitch::type::VenetianBlindsUS)
 				{
 					cmd = rfy_s05SecUp;
 				}
-				else if (switchtype == device::_switch::type::VenetianBlindsEU)
+				else if (switchtype == device::tswitch::type::VenetianBlindsEU)
 				{
 					cmd = rfy_s2SecUp;
 				}

@@ -18,7 +18,7 @@
 
 void CKodiNode::CKodiStatus::Clear()
 {
-	m_nStatus = device::media::status::UNKNOWN;
+	m_nStatus = device::tmedia::status::UNKNOWN;
 	m_sStatus = "";
 	m_iPlayerID = -1;
 	m_sType = "";
@@ -126,20 +126,20 @@ bool CKodiNode::CKodiStatus::UpdateRequired(CKodiStatus& pPrevious)
 
 bool CKodiNode::CKodiStatus::OnOffRequired(CKodiStatus& pPrevious)
 {
-	return ((m_nStatus == device::media::status::OFF) || (pPrevious.Status() == device::media::status::OFF)) && (m_nStatus != pPrevious.Status());
+	return ((m_nStatus == device::tmedia::status::OFF) || (pPrevious.Status() == device::tmedia::status::OFF)) && (m_nStatus != pPrevious.Status());
 }
 
-device::notification::type::value	CKodiNode::CKodiStatus::NotificationType()
+notification::type::value	CKodiNode::CKodiStatus::NotificationType()
 {
 	switch (m_nStatus)
 	{
-	case device::media::status::OFF:		return device::notification::type::SWITCH_OFF;
-	case device::media::status::ON:		return device::notification::type::SWITCH_ON;
-	case device::media::status::PAUSED:	return device::notification::type::PAUSED;
-	case device::media::status::VIDEO:	return device::notification::type::VIDEO;
-	case device::media::status::AUDIO:	return device::notification::type::AUDIO;
-	case device::media::status::PHOTO:	return device::notification::type::PHOTO;
-	default:			return device::notification::type::SWITCH_OFF;
+	case device::tmedia::status::OFF:		return notification::type::SWITCH_OFF;
+	case device::tmedia::status::ON:		return notification::type::SWITCH_ON;
+	case device::tmedia::status::PAUSED:	return notification::type::PAUSED;
+	case device::tmedia::status::VIDEO:	return notification::type::VIDEO;
+	case device::tmedia::status::AUDIO:	return notification::type::AUDIO;
+	case device::tmedia::status::PHOTO:	return notification::type::PHOTO;
+	default:			return notification::type::SWITCH_OFF;
 	}
 }
 
@@ -170,7 +170,7 @@ CKodiNode::CKodiNode(boost::asio::io_service *pIos, const int pHwdID, const int 
 	if (result2.size() == 1)
 	{
 		m_ID = atoi(result2[0][0].c_str());
-		m_PreviousStatus.Status((device::media::status::value)atoi(result2[0][1].c_str()));
+		m_PreviousStatus.Status((device::tmedia::status::value)atoi(result2[0][1].c_str()));
 		m_PreviousStatus.Status(result2[0][2]);
 	}
 	m_CurrentStatus = m_PreviousStatus;
@@ -229,7 +229,7 @@ void CKodiNode::handleMessage(std::string& pMessage)
 							if ((root["method"] == "Player.OnStop") || (root["method"] == "System.OnWake"))
 							{
 								m_CurrentStatus.Clear();
-								m_CurrentStatus.Status(device::media::status::ON);
+								m_CurrentStatus.Status(device::tmedia::status::ON);
 								UpdateStatus();
 							}
 							else if ((root["method"] == "Player.OnPlay") || (root["method"] == "Player.OnResume"))
@@ -237,17 +237,17 @@ void CKodiNode::handleMessage(std::string& pMessage)
 								m_CurrentStatus.Clear();
 								m_CurrentStatus.PlayerID(root["params"]["data"]["player"]["playerid"].asInt());
 								if (root["params"]["data"]["item"]["type"] == "picture")
-									m_CurrentStatus.Status(device::media::status::PHOTO);
+									m_CurrentStatus.Status(device::tmedia::status::PHOTO);
 								else if (root["params"]["data"]["item"]["type"] == "episode")
-									m_CurrentStatus.Status(device::media::status::VIDEO);
+									m_CurrentStatus.Status(device::tmedia::status::VIDEO);
 								else if (root["params"]["data"]["item"]["type"] == "channel")
-									m_CurrentStatus.Status(device::media::status::VIDEO);
+									m_CurrentStatus.Status(device::tmedia::status::VIDEO);
 								else if (root["params"]["data"]["item"]["type"] == "movie")
-									m_CurrentStatus.Status(device::media::status::VIDEO);
+									m_CurrentStatus.Status(device::tmedia::status::VIDEO);
 								else if (root["params"]["data"]["item"]["type"] == "song")
-									m_CurrentStatus.Status(device::media::status::AUDIO);
+									m_CurrentStatus.Status(device::tmedia::status::AUDIO);
 								else if (root["params"]["data"]["item"]["type"] == "musicvideo")
-									m_CurrentStatus.Status(device::media::status::VIDEO);
+									m_CurrentStatus.Status(device::tmedia::status::VIDEO);
 								else
 								{
 									_log.Log(LOG_ERROR, "Kodi: (%s) Message error, unknown type in OnPlay/OnResume message: '%s' from '%s'", m_Name.c_str(), root["params"]["data"]["item"]["type"].asCString(), pMessage.c_str());
@@ -261,7 +261,7 @@ void CKodiNode::handleMessage(std::string& pMessage)
 							}
 							else if (root["method"] == "Player.OnPause")
 							{
-								m_CurrentStatus.Status(device::media::status::PAUSED);
+								m_CurrentStatus.Status(device::tmedia::status::PAUSED);
 								UpdateStatus();
 							}
 							else if (root["method"] == "Player.OnSeek")
@@ -275,7 +275,7 @@ void CKodiNode::handleMessage(std::string& pMessage)
 							else if ((root["method"] == "System.OnQuit") || (root["method"] == "System.OnSleep") || (root["method"] == "System.OnRestart"))
 							{
 								m_CurrentStatus.Clear();
-								m_CurrentStatus.Status(device::media::status::OFF);
+								m_CurrentStatus.Status(device::tmedia::status::OFF);
 								UpdateStatus();
 							}
 							else if (root["method"] == "Application.OnVolumeChanged")
@@ -315,7 +315,7 @@ void CKodiNode::handleMessage(std::string& pMessage)
 						{
 							m_iMissedPongs = 0;
 							m_CurrentStatus.Clear();
-							m_CurrentStatus.Status(device::media::status::ON);
+							m_CurrentStatus.Status(device::tmedia::status::ON);
 							UpdateStatus();
 						}
 						break;
@@ -331,8 +331,8 @@ void CKodiNode::handleMessage(std::string& pMessage)
 						if (root["result"].isMember("speed"))
 						{
 							if (!root["result"]["speed"].asInt())
-								m_CurrentStatus.Status(device::media::status::PAUSED);	// useful when Oikomaticz restarts when media aleady paused
-							if (root["result"]["speed"].asInt() && m_CurrentStatus.Status() == device::media::status::PAUSED)
+								m_CurrentStatus.Status(device::tmedia::status::PAUSED);	// useful when Oikomaticz restarts when media aleady paused
+							if (root["result"]["speed"].asInt() && m_CurrentStatus.Status() == device::tmedia::status::PAUSED)
 							{
 								// Buffering when playing internet streams show 0 speed but don't trigger OnPause/OnPlay so force a refresh when speed is not 0 again
 								sMessage = "{\"jsonrpc\":\"2.0\",\"method\":\"Player.GetItem\",\"id\":1003,\"params\":{\"playerid\":" + m_CurrentStatus.PlayerID() + ",\"properties\":[\"artist\",\"album\",\"year\",\"channel\",\"showtitle\",\"season\",\"episode\",\"title\"]}}";
@@ -347,7 +347,7 @@ void CKodiNode::handleMessage(std::string& pMessage)
 							if (root["result"]["item"].isMember("type"))			m_CurrentStatus.Type(root["result"]["item"]["type"].asCString());
 							if (m_CurrentStatus.Type() == "song")
 							{
-								m_CurrentStatus.Status(device::media::status::AUDIO);
+								m_CurrentStatus.Status(device::tmedia::status::AUDIO);
 								if (root["result"]["item"]["artist"][0].empty() != true)
 								{
 									m_CurrentStatus.Artist(root["result"]["item"]["artist"][0].asCString());
@@ -359,23 +359,23 @@ void CKodiNode::handleMessage(std::string& pMessage)
 							}
 							if (m_CurrentStatus.Type() == "episode")
 							{
-								m_CurrentStatus.Status(device::media::status::VIDEO);
+								m_CurrentStatus.Status(device::tmedia::status::VIDEO);
 								if (root["result"]["item"].isMember("showtitle"))	m_CurrentStatus.ShowTitle(root["result"]["item"]["showtitle"].asCString());
 								if (root["result"]["item"].isMember("season"))		m_CurrentStatus.Season((int)root["result"]["item"]["season"].asInt());
 								if (root["result"]["item"].isMember("episode"))		m_CurrentStatus.Episode((int)root["result"]["item"]["episode"].asInt());
 							}
 							if (m_CurrentStatus.Type() == "channel")
 							{
-								m_CurrentStatus.Status(device::media::status::VIDEO);
+								m_CurrentStatus.Status(device::tmedia::status::VIDEO);
 								if (root["result"]["item"].isMember("channel"))		m_CurrentStatus.Channel(root["result"]["item"]["channel"].asCString());
 							}
 							if (m_CurrentStatus.Type() == "unknown")
 							{
-								m_CurrentStatus.Status(device::media::status::VIDEO);
+								m_CurrentStatus.Status(device::tmedia::status::VIDEO);
 							}
 							if (m_CurrentStatus.Type() == "picture")
 							{
-								m_CurrentStatus.Status(device::media::status::PHOTO);
+								m_CurrentStatus.Status(device::tmedia::status::PHOTO);
 							}
 							if (root["result"]["item"].isMember("title"))			m_CurrentStatus.Title(root["result"]["item"]["title"].asCString());
 							if (root["result"]["item"].isMember("year"))			m_CurrentStatus.Year(root["result"]["item"]["year"].asInt());
@@ -532,7 +532,7 @@ void CKodiNode::UpdateStatus()
 	if (m_CurrentStatus.UpdateRequired(m_PreviousStatus))
 	{
 		result = m_sql.safe_query("UPDATE DeviceStatus SET nValue=%d, sValue='%q', LastUpdate='%q' WHERE (HardwareID == %d) AND (DeviceID == '%q') AND (Unit == 1) AND (SwitchType == %d)",
-			int(m_CurrentStatus.Status()), m_CurrentStatus.StatusMessage().c_str(), m_CurrentStatus.LastOK().c_str(), m_HwdID, m_szDevID, device::_switch::type::Media);
+			int(m_CurrentStatus.Status()), m_CurrentStatus.StatusMessage().c_str(), m_CurrentStatus.LastOK().c_str(), m_HwdID, m_szDevID, device::tswitch::type::Media);
 	}
 
 	// 2:	Log the event if the actual status has changed (not counting the percentage)
@@ -581,10 +581,10 @@ void CKodiNode::handleConnect()
 			if (!ec)
 			{
 				_log.Log(LOG_NORM, "Kodi: (%s) Connected to '%s:%s'.", m_Name.c_str(), m_IP.c_str(), (m_Port[0] != '-' ? m_Port.c_str() : m_Port.substr(1).c_str()));
-				if (m_CurrentStatus.Status() == device::media::status::OFF)
+				if (m_CurrentStatus.Status() == device::tmedia::status::OFF)
 				{
 					m_CurrentStatus.Clear();
-					m_CurrentStatus.Status(device::media::status::ON);
+					m_CurrentStatus.Status(device::tmedia::status::ON);
 					UpdateStatus();
 				}
 				m_Socket->async_read_some(boost::asio::buffer(m_Buffer, sizeof m_Buffer),
@@ -607,7 +607,7 @@ void CKodiNode::handleConnect()
 				delete m_Socket;
 				m_Socket = NULL;
 				m_CurrentStatus.Clear();
-				m_CurrentStatus.Status(device::media::status::OFF);
+				m_CurrentStatus.Status(device::tmedia::status::OFF);
 				UpdateStatus();
 			}
 		}
@@ -661,7 +661,7 @@ void CKodiNode::handleRead(const boost::system::error_code& e, std::size_t bytes
 			if ((e.value() != 2) && (e.value() != 121))	// Semaphore tmieout expiry or end of file aka 'lost contact'
 				_log.Log(LOG_ERROR, "Kodi: (%s) Async Read Exception: %d, %s", m_Name.c_str(), e.value(), e.message().c_str());
 			m_CurrentStatus.Clear();
-			m_CurrentStatus.Status(device::media::status::OFF);
+			m_CurrentStatus.Status(device::tmedia::status::OFF);
 			UpdateStatus();
 			handleDisconnect();
 		}
@@ -1078,7 +1078,7 @@ void CKodi::AddNode(const std::string &Name, const std::string &IPAddress, const
 	sprintf(szID, "%X%02X%02X%02X", 0, 0, (ID & 0xFF00) >> 8, ID & 0xFF);
 
 	//Also add a light (push) device
-	m_sql.InsertDevice(m_HwdID, szID, 1, pTypeLighting2, sTypeAC, device::_switch::type::Media, 0, "Unavailable", Name, 12, 255, 1);
+	m_sql.InsertDevice(m_HwdID, szID, 1, pTypeLighting2, sTypeAC, device::tswitch::type::Media, 0, "Unavailable", Name, 12, 255, 1);
 
 	ReloadNodes();
 }
@@ -1438,11 +1438,11 @@ namespace http {
 			result = m_sql.safe_query("SELECT DS.SwitchType, H.Type, H.ID FROM DeviceStatus DS, Hardware H WHERE (DS.ID=='%q') AND (DS.HardwareID == H.ID)", sIdx.c_str());
 			if (result.size() == 1)
 			{
-				device::_switch::type::value	sType = (device::_switch::type::value)atoi(result[0][0].c_str());
+				device::tswitch::type::value	sType = (device::tswitch::type::value)atoi(result[0][0].c_str());
 				hardware::type::value	hType = (hardware::type::value)atoi(result[0][1].c_str());
 				int HwID = atoi(result[0][2].c_str());
 				// Is the device a media Player?
-				if (sType == device::_switch::type::Media)
+				if (sType == device::tswitch::type::Media)
 				{
 					switch (hType) {
 					case hardware::type::Kodi:

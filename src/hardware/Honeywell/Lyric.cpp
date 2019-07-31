@@ -302,17 +302,17 @@ void Lyric::GetThermostatData()
 
 			std::string unit = (*currentDevice)["units"].asString();
 			if (unit[0] == 'C')
-				m_lyricDevices[devNr].temperatureUnit = device::meter::temperature::unit::CELSIUS;
+				m_lyricDevices[devNr].temperatureUnit = device::tmeter::temperature::unit::CELSIUS;
 			else if (unit[0] == 'F')
-				m_lyricDevices[devNr].temperatureUnit = device::meter::temperature::unit::FAHRENHEIT;
+				m_lyricDevices[devNr].temperatureUnit = device::tmeter::temperature::unit::FAHRENHEIT;
 			else
-				m_lyricDevices[devNr].temperatureUnit = device::meter::temperature::unit::UNSUPPORTED; // shouldn't happen?
+				m_lyricDevices[devNr].temperatureUnit = device::tmeter::temperature::unit::UNSUPPORTED; // shouldn't happen?
 
 			float temperature;
 			temperature = (float)(*currentDevice)["indoorTemperature"].asFloat();
 			std::string desc = kRoomTempDesc;
 			stdreplace(desc, "{devicename}", deviceName);
-			if (m_lyricDevices[devNr].temperatureUnit == device::meter::temperature::unit::FAHRENHEIT)
+			if (m_lyricDevices[devNr].temperatureUnit == device::tmeter::temperature::unit::FAHRENHEIT)
 				SendTempSensor(10 * devNr + 1, 255, ConvertToCelsius(temperature), desc);
 			else
 				SendTempSensor(10 * devNr + 1, 255, temperature, desc);
@@ -320,7 +320,7 @@ void Lyric::GetThermostatData()
 			temperature = (float)(*currentDevice)["outdoorTemperature"].asFloat();
 			desc = kOutdoorTempDesc;
 			stdreplace(desc, "{devicename}", deviceName);
-			if (m_lyricDevices[devNr].temperatureUnit == device::meter::temperature::unit::FAHRENHEIT)
+			if (m_lyricDevices[devNr].temperatureUnit == device::tmeter::temperature::unit::FAHRENHEIT)
 				SendTempSensor(10 * devNr + 2, 255, ConvertToCelsius(temperature), desc);
 			else
 				SendTempSensor(10 * devNr + 2, 255, temperature, desc);
@@ -334,7 +334,7 @@ void Lyric::GetThermostatData()
 			temperature = (float)(*currentDevice)["changeableValues"]["heatSetpoint"].asFloat();
 			desc = kHeatSetPointDesc;
 			stdreplace(desc, "{devicename}", deviceName);
-			if (m_lyricDevices[devNr].temperatureUnit == device::meter::temperature::unit::FAHRENHEIT)
+			if (m_lyricDevices[devNr].temperatureUnit == device::tmeter::temperature::unit::FAHRENHEIT)
 				SendSetPointSensor((uint8_t)(10 * devNr + 4), ConvertToCelsius(temperature), desc);
 			else
 				SendSetPointSensor((uint8_t)(10 * devNr + 4), temperature, desc);
@@ -343,7 +343,7 @@ void Lyric::GetThermostatData()
 			bool bStatus = (operationstatus != "EquipmentOff");
 			desc = kOperationStatusDesc;
 			stdreplace(desc, "{devicename}", deviceName);
-			SendOnOffSensor(10 * devNr + 5, device::_switch::type::OnOff, bStatus, desc);
+			SendOnOffSensor(10 * devNr + 5, device::tswitch::type::OnOff, bStatus, desc);
 
 			devNr++;
 		}
@@ -364,13 +364,13 @@ void Lyric::GetThermostatData()
 			}
 			std::string desc = kWithinFenceDesc;
 			stdreplace(desc, "{name}", locationName);
-			SendOnOffSensor(10 * devNr + 6, device::_switch::type::Proximity, bWithinFence, desc);
+			SendOnOffSensor(10 * devNr + 6, device::tswitch::type::Proximity, bWithinFence, desc);
 		}
 	}
 }
 
 
-void Lyric::SendOnOffSensor(const int NodeID, const device::_switch::type::value switchtype, const bool SwitchState, const std::string &defaultname)
+void Lyric::SendOnOffSensor(const int NodeID, const device::tswitch::type::value switchtype, const bool SwitchState, const std::string &defaultname)
 {
 	char szID[10];
 	sprintf(szID, "%08X", (unsigned int)NodeID);
@@ -498,7 +498,7 @@ void Lyric::SetSetpoint(const int idx, const float temp, const int /*nodeid*/)
 
 	Json::Value reqRoot;
 	reqRoot["mode"] = "Heat";
-	if (m_lyricDevices[idx].temperatureUnit == device::meter::temperature::unit::FAHRENHEIT)
+	if (m_lyricDevices[idx].temperatureUnit == device::tmeter::temperature::unit::FAHRENHEIT)
 		reqRoot["heatSetpoint"] = ConvertToFahrenheit(temp);
 	else
 		reqRoot["heatSetpoint"] = temp;

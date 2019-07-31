@@ -28,7 +28,7 @@ private:
 	void Do_Work();
 
 	bool SendMessageToGateway(const std::string &controlmessage);
-	void InsertUpdateSwitch(const std::string &nodeid, const std::string &Name, const bool bIsOn, const device::_switch::type::value switchtype, const int unittype, const int level, const std::string &messagetype, const std::string &load_power, const std::string &power_consumed, const int battery);
+	void InsertUpdateSwitch(const std::string &nodeid, const std::string &Name, const bool bIsOn, const device::tswitch::type::value switchtype, const int unittype, const int level, const std::string &messagetype, const std::string &load_power, const std::string &power_consumed, const int battery);
 	void InsertUpdateRGBGateway(const std::string &nodeid, const std::string &Name, const bool bIsOn, const int brightness, const int hue);
 	void InsertUpdateCubeText(const std::string &nodeid, const std::string &Name, const std::string &degrees);
 	void InsertUpdateVoltage(const std::string &nodeid, const std::string &Name, const int VoltageLevel);

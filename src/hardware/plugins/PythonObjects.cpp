@@ -470,7 +470,7 @@ namespace Plugins {
 			}
 			Type = pTypeGeneralSwitch;
 			SubType = sSwitchTypeSelector;
-			SwitchType = device::_switch::type::Selector;
+			SwitchType = device::tswitch::type::Selector;
 		}
 		else if (sTypeName == "Custom")
 		{

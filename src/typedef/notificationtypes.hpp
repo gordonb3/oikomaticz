@@ -1,7 +1,6 @@
 #pragma once
 #include "typedef/common.hpp"
 
-namespace device {
 namespace notification {
 namespace type {
 
@@ -126,6 +125,6 @@ const char *Label(const int nType);
 
 
 }; // namespace type
-}; // namespace meter
-}; // namespace device
+}; // namespace notification
+
 

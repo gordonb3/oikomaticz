@@ -100,19 +100,19 @@ static struct {
 	const char *options;
 	struct selector_name *default_names;
 } switch_types[] = {
-	{ "MVL", "AMT", "Master volume", device::_switch::type::Dimmer, sSwitchGeneralSwitch, 8, NULL, NULL },
-	{ "ZVL", "ZMT", "Zone 2 volume", device::_switch::type::Dimmer, sSwitchGeneralSwitch, 8, NULL, NULL },
-	{ "VL3", "MT3", "Zone 3 volume", device::_switch::type::Dimmer, sSwitchGeneralSwitch, 8, NULL, NULL },
-	{ "VL4", "MT4", "Zone 4 volume", device::_switch::type::Dimmer, sSwitchGeneralSwitch, 8, NULL, NULL },
-	{ "PWR", NULL, "Master power", device::_switch::type::OnOff, sSwitchGeneralSwitch, 5, NULL, NULL },
-	{ "ZPW", NULL, "Zone 2 power", device::_switch::type::OnOff, sSwitchGeneralSwitch, 5, NULL, NULL },
-	{ "PW3", NULL, "Zone 3 power", device::_switch::type::OnOff, sSwitchGeneralSwitch, 5, NULL, NULL },
-	{ "PW4", NULL, "Zone 4 power", device::_switch::type::OnOff, sSwitchGeneralSwitch, 5, NULL, NULL },
-	{ "SLI", NULL, "Master selector", device::_switch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
-	{ "SLZ", NULL, "Zone 2 selector", device::_switch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
-	{ "SL2", NULL, "Zone 3 selector", device::_switch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
-	{ "SL3", NULL, "Zone 4 selector", device::_switch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
-	{ "HDO", NULL, "HDMI Output", device::_switch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:0;LevelNames:Off|Main|Sub|Main+Sub;LevelOffHidden:true;LevelActions:00|01|02|03" },
+	{ "MVL", "AMT", "Master volume", device::tswitch::type::Dimmer, sSwitchGeneralSwitch, 8, NULL, NULL },
+	{ "ZVL", "ZMT", "Zone 2 volume", device::tswitch::type::Dimmer, sSwitchGeneralSwitch, 8, NULL, NULL },
+	{ "VL3", "MT3", "Zone 3 volume", device::tswitch::type::Dimmer, sSwitchGeneralSwitch, 8, NULL, NULL },
+	{ "VL4", "MT4", "Zone 4 volume", device::tswitch::type::Dimmer, sSwitchGeneralSwitch, 8, NULL, NULL },
+	{ "PWR", NULL, "Master power", device::tswitch::type::OnOff, sSwitchGeneralSwitch, 5, NULL, NULL },
+	{ "ZPW", NULL, "Zone 2 power", device::tswitch::type::OnOff, sSwitchGeneralSwitch, 5, NULL, NULL },
+	{ "PW3", NULL, "Zone 3 power", device::tswitch::type::OnOff, sSwitchGeneralSwitch, 5, NULL, NULL },
+	{ "PW4", NULL, "Zone 4 power", device::tswitch::type::OnOff, sSwitchGeneralSwitch, 5, NULL, NULL },
+	{ "SLI", NULL, "Master selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
+	{ "SLZ", NULL, "Zone 2 selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
+	{ "SL2", NULL, "Zone 3 selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
+	{ "SL3", NULL, "Zone 4 selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
+	{ "HDO", NULL, "HDMI Output", device::tswitch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:0;LevelNames:Off|Main|Sub|Main+Sub;LevelOffHidden:true;LevelActions:00|01|02|03" },
 };
 
 static struct {
@@ -349,7 +349,7 @@ void OnkyoAVTCP::ReceiveSwitchMsg(const char *pData, int Len, bool muting, int I
 
 	if (muting)
 		action = level ? gswitch_sOff : gswitch_sOn;
-	else if (switch_types[ID].switchType == device::_switch::type::OnOff)
+	else if (switch_types[ID].switchType == device::tswitch::type::OnOff)
 		action = level ? gswitch_sOn : gswitch_sOff;
 
 

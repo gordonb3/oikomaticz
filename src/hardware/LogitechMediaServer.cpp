@@ -91,16 +91,16 @@ Json::Value CLogitechMediaServer::Query(const std::string &sIP, const int iPort,
 	return root["result"];
 }
 
-device::notification::type::value	CLogitechMediaServer::NotificationType(device::media::status::value nStatus)
+notification::type::value	CLogitechMediaServer::NotificationType(device::tmedia::status::value nStatus)
 {
 	switch (nStatus)
 	{
-	case device::media::status::OFF:		return device::notification::type::SWITCH_OFF;
-	case device::media::status::ON:		return device::notification::type::SWITCH_ON;
-	case device::media::status::PAUSED:	return device::notification::type::PAUSED;
-	case device::media::status::STOPPED:	return device::notification::type::STOPPED;
-	case device::media::status::PLAYING:	return device::notification::type::PLAYING;
-	default:			return device::notification::type::SWITCH_OFF;
+	case device::tmedia::status::OFF:		return notification::type::SWITCH_OFF;
+	case device::tmedia::status::ON:		return notification::type::SWITCH_ON;
+	case device::tmedia::status::PAUSED:	return notification::type::PAUSED;
+	case device::tmedia::status::STOPPED:	return notification::type::STOPPED;
+	case device::tmedia::status::PLAYING:	return notification::type::PLAYING;
+	default:			return notification::type::SWITCH_OFF;
 	}
 }
 
@@ -138,7 +138,7 @@ bool CLogitechMediaServer::StopHardware()
 	return true;
 }
 
-void CLogitechMediaServer::UpdateNodeStatus(const LogitechMediaServerNode &Node, const device::media::status::value nStatus, const std::string &sStatus, bool bPingOK)
+void CLogitechMediaServer::UpdateNodeStatus(const LogitechMediaServerNode &Node, const device::tmedia::status::value nStatus, const std::string &sStatus, bool bPingOK)
 {
 	//Find out node, and update it's status
 	std::vector<LogitechMediaServerNode>::iterator itt;
@@ -156,30 +156,30 @@ void CLogitechMediaServer::UpdateNodeStatus(const LogitechMediaServerNode &Node,
 				sDevName = sd[0];
 			}
 			bool	bUseOnOff = false;
-			if (((nStatus == device::media::status::OFF) && bPingOK) || ((nStatus != device::media::status::OFF) && !bPingOK)) bUseOnOff = true;
+			if (((nStatus == device::tmedia::status::OFF) && bPingOK) || ((nStatus != device::tmedia::status::OFF) && !bPingOK)) bUseOnOff = true;
 			time_t atime = mytime(NULL);
 			itt->LastOK = atime;
 			if ((itt->nStatus != nStatus) || (itt->sStatus != sStatus))
 			{
 				// 1:	Update the DeviceStatus
-				if ((nStatus == device::media::status::PLAYING) || (nStatus == device::media::status::PAUSED) || (nStatus == device::media::status::STOPPED))
-					_log.Log(LOG_NORM, "Logitech Media Server: (%s) %s - '%s'", Node.Name.c_str(), device::media::status::Description(nStatus), sStatus.c_str());
+				if ((nStatus == device::tmedia::status::PLAYING) || (nStatus == device::tmedia::status::PAUSED) || (nStatus == device::tmedia::status::STOPPED))
+					_log.Log(LOG_NORM, "Logitech Media Server: (%s) %s - '%s'", Node.Name.c_str(), device::tmedia::status::Description(nStatus), sStatus.c_str());
 				else
-					_log.Log(LOG_NORM, "Logitech Media Server: (%s) %s", Node.Name.c_str(), device::media::status::Description(nStatus));
+					_log.Log(LOG_NORM, "Logitech Media Server: (%s) %s", Node.Name.c_str(), device::tmedia::status::Description(nStatus));
 				struct tm ltime;
 				localtime_r(&atime, &ltime);
 				char szLastUpdate[40];
 				sprintf(szLastUpdate, "%04d-%02d-%02d %02d:%02d:%02d", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
 				std::vector<std::vector<std::string> > result;
 				result = m_sql.safe_query("UPDATE DeviceStatus SET nValue=%d, sValue='%q', LastUpdate='%q' WHERE (HardwareID == %d) AND (DeviceID == '%q') AND (Unit == 1) AND (SwitchType == %d)",
-					int(nStatus), sStatus.c_str(), szLastUpdate, m_HwdID, itt->szDevID, device::_switch::type::Media);
+					int(nStatus), sStatus.c_str(), szLastUpdate, m_HwdID, itt->szDevID, device::tswitch::type::Media);
 
 				// 2:	Log the event if the actual status has changed
 				std::string sShortStatus = sStatus;
 				if ((itt->nStatus != nStatus) || (itt->sShortStatus != sShortStatus))
 				{
-					std::string sLongStatus = device::media::status::Description(nStatus);
-					if ((nStatus == device::media::status::PLAYING) || (nStatus == device::media::status::PAUSED) || (nStatus == device::media::status::STOPPED))
+					std::string sLongStatus = device::tmedia::status::Description(nStatus);
+					if ((nStatus == device::tmedia::status::PLAYING) || (nStatus == device::tmedia::status::PAUSED) || (nStatus == device::tmedia::status::STOPPED))
 						if (sShortStatus.length()) sLongStatus += " - " + sShortStatus;
 					result = m_sql.safe_query("INSERT INTO LightingLog (DeviceRowID, nValue, sValue) VALUES (%d, %d, '%q')", itt->ID, int(nStatus), sLongStatus.c_str());
 				}
@@ -213,8 +213,8 @@ void CLogitechMediaServer::UpdateNodeStatus(const LogitechMediaServerNode &Node,
 void CLogitechMediaServer::Do_Node_Work(const LogitechMediaServerNode &Node)
 {
 	bool bPingOK = false;
-	device::media::status::value nStatus = device::media::status::UNKNOWN;
-	device::media::status::value nOldStatus = Node.nStatus;
+	device::tmedia::status::value nStatus = device::tmedia::status::UNKNOWN;
+	device::tmedia::status::value nOldStatus = Node.nStatus;
 	std::string	sPlayerId = Node.IP;
 	std::string	sStatus = "";
 
@@ -224,7 +224,7 @@ void CLogitechMediaServer::Do_Node_Work(const LogitechMediaServerNode &Node)
 		Json::Value root = Query(m_IP, m_Port, sPostdata);
 
 		if (root.isNull())
-			nStatus = device::media::status::DISCONNECTED;
+			nStatus = device::tmedia::status::DISCONNECTED;
 		else
 		{
 			bPingOK = true;
@@ -232,26 +232,26 @@ void CLogitechMediaServer::Do_Node_Work(const LogitechMediaServerNode &Node)
 			if (root["player_connected"].asString() == "1")
 			{
 				if (root["power"].asString() == "0")
-					nStatus = device::media::status::OFF;
+					nStatus = device::tmedia::status::OFF;
 				else {
 					std::string sMode = root["mode"].asString();
 					if (sMode == "play")
-						if ((nOldStatus == device::media::status::OFF) || (nOldStatus == device::media::status::DISCONNECTED))
-							nStatus = device::media::status::ON;
+						if ((nOldStatus == device::tmedia::status::OFF) || (nOldStatus == device::tmedia::status::DISCONNECTED))
+							nStatus = device::tmedia::status::ON;
 						else
-							nStatus = device::media::status::PLAYING;
+							nStatus = device::tmedia::status::PLAYING;
 					else if (sMode == "pause")
-						if ((nOldStatus == device::media::status::OFF) || (nOldStatus == device::media::status::DISCONNECTED))
-							nStatus = device::media::status::ON;
+						if ((nOldStatus == device::tmedia::status::OFF) || (nOldStatus == device::tmedia::status::DISCONNECTED))
+							nStatus = device::tmedia::status::ON;
 						else
-							nStatus = device::media::status::PAUSED;
+							nStatus = device::tmedia::status::PAUSED;
 					else if (sMode == "stop")
-						if ((nOldStatus == device::media::status::OFF) || (nOldStatus == device::media::status::DISCONNECTED))
-							nStatus = device::media::status::ON;
+						if ((nOldStatus == device::tmedia::status::OFF) || (nOldStatus == device::tmedia::status::DISCONNECTED))
+							nStatus = device::tmedia::status::ON;
 						else
-							nStatus = device::media::status::STOPPED;
+							nStatus = device::tmedia::status::STOPPED;
 					else
-						nStatus = device::media::status::ON;
+						nStatus = device::tmedia::status::ON;
 					std::string	sTitle = "";
 					std::string	sAlbum = "";
 					std::string	sArtist = "";
@@ -288,7 +288,7 @@ void CLogitechMediaServer::Do_Node_Work(const LogitechMediaServerNode &Node)
 				}
 			}
 			else
-				nStatus = device::media::status::DISCONNECTED;
+				nStatus = device::tmedia::status::DISCONNECTED;
 		}
 	}
 	catch (...)
@@ -488,7 +488,7 @@ void CLogitechMediaServer::UpsertPlayer(const std::string &Name, const std::stri
 	sprintf(szID, "%X%02X%02X%02X", 0, 0, (ID & 0xFF00) >> 8, ID & 0xFF);
 
 	//Also add a light (push) device
-	m_sql.InsertDevice(m_HwdID, szID, 1, pTypeLighting2, sTypeAC, device::_switch::type::Media, 0, "Unavailable", Name, 12, 255, 1);
+	m_sql.InsertDevice(m_HwdID, szID, 1, pTypeLighting2, sTypeAC, device::tswitch::type::Media, 0, "Unavailable", Name, 12, 255, 1);
 
 	ReloadNodes();
 }
@@ -570,7 +570,7 @@ void CLogitechMediaServer::ReloadNodes()
 			sprintf(pnode.szDevID, "%X%02X%02X%02X", 0, 0, (pnode.DevID & 0xFF00) >> 8, pnode.DevID & 0xFF);
 			pnode.Name = sd[1];
 			pnode.IP = sd[2];
-			pnode.nStatus = device::media::status::UNKNOWN;
+			pnode.nStatus = device::tmedia::status::UNKNOWN;
 			pnode.sStatus = "";
 			pnode.LastOK = mytime(NULL);
 
@@ -579,7 +579,7 @@ void CLogitechMediaServer::ReloadNodes()
 			if (result2.size() == 1)
 			{
 				pnode.ID = atoi(result2[0][0].c_str());
-				pnode.nStatus = (device::media::status::value)atoi(result2[0][1].c_str());
+				pnode.nStatus = (device::tmedia::status::value)atoi(result2[0][1].c_str());
 				pnode.sStatus = result2[0][2];
 			}
 
@@ -932,11 +932,11 @@ namespace http {
 			result = m_sql.safe_query("SELECT DS.SwitchType, H.Type, H.ID FROM DeviceStatus DS, Hardware H WHERE (DS.ID=='%q') AND (DS.HardwareID == H.ID)", sIdx.c_str());
 			if (result.size() == 1)
 			{
-				device::_switch::type::value	sType = (device::_switch::type::value)atoi(result[0][0].c_str());
+				device::tswitch::type::value	sType = (device::tswitch::type::value)atoi(result[0][0].c_str());
 				hardware::type::value	hType = (hardware::type::value)atoi(result[0][1].c_str());
 				int HwID = atoi(result[0][2].c_str());
 				// Is the device a media Player?
-				if (sType == device::_switch::type::Media)
+				if (sType == device::tswitch::type::Media)
 				{
 					switch (hType) {
 					case hardware::type::LogitechMediaServer:

@@ -3287,7 +3287,7 @@ namespace http {
 				{
 					int dType = atoi(result[0][3].c_str());
 					int sType = atoi(result[0][4].c_str());
-					device::_switch::type::value switchtype = (device::_switch::type::value)atoi(result[0][5].c_str());
+					device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(result[0][5].c_str());
 					std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(result[0][6].c_str());
 					GetLightCommand(dType, sType, switchtype, scommand, command, options);
 				}
@@ -3391,7 +3391,7 @@ namespace http {
 				{
 					int dType = atoi(result[0][3].c_str());
 					int sType = atoi(result[0][4].c_str());
-					device::_switch::type::value switchtype = (device::_switch::type::value)atoi(result[0][5].c_str());
+					device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(result[0][5].c_str());
 					std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(result[0][6].c_str());
 					GetLightCommand(dType, sType, switchtype, scommand, command, options);
 				}
@@ -3477,14 +3477,14 @@ namespace http {
 						root["result"][ii]["OnDelay"] = atoi(sd[12].c_str());
 						root["result"][ii]["OffDelay"] = atoi(sd[13].c_str());
 
-						device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[14].c_str());
+						device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[14].c_str());
 
 						unsigned char devType = atoi(sd[3].c_str());
 
 						//switchtype seemed not to be used down with the GetLightStatus command,
 						//causing RFY to go wrong, fixing here
 						if (devType != pTypeRFY)
-							switchtype = device::_switch::type::OnOff;
+							switchtype = device::tswitch::type::OnOff;
 
 						unsigned char subType = atoi(sd[4].c_str());
 						unsigned char nValue = (unsigned char)atoi(sd[5].c_str());
@@ -3697,7 +3697,7 @@ namespace http {
 						int Type = atoi(sd[2].c_str());
 						int SubType = atoi(sd[3].c_str());
 						int used = atoi(sd[4].c_str());
-						device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[5].c_str());
+						device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 						std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[6]);
 						bool bdoAdd = false;
 						switch (Type)
@@ -3749,10 +3749,10 @@ namespace http {
 								root["result"][ii]["Type"] = RFX_Type_Desc(Type, 1);
 								root["result"][ii]["SubType"] = RFX_Type_SubType_Desc(Type, SubType);
 								bool bIsDimmer = (
-									(switchtype == device::_switch::type::Dimmer) ||
-									(switchtype == device::_switch::type::BlindsPercentage) ||
-									(switchtype == device::_switch::type::BlindsPercentageInverted) ||
-									(switchtype == device::_switch::type::Selector)
+									(switchtype == device::tswitch::type::Dimmer) ||
+									(switchtype == device::tswitch::type::BlindsPercentage) ||
+									(switchtype == device::tswitch::type::BlindsPercentageInverted) ||
+									(switchtype == device::tswitch::type::Selector)
 									);
 								root["result"][ii]["IsDimmer"] = bIsDimmer;
 
@@ -3762,7 +3762,7 @@ namespace http {
 								{
 									std::stringstream ss;
 
-									if (switchtype == device::_switch::type::Selector) {
+									if (switchtype == device::tswitch::type::Selector) {
 										std::map<std::string, std::string> selectorStatuses;
 										GetSelectorSwitchStatuses(options, selectorStatuses);
 										bool levelOffHidden = (options["LevelOffHidden"] == "true");
@@ -4069,7 +4069,7 @@ namespace http {
 					(slighttype.empty())
 					)
 					return;
-				device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sswitchtype.c_str());
+				device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sswitchtype.c_str());
 				int lighttype = atoi(slighttype.c_str());
 				int dtype;
 				int subtype = 0;
@@ -4173,7 +4173,7 @@ namespace http {
 					dtype = pTypeLighting2;
 					subtype = sTypeAC;
 					std::string sswitchtype = request::findValue(&req, "switchtype");
-					device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sswitchtype.c_str());
+					device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sswitchtype.c_str());
 
 					std::string id = request::findValue(&req, "id");
 					if ((id.empty()) || (sunitcode.empty()))
@@ -4620,7 +4620,7 @@ namespace http {
 				if (lighttype == 70)
 				{
 					//Special EnOcean case, if it is a dimmer, set a dim value
-					if (switchtype == device::_switch::type::Dimmer)
+					if (switchtype == device::tswitch::type::Dimmer)
 						level = 5;
 				}
 				m_mainworker.SwitchLightInt(sd, switchcmd, level, NoColor, true);
@@ -4647,7 +4647,7 @@ namespace http {
 					(name.empty())
 					)
 					return;
-				device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sswitchtype.c_str());
+				device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sswitchtype.c_str());
 				int lighttype = atoi(slighttype.c_str());
 				int dtype = 0;
 				int subtype = 0;
@@ -4763,7 +4763,7 @@ namespace http {
 					sunitcode = request::findValue(&req, "unitcode"); // sysfs-gpio number
 					int unitcode = atoi(sunitcode.c_str());
 					std::string sswitchtype = request::findValue(&req, "switchtype");
-					device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sswitchtype.c_str());
+					device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sswitchtype.c_str());
 					std::string id = request::findValue(&req, "id");
 					CSysfsGpio::RequestDbUpdate(unitcode);
 
@@ -5077,7 +5077,7 @@ namespace http {
 							)
 							return;
 						devid = "0" + id;
-						switchtype = device::_switch::type::Selector;
+						switchtype = device::tswitch::type::Selector;
 						if (!deviceoptions.empty()) {
 							deviceoptions.append(";");
 						}
@@ -5326,21 +5326,21 @@ namespace http {
 					((dType == pTypeRadiator1) && (dSubType == sTypeSmartwaresSwitchRadiator))
 					)
 				{
-					if (switchtype != device::_switch::type::PushOff)
+					if (switchtype != device::tswitch::type::PushOff)
 					{
-						root["result"][ii]["val"] = device::notification::type::SWITCH_ON;
-						root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::SWITCH_ON, 0);
-						root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::SWITCH_ON, 1);
+						root["result"][ii]["val"] = notification::type::SWITCH_ON;
+						root["result"][ii]["text"] = notification::type::Description(notification::type::SWITCH_ON, 0);
+						root["result"][ii]["ptag"] = notification::type::Description(notification::type::SWITCH_ON, 1);
 						ii++;
 					}
-					if (switchtype != device::_switch::type::PushOn)
+					if (switchtype != device::tswitch::type::PushOn)
 					{
-						root["result"][ii]["val"] = device::notification::type::SWITCH_OFF;
-						root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::SWITCH_OFF, 0);
-						root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::SWITCH_OFF, 1);
+						root["result"][ii]["val"] = notification::type::SWITCH_OFF;
+						root["result"][ii]["text"] = notification::type::Description(notification::type::SWITCH_OFF, 0);
+						root["result"][ii]["ptag"] = notification::type::Description(notification::type::SWITCH_OFF, 1);
 						ii++;
 					}
-					if (switchtype == device::_switch::type::Media)
+					if (switchtype == device::tswitch::type::Media)
 					{
 						std::string idx = request::findValue(&req, "idx");
 
@@ -5351,42 +5351,42 @@ namespace http {
 							CDomoticzHardwareBase *pBaseHardware = reinterpret_cast<CDomoticzHardwareBase*>(m_mainworker.GetHardware(atoi(hdwid.c_str())));
 							if (pBaseHardware != NULL) {
 								hardware::type::value type = pBaseHardware->HwdType;
-								root["result"][ii]["val"] = device::notification::type::PAUSED;
-								root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::PAUSED, 0);
-								root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::PAUSED, 1);
+								root["result"][ii]["val"] = notification::type::PAUSED;
+								root["result"][ii]["text"] = notification::type::Description(notification::type::PAUSED, 0);
+								root["result"][ii]["ptag"] = notification::type::Description(notification::type::PAUSED, 1);
 								ii++;
 								if (type == hardware::type::Kodi) {
-									root["result"][ii]["val"] = device::notification::type::AUDIO;
-									root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::AUDIO, 0);
-									root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::AUDIO, 1);
+									root["result"][ii]["val"] = notification::type::AUDIO;
+									root["result"][ii]["text"] = notification::type::Description(notification::type::AUDIO, 0);
+									root["result"][ii]["ptag"] = notification::type::Description(notification::type::AUDIO, 1);
 									ii++;
-									root["result"][ii]["val"] = device::notification::type::VIDEO;
-									root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::VIDEO, 0);
-									root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::VIDEO, 1);
+									root["result"][ii]["val"] = notification::type::VIDEO;
+									root["result"][ii]["text"] = notification::type::Description(notification::type::VIDEO, 0);
+									root["result"][ii]["ptag"] = notification::type::Description(notification::type::VIDEO, 1);
 									ii++;
-									root["result"][ii]["val"] = device::notification::type::PHOTO;
-									root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::PHOTO, 0);
-									root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::PHOTO, 1);
+									root["result"][ii]["val"] = notification::type::PHOTO;
+									root["result"][ii]["text"] = notification::type::Description(notification::type::PHOTO, 0);
+									root["result"][ii]["ptag"] = notification::type::Description(notification::type::PHOTO, 1);
 									ii++;
 								}
 								if (type == hardware::type::LogitechMediaServer) {
-									root["result"][ii]["val"] = device::notification::type::PLAYING;
-									root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::PLAYING, 0);
-									root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::PLAYING, 1);
+									root["result"][ii]["val"] = notification::type::PLAYING;
+									root["result"][ii]["text"] = notification::type::Description(notification::type::PLAYING, 0);
+									root["result"][ii]["ptag"] = notification::type::Description(notification::type::PLAYING, 1);
 									ii++;
-									root["result"][ii]["val"] = device::notification::type::STOPPED;
-									root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::STOPPED, 0);
-									root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::STOPPED, 1);
+									root["result"][ii]["val"] = notification::type::STOPPED;
+									root["result"][ii]["text"] = notification::type::Description(notification::type::STOPPED, 0);
+									root["result"][ii]["ptag"] = notification::type::Description(notification::type::STOPPED, 1);
 									ii++;
 								}
 								if (type == hardware::type::HEOS) {
-									root["result"][ii]["val"] = device::notification::type::PLAYING;
-									root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::PLAYING, 0);
-									root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::PLAYING, 1);
+									root["result"][ii]["val"] = notification::type::PLAYING;
+									root["result"][ii]["text"] = notification::type::Description(notification::type::PLAYING, 0);
+									root["result"][ii]["ptag"] = notification::type::Description(notification::type::PLAYING, 1);
 									ii++;
-									root["result"][ii]["val"] = device::notification::type::STOPPED;
-									root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::STOPPED, 0);
-									root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::STOPPED, 1);
+									root["result"][ii]["val"] = notification::type::STOPPED;
+									root["result"][ii]["text"] = notification::type::Description(notification::type::STOPPED, 0);
+									root["result"][ii]["ptag"] = notification::type::Description(notification::type::STOPPED, 1);
 									ii++;
 								}
 							}
@@ -5411,9 +5411,9 @@ namespace http {
 					((dType == pTypeGeneral) && (dSubType == sTypeSystemTemp))
 					)
 				{
-					root["result"][ii]["val"] = device::notification::type::TEMPERATURE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::TEMPERATURE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::TEMPERATURE, 1);
+					root["result"][ii]["val"] = notification::type::TEMPERATURE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::TEMPERATURE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::TEMPERATURE, 1);
 					ii++;
 				}
 				if (
@@ -5422,9 +5422,9 @@ namespace http {
 					(dType == pTypeTEMP_HUM_BARO)
 					)
 				{
-					root["result"][ii]["val"] = device::notification::type::HUMIDITY;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::HUMIDITY, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::HUMIDITY, 1);
+					root["result"][ii]["val"] = notification::type::HUMIDITY;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::HUMIDITY, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::HUMIDITY, 1);
 					ii++;
 				}
 				if (
@@ -5432,30 +5432,30 @@ namespace http {
 					(dType == pTypeTEMP_HUM_BARO)
 					)
 				{
-					root["result"][ii]["val"] = device::notification::type::DEWPOINT;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::DEWPOINT, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::DEWPOINT, 1);
+					root["result"][ii]["val"] = notification::type::DEWPOINT;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::DEWPOINT, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::DEWPOINT, 1);
 					ii++;
 				}
 				if (dType == pTypeRAIN)
 				{
-					root["result"][ii]["val"] = device::notification::type::RAIN;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::RAIN, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::RAIN, 1);
+					root["result"][ii]["val"] = notification::type::RAIN;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::RAIN, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::RAIN, 1);
 					ii++;
 				}
 				if (dType == pTypeWIND)
 				{
-					root["result"][ii]["val"] = device::notification::type::WIND;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::WIND, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::WIND, 1);
+					root["result"][ii]["val"] = notification::type::WIND;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::WIND, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::WIND, 1);
 					ii++;
 				}
 				if (dType == pTypeUV)
 				{
-					root["result"][ii]["val"] = device::notification::type::UV;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::UV, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::UV, 1);
+					root["result"][ii]["val"] = notification::type::UV;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::UV, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::UV, 1);
 					ii++;
 				}
 				if (
@@ -5464,9 +5464,9 @@ namespace http {
 					(dType == pTypeTEMP_BARO)
 					)
 				{
-					root["result"][ii]["val"] = device::notification::type::BARO;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::BARO, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::BARO, 1);
+					root["result"][ii]["val"] = notification::type::BARO;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::BARO, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::BARO, 1);
 					ii++;
 				}
 				if (
@@ -5476,129 +5476,129 @@ namespace http {
 					((dType == pTypeRego6XXValue) && (dSubType == sTypeRego6XXCounter))
 					)
 				{
-					if ((switchtype == device::meter::type::ENERGY) || (switchtype == device::meter::type::ENERGY_GENERATED))
+					if ((switchtype == device::tmeter::type::ENERGY) || (switchtype == device::tmeter::type::ENERGY_GENERATED))
 					{
-						root["result"][ii]["val"] = device::notification::type::TODAYENERGY;
-						root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::TODAYENERGY, 0);
-						root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::TODAYENERGY, 1);
+						root["result"][ii]["val"] = notification::type::TODAYENERGY;
+						root["result"][ii]["text"] = notification::type::Description(notification::type::TODAYENERGY, 0);
+						root["result"][ii]["ptag"] = notification::type::Description(notification::type::TODAYENERGY, 1);
 					}
-					else if (switchtype == device::meter::type::GAS)
+					else if (switchtype == device::tmeter::type::GAS)
 					{
-						root["result"][ii]["val"] = device::notification::type::TODAYGAS;
-						root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::TODAYGAS, 0);
-						root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::TODAYGAS, 1);
+						root["result"][ii]["val"] = notification::type::TODAYGAS;
+						root["result"][ii]["text"] = notification::type::Description(notification::type::TODAYGAS, 0);
+						root["result"][ii]["ptag"] = notification::type::Description(notification::type::TODAYGAS, 1);
 					}
-					else if (switchtype == device::meter::type::COUNTER)
+					else if (switchtype == device::tmeter::type::COUNTER)
 					{
-						root["result"][ii]["val"] = device::notification::type::TODAYCOUNTER;
-						root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::TODAYCOUNTER, 0);
-						root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::TODAYCOUNTER, 1);
+						root["result"][ii]["val"] = notification::type::TODAYCOUNTER;
+						root["result"][ii]["text"] = notification::type::Description(notification::type::TODAYCOUNTER, 0);
+						root["result"][ii]["ptag"] = notification::type::Description(notification::type::TODAYCOUNTER, 1);
 					}
 					else
 					{
 						//water (same as gas)
-						root["result"][ii]["val"] = device::notification::type::TODAYGAS;
-						root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::TODAYGAS, 0);
-						root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::TODAYGAS, 1);
+						root["result"][ii]["val"] = notification::type::TODAYGAS;
+						root["result"][ii]["text"] = notification::type::Description(notification::type::TODAYGAS, 0);
+						root["result"][ii]["ptag"] = notification::type::Description(notification::type::TODAYGAS, 1);
 					}
 					ii++;
 				}
 				if (dType == pTypeYouLess)
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if (dType == pTypeAirQuality)
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				else if ((dType == pTypeGeneral) && ((dSubType == sTypeSoilMoisture) || (dSubType == sTypeLeafWetness)))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeVisibility))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeDistance))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeSolarRadiation))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeVoltage))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeCurrent))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypePressure))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeBaro))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if (dType == pTypeLux)
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeSoundLevel))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if (dType == pTypeWEIGHT)
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if (dType == pTypeUsage)
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if (
@@ -5606,145 +5606,145 @@ namespace http {
 					((dType == pTypeGeneral) && (dSubType == sTypeKwh))
 					)
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if (dType == pTypePOWER)
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeCURRENT) && (dSubType == sTypeELEC1))
 				{
-					root["result"][ii]["val"] = device::notification::type::AMPERE1;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::AMPERE1, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::AMPERE1, 1);
+					root["result"][ii]["val"] = notification::type::AMPERE1;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::AMPERE1, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::AMPERE1, 1);
 					ii++;
-					root["result"][ii]["val"] = device::notification::type::AMPERE2;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::AMPERE2, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::AMPERE2, 1);
+					root["result"][ii]["val"] = notification::type::AMPERE2;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::AMPERE2, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::AMPERE2, 1);
 					ii++;
-					root["result"][ii]["val"] = device::notification::type::AMPERE3;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::AMPERE3, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::AMPERE3, 1);
+					root["result"][ii]["val"] = notification::type::AMPERE3;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::AMPERE3, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::AMPERE3, 1);
 					ii++;
 				}
 				if ((dType == pTypeCURRENTENERGY) && (dSubType == sTypeELEC4))
 				{
-					root["result"][ii]["val"] = device::notification::type::AMPERE1;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::AMPERE1, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::AMPERE1, 1);
+					root["result"][ii]["val"] = notification::type::AMPERE1;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::AMPERE1, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::AMPERE1, 1);
 					ii++;
-					root["result"][ii]["val"] = device::notification::type::AMPERE2;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::AMPERE2, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::AMPERE2, 1);
+					root["result"][ii]["val"] = notification::type::AMPERE2;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::AMPERE2, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::AMPERE2, 1);
 					ii++;
-					root["result"][ii]["val"] = device::notification::type::AMPERE3;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::AMPERE3, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::AMPERE3, 1);
+					root["result"][ii]["val"] = notification::type::AMPERE3;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::AMPERE3, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::AMPERE3, 1);
 					ii++;
 				}
 				if (dType == pTypeP1Power)
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
-					root["result"][ii]["val"] = device::notification::type::TODAYENERGY;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::TODAYENERGY, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::TODAYENERGY, 1);
+					root["result"][ii]["val"] = notification::type::TODAYENERGY;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::TODAYENERGY, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::TODAYENERGY, 1);
 					ii++;
 				}
 				if (dType == pTypeP1Gas)
 				{
-					root["result"][ii]["val"] = device::notification::type::TODAYGAS;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::TODAYGAS, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::TODAYGAS, 1);
+					root["result"][ii]["val"] = notification::type::TODAYGAS;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::TODAYGAS, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::TODAYGAS, 1);
 					ii++;
 				}
 				if ((dType == pTypeThermostat) && (dSubType == sTypeThermSetpoint))
 				{
-					root["result"][ii]["val"] = device::notification::type::TEMPERATURE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::TEMPERATURE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::TEMPERATURE, 1);
+					root["result"][ii]["val"] = notification::type::TEMPERATURE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::TEMPERATURE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::TEMPERATURE, 1);
 					ii++;
 				}
 				if (dType == pTypeEvohomeZone)
 				{
-					root["result"][ii]["val"] = device::notification::type::TEMPERATURE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::SETPOINT, 0); //FIXME device::notification::type::SETPOINT implementation?
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::SETPOINT, 1);
+					root["result"][ii]["val"] = notification::type::TEMPERATURE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::SETPOINT, 0); //FIXME notification::type::SETPOINT implementation?
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::SETPOINT, 1);
 					ii++;
 				}
 				if ((dType == pTypeRFXSensor) && ((dSubType == sTypeRFXSensorAD) || (dSubType == sTypeRFXSensorVolt)))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypePercentage))
 				{
-					root["result"][ii]["val"] = device::notification::type::PERCENTAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::PERCENTAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::PERCENTAGE, 1);
+					root["result"][ii]["val"] = notification::type::PERCENTAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::PERCENTAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::PERCENTAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeWaterflow))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeCustom))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeFan))
 				{
-					root["result"][ii]["val"] = device::notification::type::RPM;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::RPM, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::RPM, 1);
+					root["result"][ii]["val"] = notification::type::RPM;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::RPM, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::RPM, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeAlert))
 				{
-					root["result"][ii]["val"] = device::notification::type::USAGE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::USAGE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::USAGE, 1);
+					root["result"][ii]["val"] = notification::type::USAGE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
 					ii++;
 				}
 				if ((dType == pTypeGeneral) && (dSubType == sTypeZWaveAlarm))
 				{
-					root["result"][ii]["val"] = device::notification::type::VALUE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::VALUE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::VALUE, 1);
+					root["result"][ii]["val"] = notification::type::VALUE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::VALUE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::VALUE, 1);
 					ii++;
 				}
 				if ((dType == pTypeRego6XXValue) && (dSubType == sTypeRego6XXStatus))
 				{
-					root["result"][ii]["val"] = device::notification::type::SWITCH_ON;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::SWITCH_ON, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::SWITCH_ON, 1);
+					root["result"][ii]["val"] = notification::type::SWITCH_ON;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::SWITCH_ON, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::SWITCH_ON, 1);
 					ii++;
-					root["result"][ii]["val"] = device::notification::type::SWITCH_OFF;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::SWITCH_OFF, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::SWITCH_OFF, 1);
+					root["result"][ii]["val"] = notification::type::SWITCH_OFF;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::SWITCH_OFF, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::SWITCH_OFF, 1);
 					ii++;
 				}
 				if (!IsLightOrSwitch(dType, dSubType))
 				{
-					root["result"][ii]["val"] = device::notification::type::LASTUPDATE;
-					root["result"][ii]["text"] = device::notification::type::Description(device::notification::type::LASTUPDATE, 0);
-					root["result"][ii]["ptag"] = device::notification::type::Description(device::notification::type::LASTUPDATE, 1);
+					root["result"][ii]["val"] = notification::type::LASTUPDATE;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::LASTUPDATE, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::LASTUPDATE, 1);
 					ii++;
 				}
 			}
@@ -5772,15 +5772,15 @@ namespace http {
 				if ((stype.empty()) || (swhen.empty()) || (svalue.empty()) || (spriority.empty()) || (ssendalways.empty()) || (srecovery.empty()))
 					return;
 
-				device::notification::type::value ntype = (device::notification::type::value)atoi(stype.c_str());
-				std::string ttype = device::notification::type::Description(ntype, 1);
+				notification::type::value ntype = (notification::type::value)atoi(stype.c_str());
+				std::string ttype = notification::type::Description(ntype, 1);
 				if (
-					(ntype == device::notification::type::SWITCH_ON) ||
-					(ntype == device::notification::type::SWITCH_OFF) ||
-					(ntype == device::notification::type::DEWPOINT)
+					(ntype == notification::type::SWITCH_ON) ||
+					(ntype == notification::type::SWITCH_OFF) ||
+					(ntype == notification::type::DEWPOINT)
 					)
 				{
-					if ((ntype == device::notification::type::SWITCH_ON) && (swhen == "2")) { // '='
+					if ((ntype == notification::type::SWITCH_ON) && (swhen == "2")) { // '='
 						unsigned char twhen = '=';
 						sprintf(szTmp, "%s;%c;%s", ttype.c_str(), twhen, svalue.c_str());
 					}
@@ -5847,15 +5847,15 @@ namespace http {
 				//delete old record
 				m_notifications.RemoveNotification(idx);
 
-				device::notification::type::value ntype = (device::notification::type::value)atoi(stype.c_str());
-				std::string ttype = device::notification::type::Description(ntype, 1);
+				notification::type::value ntype = (notification::type::value)atoi(stype.c_str());
+				std::string ttype = notification::type::Description(ntype, 1);
 				if (
-					(ntype == device::notification::type::SWITCH_ON) ||
-					(ntype == device::notification::type::SWITCH_OFF) ||
-					(ntype == device::notification::type::DEWPOINT)
+					(ntype == notification::type::SWITCH_ON) ||
+					(ntype == notification::type::SWITCH_OFF) ||
+					(ntype == notification::type::DEWPOINT)
 					)
 				{
-					if ((ntype == device::notification::type::SWITCH_ON) && (swhen == "2")) { // '='
+					if ((ntype == notification::type::SWITCH_ON) && (swhen == "2")) { // '='
 						unsigned char twhen = '=';
 						sprintf(szTmp, "%s;%c;%s", ttype.c_str(), twhen, svalue.c_str());
 					}
@@ -7288,9 +7288,9 @@ namespace http {
 
 			std::map<std::string, int> _switchtypes;
 
-			for (int ii = 0; ii < device::_switch::type::END; ii++)
+			for (int ii = 0; ii < device::tswitch::type::END; ii++)
 			{
-				_switchtypes[device::_switch::type::Description((device::_switch::type::value)ii)] = ii;
+				_switchtypes[device::tswitch::type::Description((device::tswitch::type::value)ii)] = ii;
 			}
 			//return a sorted list
 			for (const auto & itt : _switchtypes)
@@ -7303,9 +7303,9 @@ namespace http {
 		void CWebServer::DisplayMeterTypesCombo(std::string & content_part)
 		{
 			char szTmp[200];
-			for (int ii = 0; ii < device::meter::type::END; ii++)
+			for (int ii = 0; ii < device::tmeter::type::END; ii++)
 			{
-				sprintf(szTmp, "<option value=\"%d\">%s</option>\n", ii, device::meter::type::Description((device::meter::type::value)ii));
+				sprintf(szTmp, "<option value=\"%d\">%s</option>\n", ii, device::tmeter::type::Description((device::tmeter::type::value)ii));
 				content_part += szTmp;
 			}
 		}
@@ -7331,9 +7331,9 @@ namespace http {
 		void CWebServer::DisplayTimerTypesCombo(std::string & content_part)
 		{
 			char szTmp[200];
-			for (int ii = 0; ii < device::timer::type::END; ii++)
+			for (int ii = 0; ii < device::ttimer::type::END; ii++)
 			{
-				sprintf(szTmp, "<option data-i18n=\"%s\" value=\"%d\">%s</option>\n", device::timer::type::Description(ii), ii, device::timer::type::Description(ii));
+				sprintf(szTmp, "<option data-i18n=\"%s\" value=\"%d\">%s</option>\n", device::ttimer::type::Description(ii), ii, device::ttimer::type::Description(ii));
 				content_part += szTmp;
 			}
 		}
@@ -8387,8 +8387,8 @@ namespace http {
 							continue;
 					}
 
-					device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[13].c_str());
-					device::meter::type::value metertype = (device::meter::type::value)switchtype;
+					device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[13].c_str());
+					device::tmeter::type::value metertype = (device::tmeter::type::value)switchtype;
 					double AddjValue = atof(sd[15].c_str());
 					double AddjMulti = atof(sd[16].c_str());
 					double AddjValue2 = atof(sd[17].c_str());
@@ -8778,7 +8778,7 @@ namespace http {
 						}
 						root["result"][ii]["Image"] = IconFile;
 
-						if (switchtype == device::_switch::type::Dimmer)
+						if (switchtype == device::tswitch::type::Dimmer)
 						{
 							root["result"][ii]["Level"] = LastLevel;
 							int iLevel = round((float(maxDimLevel) / 100.0f)*LastLevel);
@@ -8807,7 +8807,7 @@ namespace http {
 						}
 						root["result"][ii]["HaveDimmer"] = bHaveDimmer;
 						std::string DimmerType = "none";
-						if (switchtype == device::_switch::type::Dimmer)
+						if (switchtype == device::tswitch::type::Dimmer)
 						{
 							DimmerType = "abs";
 							if (_hardwareNames.find(hardwareID) != _hardwareNames.end())
@@ -8826,7 +8826,7 @@ namespace http {
 						root["result"][ii]["DimmerType"] = DimmerType;
 						root["result"][ii]["MaxDimLevel"] = maxDimLevel;
 						root["result"][ii]["HaveGroupCmd"] = bHaveGroupCmd;
-						root["result"][ii]["SwitchType"] = device::_switch::type::Description(switchtype);
+						root["result"][ii]["SwitchType"] = device::tswitch::type::Description(switchtype);
 						root["result"][ii]["SwitchTypeVal"] = switchtype;
 						uint64_t camIDX = m_mainworker.m_cameras.IsDevSceneInCamera(0, sd[0]);
 						root["result"][ii]["UsedByCamera"] = (camIDX != 0) ? true : false;
@@ -8844,12 +8844,12 @@ namespace http {
 
 						root["result"][ii]["IsSubDevice"] = bIsSubDevice;
 
-						if (switchtype == device::_switch::type::Doorbell)
+						if (switchtype == device::tswitch::type::Doorbell)
 						{
 							root["result"][ii]["TypeImg"] = "doorbell";
 							root["result"][ii]["Status"] = "";//"Pressed";
 						}
-						else if (switchtype == device::_switch::type::DoorContact)
+						else if (switchtype == device::tswitch::type::DoorContact)
 						{
 							if (CustomImage == 0)
 							{
@@ -8866,7 +8866,7 @@ namespace http {
 							}
 							root["result"][ii]["Status"] = lstatus;
 						}
-						else if (switchtype == device::_switch::type::DoorLock)
+						else if (switchtype == device::tswitch::type::DoorLock)
 						{
 							if (CustomImage == 0)
 							{
@@ -8883,7 +8883,7 @@ namespace http {
 							}
 							root["result"][ii]["Status"] = lstatus;
 						}
-						else if (switchtype == device::_switch::type::DoorLockInverted)
+						else if (switchtype == device::tswitch::type::DoorLockInverted)
 						{
 							if (CustomImage == 0)
 							{
@@ -8900,7 +8900,7 @@ namespace http {
 							}
 							root["result"][ii]["Status"] = lstatus;
 						}
-						else if (switchtype == device::_switch::type::PushOn)
+						else if (switchtype == device::tswitch::type::PushOn)
 						{
 							if (CustomImage == 0)
 							{
@@ -8910,7 +8910,7 @@ namespace http {
 							root["result"][ii]["Status"] = "";
 							root["result"][ii]["InternalState"] = (IsLightSwitchOn(lstatus) == true) ? "On" : "Off";
 						}
-						else if (switchtype == device::_switch::type::PushOff)
+						else if (switchtype == device::tswitch::type::PushOff)
 						{
 							if (CustomImage == 0)
 							{
@@ -8920,15 +8920,15 @@ namespace http {
 							root["result"][ii]["Status"] = "";
 							root["result"][ii]["TypeImg"] = "pushoff";
 						}
-						else if (switchtype == device::_switch::type::X10Siren)
+						else if (switchtype == device::tswitch::type::X10Siren)
 							root["result"][ii]["TypeImg"] = "siren";
-						else if (switchtype == device::_switch::type::SMOKEDETECTOR)
+						else if (switchtype == device::tswitch::type::SMOKEDETECTOR)
 						{
 							root["result"][ii]["TypeImg"] = "smoke";
-							root["result"][ii]["SwitchTypeVal"] = device::_switch::type::SMOKEDETECTOR;
-							root["result"][ii]["SwitchType"] = device::_switch::type::Description(device::_switch::type::SMOKEDETECTOR);
+							root["result"][ii]["SwitchTypeVal"] = device::tswitch::type::SMOKEDETECTOR;
+							root["result"][ii]["SwitchType"] = device::tswitch::type::Description(device::tswitch::type::SMOKEDETECTOR);
 						}
-						else if (switchtype == device::_switch::type::Contact)
+						else if (switchtype == device::tswitch::type::Contact)
 						{
 							if (CustomImage == 0)
 							{
@@ -8944,19 +8944,19 @@ namespace http {
 							}
 							root["result"][ii]["Status"] = lstatus;
 						}
-						else if (switchtype == device::_switch::type::Media)
+						else if (switchtype == device::tswitch::type::Media)
 						{
 							if ((pHardware != NULL) && (pHardware->HwdType == hardware::type::LogitechMediaServer))
 								root["result"][ii]["TypeImg"] = "LogitechMediaServer";
 							else
 								root["result"][ii]["TypeImg"] = "Media";
-							root["result"][ii]["Status"] = device::media::status::Description((device::media::status::value)nValue);
+							root["result"][ii]["Status"] = device::tmedia::status::Description((device::tmedia::status::value)nValue);
 							lstatus = sValue;
 						}
 						else if (
-							(switchtype == device::_switch::type::Blinds) ||
-							(switchtype == device::_switch::type::VenetianBlindsUS) ||
-							(switchtype == device::_switch::type::VenetianBlindsEU)
+							(switchtype == device::tswitch::type::Blinds) ||
+							(switchtype == device::tswitch::type::VenetianBlindsUS) ||
+							(switchtype == device::tswitch::type::VenetianBlindsEU)
 							)
 						{
 							root["result"][ii]["TypeImg"] = "blinds";
@@ -8971,7 +8971,7 @@ namespace http {
 							}
 							root["result"][ii]["Status"] = lstatus;
 						}
-						else if (switchtype == device::_switch::type::BlindsInverted)
+						else if (switchtype == device::tswitch::type::BlindsInverted)
 						{
 							root["result"][ii]["TypeImg"] = "blinds";
 							if (lstatus == "On") {
@@ -8982,30 +8982,30 @@ namespace http {
 							}
 							root["result"][ii]["Status"] = lstatus;
 						}
-						else if ((switchtype == device::_switch::type::BlindsPercentage) || (switchtype == device::_switch::type::BlindsPercentageInverted))
+						else if ((switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageInverted))
 						{
 							root["result"][ii]["TypeImg"] = "blinds";
 							root["result"][ii]["Level"] = LastLevel;
 							int iLevel = round((float(maxDimLevel) / 100.0f)*LastLevel);
 							root["result"][ii]["LevelInt"] = iLevel;
 							if (lstatus == "On") {
-								lstatus = (switchtype == device::_switch::type::BlindsPercentage) ? "Closed" : "Open";
+								lstatus = (switchtype == device::tswitch::type::BlindsPercentage) ? "Closed" : "Open";
 							}
 							else if (lstatus == "Off") {
-								lstatus = (switchtype == device::_switch::type::BlindsPercentage) ? "Open" : "Closed";
+								lstatus = (switchtype == device::tswitch::type::BlindsPercentage) ? "Open" : "Closed";
 							}
 
 							root["result"][ii]["Status"] = lstatus;
 						}
-						else if (switchtype == device::_switch::type::Dimmer)
+						else if (switchtype == device::tswitch::type::Dimmer)
 						{
 							root["result"][ii]["TypeImg"] = "dimmer";
 						}
-						else if (switchtype == device::_switch::type::Motion)
+						else if (switchtype == device::tswitch::type::Motion)
 						{
 							root["result"][ii]["TypeImg"] = "motion";
 						}
-						else if (switchtype == device::_switch::type::Selector)
+						else if (switchtype == device::tswitch::type::Selector)
 						{
 							std::string selectorStyle = options["SelectorStyle"];
 							std::string levelOffHidden = options["LevelOffHidden"];
@@ -9054,12 +9054,12 @@ namespace http {
 							(dSubType == sTypeKD101)
 							|| (dSubType == sTypeSA30)
 							|| (dSubType == sTypeRM174RF)
-							|| (switchtype == device::_switch::type::SMOKEDETECTOR)
+							|| (switchtype == device::tswitch::type::SMOKEDETECTOR)
 							)
 						{
-							root["result"][ii]["SwitchTypeVal"] = device::_switch::type::SMOKEDETECTOR;
+							root["result"][ii]["SwitchTypeVal"] = device::tswitch::type::SMOKEDETECTOR;
 							root["result"][ii]["TypeImg"] = "smoke";
-							root["result"][ii]["SwitchType"] = device::_switch::type::Description(device::_switch::type::SMOKEDETECTOR);
+							root["result"][ii]["SwitchType"] = device::tswitch::type::Description(device::tswitch::type::SMOKEDETECTOR);
 						}
 						sprintf(szData, "%s", lstatus.c_str());
 						root["result"][ii]["Data"] = szData;
@@ -9543,20 +9543,20 @@ namespace http {
 							float musage = 0.0f;
 							switch (metertype)
 							{
-							case device::meter::type::ENERGY:
-							case device::meter::type::ENERGY_GENERATED:
+							case device::tmeter::type::ENERGY:
+							case device::tmeter::type::ENERGY_GENERATED:
 								musage = float(total_real) / divider;
 								sprintf(szTmp, "%.3f kWh", musage);
 								break;
-							case device::meter::type::GAS:
+							case device::tmeter::type::GAS:
 								musage = float(total_real) / divider;
 								sprintf(szTmp, "%.3f m3", musage);
 								break;
-							case device::meter::type::WATER:
+							case device::tmeter::type::WATER:
 								musage = float(total_real) / (divider / 1000.0f);
 								sprintf(szTmp, "%d Liter", round(musage));
 								break;
-							case device::meter::type::COUNTER:
+							case device::tmeter::type::COUNTER:
 								sprintf(szTmp, "%" PRIu64, total_real);
 								if (!ValueUnits.empty())
 								{
@@ -9583,23 +9583,23 @@ namespace http {
 
 						switch (metertype)
 						{
-						case device::meter::type::ENERGY:
-						case device::meter::type::ENERGY_GENERATED:
+						case device::tmeter::type::ENERGY:
+						case device::tmeter::type::ENERGY_GENERATED:
 							sprintf(szTmp, "%.3f kWh", meteroffset + (dvalue / divider));
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							break;
-						case device::meter::type::GAS:
+						case device::tmeter::type::GAS:
 							sprintf(szTmp, "%.3f m3", meteroffset + (dvalue / divider));
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							break;
-						case device::meter::type::WATER:
+						case device::tmeter::type::WATER:
 							sprintf(szTmp, "%.3f m3", meteroffset + (dvalue / divider));
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							break;
-						case device::meter::type::COUNTER:
+						case device::tmeter::type::COUNTER:
 							sprintf(szTmp, "%g %s", meteroffset + dvalue, ValueUnits.c_str());
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
@@ -9648,20 +9648,20 @@ namespace http {
 							float musage = 0;
 							switch (metertype)
 							{
-							case device::meter::type::ENERGY:
-							case device::meter::type::ENERGY_GENERATED:
+							case device::tmeter::type::ENERGY:
+							case device::tmeter::type::ENERGY_GENERATED:
 								musage = float(total_real) / divider;
 								sprintf(szTmp, "%.3f kWh", musage);
 								break;
-							case device::meter::type::GAS:
+							case device::tmeter::type::GAS:
 								musage = float(total_real) / divider;
 								sprintf(szTmp, "%.3f m3", musage);
 								break;
-							case device::meter::type::WATER:
+							case device::tmeter::type::WATER:
 								musage = float(total_real) / divider;
 								sprintf(szTmp, "%.3f m3", musage);
 								break;
-							case device::meter::type::COUNTER:
+							case device::tmeter::type::COUNTER:
 								sprintf(szTmp, "%" PRIu64, total_real);
 								if (!ValueUnits.empty())
 								{
@@ -9686,23 +9686,23 @@ namespace http {
 
 						switch (metertype)
 						{
-						case device::meter::type::ENERGY:
-						case device::meter::type::ENERGY_GENERATED:
+						case device::tmeter::type::ENERGY:
+						case device::tmeter::type::ENERGY_GENERATED:
 							sprintf(szTmp, "%.3f kWh", meteroffset + (dvalue / divider));
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							break;
-						case device::meter::type::GAS:
+						case device::tmeter::type::GAS:
 							sprintf(szTmp, "%.3f m3", meteroffset + (dvalue / divider));
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							break;
-						case device::meter::type::WATER:
+						case device::tmeter::type::WATER:
 							sprintf(szTmp, "%.3f m3", meteroffset + (dvalue / divider));
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							break;
-						case device::meter::type::COUNTER:
+						case device::tmeter::type::COUNTER:
 							sprintf(szTmp, "%" PRIu64 " %s", static_cast<uint64_t>(meteroffset + dvalue), ValueUnits.c_str());
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
@@ -9753,23 +9753,23 @@ namespace http {
 
 						switch (metertype)
 						{
-						case device::meter::type::ENERGY:
-						case device::meter::type::ENERGY_GENERATED:
+						case device::tmeter::type::ENERGY:
+						case device::tmeter::type::ENERGY_GENERATED:
 							sprintf(szTmp, "%.3f kWh", meteroffset + (dvalue / divider));
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							break;
-						case device::meter::type::GAS:
+						case device::tmeter::type::GAS:
 							sprintf(szTmp, "%.3f m3", meteroffset + (dvalue / divider));
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							break;
-						case device::meter::type::WATER:
+						case device::tmeter::type::WATER:
 							sprintf(szTmp, "%.3f m3", meteroffset + (dvalue / divider));
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							break;
-						case device::meter::type::COUNTER:
+						case device::tmeter::type::COUNTER:
 							sprintf(szTmp, "%g %s", meteroffset + dvalue, ValueUnits.c_str());
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
@@ -9821,20 +9821,20 @@ namespace http {
 							musage = 0;
 							switch (metertype)
 							{
-							case device::meter::type::ENERGY:
-							case device::meter::type::ENERGY_GENERATED:
+							case device::tmeter::type::ENERGY:
+							case device::tmeter::type::ENERGY_GENERATED:
 								musage = float(total_real) / divider;
 								sprintf(szTmp, "%.3f kWh", musage);
 								break;
-							case device::meter::type::GAS:
+							case device::tmeter::type::GAS:
 								musage = float(total_real) / divider;
 								sprintf(szTmp, "%.3f m3", musage);
 								break;
-							case device::meter::type::WATER:
+							case device::tmeter::type::WATER:
 								musage = float(total_real) / divider;
 								sprintf(szTmp, "%.3f m3", musage);
 								break;
-							case device::meter::type::COUNTER:
+							case device::tmeter::type::COUNTER:
 								sprintf(szTmp, "%llu %s", total_real, ValueUnits.c_str());
 								break;
 							default:
@@ -9854,17 +9854,17 @@ namespace http {
 						musage = 0;
 						switch (metertype)
 						{
-						case device::meter::type::ENERGY:
-						case device::meter::type::ENERGY_GENERATED:
+						case device::tmeter::type::ENERGY:
+						case device::tmeter::type::ENERGY_GENERATED:
 							musage = float(total_actual) / divider;
 							sprintf(szTmp, "%.03f", musage);
 							break;
-						case device::meter::type::GAS:
-						case device::meter::type::WATER:
+						case device::tmeter::type::GAS:
+						case device::tmeter::type::WATER:
 							musage = float(total_actual) / divider;
 							sprintf(szTmp, "%.03f", musage);
 							break;
-						case device::meter::type::COUNTER:
+						case device::tmeter::type::COUNTER:
 							sprintf(szTmp, "%llu", total_actual);
 							break;
 						default:
@@ -9879,20 +9879,20 @@ namespace http {
 						musage = 0;
 						switch (metertype)
 						{
-						case device::meter::type::ENERGY:
-						case device::meter::type::ENERGY_GENERATED:
+						case device::tmeter::type::ENERGY:
+						case device::tmeter::type::ENERGY_GENERATED:
 							musage = float(acounter) / divider;
 							sprintf(szTmp, "%.3f kWh %s Watt", musage, splitresults[1].c_str());
 							break;
-						case device::meter::type::GAS:
+						case device::tmeter::type::GAS:
 							musage = float(acounter) / divider;
 							sprintf(szTmp, "%.3f m3", musage);
 							break;
-						case device::meter::type::WATER:
+						case device::tmeter::type::WATER:
 							musage = float(acounter) / divider;
 							sprintf(szTmp, "%.3f m3", musage);
 							break;
-						case device::meter::type::COUNTER:
+						case device::tmeter::type::COUNTER:
 							sprintf(szTmp, "%llu %s", acounter, ValueUnits.c_str());
 							break;
 						default:
@@ -9904,17 +9904,17 @@ namespace http {
 						root["result"][ii]["ValueUnits"] = "";
 						switch (metertype)
 						{
-						case device::meter::type::ENERGY:
-						case device::meter::type::ENERGY_GENERATED:
+						case device::tmeter::type::ENERGY:
+						case device::tmeter::type::ENERGY_GENERATED:
 							sprintf(szTmp, "%s Watt", splitresults[1].c_str());
 							break;
-						case device::meter::type::GAS:
+						case device::tmeter::type::GAS:
 							sprintf(szTmp, "%s m3", splitresults[1].c_str());
 							break;
-						case device::meter::type::WATER:
+						case device::tmeter::type::WATER:
 							sprintf(szTmp, "%s m3", splitresults[1].c_str());
 							break;
-						case device::meter::type::COUNTER:
+						case device::tmeter::type::COUNTER:
 							sprintf(szTmp, "%s", splitresults[1].c_str());
 							root["result"][ii]["ValueQuantity"] = ValueQuantity;
 							root["result"][ii]["ValueUnits"] = ValueUnits;
@@ -9933,7 +9933,7 @@ namespace http {
 						StringSplit(sValue, ";", splitresults);
 						if (splitresults.size() != 6)
 						{
-							root["result"][ii]["SwitchTypeVal"] = device::meter::type::ENERGY;
+							root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::ENERGY;
 							root["result"][ii]["Counter"] = "0";
 							root["result"][ii]["CounterDeliv"] = "0";
 							root["result"][ii]["Usage"] = "Invalid";
@@ -9969,7 +9969,7 @@ namespace http {
 
 							double musage = 0;
 
-							root["result"][ii]["SwitchTypeVal"] = device::meter::type::ENERGY;
+							root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::ENERGY;
 							musage = double(powerusage) / EnergyDivider;
 							sprintf(szTmp, "%.03f", musage);
 							root["result"][ii]["Counter"] = szTmp;
@@ -10030,7 +10030,7 @@ namespace http {
 					}
 					else if (dType == pTypeP1Gas)
 					{
-						root["result"][ii]["SwitchTypeVal"] = device::meter::type::GAS;
+						root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::GAS;
 
 						//get lowest value of today
 						time_t now = mytime(NULL);
@@ -10202,7 +10202,7 @@ namespace http {
 								root["result"][ii]["CounterToday"] = szTmp;
 							}
 							root["result"][ii]["TypeImg"] = "current";
-							root["result"][ii]["SwitchTypeVal"] = switchtype; //device::meter::type::ENERGY
+							root["result"][ii]["SwitchTypeVal"] = switchtype; //device::tmeter::type::ENERGY
 							root["result"][ii]["EnergyMeterMode"] = options["EnergyMeterMode"];  //for alternate Energy Reading
 						}
 					}
@@ -10632,8 +10632,8 @@ namespace http {
 							root["result"][ii]["MaxDimLevel"] = 0;
 							root["result"][ii]["HaveGroupCmd"] = false;
 							root["result"][ii]["TypeImg"] = "utility";
-							root["result"][ii]["SwitchTypeVal"] = device::_switch::type::OnOff;
-							root["result"][ii]["SwitchType"] = device::_switch::type::Description(device::_switch::type::OnOff);
+							root["result"][ii]["SwitchTypeVal"] = device::tswitch::type::OnOff;
+							root["result"][ii]["SwitchType"] = device::tswitch::type::Description(device::tswitch::type::OnOff);
 							sprintf(szData, "%d", atoi(sValue.c_str()));
 							root["result"][ii]["Data"] = szData;
 							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
@@ -10682,7 +10682,7 @@ namespace http {
 								total_real = total_max - total_min;
 								sprintf(szTmp, "%llu", total_real);
 							}
-							root["result"][ii]["SwitchTypeVal"] = device::meter::type::COUNTER;
+							root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::COUNTER;
 							root["result"][ii]["Counter"] = sValue;
 							root["result"][ii]["CounterToday"] = szTmp;
 							root["result"][ii]["Data"] = sValue;
@@ -11475,7 +11475,7 @@ namespace http {
 						{
 							unsigned char devType = (unsigned char)atoi(sd[1].c_str());
 							unsigned char subType = (unsigned char)atoi(sd[2].c_str());
-							device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[3].c_str());
+							device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[3].c_str());
 							int nValue = sCode;
 							std::string sValue = "";
 							int llevel = 0;
@@ -12933,7 +12933,7 @@ namespace http {
 
 			unsigned char dType = atoi(result[0][0].c_str());
 			unsigned char dSubType = atoi(result[0][1].c_str());
-			device::_switch::type::value switchtype = (device::_switch::type::value)atoi(result[0][2].c_str());
+			device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(result[0][2].c_str());
 			std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(result[0][3].c_str());
 
 			if (
@@ -12972,7 +12972,7 @@ namespace http {
 			if (!result.empty())
 			{
 				std::map<std::string, std::string> selectorStatuses;
-				if (switchtype == device::_switch::type::Selector) {
+				if (switchtype == device::tswitch::type::Selector) {
 					GetSelectorSwitchStatuses(options, selectorStatuses);
 				}
 
@@ -12985,7 +12985,7 @@ namespace http {
 					std::string sValue = sd[2];
 
 					//skip 0-values in log for MediaPlayers
-					if ((switchtype == device::_switch::type::Media) && (sValue == "0")) continue;
+					if ((switchtype == device::tswitch::type::Media) && (sValue == "0")) continue;
 
 					root["result"][ii]["idx"] = sd[0];
 
@@ -12998,12 +12998,12 @@ namespace http {
 					bool bHaveGroupCmd = false;
 					int maxDimLevel = 0;
 
-					if (switchtype == device::_switch::type::Media) {
+					if (switchtype == device::tswitch::type::Media) {
 						lstatus = sValue;
 						ldata = lstatus;
 
 					}
-					else if (switchtype == device::_switch::type::Selector)
+					else if (switchtype == device::tswitch::type::Selector)
 					{
 						if (ii == 0) {
 							bHaveSelector = true;
@@ -13127,7 +13127,7 @@ namespace http {
 
 			unsigned char dType = atoi(result[0][0].c_str());
 			unsigned char dSubType = atoi(result[0][1].c_str());
-			device::meter::type::value metertype = (device::meter::type::value)atoi(result[0][2].c_str());
+			device::tmeter::type::value metertype = (device::tmeter::type::value)atoi(result[0][2].c_str());
 			if (
 				(dType == pTypeP1Power) ||
 				(dType == pTypeENERGY) ||
@@ -13136,12 +13136,12 @@ namespace http {
 				((dType == pTypeGeneral) && (dSubType == sTypeKwh))
 				)
 			{
-				metertype = device::meter::type::ENERGY;
+				metertype = device::tmeter::type::ENERGY;
 			}
 			else if (dType == pTypeP1Gas)
-				metertype = device::meter::type::GAS;
+				metertype = device::tmeter::type::GAS;
 			else if ((dType == pTypeRego6XXValue) && (dSubType == sTypeRego6XXCounter))
-				metertype = device::meter::type::COUNTER;
+				metertype = device::tmeter::type::COUNTER;
 
 			// Special case of managed counter: Usage instead of Value in Meter table, and we don't want to calculate last value
 			bool bIsManagedCounter = (dType == pTypeGeneral) && (dSubType == sTypeManagedCounter);
@@ -13843,7 +13843,7 @@ namespace http {
 						if (bHaveUsage == false)
 							method = 0;
 
-						if ((dType == pTypeYouLess) && ((metertype == device::meter::type::ENERGY) || (metertype == device::meter::type::ENERGY_GENERATED)))
+						if ((dType == pTypeYouLess) && ((metertype == device::tmeter::type::ENERGY) || (metertype == device::tmeter::type::ENERGY_GENERATED)))
 							method = 1;
 
 						if (method != 0)
@@ -13896,17 +13896,17 @@ namespace http {
 											float TotalValue = float(ulTotalValue);
 											switch (metertype)
 											{
-											case device::meter::type::ENERGY:
-											case device::meter::type::ENERGY_GENERATED:
+											case device::tmeter::type::ENERGY:
+											case device::tmeter::type::ENERGY_GENERATED:
 												sprintf(szTmp, "%.3f", (TotalValue / divider)*1000.0f);	//from kWh -> Watt
 												break;
-											case device::meter::type::GAS:
+											case device::tmeter::type::GAS:
 												sprintf(szTmp, "%.3f", TotalValue / divider);
 												break;
-											case device::meter::type::WATER:
+											case device::tmeter::type::WATER:
 												sprintf(szTmp, "%.3f", TotalValue / divider);
 												break;
-											case device::meter::type::COUNTER:
+											case device::tmeter::type::COUNTER:
 												sprintf(szTmp, "%.1f", TotalValue);
 												break;
 											default:
@@ -13942,17 +13942,17 @@ namespace http {
 										TotalValue /= 10.0f;
 									switch (metertype)
 									{
-									case device::meter::type::ENERGY:
-									case device::meter::type::ENERGY_GENERATED:
+									case device::tmeter::type::ENERGY:
+									case device::tmeter::type::ENERGY_GENERATED:
 										sprintf(szTmp, "%.3f", (TotalValue / divider)*1000.0f);	//from kWh -> Watt
 										break;
-									case device::meter::type::GAS:
+									case device::tmeter::type::GAS:
 										sprintf(szTmp, "%.2f", TotalValue / divider);
 										break;
-									case device::meter::type::WATER:
+									case device::tmeter::type::WATER:
 										sprintf(szTmp, "%.3f", TotalValue / divider);
 										break;
-									case device::meter::type::COUNTER:
+									case device::tmeter::type::COUNTER:
 										sprintf(szTmp, "%.1f", TotalValue);
 										break;
 									default:
@@ -14039,17 +14039,17 @@ namespace http {
 											{
 												switch (metertype)
 												{
-												case device::meter::type::ENERGY:
-												case device::meter::type::ENERGY_GENERATED:
+												case device::tmeter::type::ENERGY:
+												case device::tmeter::type::ENERGY_GENERATED:
 													sprintf(szTmp, "%.3f", (TotalValue / divider)*1000.0f);	//from kWh -> Watt
 													break;
-												case device::meter::type::GAS:
+												case device::tmeter::type::GAS:
 													sprintf(szTmp, "%.3f", TotalValue / divider);
 													break;
-												case device::meter::type::WATER:
+												case device::tmeter::type::WATER:
 													sprintf(szTmp, "%.3f", TotalValue / divider);
 													break;
-												case device::meter::type::COUNTER:
+												case device::tmeter::type::COUNTER:
 													sprintf(szTmp, "%.1f", TotalValue);
 													break;
 												default:
@@ -14099,17 +14099,17 @@ namespace http {
 										{
 											switch (metertype)
 											{
-											case device::meter::type::ENERGY:
-											case device::meter::type::ENERGY_GENERATED:
+											case device::tmeter::type::ENERGY:
+											case device::tmeter::type::ENERGY_GENERATED:
 												sprintf(szTmp, "%.3f", (TotalValue / divider)*1000.0f);	//from kWh -> Watt
 												break;
-											case device::meter::type::GAS:
+											case device::tmeter::type::GAS:
 												sprintf(szTmp, "%.2f", TotalValue / divider);
 												break;
-											case device::meter::type::WATER:
+											case device::tmeter::type::WATER:
 												sprintf(szTmp, "%.3f", TotalValue / divider);
 												break;
-											case device::meter::type::COUNTER:
+											case device::tmeter::type::COUNTER:
 												sprintf(szTmp, "%.1f", TotalValue);
 												break;
 											default:
@@ -14143,17 +14143,17 @@ namespace http {
 							{
 								switch (metertype)
 								{
-								case device::meter::type::ENERGY:
-								case device::meter::type::ENERGY_GENERATED:
+								case device::tmeter::type::ENERGY:
+								case device::tmeter::type::ENERGY_GENERATED:
 									sprintf(szTmp, "%.3f", (TotalValue / divider)*1000.0f);	//from kWh -> Watt
 									break;
-								case device::meter::type::GAS:
+								case device::tmeter::type::GAS:
 									sprintf(szTmp, "%.3f", TotalValue / divider);
 									break;
-								case device::meter::type::WATER:
+								case device::tmeter::type::WATER:
 									sprintf(szTmp, "%.3f", TotalValue / divider);
 									break;
-								case device::meter::type::COUNTER:
+								case device::tmeter::type::COUNTER:
 									sprintf(szTmp, "%.1f", TotalValue);
 									break;
 								default:
@@ -14623,20 +14623,20 @@ namespace http {
 								std::string szValue = sd[0];
 								switch (metertype)
 								{
-								case device::meter::type::ENERGY:
-								case device::meter::type::ENERGY_GENERATED:
+								case device::tmeter::type::ENERGY:
+								case device::tmeter::type::ENERGY_GENERATED:
 									sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 									szValue = szTmp;
 									break;
-								case device::meter::type::GAS:
+								case device::tmeter::type::GAS:
 									sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 									szValue = szTmp;
 									break;
-								case device::meter::type::WATER:
+								case device::tmeter::type::WATER:
 									sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 									szValue = szTmp;
 									break;
-								case device::meter::type::COUNTER:
+								case device::tmeter::type::COUNTER:
 									//value already set above!
 									break;
 								default:
@@ -14723,20 +14723,20 @@ namespace http {
 							std::string szValue = szTmp;
 							switch (metertype)
 							{
-							case device::meter::type::ENERGY:
-							case device::meter::type::ENERGY_GENERATED:
+							case device::tmeter::type::ENERGY:
+							case device::tmeter::type::ENERGY_GENERATED:
 								sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 								szValue = szTmp;
 								break;
-							case device::meter::type::GAS:
+							case device::tmeter::type::GAS:
 								sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 								szValue = szTmp;
 								break;
-							case device::meter::type::WATER:
+							case device::tmeter::type::WATER:
 								sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 								szValue = szTmp;
 								break;
-							case device::meter::type::COUNTER:
+							case device::tmeter::type::COUNTER:
 								//value already set above!
 								break;
 							default:
@@ -15817,14 +15817,14 @@ namespace http {
 							float fvalue = static_cast<float>(atof(sValue.c_str()));
 							switch (metertype)
 							{
-							case device::meter::type::ENERGY:
-							case device::meter::type::ENERGY_GENERATED:
+							case device::tmeter::type::ENERGY:
+							case device::tmeter::type::ENERGY_GENERATED:
 								sprintf(szTmp, "%.3f", AddjValue + (fvalue / divider));
 								break;
-							case device::meter::type::GAS:
+							case device::tmeter::type::GAS:
 								sprintf(szTmp, "%.2f", AddjValue + (fvalue / divider));
 								break;
-							case device::meter::type::WATER:
+							case device::tmeter::type::WATER:
 								sprintf(szTmp, "%.3f", AddjValue + (fvalue / divider));
 								break;
 							default:
@@ -15843,14 +15843,14 @@ namespace http {
 								float fvalue = static_cast<float>(atof(results[0].c_str()));
 								switch (metertype)
 								{
-								case device::meter::type::ENERGY:
-								case device::meter::type::ENERGY_GENERATED:
+								case device::tmeter::type::ENERGY:
+								case device::tmeter::type::ENERGY_GENERATED:
 									sprintf(szTmp, "%.3f", fvalue / divider);
 									break;
-								case device::meter::type::GAS:
+								case device::tmeter::type::GAS:
 									sprintf(szTmp, "%.2f", fvalue / divider);
 									break;
-								case device::meter::type::WATER:
+								case device::tmeter::type::WATER:
 									sprintf(szTmp, "%.3f", fvalue / divider);
 									break;
 								default:
@@ -15886,8 +15886,8 @@ namespace http {
 
 								switch (metertype)
 								{
-								case device::meter::type::ENERGY:
-								case device::meter::type::ENERGY_GENERATED:
+								case device::tmeter::type::ENERGY:
+								case device::tmeter::type::ENERGY_GENERATED:
 									sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 									root["result"][ii]["v"] = szTmp;
 									if (fcounter != 0)
@@ -15896,7 +15896,7 @@ namespace http {
 										strcpy(szTmp, "0");
 									root["result"][ii]["c"] = szTmp;
 									break;
-								case device::meter::type::GAS:
+								case device::tmeter::type::GAS:
 									sprintf(szTmp, "%.2f", atof(szValue.c_str()) / divider);
 									root["result"][ii]["v"] = szTmp;
 									if (fcounter != 0)
@@ -15905,7 +15905,7 @@ namespace http {
 										strcpy(szTmp, "0");
 									root["result"][ii]["c"] = szTmp;
 									break;
-								case device::meter::type::WATER:
+								case device::tmeter::type::WATER:
 									sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 									root["result"][ii]["v"] = szTmp;
 									if (fcounter != 0)
@@ -15914,7 +15914,7 @@ namespace http {
 										strcpy(szTmp, "0");
 									root["result"][ii]["c"] = szTmp;
 									break;
-								case device::meter::type::COUNTER:
+								case device::tmeter::type::COUNTER:
 									sprintf(szTmp, "%.0f", atof(szValue.c_str()));
 									root["result"][ii]["v"] = szTmp;
 									if (fcounter != 0)
@@ -15941,20 +15941,20 @@ namespace http {
 								std::string szValue = sd[0];
 								switch (metertype)
 								{
-								case device::meter::type::ENERGY:
-								case device::meter::type::ENERGY_GENERATED:
+								case device::tmeter::type::ENERGY:
+								case device::tmeter::type::ENERGY_GENERATED:
 									sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 									root["resultprev"][iPrev]["v"] = szTmp;
 									break;
-								case device::meter::type::GAS:
+								case device::tmeter::type::GAS:
 									sprintf(szTmp, "%.2f", atof(szValue.c_str()) / divider);
 									root["resultprev"][iPrev]["v"] = szTmp;
 									break;
-								case device::meter::type::WATER:
+								case device::tmeter::type::WATER:
 									sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 									root["resultprev"][iPrev]["v"] = szTmp;
 									break;
-								case device::meter::type::COUNTER:
+								case device::tmeter::type::COUNTER:
 									sprintf(szTmp, "%.0f", atof(szValue.c_str()));
 									root["resultprev"][iPrev]["v"] = szTmp;
 									break;
@@ -16193,8 +16193,8 @@ namespace http {
 							std::string szValue = szTmp;
 							switch (metertype)
 							{
-							case device::meter::type::ENERGY:
-							case device::meter::type::ENERGY_GENERATED:
+							case device::tmeter::type::ENERGY:
+							case device::tmeter::type::ENERGY_GENERATED:
 							{
 								sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 								root["result"][ii]["v"] = szTmp;
@@ -16212,19 +16212,19 @@ namespace http {
 								root["result"][ii]["c"] = szTmp;
 							}
 							break;
-							case device::meter::type::GAS:
+							case device::tmeter::type::GAS:
 								sprintf(szTmp, "%.2f", atof(szValue.c_str()) / divider);
 								root["result"][ii]["v"] = szTmp;
 								sprintf(szTmp, "%.2f", AddjValue + ((atof(sValue.c_str()) - atof(szValue.c_str())) / divider));
 								root["result"][ii]["c"] = szTmp;
 								break;
-							case device::meter::type::WATER:
+							case device::tmeter::type::WATER:
 								sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 								root["result"][ii]["v"] = szTmp;
 								sprintf(szTmp, "%.3f", AddjValue + ((atof(sValue.c_str()) - atof(szValue.c_str())) / divider));
 								root["result"][ii]["c"] = szTmp;
 								break;
-							case device::meter::type::COUNTER:
+							case device::tmeter::type::COUNTER:
 								sprintf(szTmp, "%.0f", atof(szValue.c_str()));
 								root["result"][ii]["v"] = szTmp;
 								sprintf(szTmp, "%.0f", AddjValue + ((atof(sValue.c_str()) - atof(szValue.c_str()))));
@@ -16795,16 +16795,16 @@ namespace http {
 								std::string szValue = sd[0];
 								switch (metertype)
 								{
-								case device::meter::type::ENERGY:
-								case device::meter::type::ENERGY_GENERATED:
+								case device::tmeter::type::ENERGY:
+								case device::tmeter::type::ENERGY_GENERATED:
 									sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 									szValue = szTmp;
 									break;
-								case device::meter::type::GAS:
+								case device::tmeter::type::GAS:
 									sprintf(szTmp, "%.2f", atof(szValue.c_str()) / divider);
 									szValue = szTmp;
 									break;
-								case device::meter::type::WATER:
+								case device::tmeter::type::WATER:
 									sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 									szValue = szTmp;
 									break;
@@ -16882,16 +16882,16 @@ namespace http {
 							std::string szValue = szTmp;
 							switch (metertype)
 							{
-							case device::meter::type::ENERGY:
-							case device::meter::type::ENERGY_GENERATED:
+							case device::tmeter::type::ENERGY:
+							case device::tmeter::type::ENERGY_GENERATED:
 								sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 								szValue = szTmp;
 								break;
-							case device::meter::type::GAS:
+							case device::tmeter::type::GAS:
 								sprintf(szTmp, "%.2f", atof(szValue.c_str()) / divider);
 								szValue = szTmp;
 								break;
-							case device::meter::type::WATER:
+							case device::tmeter::type::WATER:
 								sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 								szValue = szTmp;
 								break;

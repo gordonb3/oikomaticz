@@ -2,7 +2,7 @@
 #include "typedef/common.hpp"
 
 namespace device {
-namespace meter {
+namespace tmeter {
 
 namespace type {
 	enum value {
@@ -72,6 +72,6 @@ namespace OBIS { // Object identification system
 }; // namespace OBIS {
 }; // namespace COSEM {
 
-}; // namespace meter
+}; // namespace tmeter
 }; // namespace device
 

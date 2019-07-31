@@ -569,9 +569,9 @@ void CPhilipsHue::InsertUpdateSwitch(const int NodeID, const _eHueLightType LTyp
 
 		if (result.empty())
 		{
-			//Set SwitchType to device::_switch::type::Dimmer
+			//Set SwitchType to device::tswitch::type::Dimmer
 			m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE(HardwareID == %d) AND (DeviceID == '%q')",
-				int(device::_switch::type::Dimmer), m_HwdID, szID);
+				int(device::tswitch::type::Dimmer), m_HwdID, szID);
 		}
 	}
 	else if (LType == HLTYPE_SCENE)
@@ -607,9 +607,9 @@ void CPhilipsHue::InsertUpdateSwitch(const int NodeID, const _eHueLightType LTyp
 
 		if (result.empty())
 		{
-			//Set SwitchType to device::_switch::type::PushOn
+			//Set SwitchType to device::tswitch::type::PushOn
 			m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE(HardwareID == %d) AND (DeviceID == '%q')",
-				int(device::_switch::type::Dimmer), m_HwdID, szID);
+				int(device::tswitch::type::Dimmer), m_HwdID, szID);
 		}
 	}
 	else
@@ -657,7 +657,7 @@ void CPhilipsHue::InsertUpdateSwitch(const int NodeID, const _eHueLightType LTyp
 		{
 			//Set SwitchType
 			m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE(HardwareID == %d) AND (DeviceID == '%q')",
-				int(LType == HLTYPE_DIM ? device::_switch::type::Dimmer : device::_switch::type::OnOff), m_HwdID, szID);
+				int(LType == HLTYPE_DIM ? device::tswitch::type::Dimmer : device::tswitch::type::OnOff), m_HwdID, szID);
 		}
 	}
 }
@@ -1074,7 +1074,7 @@ bool CPhilipsHue::GetSensors(const Json::Value &root)
 				if ((previous_sensor.m_state.m_presence != current_sensor.m_state.m_presence)
 					|| (bNewSensor))
 				{
-					InsertUpdateSwitch(sID, device::_switch::type::Motion, current_sensor.m_state.m_presence, device_name, current_sensor.m_config.m_battery);
+					InsertUpdateSwitch(sID, device::tswitch::type::Motion, current_sensor.m_state.m_presence, device_name, current_sensor.m_config.m_battery);
 				}
 			}
 			else if (current_sensor.m_type == SensorTypeZLLTemperature)
@@ -1090,7 +1090,7 @@ bool CPhilipsHue::GetSensors(const Json::Value &root)
 				if ((previous_sensor.m_state.m_dark != current_sensor.m_state.m_dark)
 					|| (bNewSensor))
 				{
-					InsertUpdateSwitch(sID, device::_switch::type::Dusk, current_sensor.m_state.m_dark, device_name, current_sensor.m_config.m_battery);
+					InsertUpdateSwitch(sID, device::tswitch::type::Dusk, current_sensor.m_state.m_dark, device_name, current_sensor.m_config.m_battery);
 				}
 
 				if ((previous_sensor.m_state.m_lightlevel != current_sensor.m_state.m_lightlevel)
@@ -1115,7 +1115,7 @@ bool CPhilipsHue::GetSensors(const Json::Value &root)
 	return true;
 }
 
-void CPhilipsHue::InsertUpdateSwitch(const int NodeID, const device::_switch::type::value SType, const bool status, const std::string &Name, const uint8_t BatteryLevel)
+void CPhilipsHue::InsertUpdateSwitch(const int NodeID, const device::tswitch::type::value SType, const bool status, const std::string &Name, const uint8_t BatteryLevel)
 {
 	int sID = NodeID;
 	char ID[40];

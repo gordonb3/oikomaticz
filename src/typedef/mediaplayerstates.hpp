@@ -2,7 +2,7 @@
 #include "typedef/common.hpp"
 
 namespace device {
-namespace media {
+namespace tmedia {
 namespace status {
 
 enum value {
@@ -23,7 +23,7 @@ enum value {
 #ifdef INCLUDE_TYPEDEF_CODE
 // tiny hack that allows us to keep these definitions together in a single file
 
-const char *Description(const device::media::status::value Status)
+const char *Description(const device::tmedia::status::value Status)
 {
 	static const STR_TABLE_SINGLE Table[] =
 	{
@@ -46,11 +46,11 @@ const char *Description(const device::media::status::value Status)
 
 
 #else // INCLUDE_TYPEDEF_CODE
-const char *Description(const device::media::status::value Status);
+const char *Description(const device::tmedia::status::value Status);
 #endif // INCLUDE_TYPEDEF_CODE
 
 
 }; // namespace status
-}; // namespace media
+}; // namespace tmedia
 }; // namespace device
 

@@ -12,7 +12,7 @@ class CHEOS : public CDomoticzHardwareBase, ASyncTCP
 		int				DevID;
 		std::string		Name;
 		time_t			LastOK;
-		device::media::status::value	nStatus;
+		device::tmedia::status::value	nStatus;
 		std::string		sStatus;
 		std::string		sShortStatus;
 	};
@@ -26,7 +26,7 @@ public:
 	void SendCommand(const std::string&, const int iValue);
 private:
 	void SendCommand(const std::string&);
-	device::notification::type::value	NotificationType(device::media::status::value nStatus);
+	notification::type::value	NotificationType(device::tmedia::status::value nStatus);
 	bool StartHardware() override;
 	bool StopHardware() override;
 	bool WriteInt(const std::string &sendStr);
@@ -43,7 +43,7 @@ private:
 
 	void AddNode(const std::string &Name, const std::string &PlayerID);
 	void UpdateNode(const int ID, const std::string &Name);
-	void UpdateNodeStatus(const std::string &DevID, const device::media::status::value nStatus, const std::string &sStatus);
+	void UpdateNodeStatus(const std::string &DevID, const device::tmedia::status::value nStatus, const std::string &sStatus);
 	void UpdateNodesStatus(const std::string &DevID, const std::string &sStatus);
 	//	void RemoveNode(const int ID);
 	void ReloadNodes();

@@ -25,13 +25,13 @@ struct STR_DEVICE {
 
 const STR_DEVICE DevicesType[TOT_DEVICE_TYPES] =
 {
-	{ 0, "switchBox", "Switch Box",pTypeLighting2, sTypeAC, device::_switch::type::OnOff, "relay" },
-	{ 1, "shutterBox", "Shutter Box", pTypeLighting2, sTypeAC, device::_switch::type::BlindsPercentageInverted, "shutter" },
-	{ 2, "wLightBoxS", "Light Box S", pTypeLighting2, sTypeAC, device::_switch::type::Dimmer, "light" },
-	{ 3, "wLightBox", "Light Box", pTypeColorSwitch, sTypeColor_RGB_W, device::_switch::type::Dimmer, "rgbw" },
+	{ 0, "switchBox", "Switch Box",pTypeLighting2, sTypeAC, device::tswitch::type::OnOff, "relay" },
+	{ 1, "shutterBox", "Shutter Box", pTypeLighting2, sTypeAC, device::tswitch::type::BlindsPercentageInverted, "shutter" },
+	{ 2, "wLightBoxS", "Light Box S", pTypeLighting2, sTypeAC, device::tswitch::type::Dimmer, "light" },
+	{ 3, "wLightBox", "Light Box", pTypeColorSwitch, sTypeColor_RGB_W, device::tswitch::type::Dimmer, "rgbw" },
 	{ 4, "gateBox", "Gate Box", pTypeGeneral, sTypePercentage, 0, "gate" },
-	{ 5, "dimmerBox", "Dimmer Box", pTypeLighting2, sTypeAC, device::_switch::type::Dimmer, "dimmer" },
-	{ 6, "switchBoxD", "Switch Box D", pTypeLighting2, sTypeAC, device::_switch::type::OnOff, "relay" },
+	{ 5, "dimmerBox", "Dimmer Box", pTypeLighting2, sTypeAC, device::tswitch::type::Dimmer, "dimmer" },
+	{ 6, "switchBoxD", "Switch Box D", pTypeLighting2, sTypeAC, device::tswitch::type::OnOff, "relay" },
 	{ 7, "airSensor", "Air Sensor", pTypeAirQuality, sTypeVoltcraft, 0, "air" },
 	{ 8, "tempSensor", "Temp Sensor", pTypeGeneral, sTypeTemperature, 0, "tempsensor" },
 };
@@ -1165,8 +1165,8 @@ void BleBox::AddNode(const std::string & name, const std::string & IPAddress, bo
 	if (deviceType.unit == 4) // gatebox
 	{
 		m_sql.InsertDevice(m_HwdID, szIdx.c_str(), 1, (uint8_t)deviceType.deviceID, deviceType.subType, deviceType.switchType, 0, "Unavailable", name);
-		m_sql.InsertDevice(m_HwdID, szIdx.c_str(), 2, pTypeGeneralSwitch, sTypeAC, device::_switch::type::PushOn, 0, "Unavailable", name);
-		m_sql.InsertDevice(m_HwdID, szIdx.c_str(), 3, pTypeGeneralSwitch, sTypeAC, device::_switch::type::PushOn, 0, "Unavailable", name);
+		m_sql.InsertDevice(m_HwdID, szIdx.c_str(), 2, pTypeGeneralSwitch, sTypeAC, device::tswitch::type::PushOn, 0, "Unavailable", name);
+		m_sql.InsertDevice(m_HwdID, szIdx.c_str(), 3, pTypeGeneralSwitch, sTypeAC, device::tswitch::type::PushOn, 0, "Unavailable", name);
 	}
 	else
 		if (deviceType.unit == 6) // switchboxd

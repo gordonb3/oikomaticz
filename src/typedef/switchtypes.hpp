@@ -2,7 +2,7 @@
 #include "typedef/common.hpp"
 
 namespace device {
-namespace _switch {
+namespace tswitch {
 namespace type {
 
 enum value {
@@ -38,28 +38,28 @@ const char *Description(const int sType)
 {
 	static const STR_TABLE_SINGLE Table[] =
 	{
-		{ device::_switch::type::OnOff,				"On/Off" },
-		{ device::_switch::type::Doorbell,			"Doorbell" },
-		{ device::_switch::type::Contact,			"Contact" },
-		{ device::_switch::type::Blinds,			"Blinds" },
-		{ device::_switch::type::X10Siren,			"X10 Siren" },
-		{ device::_switch::type::SMOKEDETECTOR,			"Smoke Detector" },
-		{ device::_switch::type::BlindsInverted,		"Blinds Inverted" },
-		{ device::_switch::type::Dimmer,			"Dimmer" },
-		{ device::_switch::type::Motion,			"Motion Sensor" },
-		{ device::_switch::type::PushOn,			"Push On Button" },
-		{ device::_switch::type::PushOff,			"Push Off Button" },
-		{ device::_switch::type::DoorContact,			"Door Contact" },
-		{ device::_switch::type::Dusk,				"Dusk Sensor" },
-		{ device::_switch::type::BlindsPercentage,		"Blinds Percentage" },
-		{ device::_switch::type::VenetianBlindsUS,		"Venetian Blinds US" },
-		{ device::_switch::type::VenetianBlindsEU,		"Venetian Blinds EU" },
-		{ device::_switch::type::BlindsPercentageInverted,	"Blinds Percentage Inverted" },
-		{ device::_switch::type::Media,				"Media Player" },
-		{ device::_switch::type::Selector,			"Selector" },
-		{ device::_switch::type::DoorLock,			"Door Lock" },
-		{ device::_switch::type::DoorLockInverted,		"Door Lock Inverted" },
-		{ device::_switch::type::Proximity,			"Proximity Sensor" },
+		{ device::tswitch::type::OnOff,				"On/Off" },
+		{ device::tswitch::type::Doorbell,			"Doorbell" },
+		{ device::tswitch::type::Contact,			"Contact" },
+		{ device::tswitch::type::Blinds,			"Blinds" },
+		{ device::tswitch::type::X10Siren,			"X10 Siren" },
+		{ device::tswitch::type::SMOKEDETECTOR,			"Smoke Detector" },
+		{ device::tswitch::type::BlindsInverted,		"Blinds Inverted" },
+		{ device::tswitch::type::Dimmer,			"Dimmer" },
+		{ device::tswitch::type::Motion,			"Motion Sensor" },
+		{ device::tswitch::type::PushOn,			"Push On Button" },
+		{ device::tswitch::type::PushOff,			"Push Off Button" },
+		{ device::tswitch::type::DoorContact,			"Door Contact" },
+		{ device::tswitch::type::Dusk,				"Dusk Sensor" },
+		{ device::tswitch::type::BlindsPercentage,		"Blinds Percentage" },
+		{ device::tswitch::type::VenetianBlindsUS,		"Venetian Blinds US" },
+		{ device::tswitch::type::VenetianBlindsEU,		"Venetian Blinds EU" },
+		{ device::tswitch::type::BlindsPercentageInverted,	"Blinds Percentage Inverted" },
+		{ device::tswitch::type::Media,				"Media Player" },
+		{ device::tswitch::type::Selector,			"Selector" },
+		{ device::tswitch::type::DoorLock,			"Door Lock" },
+		{ device::tswitch::type::DoorLockInverted,		"Door Lock Inverted" },
+		{ device::tswitch::type::Proximity,			"Proximity Sensor" },
 		{ 0, NULL, NULL }
 	};
 	return findTableIDSingle1(Table, sType);
@@ -73,6 +73,6 @@ const char *Description(const int sType);
 
 
 }; // namespace type
-}; // namespace _switch
+}; // namespace tswitch
 }; // namespace device
 

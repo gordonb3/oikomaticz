@@ -2,7 +2,7 @@
 #include "typedef/common.hpp"
 
 namespace device {
-namespace timer {
+namespace ttimer {
 namespace command {
 
 enum value {
@@ -94,6 +94,6 @@ const char *Description(const int tType);
 
 
 }; // namespace type
-}; // namespace timer
+}; // namespace ttimer
 }; // namespace device
 

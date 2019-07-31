@@ -10597,7 +10597,7 @@ void MainWorker::decode_CartelectronicTIC(const int HwdID,
 			if (DevRowIdx == -1)
 				return;
 
-			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, pTypeUsage, sTypeElectric, device::notification::type::ENERGYINSTANT, (const float)apparentPower);
+			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, pTypeUsage, sTypeElectric, notification::type::ENERGYINSTANT, (const float)apparentPower);
 		}
 
 		switch (contractType)
@@ -10635,7 +10635,7 @@ void MainWorker::decode_CartelectronicTIC(const int HwdID,
 			if (DevRowIdx == -1)
 				return;
 
-			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, device::notification::type::TODAYENERGY, (float)counter2);
+			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, notification::type::TODAYENERGY, (float)counter2);
 			//----------------------------
 		}
 		break;
@@ -10653,7 +10653,7 @@ void MainWorker::decode_CartelectronicTIC(const int HwdID,
 			if (DevRowIdx == -1)
 				return;
 
-			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, device::notification::type::TODAYENERGY, (float)counter2);
+			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, notification::type::TODAYENERGY, (float)counter2);
 			//----------------------------
 		}
 		break;
@@ -10713,7 +10713,7 @@ void MainWorker::decode_CartelectronicTIC(const int HwdID,
 			if (DevRowIdx == -1)
 				return;
 
-			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, device::notification::type::TODAYENERGY, (float)counter2);
+			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, notification::type::TODAYENERGY, (float)counter2);
 			//----------------------------
 		}
 		break;
@@ -10730,7 +10730,7 @@ void MainWorker::decode_CartelectronicTIC(const int HwdID,
 		if (DevRowIdx == -1)
 			return;
 
-		m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, device::notification::type::TODAYENERGY, (float)counter1);
+		m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, notification::type::TODAYENERGY, (float)counter1);
 		//----------------------------
 	}
 	else
@@ -10905,7 +10905,7 @@ bool MainWorker::GetSensorData(const uint64_t idx, int &nValue, std::string &sVa
 	int subType = atoi(sd[1].c_str());
 	nValue = atoi(sd[2].c_str());
 	sValue = sd[3];
-	device::meter::type::value metertype = (device::meter::type::value)atoi(sd[4].c_str());
+	device::tmeter::type::value metertype = (device::tmeter::type::value)atoi(sd[4].c_str());
 
 	//Special cases
 	if ((devType == pTypeP1Power) && (subType == sTypeP1Power))
@@ -11019,19 +11019,19 @@ bool MainWorker::GetSensorData(const uint64_t idx, int &nValue, std::string &sVa
 			float musage = 0;
 			switch (metertype)
 			{
-			case device::meter::type::ENERGY:
-			case device::meter::type::ENERGY_GENERATED:
+			case device::tmeter::type::ENERGY:
+			case device::tmeter::type::ENERGY_GENERATED:
 				musage = float(total_real) / EnergyDivider;
 				sprintf(szTmp, "%.03f", musage);
 				break;
-			case device::meter::type::GAS:
+			case device::tmeter::type::GAS:
 				musage = float(total_real) / GasDivider;
 				sprintf(szTmp, "%.03f", musage);
 				break;
-			case device::meter::type::WATER:
+			case device::tmeter::type::WATER:
 				sprintf(szTmp, "%llu", total_real);
 				break;
-			case device::meter::type::COUNTER:
+			case device::tmeter::type::COUNTER:
 				sprintf(szTmp, "%llu", total_real);
 				break;
 				/*
@@ -11095,7 +11095,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 	uint8_t Unit = atoi(sd[2].c_str());
 	uint8_t dType = atoi(sd[3].c_str());
 	uint8_t dSubType = atoi(sd[4].c_str());
-	device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[5].c_str());
+	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 	std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10].c_str());
 
 	//when asking for Toggle, just switch to the opposite value
@@ -11171,7 +11171,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 
 		if (!GetLightCommand(dType, dSubType, switchtype, switchcmd, lcmd.LIGHTING1.cmnd, options))
 			return false;
-		if (switchtype == device::_switch::type::Doorbell)
+		if (switchtype == device::tswitch::type::Doorbell)
 		{
 			int rnvalue = 0;
 			m_sql.GetPreferencesVar("DoorbellCommand", rnvalue);
@@ -11207,7 +11207,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 
 		if (!GetLightCommand(dType, dSubType, switchtype, switchcmd, lcmd.LIGHTING2.cmnd, options))
 			return false;
-		if (switchtype == device::_switch::type::Doorbell) {
+		if (switchtype == device::tswitch::type::Doorbell) {
 			int rnvalue = 0;
 			m_sql.GetPreferencesVar("DoorbellCommand", rnvalue);
 			if (rnvalue == 0)
@@ -11216,10 +11216,10 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 				lcmd.LIGHTING2.cmnd = light2_sOn;
 			level = 15;
 		}
-		else if (switchtype == device::_switch::type::X10Siren) {
+		else if (switchtype == device::tswitch::type::X10Siren) {
 			level = 15;
 		}
-		else if ((switchtype == device::_switch::type::BlindsPercentage) || (switchtype == device::_switch::type::BlindsPercentageInverted)) {
+		else if ((switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageInverted)) {
 			if (lcmd.LIGHTING2.cmnd == light2_sSetLevel)
 			{
 				if (level == 15)
@@ -11232,7 +11232,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 				}
 			}
 		}
-		else if (switchtype == device::_switch::type::Media)
+		else if (switchtype == device::tswitch::type::Media)
 		{
 			if (switchcmd == "Set Volume") {
 				level = (level < 0) ? 0 : level;
@@ -11244,19 +11244,19 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 
 		lcmd.LIGHTING2.level = (uint8_t)level;
 		//Special Teach-In for EnOcean Dimmers
-		if ((pHardware->HwdType == hardware::type::EnOceanESP2) && (IsTesting) && (switchtype == device::_switch::type::Dimmer))
+		if ((pHardware->HwdType == hardware::type::EnOceanESP2) && (IsTesting) && (switchtype == device::tswitch::type::Dimmer))
 		{
 			CEnOceanESP2 *pEnocean = reinterpret_cast<CEnOceanESP2*>(pHardware);
 			pEnocean->SendDimmerTeachIn((const char*)&lcmd, sizeof(lcmd.LIGHTING1));
 		}
-		else if ((pHardware->HwdType == hardware::type::EnOceanESP3) && (IsTesting) && (switchtype == device::_switch::type::Dimmer))
+		else if ((pHardware->HwdType == hardware::type::EnOceanESP3) && (IsTesting) && (switchtype == device::tswitch::type::Dimmer))
 		{
 			CEnOceanESP3 *pEnocean = reinterpret_cast<CEnOceanESP3*>(pHardware);
 			pEnocean->SendDimmerTeachIn((const char*)&lcmd, sizeof(lcmd.LIGHTING1));
 		}
 		else
 		{
-			if (switchtype != device::_switch::type::Motion) //dont send actual motion off command
+			if (switchtype != device::tswitch::type::Motion) //dont send actual motion off command
 			{
 				if (!WriteToHardware(HardwareID, (const char*)&lcmd, sizeof(lcmd.LIGHTING2)))
 					return false;
@@ -11323,7 +11323,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 
 		if (!GetLightCommand(dType, dSubType, switchtype, switchcmd, lcmd.LIGHTING5.cmnd, options))
 			return false;
-		if (switchtype == device::_switch::type::Doorbell)
+		if (switchtype == device::tswitch::type::Doorbell)
 		{
 			int rnvalue = 0;
 			m_sql.GetPreferencesVar("DoorbellCommand", rnvalue);
@@ -11333,7 +11333,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 				lcmd.LIGHTING5.cmnd = light5_sOn;
 			level = 31;
 		}
-		else if (switchtype == device::_switch::type::X10Siren)
+		else if (switchtype == device::tswitch::type::X10Siren)
 		{
 			level = 31;
 		}
@@ -11477,7 +11477,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 			lcmd.FS20.cmd1 = fs20_sDimlevel_1 + level;
 		}
 
-		if (switchtype != device::_switch::type::Motion) //dont send actual motion off command
+		if (switchtype != device::tswitch::type::Motion) //dont send actual motion off command
 		{
 			if (!WriteToHardware(HardwareID, (const char*)&lcmd, sizeof(lcmd.FS20)))
 				return false;
@@ -11960,12 +11960,12 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 		if (!GetLightCommand(dType, dSubType, switchtype, switchcmd, gswitch.cmnd, options))
 			return false;
 
-		if ((switchtype != device::_switch::type::Selector) && (dSubType != sSwitchGeneralSwitch))
+		if ((switchtype != device::tswitch::type::Selector) && (dSubType != sSwitchGeneralSwitch))
 		{
 			level = (level > 99) ? 99 : level;
 		}
 
-		if (switchtype == device::_switch::type::Doorbell) {
+		if (switchtype == device::tswitch::type::Doorbell) {
 			int rnvalue = 0;
 			m_sql.GetPreferencesVar("DoorbellCommand", rnvalue);
 			if (rnvalue == 0)
@@ -11974,7 +11974,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 				lcmd.LIGHTING2.cmnd = gswitch_sOn;
 			level = 15;
 		}
-		else if (switchtype == device::_switch::type::Selector)
+		else if (switchtype == device::tswitch::type::Selector)
 		{
 			if ((switchcmd == "Set Level") || (switchcmd == "Set Group Level")) {
 				std::map<std::string, std::string> statuses;
@@ -11991,14 +11991,14 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 				}
 			}
 		}
-		else if (((switchtype == device::_switch::type::BlindsPercentage) ||
-			(switchtype == device::_switch::type::BlindsPercentageInverted)) &&
+		else if (((switchtype == device::tswitch::type::BlindsPercentage) ||
+			(switchtype == device::tswitch::type::BlindsPercentageInverted)) &&
 			(gswitch.cmnd == gswitch_sSetLevel) && (level == 100))
 			gswitch.cmnd = gswitch_sOn;
 
 		gswitch.level = (uint8_t)level;
 		gswitch.rssi = 12;
-		if (switchtype != device::_switch::type::Motion) //dont send actual motion off command
+		if (switchtype != device::tswitch::type::Motion) //dont send actual motion off command
 		{
 			if (!WriteToHardware(HardwareID, (const char*)&gswitch, sizeof(_tGeneralSwitch)))
 				return false;
@@ -12050,7 +12050,7 @@ bool MainWorker::SwitchModal(const std::string &idx, const std::string &status, 
 	uint8_t Unit = atoi(sd[2].c_str());
 	uint8_t dType = atoi(sd[3].c_str());
 	uint8_t dSubType = atoi(sd[4].c_str());
-	device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[5].c_str());
+	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 
 	CDomoticzHardwareBase *pHardware = GetHardware(HardwareID);
 	if (pHardware == NULL)
@@ -12110,7 +12110,7 @@ bool MainWorker::SwitchLight(const uint64_t idx, const std::string &switchcmd, c
 
 	//uint8_t dType = atoi(sd[3].c_str());
 	//uint8_t dSubType = atoi(sd[4].c_str());
-	device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[5].c_str());
+	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 	int iOnDelay = atoi(sd[6].c_str());
 	int nValue = atoi(sd[7].c_str());
 	std::string sValue = sd[8].c_str();
@@ -12121,7 +12121,7 @@ bool MainWorker::SwitchLight(const uint64_t idx, const std::string &switchcmd, c
 	if (ooc)//Only on change
 	{
 		int nNewVal = bIsOn ? 1 : 0;//Is that everything we need here
-		if ((switchtype == device::_switch::type::Selector) && (nValue == nNewVal) && (level == atoi(sValue.c_str()))) {
+		if ((switchtype == device::tswitch::type::Selector) && (nValue == nNewVal) && (level == atoi(sValue.c_str()))) {
 			return true;
 		}
 		else if (nValue == nNewVal) {
@@ -12185,7 +12185,7 @@ bool MainWorker::SetSetPoint(const std::string &idx, const float TempValue, cons
 	uint8_t Unit = atoi(sd[2].c_str());
 	uint8_t dType = atoi(sd[3].c_str());
 	uint8_t dSubType = atoi(sd[4].c_str());
-	//device::_switch::type::value switchtype=(device::_switch::type::value)atoi(sd[5].c_str());
+	//device::tswitch::type::value switchtype=(device::tswitch::type::value)atoi(sd[5].c_str());
 
 	if (pHardware->HwdType == hardware::type::EVOHOME_SCRIPT || pHardware->HwdType == hardware::type::EVOHOME_SERIAL || pHardware->HwdType == hardware::type::EVOHOME_WEB || pHardware->HwdType == hardware::type::EVOHOME_TCP)
 	{
@@ -12237,7 +12237,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string> &sd, const float 
 	uint8_t Unit = atoi(sd[2].c_str());
 	uint8_t dType = atoi(sd[3].c_str());
 	uint8_t dSubType = atoi(sd[4].c_str());
-	device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[5].c_str());
+	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 
 	CDomoticzHardwareBase *pHardware = GetHardware(HardwareID);
 	if (pHardware == NULL)
@@ -12784,7 +12784,7 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd)
 			uint8_t dType = atoi(sd2[3].c_str());
 			uint8_t dSubType = atoi(sd2[4].c_str());
 			std::string DeviceName = sd2[8];
-			device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd2[5].c_str());
+			device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd2[5].c_str());
 
 			//Check if this device will not activate a scene
 			uint64_t dID = std::strtoull(sd[0].c_str(), nullptr, 10);
@@ -12812,10 +12812,10 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd)
 			int ilevel = maxDimLevel - 1; // Why -1?
 
 			if (
-				((switchtype == device::_switch::type::Dimmer) ||
-				(switchtype == device::_switch::type::BlindsPercentage) ||
-					(switchtype == device::_switch::type::BlindsPercentageInverted) ||
-					(switchtype == device::_switch::type::Selector)
+				((switchtype == device::tswitch::type::Dimmer) ||
+				(switchtype == device::tswitch::type::BlindsPercentage) ||
+					(switchtype == device::tswitch::type::BlindsPercentageInverted) ||
+					(switchtype == device::tswitch::type::Selector)
 					) && (maxDimLevel != 0))
 			{
 				if (lstatus == "On")
@@ -12826,7 +12826,7 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd)
 						fLevel = 100;
 					ilevel = round(fLevel);
 				}
-				if (switchtype == device::_switch::type::Selector) {
+				if (switchtype == device::tswitch::type::Selector) {
 					if (lstatus != "Set Level") {
 						ilevel = 0;
 					}
@@ -12838,7 +12838,7 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd)
 			}
 
 			int idx = atoi(sd[0].c_str());
-			if (switchtype != device::_switch::type::PushOn)
+			if (switchtype != device::tswitch::type::PushOn)
 			{
 				int delay = (lstatus == "Off") ? offdelay : ondelay;
 				if (m_sql.m_bEnableEventSystem && !bEventTrigger)
@@ -12917,7 +12917,7 @@ void MainWorker::CheckSceneCode(const uint64_t DevRowIdx, const uint8_t dType, c
 					bool bHaveGroupCmd = false;
 					int maxDimLevel = 0;
 
-					GetLightStatus(dType, dSubType, device::_switch::type::OnOff, rnValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
+					GetLightStatus(dType, dSubType, device::tswitch::type::OnOff, rnValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 					std::string switchcmd = (IsLightSwitchOn(lstatus) == true) ? "On" : "Off";
 
 					m_sql.AddTaskItem(_tTaskItem::SwitchSceneEvent(0.2f, ID, switchcmd, "SceneTrigger"));

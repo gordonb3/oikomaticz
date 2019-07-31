@@ -559,19 +559,19 @@ void COpenWebNetTCP::UpdateBlinds(const int who, const int where, const int Comm
 	{
 		if (iLevel < 0)
 		{
-			// Special insert to set SwitchType = device::_switch::type::VenetianBlindsEU
+			// Special insert to set SwitchType = device::tswitch::type::VenetianBlindsEU
 			// so we have stop button!
-			m_sql.InsertDevice(m_HwdID, szIdx, unit, pTypeGeneralSwitch, sSwitchBlindsT1, device::_switch::type::VenetianBlindsEU, 0, "", devname);
+			m_sql.InsertDevice(m_HwdID, szIdx, unit, pTypeGeneralSwitch, sSwitchBlindsT1, device::tswitch::type::VenetianBlindsEU, 0, "", devname);
 		}
 		else
 		{	//is  Advanced motor actuator
-		  //insert to set SwitchType = device::_switch::type::BlindsPercentageInverted
-			m_sql.InsertDevice(m_HwdID, szIdx, unit, pTypeGeneralSwitch, sSwitchBlindsT1, device::_switch::type::BlindsPercentageInverted, 0, "", devname);
+		  //insert to set SwitchType = device::tswitch::type::BlindsPercentageInverted
+			m_sql.InsertDevice(m_HwdID, szIdx, unit, pTypeGeneralSwitch, sSwitchBlindsT1, device::tswitch::type::BlindsPercentageInverted, 0, "", devname);
 		}
 	}
 
 	result = m_sql.safe_query("SELECT nValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%s') AND (Unit==%d) AND (SwitchType==%d)",
-		m_HwdID, szIdx, unit, device::_switch::type::BlindsPercentageInverted);
+		m_HwdID, szIdx, unit, device::tswitch::type::BlindsPercentageInverted);
 
 	_tGeneralSwitch gswitch;
 	if (iLevel < 0 && result.empty()) //is a Normal Frame and device is standard
@@ -708,9 +708,9 @@ void COpenWebNetTCP::UpdateSwitch(const int who, const int where, const int what
 	}
 	else if ((who == WHO_CEN_PLUS_DRY_CONTACT_IR_DETECTION) || (who == (WHO_TEMPERATURE_CONTROL + 500)) || (who == (WHO_TEMPERATURE_CONTROL + 600)))
 	{
-		// Special insert to set SwitchType = device::_switch::type::Contact
+		// Special insert to set SwitchType = device::tswitch::type::Contact
 		// so we have a correct contact device
-		m_sql.InsertDevice(m_HwdID, szIdx, unit, pTypeGeneralSwitch, subtype, device::_switch::type::Contact, 0, "Unavailable", devname);
+		m_sql.InsertDevice(m_HwdID, szIdx, unit, pTypeGeneralSwitch, subtype, device::tswitch::type::Contact, 0, "Unavailable", devname);
 	}
 
 	_tGeneralSwitch gswitch;
@@ -1212,7 +1212,7 @@ bool COpenWebNetTCP::WriteToHardware(const char *pdata, const unsigned char leng
 			sprintf(szIdx, "%02X%02X%02X%02X", ID1, ID2, ID3, ID4);
 
 			result = m_sql.safe_query("SELECT nValue FROM DeviceStatus WHERE (HardwareID==%d)  AND (DeviceID=='%s') AND (SwitchType==%d)",  //*******is there a better method for get
-				m_HwdID, szIdx, device::_switch::type::BlindsPercentageInverted);																																					//*******SUBtype (device::_switch::type::BlindsPercentageInverted) ??
+				m_HwdID, szIdx, device::tswitch::type::BlindsPercentageInverted);																																					//*******SUBtype (device::tswitch::type::BlindsPercentageInverted) ??
 
 			if (result.empty())// from a normal button
 			{

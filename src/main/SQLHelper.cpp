@@ -1766,11 +1766,11 @@ bool CSQLHelper::OpenDatabase()
 		if (dbversion < 94)
 		{
 			std::stringstream szQuery;
-			szQuery << "UPDATE Timers SET [Type]=[Type]+2 WHERE ([Type]>" << device::timer::type::FIXEDDATETIME << ")";
+			szQuery << "UPDATE Timers SET [Type]=[Type]+2 WHERE ([Type]>" << device::ttimer::type::FIXEDDATETIME << ")";
 			query(szQuery.str());
 			szQuery.clear();
 			szQuery.str("");
-			szQuery << "UPDATE SceneTimers SET [Type]=[Type]+2 WHERE ([Type]>" << device::timer::type::FIXEDDATETIME << ")";
+			szQuery << "UPDATE SceneTimers SET [Type]=[Type]+2 WHERE ([Type]>" << device::ttimer::type::FIXEDDATETIME << ")";
 			query(szQuery.str());
 		}
 		if (dbversion < 95)
@@ -1856,7 +1856,7 @@ bool CSQLHelper::OpenDatabase()
 						" WHERE ((([Type]=" << pTypeRFXMeter << ") AND (SubType=" << sTypeRFXMeterCount << "))"
 						" OR (([Type]=" << pTypeGeneral << ") AND (SubType=" << sTypeCounterIncremental << "))"
 						" OR ([Type]=" << pTypeYouLess << "))"
-						" AND ((SwitchType=" << device::meter::type::COUNTER << ") OR (SwitchType=" << device::meter::type::TIME << "))"
+						" AND ((SwitchType=" << device::tmeter::type::COUNTER << ") OR (SwitchType=" << device::tmeter::type::TIME << "))"
 						" AND (HardwareID=" << sd[0] << ")";
 					result1 = query(szQuery1.str());
 					if (!result1.empty())
@@ -1865,14 +1865,14 @@ bool CSQLHelper::OpenDatabase()
 						{
 							sd = itt2;
 							uint64_t devidx = atoi(sd[0].c_str());
-							device::meter::type::value switchType = (device::meter::type::value)atoi(sd[2].c_str());
+							device::tmeter::type::value switchType = (device::tmeter::type::value)atoi(sd[2].c_str());
 
-							if (switchType == device::meter::type::COUNTER)
+							if (switchType == device::tmeter::type::COUNTER)
 							{
 								//Add options to existing SwitchType 'Counter'
 								m_sql.SetDeviceOptions(devidx, m_sql.BuildDeviceOptions("ValueQuantity:Count;ValueUnits:", false));
 							}
-							else if (switchType == device::meter::type::TIME)
+							else if (switchType == device::tmeter::type::TIME)
 							{
 								//Set default options
 								m_sql.SetDeviceOptions(devidx, m_sql.BuildDeviceOptions("ValueQuantity:Time;ValueUnits:Min", false));
@@ -1881,14 +1881,14 @@ bool CSQLHelper::OpenDatabase()
 								szQuery2.clear();
 								szQuery2.str("");
 								szQuery2 << "UPDATE DeviceStatus"
-									" SET SwitchType=" << device::meter::type::COUNTER << " WHERE (ID=" << devidx << ")";
+									" SET SwitchType=" << device::tmeter::type::COUNTER << " WHERE (ID=" << devidx << ")";
 								query(szQuery2.str());
 
 								//Update notifications 'Time' -> 'Counter'
 								szQuery3.clear();
 								szQuery3.str("");
 								szQuery3 << "UPDATE Notifications"
-									" SET Params=REPLACE(Params, '" << oldnotification << ";', '" << device::notification::type::Description(device::notification::type::TODAYCOUNTER, 1) << ";')"
+									" SET Params=REPLACE(Params, '" << oldnotification << ";', '" << notification::type::Description(notification::type::TODAYCOUNTER, 1) << ";')"
 									" WHERE (DeviceRowID=" << devidx << ")";
 								query(szQuery3.str());
 							}
@@ -2666,7 +2666,7 @@ bool CSQLHelper::OpenDatabase()
 								// fix incorrect assigned device number
 								// convert type from lighting2 to general on/off contact
 								safe_query("UPDATE DeviceStatus SET DeviceID='%08X', Type=%d, SubType=%d, SwitchType=%d WHERE (ID=%s)",
-									(x-10), pTypeGeneralSwitch, sSwitchGeneralContact, int(device::_switch::type::Contact),
+									(x-10), pTypeGeneralSwitch, sSwitchGeneralContact, int(device::tswitch::type::Contact),
 									sd[0].c_str());
 							}
 							if ((x % 10) == 6 )
@@ -2675,7 +2675,7 @@ bool CSQLHelper::OpenDatabase()
 								std::string desc = sd[2];
 								stdreplace(desc, "Away", "Within proximity");
 								safe_query("UPDATE DeviceStatus SET DeviceID='%08X', Type=%d, SubType=%d, SwitchType=%d, Name='%s' WHERE (ID=%s)",
-									x, pTypeGeneralSwitch, sSwitchGeneralContact, int(device::_switch::type::Proximity), desc.c_str(),
+									x, pTypeGeneralSwitch, sSwitchGeneralContact, int(device::tswitch::type::Proximity), desc.c_str(),
 									sd[0].c_str());
 							}
 						}
@@ -3268,7 +3268,7 @@ void CSQLHelper::Do_Work()
 
 			if (itt->_ItemType == TITEM_SWITCHCMD)
 			{
-				if (itt->_switchtype == device::_switch::type::Motion)
+				if (itt->_switchtype == device::tswitch::type::Motion)
 				{
 					std::string devname = "";
 					switch (itt->_devType)
@@ -3937,7 +3937,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 			if (DeviceRowIdx != -1)
 			{
 				//Set switch type to selector
-				m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%" PRIu64 ")", device::_switch::type::Selector, DeviceRowIdx);
+				m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%" PRIu64 ")", device::tswitch::type::Selector, DeviceRowIdx);
 				//Set default device options
 				m_sql.SetDeviceOptions(DeviceRowIdx, BuildDeviceOptions("SelectorStyle:0;LevelNames:Off|Level1|Level2|Level3", false));
 			}
@@ -3965,7 +3965,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 			if (DeviceRowIdx != -1)
 			{
 				//Set switch type to dimmer
-				m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%" PRIu64 ")", device::_switch::type::Dimmer, DeviceRowIdx);
+				m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%" PRIu64 ")", device::tswitch::type::Dimmer, DeviceRowIdx);
 			}
 		}
 		break;
@@ -4315,7 +4315,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 		auto options = BuildDeviceOptions(sOption);
 		devname = result[0][1];
 		bDeviceUsed = atoi(result[0][2].c_str()) != 0;
-		device::_switch::type::value stype = (device::_switch::type::value)atoi(result[0][3].c_str());
+		device::tswitch::type::value stype = (device::tswitch::type::value)atoi(result[0][3].c_str());
 		int old_nValue = atoi(result[0][4].c_str());
 		std::string old_sValue = result[0][5];
 		time_t now = time(0);
@@ -4355,10 +4355,10 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 		else
 		{
 			if (
-				(stype == device::_switch::type::DoorContact) ||
-				(stype == device::_switch::type::DoorLock) ||
-				(stype == device::_switch::type::DoorLockInverted) ||
-				(stype == device::_switch::type::Contact)
+				(stype == device::tswitch::type::DoorContact) ||
+				(stype == device::tswitch::type::DoorLock) ||
+				(stype == device::tswitch::type::DoorLockInverted) ||
+				(stype == device::tswitch::type::Contact)
 				)
 			{
 				//Check if we received the same state as before, if yes, don't do anything (only update)
@@ -4461,7 +4461,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 			bool bHaveDimmer = false;
 			std::vector<std::string> sd = result[0];
 			std::string Name = sd[0];
-			device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[1].c_str());
+			device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[1].c_str());
 			float AddjValue = static_cast<float>(atof(sd[2].c_str()));
 			GetLightStatus(devType, subType, switchtype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 
@@ -4469,9 +4469,9 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 			std::string slevel = sd[6];
 
 			if ((bIsLightSwitchOn) && (llevel != 0) && (llevel != 255) ||
-				(switchtype == device::_switch::type::BlindsPercentage) || (switchtype == device::_switch::type::BlindsPercentageInverted))
+				(switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageInverted))
 			{
-				if (switchtype == device::_switch::type::BlindsPercentage || switchtype == device::_switch::type::BlindsPercentageInverted)
+				if (switchtype == device::tswitch::type::BlindsPercentage || switchtype == device::tswitch::type::BlindsPercentageInverted)
 				{
 					if (nValue == light2_sOn)
 						llevel = 100;
@@ -4499,7 +4499,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 					bIsLightSwitchOn = true;//Force use of OnAction for all actions
 
 				}
-				else if (switchtype == device::_switch::type::Selector) {
+				else if (switchtype == device::tswitch::type::Selector) {
 					bIsLightSwitchOn = (llevel > 0) ? true : false;
 					OnAction = GetSelectorSwitchLevelAction(BuildDeviceOptions(Options, true), llevel);
 					OffAction = GetSelectorSwitchLevelAction(BuildDeviceOptions(Options, true), 0);
@@ -4574,10 +4574,10 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 			//Check for notifications
 			if (HWtype != hardware::type::LogitechMediaServer) // Skip notifications for LMS here; is handled by the LMS plug-in
 			{
-				if (switchtype == device::_switch::type::Selector)
-					m_notifications.CheckAndHandleSwitchNotification(ulID, devname, (bIsLightSwitchOn) ? device::notification::type::SWITCH_ON : device::notification::type::SWITCH_OFF, llevel);
+				if (switchtype == device::tswitch::type::Selector)
+					m_notifications.CheckAndHandleSwitchNotification(ulID, devname, (bIsLightSwitchOn) ? notification::type::SWITCH_ON : notification::type::SWITCH_OFF, llevel);
 				else
-					m_notifications.CheckAndHandleSwitchNotification(ulID, devname, (bIsLightSwitchOn) ? device::notification::type::SWITCH_ON : device::notification::type::SWITCH_OFF);
+					m_notifications.CheckAndHandleSwitchNotification(ulID, devname, (bIsLightSwitchOn) ? notification::type::SWITCH_ON : notification::type::SWITCH_OFF);
 			}
 			if (bIsLightSwitchOn)
 			{
@@ -4586,14 +4586,14 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 					bool bAdd2DelayQueue = false;
 					int cmd = 0;
 					if (
-						(switchtype == device::_switch::type::OnOff) ||
-						(switchtype == device::_switch::type::Motion) ||
-						(switchtype == device::_switch::type::Dimmer) ||
-						(switchtype == device::_switch::type::PushOn) ||
-						(switchtype == device::_switch::type::DoorContact) ||
-						(switchtype == device::_switch::type::DoorLock) ||
-						(switchtype == device::_switch::type::DoorLockInverted) ||
-						(switchtype == device::_switch::type::Selector)
+						(switchtype == device::tswitch::type::OnOff) ||
+						(switchtype == device::tswitch::type::Motion) ||
+						(switchtype == device::tswitch::type::Dimmer) ||
+						(switchtype == device::tswitch::type::PushOn) ||
+						(switchtype == device::tswitch::type::DoorContact) ||
+						(switchtype == device::tswitch::type::DoorLock) ||
+						(switchtype == device::tswitch::type::DoorLockInverted) ||
+						(switchtype == device::tswitch::type::Selector)
 						)
 					{
 						switch (devType)
@@ -5427,7 +5427,7 @@ bool CSQLHelper::UpdateCalendarMeter(
 	std::vector<std::string> sd = result[0];
 	uint64_t DeviceRowID = std::strtoull(sd[0].c_str(), nullptr, 10);
 	//std::string devname = sd[1];
-	//device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[2].c_str());
+	//device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[2].c_str());
 
 	if (shortLog)
 	{
@@ -6170,23 +6170,23 @@ void CSQLHelper::AddCalendarUpdateMeter()
 		//unsigned char Unit = atoi(sd[3].c_str());
 		unsigned char devType = atoi(sd[4].c_str());
 		unsigned char subType = atoi(sd[5].c_str());
-		device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[6].c_str());
-		device::meter::type::value metertype = (device::meter::type::value)switchtype;
+		device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[6].c_str());
+		device::tmeter::type::value metertype = (device::tmeter::type::value)switchtype;
 
 		float tGasDivider = GasDivider;
 
 		if (devType == pTypeP1Power)
 		{
-			metertype = device::meter::type::ENERGY;
+			metertype = device::tmeter::type::ENERGY;
 		}
 		else if (devType == pTypeP1Gas)
 		{
-			metertype = device::meter::type::GAS;
+			metertype = device::tmeter::type::GAS;
 			tGasDivider = 1000.0f;
 		}
 		else if ((devType == pTypeRego6XXValue) && (subType == sTypeRego6XXCounter))
 		{
-			metertype = device::meter::type::COUNTER;
+			metertype = device::tmeter::type::COUNTER;
 		}
 
 
@@ -6236,26 +6236,26 @@ void CSQLHelper::AddCalendarUpdateMeter()
 				musage = 0;
 				switch (metertype)
 				{
-				case device::meter::type::ENERGY:
-				case device::meter::type::ENERGY_GENERATED:
+				case device::tmeter::type::ENERGY:
+				case device::tmeter::type::ENERGY_GENERATED:
 					musage = float(total_real) / EnergyDivider;
 					if (musage != 0)
-						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, device::notification::type::TODAYENERGY, musage);
+						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, notification::type::TODAYENERGY, musage);
 					break;
-				case device::meter::type::GAS:
+				case device::tmeter::type::GAS:
 					musage = float(total_real) / tGasDivider;
 					if (musage != 0)
-						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, device::notification::type::TODAYGAS, musage);
+						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, notification::type::TODAYGAS, musage);
 					break;
-				case device::meter::type::WATER:
+				case device::tmeter::type::WATER:
 					musage = float(total_real) / WaterDivider;
 					if (musage != 0)
-						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, device::notification::type::TODAYGAS, musage);
+						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, notification::type::TODAYGAS, musage);
 					break;
-				case device::meter::type::COUNTER:
+				case device::tmeter::type::COUNTER:
 					musage = float(total_real);
 					if (musage != 0)
-						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, device::notification::type::TODAYCOUNTER, musage);
+						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, notification::type::TODAYCOUNTER, musage);
 					break;
 				default:
 					//Unhandled
@@ -6366,8 +6366,8 @@ void CSQLHelper::AddCalendarUpdateMultiMeter()
 		//unsigned char Unit = atoi(sd[3].c_str());
 		unsigned char devType = atoi(sd[4].c_str());
 		unsigned char subType = atoi(sd[5].c_str());
-		//device::_switch::type::value switchtype=(device::_switch::type::value) atoi(sd[6].c_str());
-		//device::meter::type::value metertype=(device::meter::type::value)switchtype;
+		//device::tswitch::type::value switchtype=(device::tswitch::type::value) atoi(sd[6].c_str());
+		//device::tmeter::type::value metertype=(device::tmeter::type::value)switchtype;
 
 		result = safe_query(
 			"SELECT MIN(Value1), MAX(Value1), MIN(Value2), MAX(Value2), MIN(Value3), MAX(Value3), MIN(Value4), MAX(Value4), MIN(Value5), MAX(Value5), MIN(Value6), MAX(Value6) FROM MultiMeter WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
@@ -6428,7 +6428,7 @@ void CSQLHelper::AddCalendarUpdateMultiMeter()
 			if (devType == pTypeP1Power)
 			{
 				float musage = (total_real[0] + total_real[4]) / EnergyDivider;
-				m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, device::notification::type::TODAYENERGY, musage);
+				m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, notification::type::TODAYENERGY, musage);
 			}
 			/*
 			//Insert the last (max) counter values into the table to get the "today" value correct.
@@ -7108,7 +7108,7 @@ void CSQLHelper::CheckSceneStatus(const uint64_t Idx)
 		//unsigned char Unit=atoi(sd[2].c_str());
 		unsigned char dType = atoi(sd[3].c_str());
 		unsigned char dSubType = atoi(sd[4].c_str());
-		device::_switch::type::value switchtype = (device::_switch::type::value)atoi(sd[5].c_str());
+		device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 
 		std::string lstatus = "";
 		int llevel = 0;
@@ -8564,20 +8564,20 @@ float CSQLHelper::GetCounterDivider(const int metertype, const int dType, const 
 		int tValue;
 		switch (metertype)
 		{
-		case device::meter::type::ENERGY:
-		case device::meter::type::ENERGY_GENERATED:
+		case device::tmeter::type::ENERGY:
+		case device::tmeter::type::ENERGY_GENERATED:
 			if (GetPreferencesVar("MeterDividerEnergy", tValue))
 			{
 				divider = float(tValue);
 			}
 			break;
-		case device::meter::type::GAS:
+		case device::tmeter::type::GAS:
 			if (GetPreferencesVar("MeterDividerGas", tValue))
 			{
 				divider = float(tValue);
 			}
 			break;
-		case device::meter::type::WATER:
+		case device::tmeter::type::WATER:
 			if (GetPreferencesVar("MeterDividerWater", tValue))
 			{
 				divider = float(tValue);

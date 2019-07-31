@@ -103,16 +103,16 @@ void CHEOS::ParseLine()
 										std::string pid = SplitMessagePlayer[1];
 										std::string state = SplitMessageState[1];
 
-										device::media::status::value nStatus = device::media::status::UNKNOWN;
+										device::tmedia::status::value nStatus = device::tmedia::status::UNKNOWN;
 
 										if (state == "play")
-											nStatus = device::media::status::PLAYING;
+											nStatus = device::tmedia::status::PLAYING;
 										else if (state == "pause")
-											nStatus = device::media::status::PAUSED;
+											nStatus = device::tmedia::status::PAUSED;
 										else if (state == "stop")
-											nStatus = device::media::status::STOPPED;
+											nStatus = device::tmedia::status::STOPPED;
 										else
-											nStatus = device::media::status::ON;
+											nStatus = device::tmedia::status::ON;
 
 										std::string	sStatus = "";
 
@@ -205,16 +205,16 @@ void CHEOS::ParseLine()
 									std::string pid = SplitMessagePlayer[1];
 									std::string state = SplitMessageState[1];
 
-									device::media::status::value nStatus = device::media::status::UNKNOWN;
+									device::tmedia::status::value nStatus = device::tmedia::status::UNKNOWN;
 
 									if (state == "play")
-										nStatus = device::media::status::PLAYING;
+										nStatus = device::tmedia::status::PLAYING;
 									else if (state == "pause")
-										nStatus = device::media::status::PAUSED;
+										nStatus = device::tmedia::status::PAUSED;
 									else if (state == "stop")
-										nStatus = device::media::status::STOPPED;
+										nStatus = device::tmedia::status::STOPPED;
 									else
-										nStatus = device::media::status::ON;
+										nStatus = device::tmedia::status::ON;
 
 									std::string	sStatus = "";
 
@@ -543,16 +543,16 @@ void CHEOS::Do_Work()
 
 }
 
-device::notification::type::value	CHEOS::NotificationType(device::media::status::value nStatus)
+notification::type::value	CHEOS::NotificationType(device::tmedia::status::value nStatus)
 {
 	switch (nStatus)
 	{
-	case device::media::status::OFF:		return device::notification::type::SWITCH_OFF;
-	case device::media::status::ON:		return device::notification::type::SWITCH_ON;
-	case device::media::status::PAUSED:	return device::notification::type::PAUSED;
-	case device::media::status::STOPPED:	return device::notification::type::STOPPED;
-	case device::media::status::PLAYING:	return device::notification::type::PLAYING;
-	default:			return device::notification::type::SWITCH_OFF;
+	case device::tmedia::status::OFF:		return notification::type::SWITCH_OFF;
+	case device::tmedia::status::ON:		return notification::type::SWITCH_ON;
+	case device::tmedia::status::PAUSED:	return notification::type::PAUSED;
+	case device::tmedia::status::STOPPED:	return notification::type::STOPPED;
+	case device::tmedia::status::PLAYING:	return notification::type::PLAYING;
+	default:			return notification::type::SWITCH_OFF;
 	}
 }
 
@@ -685,7 +685,7 @@ bool CHEOS::WriteInt(const std::string &sendStr)
 	return true;
 }
 
-void CHEOS::UpdateNodeStatus(const std::string &DevID, const device::media::status::value nStatus, const std::string &sStatus)
+void CHEOS::UpdateNodeStatus(const std::string &DevID, const device::tmedia::status::value nStatus, const std::string &sStatus)
 {
 	std::vector<std::vector<std::string> > result;
 
@@ -697,7 +697,7 @@ void CHEOS::UpdateNodeStatus(const std::string &DevID, const device::media::stat
 	sprintf(szLastUpdate, "%04d-%02d-%02d %02d:%02d:%02d", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
 
 	result = m_sql.safe_query("UPDATE DeviceStatus SET nValue=%d, sValue='%q', LastUpdate='%q' WHERE (HardwareID == %d) AND (DeviceID == '%q') AND (Unit == 1) AND (SwitchType == %d)",
-		int(nStatus), sStatus.c_str(), szLastUpdate, m_HwdID, DevID.c_str(), device::_switch::type::Media);
+		int(nStatus), sStatus.c_str(), szLastUpdate, m_HwdID, DevID.c_str(), device::tswitch::type::Media);
 }
 
 void CHEOS::UpdateNodesStatus(const std::string &DevID, const std::string &sStatus)
@@ -712,7 +712,7 @@ void CHEOS::UpdateNodesStatus(const std::string &DevID, const std::string &sStat
 	sprintf(szLastUpdate, "%04d-%02d-%02d %02d:%02d:%02d", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
 
 	result = m_sql.safe_query("UPDATE DeviceStatus SET sValue='%q', LastUpdate='%q' WHERE (HardwareID == %d) AND (DeviceID == '%q') AND (Unit == 1) AND (SwitchType == %d)",
-		sStatus.c_str(), szLastUpdate, m_HwdID, DevID.c_str(), device::_switch::type::Media);
+		sStatus.c_str(), szLastUpdate, m_HwdID, DevID.c_str(), device::tswitch::type::Media);
 }
 
 void CHEOS::AddNode(const std::string &Name, const std::string &PlayerID)
@@ -726,7 +726,7 @@ void CHEOS::AddNode(const std::string &Name, const std::string &PlayerID)
 		return;
 	}
 
-	m_sql.InsertDevice(m_HwdID, PlayerID.c_str(), 1, pTypeLighting2, sTypeAC, device::_switch::type::Media, 0, "Unavailable", Name, 12, 255, 1);
+	m_sql.InsertDevice(m_HwdID, PlayerID.c_str(), 1, pTypeLighting2, sTypeAC, device::tswitch::type::Media, 0, "Unavailable", Name, 12, 255, 1);
 
 	ReloadNodes();
 }
@@ -816,7 +816,7 @@ void CHEOS::ReloadNodes()
 			pnode.ID = atoi(sd[0].c_str());
 			pnode.DevID = atoi(sd[1].c_str());
 			pnode.Name = sd[2];
-			pnode.nStatus = (device::media::status::value)atoi(sd[3].c_str());
+			pnode.nStatus = (device::tmedia::status::value)atoi(sd[3].c_str());
 			pnode.sStatus = sd[4];
 			pnode.LastOK = mytime(NULL);
 
@@ -883,12 +883,12 @@ namespace http {
 
 			if (result.size() == 1)
 			{
-				device::_switch::type::value	sType = (device::_switch::type::value)atoi(result[0][0].c_str());
+				device::tswitch::type::value	sType = (device::tswitch::type::value)atoi(result[0][0].c_str());
 				int PlayerID = atoi(result[0][1].c_str());
 				hardware::type::value	hType = (hardware::type::value)atoi(result[0][2].c_str());
 				//int HwID = atoi(result[0][3].c_str());
 				// Is the device a media Player?
-				if (sType == device::_switch::type::Media)
+				if (sType == device::tswitch::type::Media)
 				{
 					switch (hType) {
 					case hardware::type::HEOS:

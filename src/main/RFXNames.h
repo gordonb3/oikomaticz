@@ -30,7 +30,7 @@ int Lookup_ZWave_Thermostat_Fan_Modes(const std::string &sMode);
 void GetLightStatus(
 	const unsigned char dType,
 	const unsigned char dSubType,
-	const device::_switch::type::value switchtype,
+	const device::tswitch::type::value switchtype,
 	const unsigned char nValue,
 	const std::string &sValue,
 	std::string &lstatus,
@@ -46,7 +46,7 @@ void GetSelectorSwitchStatuses(const std::map<std::string, std::string> & option
 bool GetLightCommand(
 	const unsigned char dType,
 	const unsigned char dSubType,
-	const device::_switch::type::value switchtype,
+	const device::tswitch::type::value switchtype,
 	std::string switchcmd,
 	unsigned char &cmd,
 	const std::map<std::string, std::string> & options
