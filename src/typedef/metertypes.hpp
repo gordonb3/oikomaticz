@@ -49,6 +49,29 @@ namespace unit {
 }; // namespace unit
 }; // namespace temperature
 
+namespace COSEM { // Companion Specification for Energy Metering
+namespace OBIS { // Object identification system
+	enum type {
+		header = 0,			// 0
+		version,			// 1
+		electricityUsed,		// 2
+		electricityDelivered,		// 3
+		activeTariff,			// 5
+		instantaneousAmpsUsage,		// 5
+		instantaneousAmpsDelivery,	// 6
+		instantaneousVoltage,		// 7
+		activePowerUsage,		// 8
+		activePowerDelivery,		// 9
+		mBusDeviceType,			//10
+		gasTimestampDSMR2,		//11
+		gasUsageDSMR2,			//12
+		gasUsageDSMR4,			//13
+		endOfTelegram			//14
+	};
+
+}; // namespace OBIS {
+}; // namespace COSEM {
+
 }; // namespace meter
 }; // namespace device
 
