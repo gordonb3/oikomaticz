@@ -30,7 +30,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#define DB_VERSION 135
+#define DB_VERSION 136
 
 extern http::server::CWebServerHelper m_webservers;
 extern std::string szWWWFolder;
@@ -2638,7 +2638,52 @@ bool CSQLHelper::OpenDatabase()
 				}
 			}
 		}
+		if (dbversion < 136)
+		{
+			// patch for Honeywell Lyric 
+			std::vector<std::vector<std::string> > hwresult;
+			hwresult = safe_query("select ID from Hardware where Type=%d", hardware::type::HoneywellLyric);
+			if (!hwresult.empty())
+			{
+				std::vector<std::vector<std::string> > devresult;
+				for (const auto & itt : hwresult)
+				{
+					std::vector<std::string> sd = itt;
+					devresult = safe_query("select ID, DeviceID, Name from DeviceStatus where (HardwareID=%s) and (Type=%d) and (SubType=%d) and Description='' order by DeviceID", sd[0].c_str(), pTypeLighting2, sTypeAC);
 
+					if (!devresult.empty())
+					{
+						for (const auto & itt2 : devresult)
+						{
+							sd = itt2;
+							unsigned int x;   
+							std::stringstream ss;
+							ss << std::hex << sd[1];
+							ss >> x;
+
+							if ((x % 10) == 5 )
+							{
+								// fix incorrect assigned device number
+								// convert type from lighting2 to general on/off contact
+								safe_query("UPDATE DeviceStatus SET DeviceID='%08X', Type=%d, SubType=%d, SwitchType=%d WHERE (ID=%s)",
+									(x-10), pTypeGeneralSwitch, sSwitchGeneralContact, int(device::_switch::type::Contact),
+									sd[0].c_str());
+							}
+							if ((x % 10) == 6 )
+							{
+								// convert type from lighting2 to general on/off contact
+								std::string desc = sd[2];
+								stdreplace(desc, "Away", "Within proximity");
+								safe_query("UPDATE DeviceStatus SET DeviceID='%08X', Type=%d, SubType=%d, SwitchType=%d, Name='%s' WHERE (ID=%s)",
+									x, pTypeGeneralSwitch, sSwitchGeneralContact, int(device::_switch::type::Proximity), desc.c_str(),
+									sd[0].c_str());
+							}
+						}
+					}
+				}
+				
+			}
+		}
 	}
 	else if (bNewInstall)
 	{

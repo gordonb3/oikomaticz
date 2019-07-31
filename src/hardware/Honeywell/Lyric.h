@@ -20,6 +20,7 @@ public:
 private:
 	void SetSetpoint(const int idx, const float temp, const int nodeid);
 	void SetPauseStatus(const int idx, bool bHeating, const int nodeid);
+	void SendOnOffSensor(const int NodeID, const device::_switch::type::value switchtype, const bool SwitchState, const std::string &defaultname);
 	void SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname);
 	bool refreshToken();
 	void Init();

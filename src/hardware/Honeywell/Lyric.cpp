@@ -12,10 +12,13 @@
 #include "webserver/Base64.h"
 
 
-#ifdef OFFLINE
+#ifdef LYRIC_OFFLINE
 #include <iostream>
 #include <fstream>
 #endif
+
+
+#define HEATING_IMAGE_ID 15	// row index inside 'switch_icons.txt'
 
 
 #define round(a) ( int ) ( a + .5 )
@@ -31,7 +34,7 @@ const std::string kHeatingDesc = "Heating ({devicename})";
 const std::string kOperationStatusDesc = "Heating state ({devicename})";
 const std::string kOutdoorTempDesc = "Outdoor temperature ({devicename})";
 const std::string kRoomTempDesc = "Room temperature ({devicename})";
-const std::string kAwayDesc = "Away ({name})";
+const std::string kWithinFenceDesc = "Within proximity ({name})";
 
 extern http::server::CWebServerHelper m_webservers;
 
@@ -74,6 +77,9 @@ void Lyric::Init()
 
 bool Lyric::StartHardware()
 {
+#ifdef LYRIC_OFFLINE
+	_log.Log(LOG_STATUS, "Honeywell Lyric: using offline data");
+#endif
 	RequestStart();
 
 	Init();
@@ -151,6 +157,7 @@ bool Lyric::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 		int nodeID = (int)therm->id4;
 		int devID = nodeID / 10;
 		SetSetpoint(devID, therm->temp, nodeID);
+		return true;
 	}
 	return false;
 }
@@ -160,7 +167,7 @@ bool Lyric::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 //
 bool Lyric::refreshToken()
 {
-#ifdef OFFLINE
+#ifdef LYRIC_OFFLINE
 	return true;
 #endif
 
@@ -205,20 +212,20 @@ bool Lyric::refreshToken()
 	std::string at = root["access_token"].asString();
 	std::string rt = root["refresh_token"].asString();
 	std::string ei = root["expires_in"].asString();
-	if (at.length() && rt.length() && ei.length()) {
-		int expires_in = std::stoi(ei);
-		mTokenExpires = mytime(NULL) + (expires_in > 0 ? expires_in : 600) - HWAPITIMEOUT;
-		mAccessToken = at;
-		mRefreshToken = rt;
-		_log.Log(LOG_NORM, "Honeywell Lyric: Storing received access & refresh token. Token expires after %d seconds.",expires_in);
-		m_sql.safe_query("UPDATE Hardware SET Username='%q', Password='%q' WHERE (ID==%d)", mAccessToken.c_str(), mRefreshToken.c_str(), m_HwdID);
-		mSessionHeaders.clear();
-		mSessionHeaders.push_back("Authorization:Bearer " + mAccessToken);
-		mSessionHeaders.push_back("Content-Type: application/json");
-	}
-	else
+	if (at.empty() || rt.empty() || ei.empty()) {
+		_log.Log(LOG_ERROR, "Honeywell Lyric: Unhandled response from server...");
 		return false;
+	}
 
+	int expires_in = std::stoi(ei);
+	mTokenExpires = mytime(NULL) + (expires_in > 0 ? expires_in : 600) - HWAPITIMEOUT;
+	mAccessToken = at;
+	mRefreshToken = rt;
+	_log.Log(LOG_NORM, "Honeywell Lyric: Storing received access & refresh token. Token expires after %d seconds.",expires_in);
+	m_sql.safe_query("UPDATE Hardware SET Username='%q', Password='%q' WHERE (ID==%d)", mAccessToken.c_str(), mRefreshToken.c_str(), m_HwdID);
+	mSessionHeaders.clear();
+	mSessionHeaders.push_back("Authorization:Bearer " + mAccessToken);
+	mSessionHeaders.push_back("Content-Type: application/json");
 	return true;
 }
 
@@ -227,6 +234,7 @@ bool Lyric::refreshToken()
 //
 void Lyric::GetThermostatData()
 {
+#ifndef LYRIC_OFFLINE
 	if (!refreshToken())
 		return;
 
@@ -234,7 +242,6 @@ void Lyric::GetThermostatData()
 	std::string sURL = HONEYWELL_LOCATIONS_PATH;
 	stdreplace(sURL, "{apikey}", mApiKey);
 	
-#ifndef OFFLINE
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::GET(sURL, mSessionHeaders, sResult)) {
@@ -242,15 +249,24 @@ void Lyric::GetThermostatData()
 		return;
 	}
 #else
-	std::ifstream myfile ("/tmp/lyricsampledata.json");
+// require dirty hack to use command line define as a string
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define FNAME TOSTRING(LYRIC_OFFLINE)
+
+	std::string sResult;
+	std::ifstream myfile (FNAME);
 	if ( myfile.is_open() )
 	{
 		std::string line;
 		while ( getline(myfile,line) )
-		{
 			sResult.append(line);
-		}
 		myfile.close();
+	}
+	else
+	{
+		_log.Log(LOG_ERROR, "Honeywell Lyric: Error getting offline thermostat data from file %s!", FNAME);
+		return;
 	}
 #endif
 
@@ -323,39 +339,83 @@ void Lyric::GetThermostatData()
 			else
 				SendSetPointSensor((uint8_t)(10 * devNr + 4), temperature, desc);
 
-			devNr++;
-			
-// FIXME: devNr is already incremented, so within the used logic this ends up belonging to the next location
 			std::string operationstatus = (*currentDevice)["operationStatus"]["mode"].asString();
 			bool bStatus = (operationstatus != "EquipmentOff");
 			desc = kOperationStatusDesc;
 			stdreplace(desc, "{devicename}", deviceName);
-			SendSwitch(10 * devNr + 5, 1, 255, bStatus, 0, desc);
+			SendOnOffSensor(10 * devNr + 5, device::_switch::type::OnOff, bStatus, desc);
+
+			devNr++;
 		}
 
-
-// FIXME: this is wrong as multiple geofences for a single location will write to the same switch ID
 		bool geoFenceEnabled = (*jlocation)["geoFenceEnabled"].asBool();
 		if (geoFenceEnabled)
 		{
-			
 			Json::Value* geofences = &(*jlocation)["geoFences"];
 			std::string locationName = (*jlocation)["name"].asString();
-			bool bAway = true;
+			bool bWithinFence = false;
 			for (size_t geofCnt = 0; geofCnt < (*geofences).size(); geofCnt++)
 			{
 				int withinFence = (*geofences)[(int)geofCnt]["geoOccupancy"]["withinFence"].asInt();
 				if (withinFence > 0) {
-					bAway = false;
+					bWithinFence = true;
 					break;
 				}
 			}
-			std::string desc = kAwayDesc;
+			std::string desc = kWithinFenceDesc;
 			stdreplace(desc, "{name}", locationName);
-			SendSwitch(10 * devNr + 6, 1, 255, bAway, 0, desc);
+			SendOnOffSensor(10 * devNr + 6, device::_switch::type::Proximity, bWithinFence, desc);
 		}
 	}
 }
+
+
+void Lyric::SendOnOffSensor(const int NodeID, const device::_switch::type::value switchtype, const bool SwitchState, const std::string &defaultname)
+{
+	char szID[10];
+	sprintf(szID, "%08X", (unsigned int)NodeID);
+	unsigned char unit = 1;
+
+	// Get current sensor state from database
+	std::vector<std::vector<std::string> > result;
+	result = m_sql.safe_query("SELECT ID, nValue FROM DeviceStatus WHERE (HardwareID=%d) AND (DeviceID='%q') AND (Unit=%d) AND (Type=%d) AND (SubType=%d) AND (SwitchType=%d)",
+		m_HwdID, szID, int(unit), pTypeGeneralSwitch, sSwitchGeneralContact, (int)switchtype);
+
+	// Only update if the new state is different
+	if (result.empty() || ((result[0][1] == "1") != SwitchState))
+	{
+		GeneralSwitch gSwitch;
+		gSwitch.type = pTypeGeneralSwitch;
+		gSwitch.subtype = sSwitchGeneralContact;
+		gSwitch.id = NodeID;
+		gSwitch.unitcode = unit;
+		gSwitch.cmnd = SwitchState? 1:0;
+		gSwitch.level = 0;
+		sDecodeRXMessage(this, (const unsigned char *)&gSwitch, defaultname.c_str(), 255);
+	}
+
+	if (result.empty())
+	{
+		// wait a maximum of 1 second for mainworker to finish adding the device
+		int i=10;
+		while (i && result.empty())
+		{
+			result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (DeviceID='%q') AND (Unit=%d) AND (Type=%d) AND (SubType=%d)",
+				m_HwdID, szID, int(unit), pTypeGeneralSwitch, sSwitchGeneralContact);
+			if (result.empty())
+			{
+				sleep_milliseconds(100);
+				i--;
+			}
+		}
+
+		//Set SwitchType and CustomImage
+		int iconID = HEATING_IMAGE_ID;
+		m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d, CustomImage=%d WHERE (HardwareID=%d) AND (DeviceID='%q')",
+			(int)switchtype, iconID, m_HwdID, szID);
+	}
+}
+
 
 //
 // send the temperature from Honeywell Lyric to domoticz backend
@@ -363,6 +423,7 @@ void Lyric::GetThermostatData()
 void Lyric::SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
 {
 	tThermostat thermos;
+	thermos.type = pTypeThermostat;
 	thermos.subtype = sTypeThermSetpoint;
 	thermos.id1 = 0;
 	thermos.id2 = 0;
@@ -380,10 +441,12 @@ void Lyric::SendSetPointSensor(const unsigned char Idx, const float Temp, const 
 //
 void Lyric::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid*/)
 {
+#ifndef LYRIC_OFFLINE
 	if (!refreshToken()) {
 		_log.Log(LOG_ERROR,"Honeywell Lyric: No token available. Failed setting thermostat data");
 		return;
 	}
+#endif
 
 	std::string url = HONEYWELL_UPDATE_THERMOSTAT;
 	std::string deviceID = (*m_lyricDevices[idx].deviceInfo)["deviceID"].asString();
@@ -399,8 +462,8 @@ void Lyric::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid*/)
 	reqRoot["thermostatSetpointStatus"] = "TemporaryHold";
 	Json::FastWriter writer;
 
+#ifndef LYRIC_OFFLINE
 	std::string sResult;
-#ifndef OFFLINE
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::POST(url, writer.write(reqRoot), mSessionHeaders, sResult, true, true)) {
@@ -408,6 +471,7 @@ void Lyric::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid*/)
 		return;
 	}
 #endif
+
 	std::string desc = kHeatingDesc;
 	stdreplace(desc, "{devicename}", m_lyricDevices[idx].deviceName);
 	SendSwitch(10 * idx + 3, 1, 255, bHeating, 0, desc);
@@ -418,11 +482,12 @@ void Lyric::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid*/)
 //
 void Lyric::SetSetpoint(const int idx, const float temp, const int /*nodeid*/)
 {
-
+#ifndef LYRIC_OFFLINE
 	if (!refreshToken()) {
 		_log.Log(LOG_ERROR, "Honeywell Lyric: No token available. Error setting thermostat data!");
 		return;
 	}
+#endif
 
 	std::string url = HONEYWELL_UPDATE_THERMOSTAT;
 	std::string deviceID = (*m_lyricDevices[idx].deviceInfo)["deviceID"].asString();
@@ -441,11 +506,8 @@ void Lyric::SetSetpoint(const int idx, const float temp, const int /*nodeid*/)
 	reqRoot["thermostatSetpointStatus"] = "TemporaryHold";
 	Json::FastWriter writer;
 
-
-std::cout << writer.write(reqRoot);
-
+#ifndef LYRIC_OFFLINE
 	std::string sResult;
-#ifndef OFFLINE
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::POST(url, writer.write(reqRoot), mSessionHeaders, sResult, true, true)) {
@@ -453,10 +515,13 @@ std::cout << writer.write(reqRoot);
 		return;
 	}
 #endif
+
+	// register the new setpoint in our database
 	std::string desc = kHeatSetPointDesc;
 	stdreplace(desc, "{devicename}", m_lyricDevices[idx].deviceName);
 	SendSetPointSensor((uint8_t)(10 * idx + 4), temp, desc);
 
+	// this also turns on the heating, so let the corresponding switch reflect that
 	desc = kHeatingDesc;
 	stdreplace(desc, "{devicename}", m_lyricDevices[idx].deviceName);
 	SendSwitch(10 * idx + 3, 1, 255, true, 0, desc);

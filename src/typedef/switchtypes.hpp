@@ -6,27 +6,28 @@ namespace _switch {
 namespace type {
 
 enum value {
-	OnOff = 0,			//0
-	Doorbell,			//1
-	Contact,			//2
-	Blinds,				//3
-	X10Siren,			//4
-	SMOKEDETECTOR,			//5
-	BlindsInverted,			//6
-	Dimmer,				//7
-	Motion,				//8
-	PushOn,				//9
-	PushOff,			//10
-	DoorContact,			//11
-	Dusk,				//12
-	BlindsPercentage,		//13
-	VenetianBlindsUS,		//14
-	VenetianBlindsEU,		//15
-	BlindsPercentageInverted,	//16
-	Media,				//17
-	Selector,			//18
-	DoorLock,			//19
-	DoorLockInverted,		//20
+	OnOff = 0,			//  0
+	Doorbell,			//  1
+	Contact,			//  2
+	Blinds,				//  3
+	X10Siren,			//  4
+	SMOKEDETECTOR,			//  5
+	BlindsInverted,			//  6
+	Dimmer,				//  7
+	Motion,				//  8
+	PushOn,				//  9
+	PushOff,			// 10
+	DoorContact,			// 11
+	Dusk,				// 12
+	BlindsPercentage,		// 13
+	VenetianBlindsUS,		// 14
+	VenetianBlindsEU,		// 15
+	BlindsPercentageInverted,	// 16
+	Media,				// 17
+	Selector,			// 18
+	DoorLock,			// 19
+	DoorLockInverted,		// 20
+	Proximity,			// 21
 	END
 };
 
@@ -58,6 +59,7 @@ const char *Description(const int sType)
 		{ device::_switch::type::Selector,			"Selector" },
 		{ device::_switch::type::DoorLock,			"Door Lock" },
 		{ device::_switch::type::DoorLockInverted,		"Door Lock Inverted" },
+		{ device::_switch::type::Proximity,			"Proximity Sensor" },
 		{ 0, NULL, NULL }
 	};
 	return findTableIDSingle1(Table, sType);
