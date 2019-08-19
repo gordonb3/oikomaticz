@@ -472,6 +472,36 @@ namespace Plugins {
 			SubType = sSwitchTypeSelector;
 			SwitchType = device::tswitch::type::Selector;
 		}
+		else if (sTypeName == "Push On")
+		{
+			Type = pTypeGeneralSwitch;
+			SubType = sSwitchGeneralSwitch;
+			SwitchType = device::tswitch::type::PushOn;
+		}
+		else if (sTypeName == "Push Off")
+		{
+			Type = pTypeGeneralSwitch;
+			SubType = sSwitchGeneralSwitch;
+			SwitchType = device::tswitch::type::PushOff;
+		}
+		else if (sTypeName == "Contact")
+		{
+			Type = pTypeGeneralSwitch;
+			SubType = sSwitchGeneralSwitch;
+			SwitchType = device::tswitch::type::Contact;
+		}
+		else if (sTypeName == "Dimmer")
+		{
+			Type = pTypeGeneralSwitch;
+			SubType = sSwitchGeneralSwitch;
+			SwitchType = device::tswitch::type::Dimmer;
+		}
+		else if (sTypeName == "Motion")
+		{
+			Type = pTypeGeneralSwitch;
+			SubType = sSwitchGeneralSwitch;
+			SwitchType = device::tswitch::type::Motion;
+		}
 		else if (sTypeName == "Custom")
 		{
 			SubType = sTypeCustom;

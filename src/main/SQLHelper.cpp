@@ -4435,6 +4435,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 	case pTypeHomeConfort:
 	case pTypeFS20:
 	case pTypeRadiator1:
+	case pTypeHunter:
 		if ((devType == pTypeRadiator1) && (subType != sTypeSmartwaresSwitchRadiator))
 			break;
 		//Add Lighting log
@@ -7683,7 +7684,7 @@ void CSQLHelper::CheckDeviceTimeout()
 	result = safe_query(
 		"SELECT ID, Name, LastUpdate FROM DeviceStatus WHERE (Used!=0 AND LastUpdate<='%04d-%02d-%02d %02d:%02d:%02d' "
 		"AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d "
-		"AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d) "
+		"AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d) "
 		"ORDER BY Name",
 		ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec,
 		pTypeLighting1,
@@ -7706,7 +7707,8 @@ void CSQLHelper::CheckDeviceTimeout()
 		pTypeRemote,
 		pTypeGeneralSwitch,
 		pTypeHomeConfort,
-		pTypeFS20
+		pTypeFS20,
+		pTypeHunter
 	);
 	if (result.empty())
 		return;

@@ -1031,7 +1031,6 @@ bool CEvohomeWeb::user_account()
 	if (!j_account.isMember("userId"))
 	{
 		_log.Log(LOG_ERROR, "(%s) retrieve user account info did not return an ID", m_Name.c_str());
-std::cout << sz_response << "\n";
 		return false;
 	}
 

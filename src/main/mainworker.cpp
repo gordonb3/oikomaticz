@@ -2035,6 +2035,7 @@ void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase *pHardware, const 
 			case pTypeHomeConfort:
 			case pTypeFan:
 			case pTypeFS20:
+			case pTypeHunter:
 				//we received a control message from a domoticz client,
 				//and should actually perform this command ourself switch
 				DeviceRowIdx = PerformRealActionFromDomoticzClient(pRXCommand, &pOrgHardware);
@@ -2263,6 +2264,9 @@ void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase *pHardware, const 
 			break;
 		case pTypeSOLAR:
 			decode_Solar(HwdID, HwdType, reinterpret_cast<const tRBUF *>(pRXCommand), procResult);
+			break;
+		case pTypeHunter:
+			decode_Hunter(HwdID, HwdType, reinterpret_cast<const tRBUF*>(pRXCommand), procResult);
 			break;
 		default:
 			_log.Log(LOG_ERROR, "UNHANDLED PACKET TYPE:      FS20 %02X", pRXCommand[1]);
@@ -10893,6 +10897,77 @@ void MainWorker::decode_Solar(const int HwdID, const hardware::type::value HwdTy
 	procResult.bProcessBatteryValue = false;
 }
 
+void MainWorker::decode_Hunter(const int HwdID, const hardware::type::value HwdType, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult)
+{
+	uint8_t devType = pResponse->HUNTER.packettype;
+	uint8_t subType = pResponse->HUNTER.subtype;
+	uint8_t SignalLevel = pResponse->HUNTER.rssi;
+	uint8_t BatteryLevel = 255;
+
+	uint8_t Unit = 0;
+	uint8_t cmnd = pResponse->HUNTER.cmnd;
+	uint64_t DevRowIdx = 0;
+	std::string ID;
+
+	char szTmp[50];
+	sprintf(szTmp, "%02X%02X%02X%02X%02X%02X", pResponse->HUNTER.id1, pResponse->HUNTER.id2, pResponse->HUNTER.id3, pResponse->HUNTER.id4, pResponse->HUNTER.id5, pResponse->HUNTER.id6);
+	ID = szTmp;
+
+	DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, procResult.DeviceName);
+	if (DevRowIdx == -1)
+		return;
+
+	CheckSceneCode(DevRowIdx, devType, subType, cmnd, szTmp);
+
+	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
+	{
+		WriteMessageStart();
+		switch (pResponse->HUNTER.subtype)
+		{
+		case sTypeHunterfan:
+			WriteMessage("subtype       = Hunter Fan");
+			sprintf(szTmp, "Sequence nbr  = %d", pResponse->HUNTER.seqnbr);
+			WriteMessage(szTmp);
+			sprintf(szTmp, "ID            = %s", ID.c_str());
+			WriteMessage(szTmp);
+			WriteMessage("Command       = ", false);
+			switch (pResponse->HUNTER.cmnd)
+			{
+			case HunterOff:
+				WriteMessage("Off");
+				break;
+			case HunterLight:
+				WriteMessage("Light");
+				break;
+			case HunterSpeed1:
+				WriteMessage("Low");
+				break;
+			case HunterSpeed2:
+				WriteMessage("Medium");
+				break;
+			case HunterSpeed3:
+				WriteMessage("High");
+				break;
+			case HunterProgram:
+				WriteMessage("Learn");
+				break;
+			default:
+				WriteMessage("UNKNOWN");
+				break;
+			}
+			break;
+		default:
+			sprintf(szTmp, "ERROR: Unknown Sub type for Packet type= %02X:%02X", pResponse->LIGHTING6.packettype, pResponse->LIGHTING6.subtype);
+			WriteMessage(szTmp);
+			break;
+		}
+		sprintf(szTmp, "Signal level  = %d", pResponse->LIGHTING6.rssi);
+		WriteMessage(szTmp);
+		WriteMessageEnd();
+	}
+	procResult.DeviceRowIdx = DevRowIdx;
+}
+
 bool MainWorker::GetSensorData(const uint64_t idx, int &nValue, std::string &sValue)
 {
 	std::vector<std::vector<std::string> > result;
@@ -11660,6 +11735,46 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string> &sd, std::string 
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
 			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, NULL, -1);
+		}
+		return true;
+	}
+	break;
+	case pTypeHunter:
+	{
+		BYTE kCodes[6];
+		if (sd[1].size() < 6 * 2)
+		{
+			return false;
+		}
+		for (int ii = 0; ii < 6; ii++)
+		{
+			std::string sHex = sd[1].substr(ii * 2, 2);
+			std::stringstream s_strid;
+			int iHex = 0;
+			s_strid << std::hex << sHex;
+			s_strid >> iHex;
+			kCodes[ii] = (BYTE)iHex;
+		}
+		tRBUF lcmd;
+		lcmd.HUNTER.packetlength = sizeof(lcmd.HUNTER) - 1;
+		lcmd.HUNTER.packettype = dType;
+		lcmd.HUNTER.subtype = dSubType;
+		lcmd.HUNTER.seqnbr = m_hardwaredevices[hindex]->m_SeqNr++;
+		lcmd.HUNTER.id1 = kCodes[0];
+		lcmd.HUNTER.id2 = kCodes[1];
+		lcmd.HUNTER.id3 = kCodes[2];
+		lcmd.HUNTER.id4 = kCodes[3];
+		lcmd.HUNTER.id5 = kCodes[4];
+		lcmd.HUNTER.id6 = kCodes[5];
+		if (!GetLightCommand(dType, dSubType, switchtype, switchcmd, lcmd.HUNTER.cmnd, options))
+			return false;
+		lcmd.HUNTER.rssi = 12;
+
+		if (!WriteToHardware(HardwareID, (const char*)& lcmd, sizeof(lcmd.SECURITY2)))
+			return false;
+		if (!IsTesting) {
+			//send to internal for now (later we use the ACK)
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)& lcmd, NULL, -1);
 		}
 		return true;
 	}
@@ -13199,6 +13314,8 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 	s_strid << std::hex << DeviceID;
 	s_strid >> ID;
 
+	float temp = 12345.0f;
+
 	if (pHardware)
 	{
 		if (devType == pTypeLighting2)
@@ -13248,7 +13365,7 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 
 			if (devType == pTypeTEMP)
 			{
-				float temp = static_cast<float>(atof(sValue.c_str()));
+				temp = static_cast<float>(atof(sValue.c_str()));
 				temp += AddjValue;
 				sprintf(szTmp, "%.2f", temp);
 				sValue = szTmp;
@@ -13258,7 +13375,7 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 				StringSplit(sValue, ";", strarray);
 				if (strarray.size() == 3)
 				{
-					float temp = static_cast<float>(atof(strarray[0].c_str()));
+					temp = static_cast<float>(atof(strarray[0].c_str()));
 					temp += AddjValue;
 					sprintf(szTmp, "%.2f;%s;%s", temp, strarray[1].c_str(), strarray[2].c_str());
 					sValue = szTmp;
@@ -13269,7 +13386,7 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 				StringSplit(sValue, ";", strarray);
 				if (strarray.size() == 5)
 				{
-					float temp = static_cast<float>(atof(strarray[0].c_str()));
+					temp = static_cast<float>(atof(strarray[0].c_str()));
 					float fbarometer = static_cast<float>(atof(strarray[3].c_str()));
 					temp += AddjValue;
 
@@ -13328,6 +13445,15 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 			pMySensorDevice->SendTextSensorValue(NodeID, ChildID, sValue);
 		}
 	}
+
+	//Calculate temperature trend
+	if (temp != 12345.0f)
+	{
+		uint64_t tID = ((uint64_t)(HardwareID & 0x7FFFFFFF) << 32) | (devidx & 0x7FFFFFFF);
+		m_trend_calculator[tID].AddValueAndReturnTendency(static_cast<double>(temp), _tTrendCalculator::TAVERAGE_TEMP);
+	}
+
+
 
 #ifdef ENABLE_PYTHON
 	// notify plugin

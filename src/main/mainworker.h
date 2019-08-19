@@ -277,7 +277,8 @@ private:
 	void decode_ASyncPort(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_ASyncData(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_Weather(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_Solar(const int HwdID, const hardware::type::value HwdType, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Solar(const int HwdID, const hardware::type::value HwdType, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult);
+	void decode_Hunter(const int HwdID, const hardware::type::value HwdType, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult);
 };
 
 extern MainWorker m_mainworker;
