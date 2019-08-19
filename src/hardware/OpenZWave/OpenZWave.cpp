@@ -812,6 +812,8 @@ void COpenZWave::OnZWaveNotification(OpenZWave::Notification const* _notificatio
 	case OpenZWave::Notification::Type_ManufacturerSpecificDBReady:
 		_log.Log(LOG_STATUS, "OpenZWave: %s", _notification->GetAsString().c_str());
 		break;
+	case OpenZWave::Notification::Type_UserAlerts:
+		_log.Log(LOG_STATUS, "OpenZWave: %s", _notification->GetAsString().c_str());
 	default:
 		_log.Log(LOG_STATUS, "OpenZWave: Received unhandled notification type (%d) from HomeID: %u, NodeID: %d (0x%02x)", nType, _homeID, _nodeID, _nodeID);
 		_log.Log(LOG_STATUS, "OpenZWave: %s", _notification->GetAsString().c_str());
@@ -1102,11 +1104,14 @@ bool COpenZWave::GetNodeConfigValueByIndex(const NodeInfo* pNode, const int inde
 	return false;
 }
 
-bool COpenZWave::SwitchLight(const int nodeID, const int instanceID, const int commandClass, const int value)
+bool COpenZWave::SwitchLight(_tZWaveDevice* pDevice, const int instanceID, const int value)
 {
-	if (m_pManager == NULL)
+	if (m_pManager == nullptr)
 		return false;
-	NodeInfo* pNode = GetNodeInfo(m_controllerID, nodeID);
+	if (pDevice == nullptr)
+		return false;
+
+	NodeInfo* pNode = GetNodeInfo(m_controllerID, pDevice->nodeID);
 	if (!pNode)
 	{
 		if (!m_awakeNodesQueried)
@@ -1114,49 +1119,30 @@ bool COpenZWave::SwitchLight(const int nodeID, const int instanceID, const int c
 			_log.Log(LOG_ERROR, "OpenZWave: Switch command not sent because not all Awake Nodes have been Queried!");
 		}
 		else {
-			_log.Log(LOG_ERROR, "OpenZWave: Node not found! (NodeID: %d, 0x%02x)", nodeID, nodeID);
+			_log.Log(LOG_ERROR, "OpenZWave: Node not found! (NodeID: %d, 0x%02x)", pDevice->nodeID, pDevice->nodeID);
 		}
 		return false;
 	}
 
 	try
 	{
-		if (m_pManager->IsNodeFailed(m_controllerID, nodeID))
+		if (m_pManager->IsNodeFailed(m_controllerID, pDevice->nodeID))
 		{
-			_log.Log(LOG_ERROR, "OpenZWave: Node has failed (or is not alive), Switch command not sent! (NodeID: %d, 0x%02x)", nodeID, nodeID);
+			_log.Log(LOG_ERROR, "OpenZWave: Node has failed (or is not alive), Switch command not sent! (NodeID: %d, 0x%02x)", pDevice->nodeID, pDevice->nodeID);
 			return false;
 		}
 
-		_tZWaveDevice* pDevice = FindDevice(nodeID, instanceID, 0, ZWaveBase::ZDTYPE_SWITCH_DIMMER);
-		if (pDevice)
+		if (
+			((pDevice->Product_id == 0x0060) && (pDevice->Product_type == 0x0003)) ||
+			((pDevice->Product_id == 0x0060) && (pDevice->Product_type == 0x0103)) ||
+			((pDevice->Product_id == 0x0060) && (pDevice->Product_type == 0x0203))
+			)
 		{
-			if (
-				((pDevice->Product_id == 0x0060) && (pDevice->Product_type == 0x0003)) ||
-				((pDevice->Product_id == 0x0060) && (pDevice->Product_type == 0x0103)) ||
-				((pDevice->Product_id == 0x0060) && (pDevice->Product_type == 0x0203))
-				)
+			//Special case for the Aeotec Smart Switch
+			if (pDevice->commandClassID == COMMAND_CLASS_SWITCH_MULTILEVEL)
 			{
-				//Special case for the Aeotec Smart Switch
-				if (commandClass == COMMAND_CLASS_SWITCH_MULTILEVEL)
-				{
-					pDevice = FindDevice(nodeID, instanceID, 0, COMMAND_CLASS_SWITCH_BINARY, ZWaveBase::ZDTYPE_SWITCH_NORMAL);
-				}
+				pDevice = FindDevice(pDevice->nodeID, instanceID, 0, COMMAND_CLASS_SWITCH_BINARY, ZWaveBase::ZDTYPE_SWITCH_NORMAL);
 			}
-		}
-		if (!pDevice)
-		{
-			//Try to find Binary type
-			if ((value == 0) || (value == 255))
-			{
-				pDevice = FindDevice(nodeID, instanceID, 0, COMMAND_CLASS_SWITCH_BINARY, ZWaveBase::ZDTYPE_SWITCH_NORMAL);
-			}
-		}
-		if (!pDevice)
-			pDevice = FindDevice(nodeID, instanceID, 0);
-		if (!pDevice)
-		{
-			_log.Log(LOG_ERROR, "OpenZWave: Internal Node Device not found! (NodeID: %d, 0x%02x)", nodeID, nodeID);
-			return false;
 		}
 
 		bool bHandleAsBinary = false;
@@ -1191,15 +1177,15 @@ bool COpenZWave::SwitchLight(const int nodeID, const int instanceID, const int c
 		if ((pDevice->devType == ZWaveBase::ZDTYPE_SWITCH_NORMAL) || (bHandleAsBinary))
 		{
 			//On/Off device
-			bool bFound = (GetValueByCommandClass(nodeID, instanceID, COMMAND_CLASS_SWITCH_BINARY, vID) == true);
+			bool bFound = (GetValueByCommandClass(pDevice->nodeID, instanceID, COMMAND_CLASS_SWITCH_BINARY, vID) == true);
 			if (!bFound)
-				bFound = (GetValueByCommandClass(nodeID, instanceID, COMMAND_CLASS_DOOR_LOCK, vID) == true);
+				bFound = (GetValueByCommandClass(pDevice->nodeID, instanceID, COMMAND_CLASS_DOOR_LOCK, vID) == true);
 			if (!bFound)
-				bFound = (GetValueByCommandClassIndex(nodeID, instanceID, COMMAND_CLASS_SWITCH_MULTILEVEL, ValueID_Index_SwitchMultiLevel::Level, vID) == true);
+				bFound = (GetValueByCommandClassIndex(pDevice->nodeID, instanceID, COMMAND_CLASS_SWITCH_MULTILEVEL, ValueID_Index_SwitchMultiLevel::Level, vID) == true);
 			if (bFound)
 			{
 				OpenZWave::ValueID::ValueType vType = vID.GetType();
-				_log.Log(LOG_NORM, "OpenZWave: Oikomaticz has send a Switch command! NodeID: %d (0x%02x)", nodeID, nodeID);
+				_log.Log(LOG_NORM, "OpenZWave: Oikomaticz has send a Switch command! NodeID: %d (0x%02x)", pDevice->nodeID, pDevice->nodeID);
 				if (vType == OpenZWave::ValueID::ValueType_Bool)
 				{
 					if (svalue == 0) {
@@ -1228,7 +1214,7 @@ bool COpenZWave::SwitchLight(const int nodeID, const int instanceID, const int c
 				}
 				else
 				{
-					_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+					_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, pDevice->nodeID, pDevice->nodeID);
 					return false;
 				}
 
@@ -1250,30 +1236,32 @@ bool COpenZWave::SwitchLight(const int nodeID, const int instanceID, const int c
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "OpenZWave: Internal Node ValueID not found! NodeID: %d (0x%02x), instanceID: %d", nodeID, nodeID, instanceID);
+				_log.Log(LOG_ERROR, "OpenZWave: Internal Node ValueID not found! NodeID: %d (0x%02x), instanceID: %d", pDevice->nodeID, pDevice->nodeID, instanceID);
 				return false;
 			}
 		}
 		else
 		{
-			//dimmable light  device
+			//dimmable/color light  device
 			if ((svalue > 99) && (svalue != 255))
 				svalue = 99;
-			if (GetValueByCommandClassIndex(nodeID, instanceID, COMMAND_CLASS_SWITCH_MULTILEVEL, ValueID_Index_SwitchMultiLevel::Level, vID) == true)
+			if (GetValueByCommandClassIndex(pDevice->nodeID, instanceID, COMMAND_CLASS_SWITCH_MULTILEVEL, ValueID_Index_SwitchMultiLevel::Level, vID) == true)
 			{
+				std::string vLabel = m_pManager->GetValueLabel(vID);
+
 				pDevice->intvalue = svalue;
-				_log.Log(LOG_NORM, "OpenZWave: Oikomaticz has send a Switch command!, Level: %d, NodeID: %d (0x%02x)", svalue, nodeID, nodeID);
+				_log.Log(LOG_NORM, "OpenZWave: Oikomaticz has send a Switch command!, Level: %d, NodeID: %d (0x%02x)", svalue, pDevice->nodeID, pDevice->nodeID);
 
 				if (vID.GetType() == OpenZWave::ValueID::ValueType_Byte)
 				{
 					if (!m_pManager->SetValue(vID, svalue))
 					{
-						_log.Log(LOG_ERROR, "OpenZWave: Error setting Switch Value! NodeID: %d (0x%02x)", nodeID, nodeID);
+						_log.Log(LOG_ERROR, "OpenZWave: Error setting Switch Value! NodeID: %d (0x%02x)", pDevice->nodeID, pDevice->nodeID);
 					}
 				}
 				else
 				{
-					_log.Log(LOG_ERROR, "OpenZWave: SwitchLight, Unhandled value type: %d, %s:%d", vID.GetType(), std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+					_log.Log(LOG_ERROR, "OpenZWave: SwitchLight, Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vID.GetType(), std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, pDevice->nodeID, pDevice->nodeID);
 					return false;
 				}
 
@@ -1294,7 +1282,7 @@ bool COpenZWave::SwitchLight(const int nodeID, const int instanceID, const int c
 				}
 
 			}
-			else if (GetValueByCommandClassIndex(nodeID, instanceID, COMMAND_CLASS_PROPRIETARY, ValueID_Index_SwitchMultiLevel::Level, vID) == true)
+			else if (GetValueByCommandClassIndex(pDevice->nodeID, instanceID, COMMAND_CLASS_PROPRIETARY, ValueID_Index_SwitchMultiLevel::Level, vID) == true)
 			{
 				if (
 					(pNode->Manufacturer_id == 0x010F)
@@ -1305,25 +1293,25 @@ bool COpenZWave::SwitchLight(const int nodeID, const int instanceID, const int c
 					//Fibaro FGRM222 Roller Shutter Controller 2
 					//Slat/Tilt position
 					pDevice->intvalue = svalue;
-					_log.Log(LOG_NORM, "OpenZWave: Oikomaticz has send a Slat/Tilt command!, Level: %d, NodeID: %d (0x%02x)", svalue, nodeID, nodeID);
+					_log.Log(LOG_NORM, "OpenZWave: Oikomaticz has send a Slat/Tilt command!, Level: %d, NodeID: %d (0x%02x)", svalue, pDevice->nodeID, pDevice->nodeID);
 
 					if (vID.GetType() == OpenZWave::ValueID::ValueType_Byte)
 					{
 						if (!m_pManager->SetValue(vID, svalue))
 						{
-							_log.Log(LOG_ERROR, "OpenZWave: Error setting Slat/Tilt Value! NodeID: %d (0x%02x)", nodeID, nodeID);
+							_log.Log(LOG_ERROR, "OpenZWave: Error setting Slat/Tilt Value! NodeID: %d (0x%02x)", pDevice->nodeID, pDevice->nodeID);
 						}
 					}
 					else
 					{
-						_log.Log(LOG_ERROR, "OpenZWave: SwitchLight, Unhandled value type: %d, %s:%d", vID.GetType(), std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+						_log.Log(LOG_ERROR, "OpenZWave: SwitchLight, Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vID.GetType(), std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, pDevice->nodeID, pDevice->nodeID);
 						return false;
 					}
 				}
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "OpenZWave: Internal Node ValueID not found! (NodeID: %d, 0x%02x)", nodeID, nodeID);
+				_log.Log(LOG_ERROR, "OpenZWave: Internal Node ValueID not found! (NodeID: %d, 0x%02x)", pDevice->nodeID, pDevice->nodeID);
 				return false;
 			}
 		}
@@ -1356,7 +1344,7 @@ bool COpenZWave::HasNodeFailed(const int nodeID)
 	return false;
 }
 
-bool COpenZWave::SwitchColor(const int nodeID, const int instanceID, const int commandClass, const std::string& ColorStr)
+bool COpenZWave::SwitchColor(const int nodeID, const int instanceID, const std::string& ColorStr)
 {
 	if (m_pManager == NULL)
 		return false;
@@ -1444,7 +1432,7 @@ bool COpenZWave::SwitchColor(const int nodeID, const int instanceID, const int c
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "OpenZWave: SwitchColor, Unhandled value type: %d, %s:%d", vID.GetType(), std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+				_log.Log(LOG_ERROR, "OpenZWave: SwitchColor, Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vID.GetType(), std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, nodeID, nodeID);
 				return false;
 			}
 		}
@@ -1492,7 +1480,7 @@ void COpenZWave::SetThermostatSetPoint(const int nodeID, const int instanceID, c
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vID.GetType(), std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+				_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vID.GetType(), std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, nodeID, nodeID);
 				return;
 			}
 			m_updateTime = mytime(NULL);
@@ -1503,6 +1491,20 @@ void COpenZWave::SetThermostatSetPoint(const int nodeID, const int instanceID, c
 		}
 	}
 }
+
+void COpenZWave::DebugValue(const OpenZWave::ValueID& vID, const int Line)
+{
+	unsigned int HomeID = vID.GetHomeId();
+	uint8_t NodeID = vID.GetNodeId();
+
+	uint8_t vInstance = vID.GetInstance();//(See note on top of this file) GetInstance();
+	uint16_t vIndex = vID.GetIndex();
+	//std::string vLabel = m_pManager->GetValueLabel(vID);
+	uint8_t commandclass = vID.GetCommandClassId();
+
+	_log.Log(LOG_STATUS, "OpenZWave: Debug Value: Node: %d (0x%02x), CommandClass: %s, Instance: %d, Index: %d, Id: 0x%llX, Line: %d", static_cast<int>(NodeID), static_cast<int>(NodeID), cclassStr(commandclass), vInstance, vIndex, vID.GetId(), Line);
+}
+
 
 void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 {
@@ -1531,6 +1533,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 
 	OpenZWave::ValueID::ValueType vType = vID.GetType();
 	OpenZWave::ValueID::ValueGenre vGenre = vID.GetGenre();
+
 	std::string vLabel = m_pManager->GetValueLabel(vID);
 	std::string vUnits = m_pManager->GetValueUnits(vID);
 
@@ -1565,7 +1568,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 				}
 				else
 				{
-					_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+					_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 					return;
 				}
 			}
@@ -1632,7 +1635,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 		}
 		else
 		{
-			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 			return;
 		}
 		InsertDevice(_device);
@@ -1662,7 +1665,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+				_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 				return;
 			}
 		}
@@ -1673,9 +1676,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 		{
 			if (vType == OpenZWave::ValueID::ValueType_String)
 			{
-				_device.intvalue = 0;
-				InsertDevice(_device);
-				_device.label = "RGBW";
+				_device.label = "Color";
 				_device.devType = ZDTYPE_SWITCH_COLOR;
 				_device.instanceID = 101;
 				InsertDevice(_device);
@@ -1718,7 +1719,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 			&& (vType != OpenZWave::ValueID::ValueType_String)
 			)
 		{
-			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 			return;
 		}
 		if (vType == OpenZWave::ValueID::ValueType_String)
@@ -1764,7 +1765,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 			return; //Not interested
 		if (vType != OpenZWave::ValueID::ValueType_Decimal)
 		{
-			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 			return;
 		}
 		if (m_pManager->GetValueAsFloat(vID, &fValue) == false)
@@ -1836,7 +1837,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 	{
 		if (vType != OpenZWave::ValueID::ValueType_Decimal)
 		{
-			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 			return;
 		}
 		if (m_pManager->GetValueAsFloat(vID, &fValue) == false)
@@ -2007,7 +2008,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 		}
 		else
 		{
-			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 			return;
 		}
 	}
@@ -2139,7 +2140,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 		}
 		else
 		{
-			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 			return;
 		}
 	}
@@ -2161,7 +2162,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+				_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 				return;
 			}
 		}
@@ -2226,7 +2227,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+				_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 				return;
 			}
 		}
@@ -2254,7 +2255,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 		}
 		else
 		{
-			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 			return;
 		}
 	}
@@ -2280,7 +2281,7 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 			}
 			else
 			{
-				_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+				_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 				return;
 			}
 		}
@@ -2318,6 +2319,9 @@ void COpenZWave::UpdateNodeEvent(const OpenZWave::ValueID& vID, int EventID)
 	instance = index;
 
 	uint8_t commandclass = vID.GetCommandClassId();
+
+	if (commandclass == COMMAND_CLASS_NO_OPERATION)
+		return;
 
 	if ((commandclass == COMMAND_CLASS_ALARM) || (commandclass == COMMAND_CLASS_SENSOR_ALARM))
 	{
@@ -2445,7 +2449,7 @@ void COpenZWave::UpdateValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 	}
 	else
 	{
-		_log.Log(LOG_ERROR, "OpenZWave: UpdateValue, Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+		_log.Log(LOG_ERROR, "OpenZWave: UpdateValue, Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 		return;
 	}
 
@@ -2585,13 +2589,16 @@ void COpenZWave::UpdateValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 			else
 			{
 				//Normal Code Code_1/Code_253
-				pNode->HaveUserCodes = true;
-
-				if (vType == OpenZWave::ValueID::ValueType_String)
+				if ((vOrgIndex >= ValueID_Index_UserCode::Code_1) && (vOrgIndex <= ValueID_Index_UserCode::Code_253))
 				{
-					std::string strValue;
-					if (m_pManager->GetValueAsString(vID, &strValue) == true)
+					pNode->HaveUserCodes = true;
+
+					if (vType == OpenZWave::ValueID::ValueType_String)
 					{
+						std::string strValue;
+						if (m_pManager->GetValueAsString(vID, &strValue) == true)
+						{
+						}
 					}
 				}
 				return;
@@ -2655,7 +2662,7 @@ void COpenZWave::UpdateValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 		}
 		else
 		{
-			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+			_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 			return;
 		}
 	}
@@ -2764,7 +2771,7 @@ void COpenZWave::UpdateValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 					else
 						intValue = 255;
 					m_pManager->GetValueListSelection(vID, &szListValue);
-					_log.Log(LOG_STATUS, "OpenZWave: Alarm received (%s: %s)", vLabel.c_str(), szListValue.c_str());
+					_log.Log(LOG_STATUS, "OpenZWave: Alarm received (%s: %s), NodeID: %d (0x%02x)", vLabel.c_str(), szListValue.c_str(), NodeID, NodeID);
 				}
 			}
 			/*
@@ -3011,7 +3018,7 @@ void COpenZWave::UpdateValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 				}
 				else
 				{
-					_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+					_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, NodeID, NodeID);
 					return;
 				}
 			}
@@ -4462,7 +4469,7 @@ void COpenZWave::GetNodeValuesJson(const unsigned int homeID, const int nodeID, 
 						else
 						{
 							//not supported
-							_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+							_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, nodeID, nodeID);
 							continue;
 						}
 
@@ -4751,13 +4758,13 @@ bool COpenZWave::ApplyNodeConfig(const unsigned int homeID, const int nodeID, co
 						}
 						else
 						{
-							_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__);
+							_log.Log(LOG_ERROR, "OpenZWave: Unhandled value type: %d, %s:%d, NodeID: %d (0x%02x)", vType, std::string(__MYFUNCTION__).substr(std::string(__MYFUNCTION__).find_last_of("/\\") + 1).c_str(), __LINE__, nodeID, nodeID);
 							return false;
 						}
 						if (!bRet)
 						{
 							std::string cvLabel = m_pManager->GetValueLabel(vID);
-							_log.Log(LOG_ERROR, "OpenZWave: Error setting value: %s (%s)", cvLabel.c_str(), ValueVal.c_str());
+							_log.Log(LOG_ERROR, "OpenZWave: Error setting value: %s (%s), NodeID: %d (0x%02x)", cvLabel.c_str(), ValueVal.c_str(), nodeID, nodeID);
 							return false;
 						}
 
@@ -4852,27 +4859,27 @@ bool COpenZWave::RemoveUserCode(const unsigned int homeID, const int nodeID, con
 		{
 			m_pManager->SetValue(itt, (uint16_t)codeIndex);
 		}
-/*
-		if ((vNodeValue.GetGenre() == OpenZWave::ValueID::ValueGenre_User) && (vNodeValue.GetInstance() == 1) && (vNodeValue.GetType() == OpenZWave::ValueID::ValueType_String))
-		{
-			int vNodeIndex = vNodeValue.GetIndex();
-			if (vNodeIndex == codeIndex)
-			{
-				try
+		/*
+				if ((vNodeValue.GetGenre() == OpenZWave::ValueID::ValueGenre_User) && (vNodeValue.GetInstance() == 1) && (vNodeValue.GetType() == OpenZWave::ValueID::ValueType_String))
 				{
-					std::string sValue;
-					sValue.assign(4, 0);
-					m_pManager->SetValue(vNodeValue, sValue);
-					break;
+					int vNodeIndex = vNodeValue.GetIndex();
+					if (vNodeIndex == codeIndex)
+					{
+						try
+						{
+							std::string sValue;
+							sValue.assign(4, 0);
+							m_pManager->SetValue(vNodeValue, sValue);
+							break;
+						}
+						catch (OpenZWave::OZWException& ex)
+						{
+							_log.Log(LOG_ERROR, "OpenZWave: Exception. Type: %d, Msg: %s, File: %s (Line %d)", ex.GetType(), ex.GetMsg().c_str(), ex.GetFile().c_str(), ex.GetLine());
+							return false;
+						}
+					}
 				}
-				catch (OpenZWave::OZWException& ex)
-				{
-					_log.Log(LOG_ERROR, "OpenZWave: Exception. Type: %d, Msg: %s, File: %s (Line %d)", ex.GetType(), ex.GetMsg().c_str(), ex.GetFile().c_str(), ex.GetLine());
-					return false;
-				}
-			}
-		}
-*/
+		*/
 	}
 	return true;
 }
@@ -4893,11 +4900,11 @@ void COpenZWave::UpdateDeviceBatteryStatus(const int nodeID, const int value)
 			itt->second.batValue = value;
 		}
 	}
-/*
-	time_t now = time(0);
-	struct tm ltime;
-	localtime_r(&now, &ltime);
-*/
+	/*
+		time_t now = time(0);
+		struct tm ltime;
+		localtime_r(&now, &ltime);
+	*/
 	//Update all devices in the database
 	std::vector<std::vector<std::string> > results;
 	results = m_sql.safe_query("SELECT ID, DeviceID FROM DeviceStatus WHERE (HardwareID==%d)", m_HwdID);
@@ -4907,7 +4914,16 @@ void COpenZWave::UpdateDeviceBatteryStatus(const int nodeID, const int value)
 		std::string rdID;
 
 		if (DeviceID.size() != 8)
-			rdID = DeviceID.substr(DeviceID.size() - 4, 2);
+		{
+			if (DeviceID.size() > 4)
+				rdID = DeviceID.substr(DeviceID.size() - 4, 2);
+			else
+			{
+				std::stringstream stream;
+				stream << std::setfill('0') << std::setw(4) << std::hex << atoi(DeviceID.c_str());
+				rdID = stream.str().substr(0, 2);
+			}
+		}
 		else
 		{
 			rdID = DeviceID.substr(2, 2);
@@ -4922,18 +4938,17 @@ void COpenZWave::UpdateDeviceBatteryStatus(const int nodeID, const int value)
 
 		if (dev_nodeID == nodeID)
 		{
-/*
-			m_sql.safe_query("UPDATE DeviceStatus SET BatteryLevel=%d, LastUpdate='%04d-%02d-%02d %02d:%02d:%02d' WHERE (ID==%s)", 
-				value, 
-				ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec,
-				itt[0].c_str());
-*/
+			/*
+						m_sql.safe_query("UPDATE DeviceStatus SET BatteryLevel=%d, LastUpdate='%04d-%02d-%02d %02d:%02d:%02d' WHERE (ID==%s)",
+							value,
+							ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec,
+							itt[0].c_str());
+			*/
 			m_sql.safe_query("UPDATE DeviceStatus SET BatteryLevel=%d WHERE (ID==%s)",
 				value,
 				itt[0].c_str());
 		}
 	}
-
 }
 
 
@@ -4961,6 +4976,55 @@ void COpenZWave::NightlyNodeHeal()
 		return; //not enabled
 	HealNetwork();
 }
+
+bool COpenZWave::IsNodeRGBW(const unsigned int homeID, const int nodeID)
+{
+	std::vector<std::vector<std::string> > result;
+	result = m_sql.safe_query("SELECT ProductDescription FROM ZWaveNodes WHERE (HardwareID==%d) AND (HomeID==%u) AND (NodeID==%d)",
+		m_HwdID, homeID, nodeID);
+	if (result.empty())
+		return false;
+	std::string ProductDescription = result[0][0];
+	return (
+		(ProductDescription.find("FGRGBWM441") != std::string::npos)
+		);
+}
+
+void COpenZWave::ForceUpdateForNodeDevices(const unsigned int homeID, const int nodeID)
+{
+	std::map<std::string, _tZWaveDevice>::iterator itt;
+	for (itt = m_devices.begin(); itt != m_devices.end(); ++itt)
+	{
+		if (itt->second.nodeID == nodeID)
+		{
+			itt->second.lastreceived = mytime(NULL) - 1;
+
+			_tZWaveDevice zdevice = itt->second;
+
+			SendDevice2Domoticz(&zdevice);
+
+			if (zdevice.commandClassID == COMMAND_CLASS_SWITCH_MULTILEVEL)
+			{
+				if (zdevice.instanceID == 1)
+				{
+					if (IsNodeRGBW(homeID, nodeID))
+					{
+						zdevice.devType = ZDTYPE_SWITCH_RGBW;
+						zdevice.instanceID = 100;
+						SendDevice2Domoticz(&zdevice);
+					}
+				}
+			}
+			else if (zdevice.commandClassID == COMMAND_CLASS_COLOR_CONTROL)
+			{
+				zdevice.devType = ZDTYPE_SWITCH_COLOR;
+				zdevice.instanceID = 101;
+				SendDevice2Domoticz(&zdevice);
+			}
+		}
+	}
+}
+
 
 //Webserver helpers
 namespace http {
