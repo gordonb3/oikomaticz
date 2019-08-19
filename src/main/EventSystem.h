@@ -69,6 +69,7 @@ public:
 		std::string description;
 		std::string deviceID;
 		int batteryLevel;
+		int protection;
 		int signalLevel;
 		int unit;
 		int hardwareID;
@@ -93,6 +94,7 @@ public:
 		std::string scenesgroupName;
 		std::string scenesgroupValue;
 		int scenesgroupType;
+		int protection;
 		std::string lastUpdate;
 		std::vector<uint64_t> memberID;
 	};
