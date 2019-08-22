@@ -15,6 +15,7 @@ option(USE_STATIC_LIBSTDCXX "Build with static libgcc/libstdc++ libraries" YES)
 option(USE_STATIC_OPENZWAVE "Build with static OpenZwave libraries" YES)
 
 
+option(WITHOUT_OLDDB_SUPPORT "Disable support for importing an ancient Domoticz database" NO)
 
 ## required min. libBoost version
 set(DZ_MIN_LIBBOOST_VERSION 106000)
@@ -53,6 +54,11 @@ set(DZ_VERSION_MAJOR 4)
 string(SUBSTRING ${ProjectRevision} 0 2 DZ_VERSION_MINOR)
 string(SUBSTRING ${ProjectRevision} 2 3 DZ_VERSION_PATCH)
 
+
+if(WITHOUT_OLDDB_SUPPORT)
+  message(STATUS "building without olddb support. Minimal required DB version is 129, Domoticz 4.9700 stable")
+  add_definitions(-DNO_PRESTABLE_9700)
+endif(WITHOUT_OLDDB_SUPPORT)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_STANDARD 11)

@@ -796,6 +796,7 @@ bool CSQLHelper::OpenDatabase()
 	}
 	if ((!bNewInstall) && (dbversion < DOMOTICZ_DB_VERSION))
 	{
+#ifndef NO_PRESTABLE_9700
 		//Post-SQL Patches
 		if (dbversion < 2)
 		{
@@ -2059,6 +2060,7 @@ bool CSQLHelper::OpenDatabase()
 				query("ALTER TABLE MySensorsChilds ADD COLUMN [AckTimeout] INTEGER DEFAULT 1200");
 			}
 		}
+// STABLE 3.5837
 		if (dbversion < 106)
 		{
 			//Adjust Limited device id's to uppercase HEX
@@ -2239,6 +2241,7 @@ bool CSQLHelper::OpenDatabase()
 				query("ALTER TABLE MobileDevices ADD COLUMN [DeviceType] VARCHAR(100) DEFAULT ('')");
 			}
 		}
+// STABLE 3.8153
 		if (dbversion < 117)
 		{
 			//Add Protocol for Camera (HTTP/HTTPS/...)
@@ -2548,6 +2551,16 @@ bool CSQLHelper::OpenDatabase()
 
 			query("DROP TABLE tmp_Floorplans;");
 		}
+#else // NO_PRESTABLE_9700
+		if (dbversion < 129)
+		{
+			_log.Log(LOG_ERROR, "Upgrade from old Domoticz database not supported. (Please upgrade your database with the latest Domoticz stable first)");
+			sqlite3_close(m_dbase);
+			m_dbase = NULL;
+			return false;
+		}
+#endif // NO_PRESTABLE_9700
+// STABLE 4.9700
 		if (dbversion < 130)
 		{
 			//Patch for energymeters to store calculated or device energy usage in options map
@@ -2613,6 +2626,7 @@ bool CSQLHelper::OpenDatabase()
 			query("INSERT INTO Hardware(ID, Name, Enabled, Type, Address, Port, SerialPort, Username, Password, Extra, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, DataTimeout) SELECT ID, Name, Enabled, Type, Address, Port, SerialPort, Username, Password, Extra, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, DataTimeout FROM tmp_Hardware;");
 			query("DROP TABLE tmp_Hardware;");
 		}
+// BETA 4.10268 - project separation
 		if (dbversion < 135)
 		{
 			//OpenZWave COMMAND_CLASS_METER new index, need to delete the cache!
