@@ -30,7 +30,12 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#define DB_VERSION 136
+#define OIKOMATICZ_DB_VERSION 2
+#define DOMOTICZ_DB_VERSION 136
+
+// combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
+#define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
+
 
 extern http::server::CWebServerHelper m_webservers;
 extern std::string szWWWFolder;
@@ -681,6 +686,8 @@ bool CSQLHelper::OpenDatabase()
 		}
 		//Pre-SQL Patches
 	}
+	int ozdbversion = (dbversion & 0xFC00) >> 10;
+	dbversion = dbversion & 0x03FF;
 
 	//create database (if not exists)
 	query(sqlCreateDeviceStatus);
@@ -782,7 +789,12 @@ bool CSQLHelper::OpenDatabase()
 	query("create index if not exists wc_id_idx       on Wind_Calendar(DeviceRowID);");
 	query("create index if not exists wc_id_date_idx  on Wind_Calendar(DeviceRowID, Date);");
 
-	if ((!bNewInstall) && (dbversion < DB_VERSION))
+	if ((!bNewInstall) && (ozdbversion == 0) && (dbversion == 136))
+	{
+		// set back dbversion to correct for entwined DB versioning
+		dbversion = 135;
+	}
+	if ((!bNewInstall) && (dbversion < DOMOTICZ_DB_VERSION))
 	{
 		//Post-SQL Patches
 		if (dbversion < 2)
@@ -2594,15 +2606,69 @@ bool CSQLHelper::OpenDatabase()
 				}
 			}
 		}
-		if (dbversion < 133)
+		if (dbversion < 134)
 		{
 			query("ALTER TABLE Hardware RENAME TO tmp_Hardware;");
 			query(sqlCreateHardware);
 			query("INSERT INTO Hardware(ID, Name, Enabled, Type, Address, Port, SerialPort, Username, Password, Extra, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, DataTimeout) SELECT ID, Name, Enabled, Type, Address, Port, SerialPort, Username, Password, Extra, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, DataTimeout FROM tmp_Hardware;");
 			query("DROP TABLE tmp_Hardware;");
 		}
+		if (dbversion < 135)
+		{
+			//OpenZWave COMMAND_CLASS_METER new index, need to delete the cache!
+			std::vector<std::string> root_files_;
+			DirectoryListing(root_files_, szUserDataFolder + "Config", false, true);
+			for (auto itt : root_files_)
+			{
+				if (itt.find("ozwcache_0x") != std::string::npos)
+				{
+					std::string dfile = szUserDataFolder + "Config/" + itt;
+					std::remove(dfile.c_str());
+				}
+			}
+		}
+		if (dbversion < 136)
+		{
+			//SolarEdge WEB API Frequency sensor change from Percentage to Custom type
+			std::stringstream szQuery;
+			std::vector<std::vector<std::string> > hwResult, dsResult;
+			std::vector<std::string> sd;
+			szQuery.clear();
+			szQuery.str("");
+			szQuery << "SELECT ID FROM Hardware WHERE([Type]==" << hardware::type::SolarEdgeAPI << ")";
+			hwResult = query(szQuery.str());
+			if (!hwResult.empty())
+			{
+				for (const auto & itt : hwResult)
+				{
+					sd = itt;
+					szQuery.clear();
+					szQuery.str("");
+					szQuery << "SELECT ID, DeviceID FROM DeviceStatus WHERE ([Type]=" << pTypeGeneral << ") AND (SubType=" << sTypePercentage << ") AND (HardwareID=" << sd[0] << ")";
+					dsResult = query(szQuery.str());
+					if (!dsResult.empty())
+					{
+						for (const auto & itt2 : dsResult)
+						{
+							sd = itt2;
+							int id = atoi(sd[1].c_str());
+							char szTmp[20];
+							sprintf(szTmp, "%06X01", id);
 
-		if (dbversion < 134)
+							szQuery.clear();
+							szQuery.str("");
+							szQuery << "UPDATE DeviceStatus SET DeviceID='" << szTmp << "', [Type]=" << pTypeGeneral << ", SubType=" << sTypeCustom << ", Options=\"1;Hz\" WHERE (ID=" << sd[0] << ")";
+							query(szQuery.str());
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if ((!bNewInstall) && (ozdbversion < OIKOMATICZ_DB_VERSION))
+	{
+		if (ozdbversion < 1)
 		{
 			// patch to move existing gas m-bus channel override to the hardware table
 			std::vector<std::vector<std::string> > result;
@@ -2624,21 +2690,7 @@ bool CSQLHelper::OpenDatabase()
 				query("DELETE FROM UserVariables WHERE (Name='P1GasMeterChannel')");
 			}
 		}
-		if (dbversion < 135)
-		{
-			//OpenZWave COMMAND_CLASS_METER new index, need to delete the cache!
-			std::vector<std::string> root_files_;
-			DirectoryListing(root_files_, szUserDataFolder + "Config", false, true);
-			for (auto itt : root_files_)
-			{
-				if (itt.find("ozwcache_0x") != std::string::npos)
-				{
-					std::string dfile = szUserDataFolder + "Config/" + itt;
-					std::remove(dfile.c_str());
-				}
-			}
-		}
-		if (dbversion < 136)
+		if (ozdbversion < 2)
 		{
 			// patch for Honeywell Lyric 
 			std::vector<std::vector<std::string> > hwresult;
@@ -2685,7 +2737,8 @@ bool CSQLHelper::OpenDatabase()
 			}
 		}
 	}
-	else if (bNewInstall)
+
+	if (bNewInstall)
 	{
 		//place here actions that needs to be performed on new databases
 		query("INSERT INTO Plans (Name) VALUES ('$Hidden Devices')");
