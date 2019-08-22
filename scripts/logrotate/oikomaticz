@@ -1,4 +1,4 @@
-/var/log/domoticz.log {
+/var/log/oikomaticz.log {
         missingok
         weekly
         rotate 7
@@ -6,9 +6,9 @@
         notifempty
         postrotate
                 if [ -x /usr/sbin/invoke-rc.d ]; then \
-                        invoke-rc.d domoticz reload > /dev/null; \
+                        invoke-rc.d oikomaticz reload > /dev/null; \
                 else \
-                        /etc/init.d/domoticz reload > /dev/null; \
+                        /etc/init.d/oikomaticz reload > /dev/null; \
                 fi
         endscript
 }

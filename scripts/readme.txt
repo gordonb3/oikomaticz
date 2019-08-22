@@ -1,4 +1,4 @@
-Place your scripts you want to be executed by domoticz in here.
+Place your scripts you want to be executed by oikomaticz in here.
 
 Special scripts:
 oikomaticz_main (on windows oikomaticz_main.bat), will be executed when a switch is pressed (On/Off)
