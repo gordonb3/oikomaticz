@@ -1999,6 +1999,39 @@ std::string CEvohomeWeb::process_response(std::vector<unsigned char> vHTTPRespon
 		return ss_error.str();
 	}
 
+	if (sz_response.find("<html>") != std::string::npos) // received an HTML page without a title
+	{
+		std::stringstream ss_error;
+		ss_error << "{\"message\":\"";
+		int i = 0;
+		char* html = &sz_response[0];
+		char c = html[i];
+		while (i < sz_response.size())
+		{
+			if (c == '<')
+			{
+				while (c != '>')
+				{
+					i++;
+					c = html[i];
+				}
+				i++;
+			}
+			else if (c != '<')
+			{
+				c = html[i];
+				ss_error << c;
+				i++;
+			}
+		}
+		if (!sz_retcode.empty())
+		{
+			ss_error << "\",\"code\":\"" << sz_retcode;
+		}
+		ss_error << "\"}";
+		return ss_error.str();
+	}
+
 	return "{\"error\":\"unhandled response\"}";
 }
 
