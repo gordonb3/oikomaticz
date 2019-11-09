@@ -180,9 +180,14 @@ bool P1MeterBase::MatchLine()
 		{
 			// Try to match OBIS IDs:
 			//    timestamp:		0-0:1.0.0
+			//    version P1+eMucs:		0-0:96.1.4
 			//    tariff indicator:		0-0:96.14.0
 			if (strncmp("96.14.0",(const char*)&m_lbuffer + 4,7) == 0)
 				matchtype = device::tmeter::COSEM::OBIS::activeTariff;
+			else if ((m_p1version == 0) && (strncmp("96.1.4",(const char*)&m_lbuffer + 4,6) == 0))	// get meter version only once
+			{
+				matchtype = device::tmeter::COSEM::OBIS::version;
+		}
 			else
 				return true;
 		}
@@ -199,25 +204,17 @@ bool P1MeterBase::MatchLine()
 		else if (m_lbuffer[2] == m_gasmbuschannel)
 		{
 			// Try to match OBIS IDs (n = m-bus channel):
-			//    DSMR4+ gas usage:				0-n:24.2.1
-			//    DSMR4+ gas usage (BEL: prepaid?):		0-n:24.2.3
-			//    DSMR2 timestamp:				0-n:24.3.0
+			//    DSMR4+ gas usage (NLD):				0-n:24.2.1
+			//    not temperature corrected gas usage (BEL):	0-n:24.2.3
+			//    DSMR2 timestamp:					0-n:24.3.0
 
 			if (strncmp("24.2.",(const char*)&m_lbuffer + 4,5) == 0)
 			{
-				matchtype = device::tmeter::COSEM::OBIS::gasUsageDSMR4;
-				if (m_lbuffer[2] == '3') // Belgian budget meter apparently uses tariff ID 3 for gas
-				{
-					if (m_p1version == 0)
-					{
-						_log.Log(LOG_STATUS, "P1 Smart Meter: Belgian prepaid/budget meter does not report its version - using ESMR 5 compatibility");
-						m_p1version = 5;
-					}
-				}
-				else if (m_lbuffer[2] != '1')
+				if ((m_lbuffer[2] & 0xFD) != '1') 
 					return true;
+				matchtype = device::tmeter::COSEM::OBIS::gasUsageDSMR4;
 			}
-			else if (strncmp("24.3.0",(const char*)&m_lbuffer + 4,6) == 0)
+			else if ((m_p1version < 4) && (strncmp("24.3.0",(const char*)&m_lbuffer + 4,6) == 0))
 				matchtype = device::tmeter::COSEM::OBIS::gasTimestampDSMR2;
 			else
 				return true;
@@ -413,6 +410,7 @@ bool P1MeterBase::MatchLine()
 		break;
 	}
 
+	// STEP 4: extract the value from the line
 	int ePos = vString.find_first_of("*)");
 
 	if (ePos == std::string::npos)
@@ -441,7 +439,7 @@ bool P1MeterBase::MatchLine()
 	unsigned long temp_usage;
 	float temp_volt;
 
-	// STEP 4: convert and store the cleaned data content
+	// STEP 5: convert and store the cleaned data content
 	switch (matchtype)
 	{
 	case device::tmeter::COSEM::OBIS::electricityDelivered:
@@ -536,8 +534,22 @@ bool P1MeterBase::MatchLine()
 		}
 		break;
 	case device::tmeter::COSEM::OBIS::version:
-		_log.Log(LOG_STATUS, "P1 Smart Meter: Meter reports as DSMR %c.%c", value[0], value[1]);
-		m_p1version = value[0] ^ 0x30;
+		char szVersion[12];
+		if ((value[0] == '(') && (ePos == 6))
+		{
+			// Belgian meter
+			sprintf(szVersion, "ESMR %c.%c.%c", value[1], value[2], value[3]);
+			m_p1version = value[1] ^ 0x30;
+		}
+		else
+		{
+			// Dutch meter
+			sprintf(szVersion, "ESMR %c.%c", value[1], value[2]);
+			m_p1version = value[0] ^ 0x30;
+			if (m_p1version < 5)
+				szVersion[0]='D';
+		}
+		_log.Log(LOG_STATUS, "P1 Smart Meter: Meter reports as %s", szVersion);
 		if (m_p1version > 9)
 			m_p1version = 0;
 		break;
