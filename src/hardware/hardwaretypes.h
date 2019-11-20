@@ -1,5 +1,6 @@
 #pragma once
 
+#include "typedef/switchtypes.hpp"
 #include <cereal/cereal.hpp>
 
 #include "ColorSwitch.h"
@@ -518,6 +519,7 @@ typedef struct _tGeneralSwitch {
 	uint8_t len;
 	uint8_t type;
 	uint8_t subtype;
+	uint8_t switchtype;
 	int32_t id;
 	int32_t unitcode;
 	uint8_t cmnd;
@@ -534,6 +536,7 @@ typedef struct _tGeneralSwitch {
 		ar & cereal::make_nvp("len", len);
 		ar & cereal::make_nvp("type", type);
 		ar & cereal::make_nvp("subtype", subtype);
+		ar & cereal::make_nvp("switchtype", switchtype);
 		ar & cereal::make_nvp("id", id);
 		ar & cereal::make_nvp("unitcode", unitcode);
 		ar & cereal::make_nvp("cmnd", cmnd);
@@ -550,6 +553,7 @@ typedef struct _tGeneralSwitch {
 		len = sizeof(_tGeneralSwitch) - 1;
 		type = pTypeGeneralSwitch;
 		subtype = sSwitchTypeAC;
+		switchtype = device::tswitch::type::OnOff;
 		id = 1;
 		unitcode = 1;
 		seqnbr = 0;
