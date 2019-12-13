@@ -196,10 +196,10 @@ void DomoticzTCP::OnData(const unsigned char *pData, size_t length)
 }
 
 
-void DomoticzTCP::OnError(const std::exception e)
-{
-	_log.Log(LOG_ERROR, "DomoticzTCP: Error: %s", e.what());
-}
+//void DomoticzTCP::OnError(const std::exception e)
+//{
+//	_log.Log(LOG_ERROR, "DomoticzTCP: Error: %s", e.what());
+//}
 
 
 void DomoticzTCP::OnError(const boost::system::error_code& error)

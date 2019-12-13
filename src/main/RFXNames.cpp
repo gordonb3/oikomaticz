@@ -113,26 +113,26 @@ const char *RFX_Forecast_Desc(const unsigned char Forecast)
 	return findTableIDSingle1(Table, Forecast);
 }
 
-const char *RFX_WSForecast_Desc(const unsigned char Forecast)
+const char* RFX_WSForecast_Desc(const unsigned char Forecast)
 {
 	static const STR_TABLE_SINGLE	Table[] =
 	{
-		{ wsbaroforcast_heavy_snow,"Heavy Snow" },
-	{ wsbaroforcast_snow, "Snow" },
-	{ wsbaroforcast_heavy_rain, "Heavy Rain" },
-	{ wsbaroforcast_rain, "Rain" },
-	{ wsbaroforcast_cloudy, "Cloudy" },
-	{ wsbaroforcast_some_clouds, "Some Clouds" },
-	{ wsbaroforcast_sunny, "Sunny" },
-	{ wsbaroforcast_unknown, "Unknown" },
-	{ wsbaroforcast_unstable, "Unstable" },
-	{ wsbaroforcast_stable, "Stable" },
+		{ wsbaroforecast_heavy_snow,"Heavy Snow" },
+	{ wsbaroforecast_snow, "Snow" },
+	{ wsbaroforecast_heavy_rain, "Heavy Rain" },
+	{ wsbaroforecast_rain, "Rain" },
+	{ wsbaroforecast_cloudy, "Cloudy" },
+	{ wsbaroforecast_some_clouds, "Some Clouds" },
+	{ wsbaroforecast_sunny, "Sunny" },
+	{ wsbaroforecast_unknown, "Unknown" },
+	{ wsbaroforecast_unstable, "Unstable" },
+	{ wsbaroforecast_stable, "Stable" },
 	{ 0, NULL, NULL }
 	};
 	return findTableIDSingle1(Table, Forecast);
 }
 
-const char *BMP_Forecast_Desc(const unsigned char Forecast)
+const char* BMP_Forecast_Desc(const unsigned char Forecast)
 {
 	static const STR_TABLE_SINGLE	Table[] =
 	{
@@ -148,7 +148,7 @@ const char *BMP_Forecast_Desc(const unsigned char Forecast)
 	return findTableIDSingle1(Table, Forecast);
 }
 
-const char *RFX_Type_Desc(const unsigned char i, const unsigned char snum)
+const char* RFX_Type_Desc(const unsigned char i, const unsigned char snum)
 {
 	static const STR_TABLE_SINGLE	Table[] =
 	{
@@ -226,7 +226,7 @@ const char *RFX_Type_Desc(const unsigned char i, const unsigned char snum)
 	return findTableIDSingle2(Table, i);
 }
 
-const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char sType)
+const char* RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char sType)
 {
 	static const STR_TABLE_ID1_ID2	Table[] =
 	{
@@ -456,6 +456,7 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 	{ pTypeGeneral, sTypeTextStatus, "Text" },
 	{ pTypeGeneral, sTypeZWaveThermostatMode, "Thermostat Mode" },
 	{ pTypeGeneral, sTypeZWaveThermostatFanMode, "Thermostat Fan Mode" },
+	{ pTypeGeneral, sTypeZWaveThermostatOperatingState, "Thermostat Operating State" },
 	{ pTypeGeneral, sTypeAlert, "Alert" },
 	{ pTypeGeneral, sTypeSoundLevel, "Sound Level" },
 	{ pTypeGeneral, sTypeUV, "UV" },

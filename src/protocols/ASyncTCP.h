@@ -48,7 +48,6 @@ protected:
 	virtual void OnConnect() = 0;
 	virtual void OnDisconnect() = 0;
 	virtual void OnData(const unsigned char *pData, size_t length) = 0;
-	virtual void OnError(const std::exception e) = 0;
 	virtual void OnError(const boost::system::error_code& error) = 0;
 
 protected:

@@ -18,6 +18,8 @@ const std::string NEST_SET_SHARED = "/v2/put/shared.";
 const std::string NEST_SET_STRUCTURE = "/v2/put/structure.";
 const std::string NEST_SET_DEVICE = "/v2/put/device.";
 
+#define NEST_USER_AGENT_STRING "User-Agent: Nest/3.0.1.15 (iOS) os=6.0"
+
 #ifdef _DEBUG
 	//#define DEBUG_NextThermostatR
 	//#define DEBUG_NextThermostatW
@@ -141,7 +143,6 @@ void CNest::SendSetPointSensor(const unsigned char Idx, const float Temp, const 
 // Creates and updates switch used to log Heating and/or Colling.
 void CNest::UpdateSwitch(const unsigned char Idx, const bool bOn, const std::string &defaultname)
 {
-	bool bDeviceExits = true;
 	char szIdx[10];
 	sprintf(szIdx, "%X%02X%02X%02X", 0, 0, 0, Idx);
 	std::vector<std::vector<std::string> > result;
@@ -179,7 +180,7 @@ void CNest::UpdateSwitch(const unsigned char Idx, const bool bOn, const std::str
 		level = 15;
 		lcmd.LIGHTING2.cmnd = light2_sOn;
 	}
-	lcmd.LIGHTING2.level = level;
+	lcmd.LIGHTING2.level = (BYTE)level;
 	lcmd.LIGHTING2.filler = 0;
 	lcmd.LIGHTING2.rssi = 12;
 	sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255);
@@ -198,7 +199,7 @@ bool CNest::Login()
 	sstr << "username=" << m_UserName << "&password=" << m_Password;
 	std::string szPostdata=sstr.str();
 	std::vector<std::string> ExtraHeaders;
-	ExtraHeaders.push_back("user-agent:Nest/1.1.0.10 CFNetwork/548.0.4");
+	ExtraHeaders.push_back(NEST_USER_AGENT_STRING);
 	std::string sResult;
 
 	std::string sURL = NEST_LOGIN_PATH;
@@ -256,7 +257,7 @@ void CNest::Logout()
 }
 
 
-bool CNest::WriteToHardware(const char *pdata, const unsigned char length)
+bool CNest::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 {
 	if (m_UserName.size() == 0)
 		return false;
@@ -274,13 +275,13 @@ bool CNest::WriteToHardware(const char *pdata, const unsigned char length)
 	if (node_id % 3 == 0)
 	{
 		//Away
-		return SetAway(node_id, bIsOn);
+		return SetAway((uint8_t)node_id, bIsOn);
 	}
 
 	if (node_id % 4 == 0)
 	{
 		//Manual Eco Mode
-		return SetManualEcoMode(node_id, bIsOn);
+		return SetManualEcoMode((uint8_t)node_id, bIsOn);
 	}
 
 	return false;
@@ -343,7 +344,7 @@ void CNest::UpdateSmokeSensor(const unsigned char Idx, const bool bOn, const std
 		level = 15;
 		lcmd.LIGHTING2.cmnd = light2_sOn;
 	}
-	lcmd.LIGHTING2.level = level;
+	lcmd.LIGHTING2.level = (uint8_t)level;
 	lcmd.LIGHTING2.filler = 0;
 	lcmd.LIGHTING2.rssi = 12;
 
@@ -380,7 +381,7 @@ void CNest::GetMeterDetails()
 	}
 	std::vector<std::string> ExtraHeaders;
 
-	ExtraHeaders.push_back("user-agent:Nest/1.1.0.10 CFNetwork/548.0.4");
+	ExtraHeaders.push_back(NEST_USER_AGENT_STRING);
 	ExtraHeaders.push_back("Authorization:Basic " + m_AccessToken);
 	ExtraHeaders.push_back("X-nl-user-id:" + m_UserID);
 	ExtraHeaders.push_back("X-nl-protocol-version:1");
@@ -534,7 +535,7 @@ void CNest::GetMeterDetails()
 				if (!bBool)
 					bIAlarm = true;
 			}
-			UpdateSmokeSensor(SwitchIndex, bIAlarm, devName);
+			UpdateSmokeSensor((uint8_t)SwitchIndex, bIAlarm, devName);
 			SwitchIndex++;
 		}
 	}
@@ -675,7 +676,7 @@ void CNest::SetSetpoint(const int idx, const float temp)
 
 	std::vector<std::string> ExtraHeaders;
 
-	ExtraHeaders.push_back("user-agent:Nest/1.1.0.10 CFNetwork/548.0.4");
+	ExtraHeaders.push_back(NEST_USER_AGENT_STRING);
 	ExtraHeaders.push_back("Authorization:Basic " + m_AccessToken);
 	ExtraHeaders.push_back("X-nl-protocol-version:1");
 
@@ -721,7 +722,7 @@ bool CNest::SetAway(const unsigned char Idx, const bool bIsAway)
 
 	std::vector<std::string> ExtraHeaders;
 
-	ExtraHeaders.push_back("user-agent:Nest/1.1.0.10 CFNetwork/548.0.4");
+	ExtraHeaders.push_back(NEST_USER_AGENT_STRING);
 	ExtraHeaders.push_back("Authorization:Basic " + m_AccessToken);
 	ExtraHeaders.push_back("X-nl-protocol-version:1");
 
@@ -761,7 +762,7 @@ bool CNest::SetManualEcoMode(const unsigned char Idx, const bool bIsManualEcoMod
 
 	std::vector<std::string> ExtraHeaders;
 
-	ExtraHeaders.push_back("user-agent:Nest/1.1.0.10 CFNetwork/548.0.4");
+	ExtraHeaders.push_back(NEST_USER_AGENT_STRING);
 	ExtraHeaders.push_back("Authorization:Basic " + m_AccessToken);
 	ExtraHeaders.push_back("X-nl-protocol-version:1");
 
@@ -787,7 +788,7 @@ bool CNest::SetManualEcoMode(const unsigned char Idx, const bool bIsManualEcoMod
 	return true;
 }
 
-void CNest::SetProgramState(const int newState)
+void CNest::SetProgramState(const int /*newState*/)
 {
 	if (m_UserName.size() == 0)
 		return;

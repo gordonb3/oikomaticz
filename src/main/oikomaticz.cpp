@@ -137,6 +137,7 @@ std::string szAppDate="???";
 std::string szPyVersion="None";
 int ActYear;
 time_t m_StartTime=time(NULL);
+std::string szRandomUUID = "???";
 
 MainWorker m_mainworker;
 CLogger _log;
@@ -214,10 +215,11 @@ void daemonize(const char *rundir, const char *pidfile)
 		/* Could not fork */
 		exit(EXIT_FAILURE);
 	}
-    
-    /* call srand once for the entire app */
-    std::srand((unsigned int)std::time(nullptr));
-    
+
+	/* call srand once for the entire app */
+	std::srand((unsigned int)std::time(nullptr));
+	szRandomUUID = GenerateUUID();
+
 	if (pid > 0)
 	{
 		/* Child created ok, so exit parent process */

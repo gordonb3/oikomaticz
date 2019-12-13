@@ -1,5 +1,5 @@
 #set to minimum version that supports clean build on cygwin
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 3.14.0)
 
 project(oikomaticz)
 
@@ -18,7 +18,7 @@ option(USE_STATIC_OPENZWAVE "Build with static OpenZwave libraries" YES)
 option(WITHOUT_OLDDB_SUPPORT "Disable support for importing an ancient Domoticz database" NO)
 
 ## required min. libBoost version
-set(DZ_MIN_LIBBOOST_VERSION 106000)
+set(DZ_MIN_LIBBOOST_VERSION 1.66.0)
 ##
 
 macro(Gitversion_GET_REVISION dir variable)

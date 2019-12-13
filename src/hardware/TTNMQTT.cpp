@@ -14,7 +14,7 @@
 #define RETRY_DELAY 30
 
 #define CLIENTID	"Domoticz"
-#define QOS         1
+extern std::string szRandomUUID;
 
 #ifdef _DEBUG
 //#define DEBUG_TTN_R
@@ -53,7 +53,7 @@ std::string ReadFile(std::string filename)
 
 
 CTTNMQTT::CTTNMQTT(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const std::string &Username, const std::string &Password, const std::string &CAfilename) :
-	mosquittopp(CLIENTID),
+	mosqdz::mosquittodz((std::string("Domoticz-TTN") + szRandomUUID).c_str()),
 	m_szIPAddress(IPAddress),
 	m_UserName(Username),
 	m_Password(Password),
@@ -75,12 +75,12 @@ CTTNMQTT::CTTNMQTT(const int ID, const std::string &IPAddress, const unsigned sh
 	on_message(&mqtt_msg);
 #endif
 
-	mosqpp::lib_init();
+	mosqdz::lib_init();
 }
 
 CTTNMQTT::~CTTNMQTT(void)
 {
-	mosqpp::lib_cleanup();
+	mosqdz::lib_cleanup();
 }
 
 bool CTTNMQTT::StartHardware()
@@ -264,6 +264,11 @@ void CTTNMQTT::Do_Work()
 			}
 		}
 	}
+	clear_callbacks();
+
+	if (isConnected())
+		disconnect();
+
 	_log.Log(LOG_STATUS, "TTN_MQTT: Worker stopped...");
 }
 
@@ -450,8 +455,8 @@ void CTTNMQTT::on_message(const struct mosquitto_message *message)
 				bool bHaveTemp = vTemp.isObject();
 				bool bHaveHumidity = vHum.isObject();
 				bool bHaveBaro = vBaro.isObject();
-				int nforecast = wsbaroforcast_some_clouds;
-				float temp, hum, baro;
+				int nforecast = wsbaroforecast_some_clouds;
+				float temp = 0, hum = 0, baro = 0;
 				if (bHaveTemp)
 				{
 					temp = vTemp["value"].asFloat();

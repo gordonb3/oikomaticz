@@ -544,7 +544,7 @@ bool P1MeterBase::MatchLine()
 		else
 		{
 			// Dutch meter
-			sprintf(szVersion, "ESMR %c.%c", value[1], value[2]);
+			sprintf(szVersion, "ESMR %c.%c", value[0], value[1]);
 			m_p1version = value[0] ^ 0x30;
 			if (m_p1version < 5)
 				szVersion[0]='D';
