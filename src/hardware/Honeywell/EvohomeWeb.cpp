@@ -1021,9 +1021,13 @@ bool CEvohomeWeb::user_account()
 		return false;
 	}
 
+	std::string szError;
+	if (j_account.isMember("error"))
+		szError = j_account["error"].asString();
 	if (j_account.isMember("message"))
+		szError = j_account["message"].asString();
+	if (!szError.empty())
 	{
-		std::string szError = j_account["message"].asString();
 		_log.Log(LOG_ERROR, "(%s) retrieve user account info failed with message: %s", m_Name.c_str(), szError.c_str());
 		return false;
 	}
@@ -1828,24 +1832,20 @@ void CEvohomeWeb::v1_renew_session()
 	std::string sz_url = EVOHOME_HOST"/WebAPI/api/Session";
 	std::string sz_response = put_receive_data(sz_url, "", m_v1SessionHeaders);
 
-	if (sz_response[0] == '[') // response is an unnamed array - likely an error message
-	{
-		sz_response[0] = ' ';
-		size_t len = sz_response.size();
-		len--;
-		sz_response[len] = ' ';
-	}
+	if (sz_response.empty())
+		return;
 
-	Json::Reader jReader;
-	Json::Value j_fi;
-	if (jReader.parse(sz_response.c_str(), j_fi))
+	// no need to parse the whole json string - we only need the "code"
+	size_t pos = sz_response.find("\"code\"");
+	if (pos == std::string::npos)
+		return;
+
+	std::string sz_code = sz_response.substr(pos+8, 2);
+	if (sz_code != "-1")
 	{
-		if (j_fi.isMember("code") && (j_fi["code"].asString() != "-1"))
-		{
-			// session is no longer valid
-			_log.Debug(DEBUG_HARDWARE, "(%s) discard expired v1 API session ID", m_Name.c_str());
-			m_v1uid = "";
-		}
+		// session is no longer valid
+		_log.Debug(DEBUG_HARDWARE, "(%s) discard expired v1 API session ID", m_Name.c_str());
+		m_v1uid = "";
 	}
 }
 
@@ -1883,26 +1883,34 @@ void CEvohomeWeb::get_v1_temps()
 		return;
 	}
 
-	if (!j_fi.isMember("locations"))
-	{
-		std::string szError;
-		if (j_fi.isMember("error"))
-			szError = j_fi["error"].asString();
-		else if (j_fi.isMember("message"))
-			szError = j_fi["message"].asString();
-		if (!szError.empty())
-		{
-			if (j_fi.isMember("code") && (j_fi["code"].asString() == "401")) // session is no longer valid
-				m_v1uid = "";
+	Json::Value *j_error;
+	if (j_fi.isMember("locations") && (j_fi["locations"].size() > 0))
+		j_error = &j_fi["locations"][0];
+	else
+		j_error = &j_fi;
 
-			_log.Log(LOG_ERROR, "(%s) v1 get temps failed with message: %s", m_Name.c_str(), szError.c_str());
-			return;
+	std::string szError;
+	if ((*j_error).isMember("error"))
+		szError = (*j_error)["error"].asString();
+	if ((*j_error).isMember("message"))
+		szError = (*j_error)["message"].asString();
+	if (!szError.empty())
+	{
+		if ((*j_error).isMember("code") && ((*j_error)["code"].asString() == "401"))
+		{
+			// authorization error: session is no longer valid
+			m_v1uid = "";
 		}
 
-		_log.Log(LOG_ERROR, "(%s) v1 get temps returned an unhandled response", m_Name.c_str());
+		_log.Log(LOG_ERROR, "(%s) v1 get temps failed with message: %s", m_Name.c_str(), szError.c_str());
 		return;
 	}
 
+	if (!j_fi.isMember("locations"))
+	{
+		_log.Log(LOG_ERROR, "(%s) v1 get temps returned an unhandled response", m_Name.c_str());
+		return;
+	}
 
 	size_t l = j_fi["locations"].size();
 	for (size_t i = 0; i < l; ++i)
@@ -1979,30 +1987,89 @@ std::string CEvohomeWeb::process_response(std::vector<unsigned char> vHTTPRespon
 {
 	std::string sz_response;
 	std::string sz_retcode;
+	std::string sz_rettext;
 
 	sz_response.insert(sz_response.begin(), vHTTPResponse.begin(), vHTTPResponse.end());
 
-	if (!httpOK && (vHeaderData.size() > 0))
+	if (vHeaderData.size() > 0)
 	{
-		if (vHeaderData[0][0] == 'H')
+
+		size_t pos = vHeaderData[0].find(" ");
+		if (pos != std::string::npos)
 		{
-			size_t pos = vHeaderData[0].find(" ");
-			sz_retcode = vHeaderData[0].substr(pos+1, 3);
+			pos++;
+			while (((vHeaderData[0][pos] & 0xF0) == 0x30) && ((vHeaderData[0][pos] & 0x0F) < 10))
+			{
+				sz_retcode.append(1,vHeaderData[0][pos]);
+				pos++;
+			}
+			pos++;
+			if (pos < vHeaderData[0].size())
+				sz_rettext = vHeaderData[0].substr(pos);
 		}
-		else if (vHeaderData[0].size() > 2)
+
+		if (sz_retcode.size() == 3)
+//		if (vHeaderData[0][0] == 'H')
+		{
+			// HTTPClient GET method sets httpOK to false if HTTP return code > 400
+			// reset the value to true - we want to process the body
+			httpOK = true;
+		}
+
+		if (sz_retcode.empty())
+		{
+			// fallthrough in case of an unexpected header content
 			sz_retcode = vHeaderData[0];
-		else // vHeaderData contains a Curl status code
-			_log.Debug(DEBUG_HARDWARE, "(%s) attempt to communicate to Evohome portal returned Curl status: %s", m_Name.c_str(), vHeaderData[0].c_str());
+		}
+
+		if (!httpOK)
+		{
+			 // sz_retcode contains a Curl status code
+			sz_response = "{\"code\":\"";
+			sz_response.append(sz_retcode);
+			sz_response.append("\",\"message\":\"");
+			if (!sz_rettext.empty())
+				sz_response.append(sz_rettext);
+			else
+			{
+				sz_response.append("HTTP client error ");
+				sz_response.append(sz_retcode);
+			}
+                        sz_response.append("\"}");
+			return sz_response;
+		}
+
+		if ((sz_retcode != "200") && (!sz_response.empty()))
+		{
+			if ((sz_response[0] == '[') || (sz_response[0] == '{'))
+			{
+				// append code to the json response so it will take preference over any existing (textual) message code
+				size_t pos = sz_response.find_last_of("}");
+				if (pos != std::string::npos)
+				{
+					sz_response.insert(pos, ",\"code\":\"\"");
+					sz_response.insert(pos+9, sz_retcode);
+					return sz_response;
+				}
+			}
+		}
 	}
 
 	if (sz_response.empty())
 	{
-		if (sz_retcode.empty()) // networking error
-			return "{\"error\":\"Evohome portal did not return any data or status\",\"code\":\"-1\"}";
+		if (sz_retcode.empty())
+			return "{\"code\":\"-1\",\"message\":\"Evohome portal did not return any data or status\"}";
 
-		sz_response = "{\"error\":\"HTTP ";
+		sz_response = "{\"code\":\"";
 		sz_response.append(sz_retcode);
-		sz_response.append("\",\"code\":\"");
+		sz_response.append("\",\"message\":\"");
+		if (!sz_rettext.empty())
+			sz_response.append(sz_rettext);
+		else
+		{
+			sz_response.append("HTTP ");
+			sz_response.append(sz_retcode);
+		}
 		sz_response.append(sz_retcode);
 		sz_response.append("\"}");
 		return sz_response;
@@ -2014,7 +2081,12 @@ std::string CEvohomeWeb::process_response(std::vector<unsigned char> vHTTPRespon
 	if (sz_response.find("<title>") != std::string::npos) // received an HTML page
 	{
 		std::stringstream ss_error;
-		ss_error << "{\"message\":\"";
+		ss_error << "{\"code\":\"";
+		if (!sz_retcode.empty())
+			ss_error << sz_retcode;
+		else
+			ss_error << "-1";
+		ss_error << "\",\"message\":\"";
 		int i = sz_response.find("<title>");
 		char* html = &sz_response[i];
 		i = 7;
@@ -2025,10 +2097,6 @@ std::string CEvohomeWeb::process_response(std::vector<unsigned char> vHTTPRespon
 			i++;
 			c = html[i];
 		}
-		if (!sz_retcode.empty())
-		{
-			ss_error << "\",\"code\":\"" << sz_retcode;
-		}
 		ss_error << "\"}";
 		return ss_error.str();
 	}
@@ -2036,7 +2104,12 @@ std::string CEvohomeWeb::process_response(std::vector<unsigned char> vHTTPRespon
 	if (sz_response.find("<html>") != std::string::npos) // received an HTML page without a title
 	{
 		std::stringstream ss_error;
-		ss_error << "{\"message\":\"";
+		ss_error << "{\"code\":\"";
+		if (!sz_retcode.empty())
+			ss_error << sz_retcode;
+		else
+			ss_error << "-1";
+		ss_error << "\",\"message\":\"";
 		int i = 0;
 		char* html = &sz_response[0];
 		char c = html[i];
@@ -2058,14 +2131,9 @@ std::string CEvohomeWeb::process_response(std::vector<unsigned char> vHTTPRespon
 				i++;
 			}
 		}
-		if (!sz_retcode.empty())
-		{
-			ss_error << "\",\"code\":\"" << sz_retcode;
-		}
 		ss_error << "\"}";
 		return ss_error.str();
 	}
-
-	return "{\"error\":\"unhandled response\"}";
+	return "{\"code\":\"-1\",\"message\":\"unhandled response\"}";
 }
 

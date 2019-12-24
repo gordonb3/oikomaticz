@@ -206,34 +206,35 @@ bool HTTPClient::GETBinary(const std::string &url, const std::vector<std::string
 		curl_easy_setopt(curl, CURLOPT_HEADERDATA, &vHeaderData);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-		curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 		res = curl_easy_perform(curl);
 
-		if (res != CURLE_OK)
+		bool bOK = false;
+		if (res == CURLE_OK)
 		{
-			if (res == CURLE_HTTP_RETURNED_ERROR)
-			{
-				//HTTP status code is already inside the header
-				long responseCode;
-				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
-				LogError(responseCode);
-			}
-			else
+			long http_code = 0;
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+
+			bOK = ((http_code) && (http_code < 400));
+			if (!bOK)
+				LogError(http_code);
+		}
+		else
+		{
+			if (res != CURLE_HTTP_RETURNED_ERROR)
 			{
 				//Need to generate a header
 				std::stringstream ss;
-				ss << "HTTP/1.1 " << res << " " << curl_easy_strerror(res);
+				ss << "CURLE " << res << " " << curl_easy_strerror(res);
 				vHeaderData.push_back(ss.str());
 			}
 		}
 
 		curl_easy_cleanup(curl);
 
-		if (headers != NULL) {
+		if (headers != NULL)
 			curl_slist_free_all(headers); /* free the header list */
-		}
 
-		return (res == CURLE_OK);
+		return bOK;
 	}
 	catch (...)
 	{
