@@ -21,6 +21,7 @@ option(WITHOUT_OLDDB_SUPPORT "Disable support for importing an ancient Domoticz 
 set(DZ_MIN_LIBBOOST_VERSION 1.66.0)
 ##
 
+find_program(GIT_EXECUTABLE git DOC "git command line client")
 macro(Gitversion_GET_REVISION dir variable)
   execute_process(COMMAND ${GIT_EXECUTABLE} --git-dir ./.git rev-list HEAD --count
     WORKING_DIRECTORY ${dir}
@@ -35,6 +36,7 @@ if(NOT ProjectRevision)
     message(STATUS "Read ProjectRevision from appversion.default")
     file(STRINGS ${CMAKE_SOURCE_DIR}/appversion.default AppVersionContent)
     list(GET AppVersionContent 2 AppVersionContent)
+    string(REPLACE "\"" "" AppVersionContent ${AppVersionContent})
     string(REPLACE " " ";" AppVersionContent ${AppVersionContent})
     list(GET AppVersionContent 2 ProjectRevision)
   else(EXISTS ${CMAKE_SOURCE_DIR}/appversion.default)
@@ -229,8 +231,6 @@ macro(ADD_PRECOMPILED_HEADER _targetName _input)
     set_target_properties(${_targetName} PROPERTIES COMPILE_FLAGS "-include ${_name} -Winvalid-pch")
   endif(CMAKE_COMPILER_IS_GNUCXX)
 endmacro()
-
-find_program(GIT_EXECUTABLE git DOC "git command line client")
 
 # a custom target that is always built
 add_custom_target(revisiontag ALL)
