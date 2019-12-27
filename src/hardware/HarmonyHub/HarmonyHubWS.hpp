@@ -2,7 +2,7 @@
 
 #include "hardware/DomoticzHardware.h"
 #include "hardware/hardwaretypes.h"
-#include <jsoncpp/json.h>
+#include "main/json_helper.h"
 #include "harmonyhubclient.hpp"
 
 namespace harmonyhubpp {

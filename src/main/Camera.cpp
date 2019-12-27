@@ -12,7 +12,7 @@
 #include "SQLHelper.h"
 #include "WebServer.h"
 #include "webserver/cWebem.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 
 #define CAMERA_POLL_INTERVAL 30
 

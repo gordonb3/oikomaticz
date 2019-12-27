@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "WebsocketHandler.h"
 #include "main/localtime_r.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "cWebem.h"
 #include "main/Logger.h"
 
@@ -27,7 +27,6 @@ namespace http {
 		boost::tribool CWebsocketHandler::Handle(const std::string &packet_data, bool outbound)
 		{
 			Json::Value jsonValue;
-			Json::StyledWriter writer;
 
 			try
 			{
@@ -53,9 +52,8 @@ namespace http {
 					}
 
 
-				Json::Reader reader;
 				Json::Value value;
-				if (!reader.parse(packet_data, value)) {
+				if (!ParseJSon(packet_data, value)) {
 					return true;
 				}
 				if (value["event"] != "request") {
@@ -75,7 +73,7 @@ namespace http {
 						jsonValue["event"] = "response";
 						jsonValue["requestid"] = value["requestid"].asInt64();
 						jsonValue["data"] = rep.content;
-						std::string response = writer.write(jsonValue);
+						std::string response = JSonToFormatString(jsonValue);
 						MyWrite(response);
 						return true;
 					}
@@ -87,7 +85,7 @@ namespace http {
 			}
 
 			jsonValue["error"] = "Internal Server Error!!";
-			std::string response = writer.write(jsonValue);
+			std::string response = JSonToFormatString(jsonValue);
 			MyWrite(response);
 			return true;
 		}
@@ -156,11 +154,10 @@ namespace http {
 			{
 				std::string query = "type=devices&rid=" + std::to_string(DeviceRowIdx);
 				Json::Value request;
-				Json::StyledWriter writer;
 				request["event"] = "request";
 				request["requestid"] = -1;
 				request["query"] = query;
-				std::string packet = writer.write(request);
+				std::string packet = JSonToFormatString(request);
 				Handle(packet, true);
 			}
 			catch (std::exception& e)

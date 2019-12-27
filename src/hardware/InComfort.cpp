@@ -4,12 +4,12 @@
 #include "main/Logger.h"
 #include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
 #include "protocols/HTTPClient.h"
 #include "main/mainworker.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 
 #define round(a) ( int ) ( a + .5 )
 
@@ -153,8 +153,7 @@ void CInComfort::SetProgramState(const int /*newState*/)
 void CInComfort::ParseAndUpdateDevices(std::string jsonData)
 {
 	Json::Value root;
-	Json::Reader jReader;
-	bool bRet = jReader.parse(jsonData, root);
+	bool bRet = ParseJSon(jsonData, root);
 	if ((!bRet) || (!root.isObject()))
 	{
 		_log.Log(LOG_ERROR, "InComfort: Invalid data received. Data is not json formatted.");

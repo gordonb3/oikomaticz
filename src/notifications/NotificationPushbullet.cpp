@@ -2,7 +2,7 @@
 #include "NotificationPushbullet.h"
 #include "protocols/HTTPClient.h"
 #include "main/Logger.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "protocols/UrlEncode.h"
 
 CNotificationPushbullet::CNotificationPushbullet() : CNotificationBase(std::string("pushbullet"), OPTIONS_URL_SUBJECT | OPTIONS_URL_BODY | OPTIONS_URL_PARAMS)
@@ -34,13 +34,12 @@ bool CNotificationPushbullet::SendMessageImplementation(
 	std::string sResult;
 	std::vector<std::string> ExtraHeaders;
 	Json::Value json;
-	Json::StyledWriter jsonWriter;
 
 	//Build the message in JSON
 	json["type"] = "note";
 	json["title"] = CURLEncode::URLDecode(cSubject);
 	json["body"] = CURLEncode::URLDecode(Text);
-	sPostData = jsonWriter.write(json);
+	sPostData = JSonToFormatString(json);
 
 	//Add the required Access Token and Content Type
 	sHeaderKey << "Access-Token: " << _apikey;

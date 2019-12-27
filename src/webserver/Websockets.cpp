@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Websockets.hpp"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 
 #define FIN_MASK 0x80
 #define RSVI1_MASK 0x40

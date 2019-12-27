@@ -202,8 +202,7 @@ bool Lyric::refreshToken()
 	}
 
 	Json::Value root;
-	Json::Reader jReader;
-	bool ret = jReader.parse(sResult, root);
+	bool ret = ParseJSon(sResult, root);
 	if (!ret) {
 		_log.Log(LOG_ERROR, "Honeywell Lyric: Invalid/no data received...");
 		return false;
@@ -270,10 +269,9 @@ void Lyric::GetThermostatData()
 	}
 #endif
 
-	Json::Reader jReader;
 	m_locationInfo.clear();
 
-	bool ret = jReader.parse(sResult, m_locationInfo);
+	bool ret = ParseJSon(sResult, m_locationInfo);
 	if (!ret) {
 		_log.Log(LOG_ERROR, "Honeywell Lyric: Invalid/no data received...");
 		return;
@@ -460,13 +458,12 @@ void Lyric::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid*/)
 	reqRoot["heatSetpoint"] = (*m_lyricDevices[idx].deviceInfo)["changeableValues"]["coolHeatpoint"].asInt();
 	reqRoot["coolSetpoint"] = (*m_lyricDevices[idx].deviceInfo)["changeableValues"]["coolSetpoint"].asInt();
 	reqRoot["thermostatSetpointStatus"] = "TemporaryHold";
-	Json::FastWriter writer;
 
 #ifndef LYRIC_OFFLINE
 	std::string sResult;
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
-	if (!HTTPClient::POST(url, writer.write(reqRoot), mSessionHeaders, sResult, true, true)) {
+	if (!HTTPClient::POST(url, JSonToRawString(reqRoot), mSessionHeaders, sResult, true, true)) {
 		_log.Log(LOG_ERROR, "Honeywell Lyric: Error setting thermostat data!");
 		return;
 	}
@@ -504,13 +501,12 @@ void Lyric::SetSetpoint(const int idx, const float temp, const int /*nodeid*/)
 		reqRoot["heatSetpoint"] = temp;
 	reqRoot["coolSetpoint"] = (*m_lyricDevices[idx].deviceInfo)["changeableValues"]["coolSetpoint"].asInt();
 	reqRoot["thermostatSetpointStatus"] = "TemporaryHold";
-	Json::FastWriter writer;
 
 #ifndef LYRIC_OFFLINE
 	std::string sResult;
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
-	if (!HTTPClient::POST(url, writer.write(reqRoot), mSessionHeaders, sResult, true, true)) {
+	if (!HTTPClient::POST(url, JSonToRawString(reqRoot), mSessionHeaders, sResult, true, true)) {
 		_log.Log(LOG_ERROR, "Honeywell Lyric: Error setting thermostat data!");
 		return;
 	}

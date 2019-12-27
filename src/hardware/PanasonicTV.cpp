@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "PanasonicTV.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "main/Helper.h"
 #include "main/HTMLSanitizer.h"
 #include "main/Logger.h"

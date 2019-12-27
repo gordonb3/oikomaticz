@@ -20,7 +20,7 @@
 #include "main/WebServer.h"
 #include "main/mainworker.h"
 #include "main/EventSystem.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "main/localtime_r.h"
 #ifdef WIN32
 #	include <direct.h>

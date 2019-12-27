@@ -2706,7 +2706,7 @@ bool CSQLHelper::OpenDatabase()
 		}
 		if (ozdbversion < 2)
 		{
-			// patch for Honeywell Lyric 
+			// patch for Honeywell Lyric
 			std::vector<std::vector<std::string> > hwresult;
 			hwresult = safe_query("select ID from Hardware where Type=%d", hardware::type::HoneywellLyric);
 			if (!hwresult.empty())

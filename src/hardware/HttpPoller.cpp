@@ -7,7 +7,7 @@
 #include "main/RFXtrx.h"
 #include "hardware/hardwaretypes.h"
 #include "protocols/HTTPClient.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "webserver/Base64.h"
 #include "main/WebServer.h"
 #include "main/LuaHandler.h"

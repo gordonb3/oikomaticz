@@ -25,7 +25,7 @@
 #include "main/SQLHelper.h"
 #include "main/localtime_r.h"
 #include "main/WebServer.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 
 
 extern std::string szUserDataFolder;

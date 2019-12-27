@@ -3,7 +3,7 @@
 #include "SQLHelper.h"
 #include "Logger.h"
 #include "protocols/HTTPClient.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "webserver/Base64.h"
 
 bool IFTTT::Send_IFTTT_Trigger(const std::string &eventid, const std::string &svalue1, const std::string &svalue2, const std::string &svalue3)

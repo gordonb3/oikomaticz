@@ -7,7 +7,7 @@
 #include "main/mainworker.h"
 #include "main/WebServer.h"
 #include "webserver/cWebem.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 
 CTellstick::CTellstick(const TelldusFunctions& functions, const int ID, int repeats, int repeatInterval)
     : m_td(functions),

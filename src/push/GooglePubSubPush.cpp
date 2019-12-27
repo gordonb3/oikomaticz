@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "GooglePubSubPush.h"
 #include "hardware/hardwaretypes.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "main/Helper.h"
 #include "main/localtime_r.h"
 #include "main/Logger.h"

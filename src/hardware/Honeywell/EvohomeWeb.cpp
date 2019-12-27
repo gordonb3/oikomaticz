@@ -875,8 +875,7 @@ bool CEvohomeWeb::login(const std::string &user, const std::string &password)
 	}
 
 	Json::Value j_login;
-	Json::Reader jReader;
-	if (!jReader.parse(sz_response.c_str(), j_login))
+	if (!ParseJSon(sz_response.c_str(), j_login))
 	{
 		_log.Log(LOG_ERROR, "(%s) failed parsing response from login to portal", m_Name.c_str());
 		return false;
@@ -953,8 +952,7 @@ bool CEvohomeWeb::renew_login()
 	}
 
 	Json::Value j_login;
-	Json::Reader jReader;
-	if (!jReader.parse(sz_response.c_str(), j_login))
+	if (!ParseJSon(sz_response.c_str(), j_login))
 	{
 		_log.Log(LOG_ERROR, "(%s) failed parsing response from renewing login", m_Name.c_str());
 		return false;
@@ -1014,8 +1012,7 @@ bool CEvohomeWeb::user_account()
 	}
 
 	Json::Value j_account;
-	Json::Reader jReader;
-	if (!jReader.parse(sz_response.c_str(), j_account))
+	if (!ParseJSon(sz_response.c_str(), j_account))
 	{
 		_log.Log(LOG_ERROR, "(%s) failed parsing response from retrieve user account info", m_Name.c_str());
 		return false;
@@ -1141,10 +1138,7 @@ bool CEvohomeWeb::full_installation()
 	sz_url.append("&includeTemperatureControlSystems=True");
 
 	std::string sz_response = send_receive_data(sz_url, m_SessionHeaders);
-
-	Json::Reader jReader;
 	m_j_fi.clear();
-
 	bool parseOK;
 	if (sz_response[0] == '[')
 	{
@@ -1152,10 +1146,10 @@ bool CEvohomeWeb::full_installation()
 		std::string sz_jdata = "{\"locations\": ";
 		sz_jdata.append(sz_response);
 		sz_jdata.append("}");
-		parseOK = jReader.parse(sz_jdata, m_j_fi);
+		parseOK = ParseJSon(sz_jdata, m_j_fi);
 	}
 	else
-		parseOK = jReader.parse(sz_response, m_j_fi);
+		parseOK = ParseJSon(sz_response, m_j_fi);
 
 	if (!parseOK)
 	{
@@ -1248,9 +1242,8 @@ bool CEvohomeWeb::get_status(int location)
 		sz_response[len] = ' ';
 	}
 
-	Json::Reader jReader;
 	m_j_stat.clear();
-	if (!jReader.parse(sz_response, m_j_stat))
+	if (!ParseJSon(sz_response, m_j_stat))
 	{
 		_log.Log(LOG_ERROR, "(%s) cannot parse return data from status request", m_Name.c_str());
 		return false;
@@ -1391,8 +1384,7 @@ bool CEvohomeWeb::get_zone_schedule(const std::string &zoneId, const std::string
 	if (hz == NULL)
 		return false;
 
-	Json::Reader jReader;
-	bool ret = jReader.parse(sz_response, hz->schedule);
+	bool ret = ParseJSon(sz_response, hz->schedule);
 	if (ret)
 	{
 		(hz->schedule)["zoneId"] = zoneId;
@@ -1584,8 +1576,7 @@ bool CEvohomeWeb::set_system_mode(const std::string &systemId, int mode)
 		}
 
 		Json::Value j_response;
-		Json::Reader jReader;
-		if (jReader.parse(sz_response.c_str(), j_response) && (j_response.isMember("message")))
+		if (ParseJSon(sz_response.c_str(), j_response) && (j_response.isMember("message")))
 		{
 			std::string szError = j_response["message"].asString();
 			_log.Log(LOG_ERROR, "(%s) set system mode failed with message: %s", m_Name.c_str(), szError.c_str());
@@ -1636,8 +1627,7 @@ bool CEvohomeWeb::set_temperature(const std::string &zoneId, const std::string &
 		}
 
 		Json::Value j_response;
-		Json::Reader jReader;
-		if (jReader.parse(sz_response.c_str(), j_response) && (j_response.isMember("message")))
+		if (ParseJSon(sz_response.c_str(), j_response) && (j_response.isMember("message")))
 		{
 			std::string szError = j_response["message"].asString();
 			_log.Log(LOG_ERROR, "(%s) set zone temperature override failed with message: %s", m_Name.c_str(), szError.c_str());
@@ -1672,8 +1662,7 @@ bool CEvohomeWeb::cancel_temperature_override(const std::string &zoneId)
 		}
 
 		Json::Value j_response;
-		Json::Reader jReader;
-		if (jReader.parse(sz_response.c_str(), j_response) && (j_response.isMember("message")))
+		if (ParseJSon(sz_response.c_str(), j_response) && (j_response.isMember("message")))
 		{
 			std::string szError = j_response["message"].asString();
 			_log.Log(LOG_ERROR, "(%s) cancel zone temperature override failed with message: %s", m_Name.c_str(), szError.c_str());
@@ -1738,8 +1727,7 @@ bool CEvohomeWeb::set_dhw_mode(const std::string &dhwId, const std::string &mode
 		}
 
 		Json::Value j_response;
-		Json::Reader jReader;
-		if (jReader.parse(sz_response.c_str(), j_response) && (j_response.isMember("message")))
+		if (ParseJSon(sz_response.c_str(), j_response) && (j_response.isMember("message")))
 		{
 			std::string szError = j_response["message"].asString();
 			_log.Log(LOG_ERROR, "(%s) set hot water override failed with message: %s", m_Name.c_str(), szError.c_str());
@@ -1784,8 +1772,7 @@ bool CEvohomeWeb::v1_login(const std::string &user, const std::string &password)
 	}
 
 	Json::Value j_login;
-	Json::Reader jReader;
-	if (!jReader.parse(sz_response.c_str(), j_login))
+	if (!ParseJSon(sz_response.c_str(), j_login))
 	{
 		_log.Log(LOG_ERROR, "(%s) cannot parse return data from v1 login", m_Name.c_str());
 		return false;
@@ -1863,7 +1850,6 @@ void CEvohomeWeb::get_v1_temps()
 
 	std::string sz_response = send_receive_data(sz_url, m_v1SessionHeaders);
 
-	Json::Reader jReader;
 	Json::Value j_fi;
 	bool parseOK;
 	if (sz_response[0] == '[')
@@ -1872,10 +1858,10 @@ void CEvohomeWeb::get_v1_temps()
 		std::string sz_jdata = "{\"locations\": ";
 		sz_jdata.append(sz_response);
 		sz_jdata.append("}");
-		parseOK = jReader.parse(sz_jdata, j_fi);
+		parseOK = ParseJSon(sz_jdata, j_fi);
 	}
 	else
-		parseOK = jReader.parse(sz_response, j_fi);
+		parseOK = ParseJSon(sz_response, j_fi);
 
 	if (!parseOK)
 	{

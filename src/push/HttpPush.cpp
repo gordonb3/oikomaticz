@@ -11,7 +11,7 @@
 #include "main/WebServer.h"
 #include "webserver/cWebem.h"
 #include "main/mainworker.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

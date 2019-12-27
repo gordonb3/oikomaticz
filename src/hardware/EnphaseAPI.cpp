@@ -6,7 +6,7 @@
 #include "hardware/hardwaretypes.h"
 #include "main/localtime_r.h"
 #include "protocols/HTTPClient.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "main/RFXtrx.h"
 #include "main/mainworker.h"
 #include <iostream>
@@ -176,9 +176,8 @@ bool EnphaseAPI::getProductionDetails(Json::Value& result)
 #endif
 #endif
 
-	Json::Reader jReader;
 
-	bool ret = jReader.parse(sResult, result);
+	bool ret = ParseJSon(sResult, result);
 	if ((!ret) || (!result.isObject()))
 	{
 		_log.Log(LOG_ERROR, "EnphaseAPI: Invalid data received!");

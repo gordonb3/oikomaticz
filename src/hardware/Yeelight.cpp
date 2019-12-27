@@ -9,7 +9,7 @@
 #include "main/mainworker.h"
 #include "main/WebServer.h"
 #include "webserver/cWebem.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 
 /*
 Yeelight (Mi Light) is a company that created White and RGBW lights

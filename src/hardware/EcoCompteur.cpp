@@ -5,7 +5,7 @@
 #include "main/localtime_r.h"
 #include "hardware/hardwaretypes.h"
 #include "protocols/HTTPClient.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "main/WebServer.h"
 
 /*
@@ -110,8 +110,7 @@ void CEcoCompteur::GetScript()
 
 	// Parse inst.json
 	Json::Value root;
-	Json::Reader jReader;
-	jReader.parse(sInst, root);
+	ParseJSon(sInst, root);
 
 	// Parse log2.csv
 	if (sLog2.length() == 0)

@@ -765,9 +765,8 @@ void HarmonyHubWS::ProcessHarmonyNotification(const Json::Value &j_data)
 void HarmonyHubWS::AsyncReceiver(const std::string szdata)
 {
 	Json::Value j_result;
-	Json::Reader j_reader;
 
-	bool ret = j_reader.parse(szdata.c_str(), j_result);
+	bool ret = ParseJSon(szdata.c_str(), j_result);
 
 	if ((!ret) || (!j_result.isObject()))
 	{
@@ -804,14 +803,14 @@ void HarmonyHubWS::AsyncReceiver(const std::string szdata)
 			{
 				m_connectionstatus = harmonyhubpp::connection::status::closed;
 				if (m_bShowConnectError)
-					_log.Log(LOG_ERROR, "Harmony Hub: Attempt to connect to Hub returned HTTP error %d (%s)", returncode, j_result["msg"].asString().c_str());
+					_log.Log(LOG_ERROR, "Harmony Hub: Attempt to connect to Hub returned HTTP client error %d (%s)", returncode, j_result["msg"].asString().c_str());
 				else
-					_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Attempt to connect to Hub returned HTTP error %d (%s)", returncode, j_result["msg"].asString().c_str());
+					_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Attempt to connect to Hub returned HTTP client error %d (%s)", returncode, j_result["msg"].asString().c_str());
 			}
 			return;
 		}
 
-		_log.Log(LOG_ERROR, "Harmony Hub: Unexpected HTTP error %d (%s)", returncode, j_result["msg"].asString().c_str());
+		_log.Log(LOG_ERROR, "Harmony Hub: Unexpected HTTP client error %d (%s)", returncode, j_result["msg"].asString().c_str());
 		return;
 	}
 

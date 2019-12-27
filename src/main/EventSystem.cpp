@@ -19,7 +19,7 @@
 #include "WebServer.h"
 #include "main/WebServerHelper.h"
 #include "webserver/cWebem.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -4443,9 +4443,7 @@ namespace http {
 			bool parsingSuccessful = eventxml.length() > 0;
 			Json::Value jsonRoot;
 			if (interpreter == "Blockly") {
-				Json::Reader reader;
-				std::stringstream ssel(eventlogic);
-				parsingSuccessful = reader.parse(ssel, jsonRoot);
+				parsingSuccessful = ParseJSon(eventlogic, jsonRoot);
 			}
 
 			if (!parsingSuccessful)
@@ -4698,9 +4696,7 @@ namespace http {
 				bool parsingSuccessful = eventxml.length() > 0;
 				Json::Value jsonRoot;
 				if (interpreter == "Blockly") {
-					Json::Reader reader;
-					std::stringstream ssel(eventlogic);
-					parsingSuccessful = reader.parse(ssel, jsonRoot);
+					parsingSuccessful = ParseJSon(eventlogic, jsonRoot);
 				}
 
 				if (!parsingSuccessful)

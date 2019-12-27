@@ -3,7 +3,7 @@
 #include "hardware/DomoticzHardware.h"
 #include "hardware/hardwaretypes.h"
 #include "typedef/metertypes.hpp"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 
 
 namespace Json

@@ -22,7 +22,7 @@
 #include "main/SQLHelper.h"
 #include "main/WebServer.h"
 #include "webserver/cWebem.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 
 extern std::string szUserDataFolder;
 

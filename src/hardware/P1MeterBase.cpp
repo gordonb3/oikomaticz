@@ -4,7 +4,7 @@
 #include "main/SQLHelper.h"
 #include "main/localtime_r.h"
 #include "main/Logger.h"
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "main/mainworker.h"
 #include "main/WebServer.h"
 #include "typedef/metertypes.hpp"
