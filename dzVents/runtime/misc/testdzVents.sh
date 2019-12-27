@@ -40,6 +40,14 @@ if [[ $? -ne 0 ]];then
 else
 	echo dzVents will be tested against domoticz version $NewVersion.
 fi
+ 
+currenttime=$(date +%H:%M)
+if [[ "$currenttime" > "00:00" ]] && [[ "$currenttime" < "00:31" ]]; then 
+	echo Script cannot be execute dbetween 00:00 and 00:30. Time checks will fail
+	exit 1
+fi
+
+dzVersion=$(grep DZVERSION dzVents/runtime/Utils.lua | head -1 | grep -oP "'.*'"  | sed s/\'//g)
 
 function leadingZero
 	{
@@ -125,14 +133,14 @@ function fillTimes
 function fillNumberOfTests
 	{
 		Device_ExpectedTests=113
-		Domoticz_ExpectedTests=70
+		Domoticz_ExpectedTests=71
 		EventHelpers_ExpectedTests=32
 		EventHelpersStorage_ExpectedTests=50
 		HTTPResponse_ExpectedTests=6
 		ScriptdzVentsDispatching_ExpectedTests=2
 		TimedCommand_ExpectedTests=42
-		Time_ExpectedTests=326
-		Utils_ExpectedTests=17
+		Time_ExpectedTests=332
+		Utils_ExpectedTests=25
 		Variable_ExpectedTests=15
 		ContactDoorLockInvertedSwitch_ExpectedTests=2
 		DelayedVariableScene_ExpectedTests=2
@@ -187,7 +195,7 @@ factor=10			   # performance factor (about 10 on Raspberry)
 
 cd $basedir/dzVents/runtime/integration-tests
 export NODE_NO_WARNINGS=1
-npm --silent start 2>&1 >/dev/null &
+npm --silent start --scripts-prepend-node-path 2>&1 >/dev/null &
 checkStarted "server" 10
 
 # Just to be sure we do not destroy something important without a backup
@@ -197,14 +205,13 @@ cp $basedir/domoticz.db $basedir/domoticz.db_$$
 rm -f $basedir/domoticz.db
 
 cd $basedir
-./domoticz > domoticz.log$$ &
+./domoticz  -www 8080 -sslwww 444 > domoticz.log$$ &
 checkStarted "domoticz" 20
 
 clear
-echo "========================= $NewVersion ================+========================== Tests ============================+"
-printf "|%6s %21s %83s " " time |" " test-script"  " | expected | tests | result | successful | failed |  seconds  |"
-echo
-echo "===================================================+=============================================================+"
+echo "========= domoticz $NewVersion, dzVents V$dzVersion =======+========================== Tests ==============================+"
+echo "  time  | test-script	                           | expected | tests | result  | successful |  failed  | seconds  |"
+echo "===================================================+===============================================================+"
 
 fillTimes
 fillNumberOfTests
@@ -230,7 +237,7 @@ if [[ $? -eq 0 ]];then
 		else
 			grep -i Error  domoticz.log$$ | grep -v CheckAuthToken
 			stopBackgroundProcesses 1
-		fi	
+		fi
 	else
 		echo Stage 1 of integration test was not completely succesfull
 		grep -i fail domoticz.log$$
@@ -245,6 +252,6 @@ else
 fi
 
 echo Total tests: $totalTest
-echo Finished without erors after $(showTime)
+echo $(date)';' dzVents version $dzVersion tested without erors after $(showTime)
 stopBackgroundProcesses 0
 cleanup

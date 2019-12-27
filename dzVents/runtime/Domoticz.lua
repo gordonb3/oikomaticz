@@ -126,7 +126,7 @@ local function Domoticz(settings)
 		['STRING'] = 'string',
 		['DATE'] = 'date',
 		['TIME'] = 'time',
-		['NSS_FIREBASE'] = 'gcm', -- For the moment the change to fcm is only done in the url 
+		['NSS_FIREBASE'] = 'gcm', -- For the moment the change to fcm is only done in the url
 		['NSS_GOOGLE_CLOUD_MESSAGING'] = 'gcm',
 		['NSS_HTTP'] = 'http',
 		['NSS_KODI'] = 'kodi',
@@ -148,6 +148,10 @@ local function Domoticz(settings)
 
 		utils = {
 			_ = _,
+
+			setLogMarker = function(logMarker)
+				return utils.setLogMarker(logMarker)
+			end,
 
 			toCelsius = function(f, relative)
 				return utils.toCelsius(f, relative)
@@ -179,6 +183,22 @@ local function Domoticz(settings)
 
 			toJSON = function(luaTable)
 				return utils.toJSON(luaTable)
+			end,
+
+			fromXML = function(xml, fallback)
+				return utils.fromXML(xml, fallback)
+			end,
+
+			toXML = function( luaTable, header)
+				return utils.toXML(luaTable, header)
+			end,
+
+			toBase64 = function (s)
+				return utils.toBase64(s)
+			end,
+
+			fromBase64 = function (s)
+				return utils.fromBase64(s)
 			end,
 
 			rgbToHSB = function(r, g, b)
@@ -299,6 +319,20 @@ local function Domoticz(settings)
 			if (message == nil) then message = '' end
 			self.sendCommand('SendEmail', subject .. '#' .. message .. '#' .. mailTo)
 		end
+	end
+
+	function self.triggerHTTPResponse(httpResponse, delay, message)
+		local httpResponse = httpResponse or _G.moduleLabel
+		local delay = delay or 0
+		local message = 'triggerHTTPResponse: ' .. (message or httpResponse)
+		local url = self.settings['Domoticz url'] .. '/json.htm?type=command&param=addlogmessage&message=' .. self.utils.urlEncode(message)
+				self.openURL  
+				(
+					{
+						url = url,
+						callback = httpResponse,
+					}
+				).afterSec(delay)
 	end
 
 	-- have domoticz send snapshot

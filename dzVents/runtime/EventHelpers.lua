@@ -29,7 +29,7 @@ local function EventHelpers(domoticz, mainMethod)
 	local _url = 'http://127.0.0.1:' .. (tostring(globalvariables['domoticz_listening_port']) or "8080")
 
 	local settings = {
-		['Log level'] = tonumber(globalvariables['dzVents_log_level']) or  1,
+		['Log level'] = tonumber(globalvariables['dzVents_log_level']) or 1,
 		['Domoticz url'] = _url,
 		url = url,
 		webRoot = tostring(webRoot),
@@ -392,10 +392,19 @@ local function EventHelpers(domoticz, mainMethod)
 			end
 
 			triggerInfo = eventHandler.trigger and ', trigger: ' .. eventHandler.trigger or ''
-
-			utils.log('------ Start ' ..  scriptType ..  moduleLabel ..':' .. moduleLabelInfo .. triggerInfo, utils.LOG_MODULE_EXEC_INFO)
+			local clockTimeStampAtStart = os.clock()
+			local timeStampAtStart = os.time()
+			utils.log('------ Start ' .. scriptType .. moduleLabel ..':' .. moduleLabelInfo .. triggerInfo, utils.LOG_MODULE_EXEC_INFO)
 			self.callEventHandler(eventHandler, device, variable, security, scenegroup, httpResponse)
-			utils.log('------ Finished ' .. moduleLabel, utils.LOG_MODULE_EXEC_INFO)
+			local clockTimeSpend = os.clock() - clockTimeStampAtStart
+			local realTimeSpend = os.time() - timeStampAtStart
+			if realTimeSpend > 9 or clockTimeSpend > 7 then
+				utils.log('------ Finished ' .. moduleLabel .. ' after >' .. realTimeSpend .. ' seconds. (using '.. tostring(clockTimeSpend):sub(1,5) .. ' seconds CPU time !)' , utils.LOG_ERROR)
+			elseif realTimeSpend > 6 or clockTimeSpend > 5 then
+				utils.log('------ Finished ' .. moduleLabel .. ' after >' .. realTimeSpend .. ' seconds. (using '.. tostring(clockTimeSpend):sub(1,5) .. ' seconds CPU time !)' , utils.LOG_FORCE)
+			else
+				utils.log('------ Finished ' .. moduleLabel , utils.LOG_MODULE_EXEC_INFO)
+			end
 
 			restoreLogging()
 		end
@@ -774,10 +783,14 @@ local function EventHelpers(domoticz, mainMethod)
 		for scriptTrigger, scripts in pairs(allEventScripts) do
 
 			if (string.find(scriptTrigger, '*')) then -- a wild-card was used
-				-- substitute 'magical chars' with a dot (a dot matches every char) and then turn it into a valid regexp and 
-				scriptTrigger = ('^' .. scriptTrigger:gsub("[%^$]","."):gsub("*", ".*") .. '$'):gsub('[^%w%s~{\\}:&(/)<>,?@#|_^*$]','.')
+				scriptTrigger = ('^' .. scriptTrigger:gsub("[%^$]","."):gsub("*", ".*") .. '$')
 
-				if (string.match(target, scriptTrigger)) then
+				local function sMatch(text, match) -- specialized sanitized match function to allow combination of Lua magic chars in wildcards
+					local sanitizedMatch = match:gsub("([%%%(%)%[%]%+%-%?])", "%%%1") -- escaping all 'magic' chars except *, ., ^ and $
+					return text:match(sanitizedMatch)
+				end
+
+				if sMatch(target, scriptTrigger) then
 					if modules == nil then modules = {} end
 
 					for i, mod in pairs(scripts) do

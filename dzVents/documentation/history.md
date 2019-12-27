@@ -1,3 +1,23 @@
+[2.5.4]
+- Add minutesSinceMidnight to domoticz Time object
+- Add domoticz.time.addSeconds(), -.addMinutes(), -.addHours(), -.addDays() , -.makeTime()
+- Add string.sMatch to utils
+- Made wildcard handling more resilient when magic chars are part of script triggers
+
+[2.5.3] 
+- Add timealert / errors for long running scripts
+- Add triggerHTTPResponse()
+
+[2.5.2]
+- Add actualWatt to replace WhActual (left in WhActual for compatibility reasons)
+- Add toBase64 and fromBase64 function in utils
+- Add setLogMarker function in utils
+- Deprecated increaseBrightness(), decreaseBrightness(), discomode methods (only available for Yeelight and when used leave the device stateless)
+
+[2.5.1]
+- Added `toXML` and `fromXML` methods to domoticz.utils.
+- Add attributes isXML, xmlVersion, xmlEncoding
+
 [2.5.0]
 - Prepared for Lua 5.3
 

@@ -194,7 +194,7 @@ local function Time(sDate, isUTC, _testMS)
 	if not(y and mon and d and h and min and s) then
 		sDate = makesDate()
 		y, mon, d, h, min, s = parseDate(sDate)
-		utils.log('sDate was invalid. Reset to ' .. sDate , utils.LOG_ERROR) 
+		utils.log('sDate was invalid. Reset to ' .. sDate , utils.LOG_ERROR)
 	end
 
 	-- extract s and ms
@@ -262,7 +262,8 @@ local function Time(sDate, isUTC, _testMS)
 	self['minutes'] = self.min
 	self['seconds'] = self.sec
 
-	self['secondsSinceMidnight'] = self.hour * 3600 + self.min * 60 + self.sec
+	self['minutesSinceMidnight'] = self.hour * 60 + self.min
+	self['secondsSinceMidnight'] = self.minutesSinceMidnight * 60 + self.sec
 	self['utils'] = utils
 	self['isUTC'] = isUTC
 	self['dDate'] = dDate
@@ -296,6 +297,31 @@ local function Time(sDate, isUTC, _testMS)
 		else
 			utils.log('Invalid time format passed to diff. Should a Time object', utils.LOG_ERROR)
 		end
+	end
+
+	function self.addSeconds(seconds, factor)
+		if type(seconds) ~= 'number' then 
+			self.utils.log(tostring(seconds) .. ' is not a valid parameter to this function. Please change to use a number value!', utils.LOG_ERROR)
+		else
+			factor = factor or 1
+			return Time( os.date("%Y-%m-%d %H:%M:%S", os.time() +  factor * math.floor(seconds) )) 
+		end
+	end
+
+	function self.addDays(days)
+		return self.addSeconds(days, 24 * 3600)
+	end
+
+	function self.addHours(hours)
+		return self.addSeconds(hours, 3600)
+	end
+
+	function self.addMinutes(minutes)
+		return self.addSeconds(minutes, 60)
+	end
+
+	function self.makeTime(sDate, isUTC)
+		return Time(sDate, isUTC)
 	end
 
 	-- return ISO format
@@ -478,25 +504,17 @@ local function Time(sDate, isUTC, _testMS)
 			return nil
 		end
 
+		local _ = require('lodash')
+		local dateTable = utils.stringSplit(dates,',') -- get all date(ranges)
+
 		-- remove spaces and add a comma
 		dates = string.gsub(dates, ' ', '') .. ',' --remove spaces and add a , so each number is terminated with a , so we can do simple search for the number
+
 		-- do a quick scan first to see if we already have a match without needing to search for ranges and wildcards
-
-		local dday = ''
-		local mmonth = ''
-
-		local _ = require('lodash')
-
-		if (self.day < 10) then dday = '0' .. tostring(self.day) end
-		if (self.month < 10) then mmonth = '0' .. tostring(self.month) end
-
-		if (
-			string.find(dates, tostring(self.day) .. '/' .. tostring(self.month) .. ',') or
-			(dday~='' and string.find(dates, dday .. '/' .. tostring(self.month) .. ',')) or
-			(mmonth ~= '' and string.find(dates, tostring(self.day) .. '/' .. mmonth .. ',')) or
-			(dday ~= '' and mmonth ~= '' and string.find(dates, dday .. '/' .. mmonth .. ','))
-		) then
-			return true
+		for index, value in ipairs(dateTable) do
+			if tonumber(value:match('%d+')) == self.day and tonumber(value:match('/(%d+)')) == self.month then
+				return true
+			end
 		end
 
 		-- wildcards
