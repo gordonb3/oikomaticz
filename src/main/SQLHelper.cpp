@@ -31,7 +31,7 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 2
-#define DOMOTICZ_DB_VERSION 136
+#define DOMOTICZ_DB_VERSION 138
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
@@ -402,11 +402,12 @@ const char *sqlCreateSetpointTimers =
 "[MDay] INTEGER DEFAULT 0, "
 "[Occurence] INTEGER DEFAULT 0);";
 
-const char *sqlCreateSharedDevices =
+const char* sqlCreateSharedDevices =
 "CREATE TABLE IF NOT EXISTS [SharedDevices] ("
 "[ID] INTEGER PRIMARY KEY,  "
 "[SharedUserID] BIGINT NOT NULL, "
-"[DeviceRowID] BIGINT NOT NULL);";
+"[DeviceRowID] BIGINT NOT NULL, "
+"[Favorite] INTEGER DEFAULT 0);";
 
 const char *sqlCreateEventMaster =
 "CREATE TABLE IF NOT EXISTS [EventMaster] ("
@@ -2678,6 +2679,76 @@ bool CSQLHelper::OpenDatabase()
 				}
 			}
 		}
+    
+		if (dbversion < 137)
+		{
+			// Patch for OpenWebNetTCP: update unit and deviceID for Alert devices, update subtype for GeneralSwitch devices
+			std::stringstream szQuery;
+			std::vector<std::vector<std::string> > result, result2;
+			std::vector<std::string> sd;
+			szQuery.clear();
+			szQuery.str("");
+			szQuery << "SELECT ID FROM Hardware WHERE([Type]==" << hardware::type::OpenWebNetTCP << ")";
+			result = query(szQuery.str());
+			if (!result.empty())
+			{
+				for (const auto& itt : result)
+				{
+					sd = itt;
+
+					szQuery.clear();
+					szQuery.str("");
+					szQuery << "SELECT ID, DeviceID, SubType FROM DeviceStatus WHERE (HardwareID=" << sd[0] << ")";
+					result2 = query(szQuery.str());
+
+					if (!result2.empty())
+					{
+						for (const auto& itt2 : result2)
+						{
+							sd = itt2;
+
+							int sub_type = atoi(sd[2].c_str());
+							uint32_t NodeID;
+							std::stringstream s_strid;
+							s_strid << std::hex << sd[1];
+							s_strid >> NodeID;
+
+							if (sub_type == sTypeAlert)
+							{
+								NodeID = NodeID & 0x000000ff;
+								if (NodeID > 8) NodeID = 0xff - NodeID + 17; // update id BURGLAR status to allow the 'id bus interface'
+
+								char ndeviceid[10];
+								sprintf(ndeviceid, "%u", NodeID);
+
+								_log.Log(LOG_STATUS, "COpenWebNetTCP: ID:%s, DeviceID change from %s to %s!", sd[0].c_str(), sd[1].c_str(), ndeviceid);
+
+								szQuery.clear();
+								szQuery.str("");
+								szQuery << "UPDATE DeviceStatus SET DeviceID='" << ndeviceid << "', Unit=1 WHERE (ID=" << sd[0] << ")";
+								query(szQuery.str());
+							}
+							else if ((sub_type == sSwitchBlindsT1) || (sub_type == sSwitchLightT1) || (sub_type == sSwitchContactT1) || (sub_type == sSwitchAuxiliaryT1))
+							{
+								char ndeviceid[10];
+								sprintf(ndeviceid, "%07X", NodeID);
+
+								_log.Log(LOG_STATUS, "COpenWebNetTCP: ID:%s, DeviceID change from %s to %s!", sd[0].c_str(), sd[1].c_str(), ndeviceid);
+								szQuery.clear();
+								szQuery.str("");
+								szQuery << "UPDATE DeviceStatus SET DeviceID='" << ndeviceid << "', Type='" << pTypeLighting2 << "', SubType='" << sTypeAC << "' WHERE (ID=" << sd[0] << ")";
+								query(szQuery.str());
+							}
+						}
+					}
+				}
+			}
+		}
+		if (dbversion < 138)
+		{
+			query("ALTER TABLE SharedDevices ADD COLUMN [Favorite] INTEGER DEFAULT 0");
+			query("UPDATE SharedDevices SET Favorite = 1 WHERE DeviceRowID IN (SELECT ID FROM DeviceStatus WHERE (Favorite=1))");
+		}
 	}
 
 	if ((!bNewInstall) && (ozdbversion < OIKOMATICZ_DB_VERSION))
@@ -3416,7 +3487,7 @@ void CSQLHelper::Do_Work()
 
 				HTTPClient::_eHTTPmethod method = static_cast<HTTPClient::_eHTTPmethod>(itt->_switchtype);
 
-				bool ret;
+				bool ret = false;
 				if (method == HTTPClient::HTTP_METHOD_GET)
 				{
 					ret = HTTPClient::GET(itt->_sValue, extraHeaders, response, headerData);
@@ -3425,6 +3496,8 @@ void CSQLHelper::Do_Work()
 				{
 					ret = HTTPClient::POST(itt->_sValue, postData, extraHeaders, response, headerData, true, true);
 				}
+				else
+					return; //unsupported method
 
 				if (m_bEnableEventSystem && !callback.empty())
 				{
@@ -3563,7 +3636,7 @@ void CSQLHelper::Do_Work()
 			}
 			else if (itt->_ItemType == TITEM_UPDATEDEVICE)
 			{
-				m_mainworker.UpdateDevice(itt->_idx, itt->_nValue, itt->_sValue, itt->_HardwareID, (itt->_switchtype ? true : false));
+				m_mainworker.UpdateDevice(static_cast<int>(itt->_idx), itt->_nValue, itt->_sValue, 12, 255, (itt->_switchtype ? true : false));
 			}
 			else if (itt->_ItemType == TITEM_CUSTOM_COMMAND)
 			{
@@ -3959,7 +4032,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 				std::string rID = std::string(ID);
 				padLeft(rID, 8, '0');
 				DeviceRowIdx = UpdateValue(HardwareID, rID.c_str(), 1, SensorType, SensorSubType, 12, 255, 0, "0.0", devname);
-				if (DeviceRowIdx != -1)
+				if (DeviceRowIdx != (uint64_t)-1)
 				{
 					//Set the Label
 					m_sql.safe_query("UPDATE DeviceStatus SET Options='%q' WHERE (ID==%" PRIu64 ")", soptions.c_str(), DeviceRowIdx);
@@ -4001,7 +4074,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 			unsigned char ID4 = (unsigned char)((nid & 0x000000FF));
 			sprintf(ID, "%02X%02X%02X%02X", ID1, ID2, ID3, ID4);
 			DeviceRowIdx = UpdateValue(HardwareID, ID, 1, SensorType, SensorSubType, 12, 255, 0, "0", devname);
-			if (DeviceRowIdx != -1)
+			if (DeviceRowIdx != (uint64_t)-1)
 			{
 				//Set switch type to selector
 				m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%" PRIu64 ")", device::tswitch::type::Selector, DeviceRowIdx);
@@ -4029,7 +4102,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 			std::string rID = std::string(ID);
 			padLeft(rID, 8, '0');
 			DeviceRowIdx = UpdateValue(HardwareID, rID.c_str(), 1, SensorType, SensorSubType, 12, 255, 1, devname);
-			if (DeviceRowIdx != -1)
+			if (DeviceRowIdx != (uint64_t)-1)
 			{
 				//Set switch type to dimmer
 				m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (ID==%" PRIu64 ")", device::tswitch::type::Dimmer, DeviceRowIdx);
@@ -4041,7 +4114,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 	}
 	}
 
-	if (DeviceRowIdx != -1)
+	if (DeviceRowIdx != (uint64_t)-1)
 	{
 		m_sql.safe_query("UPDATE DeviceStatus SET Used=1 WHERE (ID==%" PRIu64 ")", DeviceRowIdx);
 		m_mainworker.m_eventsystem.GetCurrentStates();
@@ -4064,7 +4137,7 @@ uint64_t CSQLHelper::UpdateValue(const int HardwareID, const char* ID, const uns
 uint64_t CSQLHelper::UpdateValue(const int HardwareID, const char* ID, const unsigned char unit, const unsigned char devType, const unsigned char subType, const unsigned char signallevel, const unsigned char batterylevel, const int nValue, const char* sValue, std::string &devname, const bool bUseOnOffAction)
 {
 	uint64_t devRowID = UpdateValueInt(HardwareID, ID, unit, devType, subType, signallevel, batterylevel, nValue, sValue, devname, bUseOnOffAction);
-	if (devRowID == -1)
+	if (devRowID == (uint64_t)-1)
 		return -1;
 
 	if (!IsLightOrSwitch(devType, subType))
@@ -4536,8 +4609,11 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 			bool bIsLightSwitchOn = IsLightSwitchOn(lstatus);
 			std::string slevel = sd[6];
 
-			if ((bIsLightSwitchOn) && (llevel != 0) && (llevel != 255) ||
-				(switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageInverted))
+			if (
+				((bIsLightSwitchOn) && (llevel != 0) && (llevel != 255))
+				|| (switchtype == device::tswitch::type::BlindsPercentage)
+				|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
+				)
 			{
 				if (switchtype == device::tswitch::type::BlindsPercentage || switchtype == device::tswitch::type::BlindsPercentageInverted)
 				{
@@ -6855,90 +6931,116 @@ void CSQLHelper::DeleteDevices(const std::string &idx)
 {
 	std::vector<std::string> _idx;
 	StringSplit(idx, ";", _idx);
-	if (!_idx.empty())
-	{
-		std::set<std::pair<std::string, std::string> > removeddevices;
+	if (_idx.empty())
+		return;
+	std::set<std::pair<std::string, std::string> > removeddevices;
 #ifdef ENABLE_PYTHON
+	for (const auto & itt : _idx)
+	{
+		_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDevices: ID: %s", itt.c_str());
+		std::vector<std::vector<std::string> > result;
+		result = safe_query("SELECT HardwareID, Unit FROM DeviceStatus WHERE (ID == '%q')", itt.c_str());
+		if (!result.empty())
+		{
+			std::vector<std::string> sd = result[0];
+			std::string HwID = sd[0];
+			std::string Unit = sd[1];
+			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardwareByIDType(HwID, hardware::type::PythonPlugin);
+			if (pHardware != NULL)
+			{
+				removeddevices.insert(std::make_pair(HwID, Unit));
+			}
+		}
+	}
+#endif
+	{
+		//Avoid mutex deadlock here
+		std::lock_guard<std::mutex> l(m_sqlQueryMutex);
+
+		char* errorMessage;
+		sqlite3_exec(m_dbase, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
+
 		for (const auto & itt : _idx)
 		{
-			_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDevices: ID: %s", itt.c_str());
-			std::vector<std::vector<std::string> > result;
-			result = safe_query("SELECT HardwareID, Unit FROM DeviceStatus WHERE (ID == '%q')", itt.c_str());
-			if (!result.empty())
-			{
-				std::vector<std::string> sd = result[0];
-				std::string HwID = sd[0];
-				std::string Unit = sd[1];
-				CDomoticzHardwareBase *pHardware = m_mainworker.GetHardwareByIDType(HwID, hardware::type::PythonPlugin);
-				if (pHardware != NULL)
-				{
-					removeddevices.insert(std::make_pair(HwID, Unit));
-				}
-			}
+			safe_exec_no_return("DELETE FROM LightingLog WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM LightSubDevices WHERE (ParentID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM LightSubDevices WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Notifications WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Rain WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Rain_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Temperature WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Temperature_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Timers WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM SetpointTimers WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM UV WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM UV_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Wind WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Wind_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Meter WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Meter_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM MultiMeter WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM MultiMeter_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Percentage WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Percentage_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Fan WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM Fan_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM SceneDevices WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM DeviceToPlansMap WHERE (DeviceRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM CamerasActiveDevices WHERE (DevSceneType==0) AND (DevSceneRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM SharedDevices WHERE (DeviceRowID== '%q')", itt.c_str());
+			//notify eventsystem device is no longer present
+			uint64_t ullidx = std::strtoull(itt.c_str(), nullptr, 10);
+			m_mainworker.m_eventsystem.RemoveSingleState(ullidx, m_mainworker.m_eventsystem.REASON_DEVICE);
+			//and now delete all records in the DeviceStatus table itself
+			safe_exec_no_return("DELETE FROM DeviceStatus WHERE (ID == '%q')", itt.c_str());
 		}
-#endif
-		{
-			//Avoid mutex deadlock here
-			std::lock_guard<std::mutex> l(m_sqlQueryMutex);
-
-			char* errorMessage;
-			sqlite3_exec(m_dbase, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
-
-			for (const auto & itt : _idx)
-			{
-				safe_exec_no_return("DELETE FROM LightingLog WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM LightSubDevices WHERE (ParentID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM LightSubDevices WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Notifications WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Rain WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Rain_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Temperature WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Temperature_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Timers WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM SetpointTimers WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM UV WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM UV_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Wind WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Wind_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Meter WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Meter_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM MultiMeter WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM MultiMeter_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Percentage WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Percentage_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Fan WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM Fan_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM SceneDevices WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM DeviceToPlansMap WHERE (DeviceRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM CamerasActiveDevices WHERE (DevSceneType==0) AND (DevSceneRowID == '%q')", itt.c_str());
-				safe_exec_no_return("DELETE FROM SharedDevices WHERE (DeviceRowID== '%q')", itt.c_str());
-				//notify eventsystem device is no longer present
-				uint64_t ullidx = std::strtoull(itt.c_str(), nullptr, 10);
-				m_mainworker.m_eventsystem.RemoveSingleState(ullidx, m_mainworker.m_eventsystem.REASON_DEVICE);
-				//and now delete all records in the DeviceStatus table itself
-				safe_exec_no_return("DELETE FROM DeviceStatus WHERE (ID == '%q')", itt.c_str());
-			}
-			sqlite3_exec(m_dbase, "COMMIT TRANSACTION", NULL, NULL, &errorMessage);
-		}
-#ifdef ENABLE_PYTHON
-		for (const auto & it : removeddevices)
-		{
-			int HwID = atoi(it.first.c_str());
-			int Unit = atoi(it.second.c_str());
-			// Notify plugin to sync plugins' device list
-			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(HwID);
-			if (pHardware != NULL && pHardware->HwdType == hardware::type::PythonPlugin)
-			{
-				_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDevices: Notifying plugin %u about deletion of device %u", HwID, Unit);
-				Plugins::CPlugin *pPlugin = (Plugins::CPlugin*)pHardware;
-				pPlugin->DeviceRemoved(Unit);
-			}
-
-		}
-#endif
+		sqlite3_exec(m_dbase, "COMMIT TRANSACTION", NULL, NULL, &errorMessage);
 	}
-	else
+#ifdef ENABLE_PYTHON
+	for (const auto & it : removeddevices)
+	{
+		int HwID = atoi(it.first.c_str());
+		int Unit = atoi(it.second.c_str());
+		// Notify plugin to sync plugins' device list
+		CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(HwID);
+		if (pHardware != NULL && pHardware->HwdType == hardware::type::PythonPlugin)
+		{
+			_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDevices: Notifying plugin %u about deletion of device %u", HwID, Unit);
+			Plugins::CPlugin *pPlugin = (Plugins::CPlugin*)pHardware;
+			pPlugin->DeviceRemoved(Unit);
+		}
+	}
+#endif
+
+	m_notifications.ReloadNotifications();
+}
+
+//Argument, one or multiple devices separated by a semicolumn (;)
+void CSQLHelper::DeleteScenes(const std::string& idx)
+{
+	std::vector<std::string> _idx;
+	StringSplit(idx, ";", _idx);
+	if (_idx.empty())
 		return;
+	{
+		//Avoid mutex deadlock here
+		std::lock_guard<std::mutex> l(m_sqlQueryMutex);
+
+		char* errorMessage;
+		sqlite3_exec(m_dbase, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
+
+		for (const auto& itt : _idx)
+		{
+			safe_exec_no_return("DELETE FROM Scenes WHERE (ID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM SceneDevices WHERE (SceneRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM SceneTimers WHERE (SceneRowID == '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM SceneLog WHERE (SceneRowID=='%q')", itt.c_str());
+			uint64_t ullidx = std::strtoull(itt.c_str(), nullptr, 10);
+			m_mainworker.m_eventsystem.RemoveSingleState(ullidx, m_mainworker.m_eventsystem.REASON_SCENEGROUP);
+		}
+
+		sqlite3_exec(m_dbase, "COMMIT TRANSACTION", NULL, NULL, &errorMessage);
+	}
 
 	m_notifications.ReloadNotifications();
 }
@@ -6953,6 +7055,7 @@ void CSQLHelper::TransferDevice(const std::string &idx, const std::string &newid
 	safe_query("UPDATE Notifications SET DeviceRowID='%q' WHERE (DeviceRowID == '%q')", newidx.c_str(), idx.c_str());
 	safe_query("UPDATE DeviceToPlansMap SET DeviceRowID='%q' WHERE (DeviceRowID == '%q')", newidx.c_str(), idx.c_str());
 	safe_query("UPDATE SharedDevices SET DeviceRowID='%q' WHERE (DeviceRowID == '%q')", newidx.c_str(), idx.c_str());
+	safe_query("UPDATE Timers SET DeviceRowID='%q' WHERE (DeviceRowID == '%q')", newidx.c_str(), idx.c_str());
 
 	//Rain
 	result = safe_query("SELECT Date FROM Rain WHERE (DeviceRowID == '%q') ORDER BY Date ASC LIMIT 1", newidx.c_str());
@@ -6979,8 +7082,6 @@ void CSQLHelper::TransferDevice(const std::string &idx, const std::string &newid
 		safe_query("UPDATE Temperature_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date<'%q')", newidx.c_str(), idx.c_str(), result[0][0].c_str());
 	else
 		safe_query("UPDATE Temperature_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q')", newidx.c_str(), idx.c_str());
-
-	safe_query("UPDATE Timers SET DeviceRowID='%q' WHERE (DeviceRowID == '%q')", newidx.c_str(), idx.c_str());
 
 	//UV
 	result = safe_query("SELECT Date FROM UV WHERE (DeviceRowID == '%q') ORDER BY Date ASC LIMIT 1", newidx.c_str());
@@ -7189,8 +7290,8 @@ void CSQLHelper::CheckSceneStatus(const uint64_t Idx)
 	}
 
 	//Check if all on/off
-	int totOn = 0;
-	int totOff = 0;
+	size_t totOn = 0;
+	size_t totOff = 0;
 
 	for (const auto & itt2 : _DeviceStatusResults)
 	{
@@ -7629,7 +7730,7 @@ bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string &OnAction
 #endif
 			std::string scriptparams = "";
 			//Add parameters
-			int pindex = scriptname.find(' ');
+			size_t pindex = scriptname.find(' ');
 			if (pindex != std::string::npos)
 			{
 				scriptparams = scriptname.substr(pindex + 1);
@@ -7668,7 +7769,7 @@ bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string &OnAction
 			scriptname = szUserDataFolder + "scripts/" + scriptname;
 #endif
 		std::string scriptparams = "";
-		int pindex = scriptname.find(' ');
+		size_t pindex = scriptname.find(' ');
 		if (pindex != std::string::npos)
 		{
 			scriptparams = scriptname.substr(pindex + 1);
@@ -8265,8 +8366,7 @@ bool CSQLHelper::CheckDateTimeSQL(const std::string &sDateTime)
 
 bool CSQLHelper::CheckTime(const std::string &sTime)
 {
-
-	int iSemiColon = sTime.find(':');
+	size_t iSemiColon = sTime.find(':');
 	if ((iSemiColon == std::string::npos) || (iSemiColon < 1) || (iSemiColon > 2) || (iSemiColon == sTime.length() - 1)) return false;
 	if ((sTime.length() < 3) || (sTime.length() > 5)) return false;
 	if (atoi(sTime.substr(0, iSemiColon).c_str()) >= 24) return false;
@@ -8286,6 +8386,7 @@ void CSQLHelper::AllowNewHardwareTimer(const int iTotMinutes)
 	_log.Log(LOG_STATUS, "New sensors allowed for %d minutes...", iTotMinutes);
 }
 
+/*
 std::string CSQLHelper::GetDeviceValue(const char * FieldName, const char *Idx)
 {
 	TSqlQueryResult result = safe_query("SELECT %s from DeviceStatus WHERE (ID == %s )", FieldName, Idx);
@@ -8294,18 +8395,24 @@ std::string CSQLHelper::GetDeviceValue(const char * FieldName, const char *Idx)
 	else
 		return  "";
 }
+*/
 
-void CSQLHelper::UpdateDeviceValue(const char * FieldName, std::string &Value, std::string &Idx)
+void CSQLHelper::UpdateDeviceValue(const char * FieldName, const std::string &Value, const std::string &Idx)
 {
-	safe_query("UPDATE DeviceStatus SET %s='%s' , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value.c_str(), TimeToString(NULL, TF_DateTime).c_str(), Idx.c_str());
+	safe_query("UPDATE DeviceStatus SET %s='%s' , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value.c_str(), TimeToString(nullptr, TF_DateTime).c_str(), Idx.c_str());
 }
-void CSQLHelper::UpdateDeviceValue(const char * FieldName, int Value, std::string &Idx)
+void CSQLHelper::UpdateDeviceValue(const char * FieldName, const int Value, const std::string &Idx)
 {
-	safe_query("UPDATE DeviceStatus SET %s=%d , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value, TimeToString(NULL, TF_DateTime).c_str(), Idx.c_str());
+	safe_query("UPDATE DeviceStatus SET %s=%d , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value, TimeToString(nullptr, TF_DateTime).c_str(), Idx.c_str());
 }
-void CSQLHelper::UpdateDeviceValue(const char * FieldName, float Value, std::string &Idx)
+void CSQLHelper::UpdateDeviceValue(const char * FieldName, const float Value, const std::string &Idx)
 {
-	safe_query("UPDATE DeviceStatus SET %s=%4.2f , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value, TimeToString(NULL, TF_DateTime).c_str(), Idx.c_str());
+	safe_query("UPDATE DeviceStatus SET %s=%4.2f , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value, TimeToString(nullptr, TF_DateTime).c_str(), Idx.c_str());
+}
+
+void CSQLHelper::UpdateDeviceName(const std::string& Idx, const std::string& Name)
+{
+	safe_query("UPDATE DeviceStatus SET Name='%q', LastUpdate='%s' WHERE (ID == %s )", Name.c_str(), TimeToString(nullptr, TF_DateTime).c_str(), Idx.c_str());
 }
 
 bool CSQLHelper::InsertCustomIconFromZip(const std::string &szZip, std::string &ErrorMessage)
@@ -8349,7 +8456,7 @@ bool CSQLHelper::InsertCustomIconFromZipFile(const std::string &szZipFile, std::
 		if (fpath.find("__MACOSX") != std::string::npos)
 			continue;
 
-		int ipos = fpath.find("icons.txt");
+		size_t ipos = fpath.find("icons.txt");
 		if (ipos != std::string::npos)
 		{
 			std::string rpath;
