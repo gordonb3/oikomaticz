@@ -53,6 +53,8 @@ bool CNotificationTelegram::SendMessageImplementation(
 
 	if ( Priority < 0 )
 		json["disable_notification"] = 1;
+
+
 	sPostData = JSonToFormatString(json);
 
 	//Add the required Content Type

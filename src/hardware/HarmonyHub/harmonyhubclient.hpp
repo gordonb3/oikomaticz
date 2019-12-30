@@ -21,7 +21,7 @@
 #include <functional>
 #include <vector>
 #include <string>
-#include <jsoncpp/json.h>
+#include "main/json_helper.h"
 
 
 namespace harmonyhubpp {

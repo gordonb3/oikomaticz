@@ -2041,7 +2041,7 @@ void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase *pHardware, const 
 				//we received a control message from a domoticz client,
 				//and should actually perform this command ourself switch
 				DeviceRowIdx = PerformRealActionFromDomoticzClient(pRXCommand, &pOrgHardware);
-				if (DeviceRowIdx != -1)
+				if (DeviceRowIdx != (uint64_t)-1)
 				{
 					if (pOrgHardware != NULL)
 					{
@@ -2061,7 +2061,7 @@ void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase *pHardware, const 
 	procResult.DeviceName = "";
 	procResult.DeviceRowIdx = -1;
 	procResult.bProcessBatteryValue = true;
-	if (DeviceRowIdx == -1)
+	if (DeviceRowIdx == (uint64_t)-1)
 	{
 		switch (pRXCommand[1])
 		{
@@ -2278,7 +2278,7 @@ void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase *pHardware, const 
 		DeviceName = procResult.DeviceName;
 	}
 
-	if (DeviceRowIdx == -1)
+	if (DeviceRowIdx == (uint64_t)-1)
 		return;
 
 	if ((BatteryLevel != -1) && (procResult.bProcessBatteryValue))
@@ -2963,7 +2963,7 @@ void MainWorker::decode_Rain(const int HwdID, const hardware::type::value HwdTyp
 
 	sprintf(szTmp, "%d;%.1f", Rainrate, TotalRain);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, cmnd, szTmp);
@@ -3166,7 +3166,7 @@ void MainWorker::decode_Wind(const int HwdID, const hardware::type::value HwdTyp
 
 	sprintf(szTmp, "%.2f;%s;%d;%d;%.1f;%.1f", dDirection, strDirection.c_str(), intSpeed, intGust, temp, chill);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, cmnd, szTmp);
@@ -3303,7 +3303,7 @@ void MainWorker::decode_Temp(const int HwdID, const hardware::type::value HwdTyp
 
 	sprintf(szTmp, "%.1f", temp);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	uint64_t tID = ((uint64_t)(HwdID & 0x7FFFFFFF) << 32) | (DevRowIdx & 0x7FFFFFFF);
@@ -3443,7 +3443,7 @@ void MainWorker::decode_Hum(const int HwdID, const hardware::type::value HwdType
 
 	sprintf(szTmp, "%d", pResponse->HUM.humidity_status);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, humidity, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	bool bHandledNotification = false;
@@ -3614,7 +3614,7 @@ void MainWorker::decode_TempHum(const int HwdID, const hardware::type::value Hwd
 	*/
 	sprintf(szTmp, "%.1f;%d;%d", temp, Humidity, HumidityStatus);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	uint64_t tID = ((uint64_t)(HwdID & 0x7FFFFFFF) << 32) | (DevRowIdx & 0x7FFFFFFF);
@@ -3824,7 +3824,7 @@ void MainWorker::decode_TempHumBaro(const int HwdID, const hardware::type::value
 		sprintf(szTmp, "%.1f;%d;%d;%d;%d", temp, Humidity, HumidityStatus, barometer, forcast);
 	}
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	uint64_t tID = ((uint64_t)(HwdID & 0x7FFFFFFF) << 32) | (DevRowIdx & 0x7FFFFFFF);
@@ -3960,7 +3960,7 @@ void MainWorker::decode_TempBaro(const int HwdID, const hardware::type::value Hw
 
 	sprintf(szTmp, "%.1f;%.1f;%d;%.2f", temp, fbarometer, forcast, pTempBaro->altitude);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	uint64_t tID = ((uint64_t)(HwdID & 0x7FFFFFFF) << 32) | (DevRowIdx & 0x7FFFFFFF);
@@ -4064,7 +4064,7 @@ void MainWorker::decode_TempRain(const int HwdID, const hardware::type::value Hw
 
 	sprintf(szTmp, "%.1f;%.1f", temp, TotalRain);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	uint64_t tID = ((uint64_t)(HwdID & 0x7FFFFFFF) << 32) | (DevRowIdx & 0x7FFFFFFF);
@@ -4157,7 +4157,7 @@ void MainWorker::decode_UV(const int HwdID, const hardware::type::value HwdType,
 
 	sprintf(szTmp, "%.1f;%.1f", Level, temp);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, cmnd, szTmp);
@@ -4235,7 +4235,7 @@ void MainWorker::decode_FS20(const int HwdID, const hardware::type::value HwdTyp
 	uint8_t SignalLevel = pResponse->FS20.rssi;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, "");
 
@@ -4503,7 +4503,7 @@ void MainWorker::decode_Lighting1(const int HwdID, const hardware::type::value H
 	uint8_t SignalLevel = pResponse->LIGHTING1.rssi;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, "");
 
@@ -4715,7 +4715,7 @@ void MainWorker::decode_Lighting2(const int HwdID, const hardware::type::value H
 		m_sql.Lighting2GroupCmd(ID, subType, single_cmnd);
 	}
 
-	if (DevRowIdx == -1) {
+	if (DevRowIdx == (uint64_t)-1) {
 		// not found nothing to do
 		return;
 	}
@@ -4848,7 +4848,7 @@ void MainWorker::decode_Lighting4(const int HwdID, const hardware::type::value H
 	uint8_t SignalLevel = pResponse->LIGHTING4.rssi;
 	sprintf(szTmp, "%d", (pResponse->LIGHTING4.pulseHigh * 256) + pResponse->LIGHTING4.pulseLow);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, szTmp);
 
@@ -5044,7 +5044,7 @@ void MainWorker::decode_Lighting5(const int HwdID, const hardware::type::value H
 	{
 		sprintf(szTmp, "%d", pResponse->LIGHTING5.level);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 		CheckSceneCode(DevRowIdx, devType, subType, cmnd, szTmp);
 	}
@@ -5511,7 +5511,7 @@ void MainWorker::decode_Lighting6(const int HwdID, const hardware::type::value H
 
 	sprintf(szTmp, "%d", rfu);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, szTmp);
 
@@ -5578,7 +5578,7 @@ void MainWorker::decode_Fan(const int HwdID, const hardware::type::value HwdType
 	uint8_t SignalLevel = pResponse->FAN.rssi;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, szTmp);
 
@@ -5717,7 +5717,7 @@ void MainWorker::decode_HomeConfort(const int HwdID, const hardware::type::value
 		m_sql.HomeConfortGroupCmd(ID, subType, single_cmnd);
 	}
 
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, "");
 
@@ -5788,7 +5788,7 @@ void MainWorker::decode_ColorSwitch(const int HwdID, const hardware::type::value
 	sprintf(szValueTmp, "%u", value);
 	std::string sValue = szValueTmp;
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, 12, -1, cmnd, sValue.c_str(), procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, szTmp);
 
@@ -5846,7 +5846,7 @@ void MainWorker::decode_Chime(const int HwdID, const hardware::type::value HwdTy
 	uint8_t SignalLevel = pResponse->CHIME.rssi;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, "");
 
@@ -6105,7 +6105,7 @@ void MainWorker::decode_Curtain(const int HwdID, const hardware::type::value Hwd
 	uint8_t SignalLevel = 9;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
@@ -6168,7 +6168,7 @@ void MainWorker::decode_BLINDS1(const int HwdID, const hardware::type::value Hwd
 	uint8_t SignalLevel = pResponse->BLINDS1.rssi;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, szTmp);
 
@@ -6316,7 +6316,7 @@ void MainWorker::decode_RFY(const int HwdID, const hardware::type::value HwdType
 	uint8_t SignalLevel = pResponse->RFY.rssi;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, szTmp);
 
@@ -6483,7 +6483,7 @@ void MainWorker::decode_evohome1(const int HwdID, const hardware::type::value Hw
 	}
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szUntilDate.c_str(), procResult.DeviceName, pEvo->action != 0);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	if (bNewDev)
 	{
@@ -6660,7 +6660,7 @@ void MainWorker::decode_evohome2(const int HwdID, const hardware::type::value Hw
 		}
 	}
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, szDevID.c_str(), Unit, dType, dSubType, SignalLevel, BatteryLevel, cmnd, szUpdateStat.c_str(), procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	if (bNewDev)
 	{
@@ -6740,7 +6740,7 @@ void MainWorker::decode_evohome3(const int HwdID, const hardware::type::value Hw
 	}
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szDemand.c_str(), procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	if (bNewDev && (Unit == 0xF9 || Unit == 0xFA || Unit == 0xFC || Unit <= 12))
@@ -6792,7 +6792,7 @@ void MainWorker::decode_Security1(const int HwdID, const hardware::type::value H
 	}
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, "");
 
@@ -6969,7 +6969,7 @@ void MainWorker::decode_Security2(const int HwdID, const hardware::type::value H
 	uint8_t BatteryLevel = get_BateryLevel(HwdType, false, pResponse->SECURITY2.battery_level & 0x0F);
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, "");
 
@@ -7101,7 +7101,7 @@ void MainWorker::decode_Remote(const int HwdID, const hardware::type::value HwdT
 	uint8_t SignalLevel = pResponse->REMOTE.rssi;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, "");
 
@@ -8193,7 +8193,7 @@ void MainWorker::decode_Thermostat1(const int HwdID, const hardware::type::value
 
 	sprintf(szTmp, "%d;%d;%d;%d", temp, set_point, mode, status);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
@@ -8267,7 +8267,7 @@ void MainWorker::decode_Thermostat2(const int HwdID, const hardware::type::value
 	uint8_t BatteryLevel = 255;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, "");
 
@@ -8328,7 +8328,7 @@ void MainWorker::decode_Thermostat3(const int HwdID, const hardware::type::value
 	uint8_t BatteryLevel = 255;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, "");
 
@@ -8425,7 +8425,7 @@ void MainWorker::decode_Thermostat4(const int HwdID, const hardware::type::value
 	);
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
@@ -8521,7 +8521,7 @@ void MainWorker::decode_Radiator1(const int HwdID, const hardware::type::value H
 
 	sprintf(szTmp, "%d.%d", pResponse->RADIATOR1.temperature, pResponse->RADIATOR1.tempPoint5);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
@@ -8666,7 +8666,7 @@ void MainWorker::decode_Current(const int HwdID, const hardware::type::value Hwd
 	float CurrentChannel3 = float((pResponse->CURRENT.ch3h * 256) + pResponse->CURRENT.ch3l) / 10.0f;
 	sprintf(szTmp, "%.1f;%.1f;%.1f", CurrentChannel1, CurrentChannel2, CurrentChannel3);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, cmnd, szTmp);
@@ -8795,7 +8795,7 @@ void MainWorker::decode_Power(const int HwdID, const hardware::type::value HwdTy
 
 	sprintf(szTmp, "%ld;%.2f", long(round(instant)), usage*1000.0);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, cmnd, szTmp);
 
@@ -8803,21 +8803,21 @@ void MainWorker::decode_Power(const int HwdID, const hardware::type::value HwdTy
 	sprintf(szTmp, "%.3f", Voltage);
 	std::string tmpDevName;
 	uint64_t DevRowIdxAlt = m_sql.UpdateValue(HwdID, ID.c_str(), 1, pTypeGeneral, sTypeVoltage, SignalLevel, BatteryLevel, cmnd, szTmp, tmpDevName);
-	if (DevRowIdxAlt == -1)
+	if (DevRowIdxAlt == (uint64_t)-1)
 		return;
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, tmpDevName, 1, pTypeGeneral, sTypeVoltage, Voltage);
 
 	//Powerfactor
 	sprintf(szTmp, "%.2f", (float)powerfactor);
 	DevRowIdxAlt = m_sql.UpdateValue(HwdID, ID.c_str(), 2, pTypeGeneral, sTypePercentage, SignalLevel, BatteryLevel, cmnd, szTmp, tmpDevName);
-	if (DevRowIdxAlt == -1)
+	if (DevRowIdxAlt == (uint64_t)-1)
 		return;
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, tmpDevName, 2, pTypeGeneral, sTypePercentage, (float)powerfactor);
 
 	//Frequency
 	sprintf(szTmp, "%.2f", (float)frequency);
 	DevRowIdxAlt = m_sql.UpdateValue(HwdID, ID.c_str(), 3, pTypeGeneral, sTypePercentage, SignalLevel, BatteryLevel, cmnd, szTmp, tmpDevName);
-	if (DevRowIdxAlt == -1)
+	if (DevRowIdxAlt == (uint64_t)-1)
 		return;
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, tmpDevName, 3, pTypeGeneral, sTypePercentage, frequency);
 
@@ -8932,7 +8932,7 @@ void MainWorker::decode_Current_Energy(const int HwdID, const hardware::type::va
 	}
 	sprintf(szTmp, "%.1f;%.1f;%.1f;%.3f", CurrentChannel1, CurrentChannel2, CurrentChannel3, usage);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, cmnd, szTmp);
@@ -9032,7 +9032,7 @@ void MainWorker::decode_Weight(const int HwdID, const hardware::type::value HwdT
 
 	sprintf(szTmp, "%.1f", weight);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, weight);
@@ -9087,7 +9087,7 @@ void MainWorker::decode_RFXSensor(const int HwdID, const hardware::type::value H
 		Unit = (pResponse->RFXSENSOR.rssi << 4) | pResponse->RFXSENSOR.filler;
 	}
 
-	float temp;
+	float temp = 0;
 	int volt = 0;
 	switch (pResponse->RFXSENSOR.subtype)
 	{
@@ -9122,7 +9122,7 @@ void MainWorker::decode_RFXSensor(const int HwdID, const hardware::type::value H
 	break;
 	}
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	switch (pResponse->RFXSENSOR.subtype)
@@ -9250,7 +9250,7 @@ void MainWorker::decode_RFXMeter(const int HwdID, const hardware::type::value Hw
 
 		sprintf(szTmp, "%lu", counter);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 
@@ -9487,7 +9487,7 @@ void MainWorker::decode_P1MeterPower(const int HwdID, const hardware::type::valu
 		p1Power->delivcurrent
 	);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, cmnd, szTmp);
@@ -9544,7 +9544,7 @@ void MainWorker::decode_P1MeterGas(const int HwdID, const hardware::type::value 
 
 	sprintf(szTmp, "%u", p1Gas->gasusage);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
@@ -9586,7 +9586,7 @@ void MainWorker::decode_YouLessMeter(const int HwdID, const hardware::type::valu
 		pMeter->usagecurrent
 	);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, cmnd, szTmp);
@@ -9630,7 +9630,7 @@ void MainWorker::decode_Rego6XXTemp(const int HwdID, const hardware::type::value
 		pRego->temperature
 	);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, pRego->temperature);
 
@@ -9663,7 +9663,7 @@ void MainWorker::decode_Rego6XXValue(const int HwdID, const hardware::type::valu
 	);
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, numValue, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
@@ -9701,7 +9701,7 @@ void MainWorker::decode_AirQuality(const int HwdID, const hardware::type::value 
 	uint8_t BatteryLevel = 255;
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, pMeter->airquality, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, (const int)pMeter->airquality);
@@ -9754,7 +9754,7 @@ void MainWorker::decode_Usage(const int HwdID, const hardware::type::value HwdTy
 	sprintf(szTmp, "%.1f", pMeter->fusage);
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, pMeter->fusage);
@@ -9796,7 +9796,7 @@ void MainWorker::decode_Lux(const int HwdID, const hardware::type::value HwdType
 	sprintf(szTmp, "%.0f", pMeter->fLux);
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, pMeter->fLux);
@@ -9847,7 +9847,7 @@ void MainWorker::decode_Thermostat(const int HwdID, const hardware::type::value 
 	}
 
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, pMeter->temp);
@@ -9918,91 +9918,91 @@ void MainWorker::decode_General(const int HwdID, const hardware::type::value Hwd
 	{
 		sprintf(szTmp, "%.1f", pMeter->floatval1);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeDistance)
 	{
 		sprintf(szTmp, "%.1f", pMeter->floatval1);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeSolarRadiation)
 	{
 		sprintf(szTmp, "%.1f", pMeter->floatval1);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeSoilMoisture)
 	{
 		cmnd = pMeter->intval2;
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeLeafWetness)
 	{
 		cmnd = pMeter->intval1;
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeVoltage)
 	{
 		sprintf(szTmp, "%.3f", pMeter->floatval1);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeCurrent)
 	{
 		sprintf(szTmp, "%.3f", pMeter->floatval1);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeBaro)
 	{
 		sprintf(szTmp, "%.02f;%d", pMeter->floatval1, pMeter->intval2);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypePressure)
 	{
 		sprintf(szTmp, "%.1f", pMeter->floatval1);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypePercentage)
 	{
 		sprintf(szTmp, "%.2f", pMeter->floatval1);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeWaterflow)
 	{
 		sprintf(szTmp, "%.2f", pMeter->floatval1);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeFan)
 	{
 		sprintf(szTmp, "%d", pMeter->intval2);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeSoundLevel)
 	{
 		sprintf(szTmp, "%d", pMeter->intval2);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeZWaveClock)
@@ -10032,14 +10032,14 @@ void MainWorker::decode_General(const int HwdID, const hardware::type::value Hwd
 			sprintf(szTmp, "%d", pMeter->intval1);
 		cmnd = pMeter->intval1;
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeCustom)
 	{
 		sprintf(szTmp, "%.4f", pMeter->floatval1);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeZWaveAlarm)
@@ -10048,7 +10048,7 @@ void MainWorker::decode_General(const int HwdID, const hardware::type::value Hwd
 		cmnd = pMeter->intval2;
 		strcpy(szTmp, pMeter->text);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 	}
 	else if (subType == sTypeTextStatus)
@@ -10203,7 +10203,7 @@ void MainWorker::decode_GeneralSwitch(const int HwdID, const hardware::type::val
 
 	sprintf(szTmp, "%d", level);
 	uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, -1, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	uint8_t check_cmnd = cmnd;
 	if ((cmnd == gswitch_sGroupOff) || (cmnd == gswitch_sGroupOn))
@@ -10249,7 +10249,7 @@ void MainWorker::decode_BBQ(const int HwdID, const hardware::type::value HwdType
 
 	sprintf(szTmp, "%.0f;%.0f", temp1, temp2);
 	DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
 	{
@@ -10600,7 +10600,7 @@ void MainWorker::decode_CartelectronicTIC(const int HwdID,
 			sprintf(szTmp, "%u", apparentPower);
 			uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), 1, pTypeUsage, sTypeElectric, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
 
-			if (DevRowIdx == -1)
+			if (DevRowIdx == (uint64_t)-1)
 				return;
 
 			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, pTypeUsage, sTypeElectric, notification::type::ENERGYINSTANT, (const float)apparentPower);
@@ -10638,7 +10638,7 @@ void MainWorker::decode_CartelectronicTIC(const int HwdID,
 
 			uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), 1, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
 
-			if (DevRowIdx == -1)
+			if (DevRowIdx == (uint64_t)-1)
 				return;
 
 			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, notification::type::TODAYENERGY, (float)counter2);
@@ -10656,7 +10656,7 @@ void MainWorker::decode_CartelectronicTIC(const int HwdID,
 			sprintf(szTmp, "%u;%d", counter2ApparentPower, counter2);
 			uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), 1, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
 
-			if (DevRowIdx == -1)
+			if (DevRowIdx == (uint64_t)-1)
 				return;
 
 			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, notification::type::TODAYENERGY, (float)counter2);
@@ -10716,7 +10716,7 @@ void MainWorker::decode_CartelectronicTIC(const int HwdID,
 			sprintf(szTmp, "%u;%d", counter2ApparentPower, counter2);
 			uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), unitCounter2, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
 
-			if (DevRowIdx == -1)
+			if (DevRowIdx == (uint64_t)-1)
 				return;
 
 			m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, notification::type::TODAYENERGY, (float)counter2);
@@ -10733,7 +10733,7 @@ void MainWorker::decode_CartelectronicTIC(const int HwdID,
 		sprintf(szTmp, "%u;%d", counter1ApparentPower, counter1);
 		uint64_t DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), unitCounter1, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
 
-		if (DevRowIdx == -1)
+		if (DevRowIdx == (uint64_t)-1)
 			return;
 
 		m_notifications.CheckAndHandleNotification(DevRowIdx, procResult.DeviceName, devType, subType, notification::type::TODAYENERGY, (float)counter1);
@@ -10773,7 +10773,7 @@ void MainWorker::decode_CartelectronicEncoder(const int HwdID,
 
 	sprintf(szTmp, "%d", counter1);
 	DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, Unit, devType, subType, (float)counter1);
 
@@ -10782,7 +10782,7 @@ void MainWorker::decode_CartelectronicEncoder(const int HwdID,
 
 	sprintf(szTmp, "%d", counter2);
 	DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), 1, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 	m_notifications.CheckAndHandleNotification(DevRowIdx, HwdID, ID, procResult.DeviceName, 1, devType, subType, (float)counter2);
 }
@@ -10916,7 +10916,7 @@ void MainWorker::decode_Hunter(const int HwdID, const hardware::type::value HwdT
 	ID = szTmp;
 
 	DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, procResult.DeviceName);
-	if (DevRowIdx == -1)
+	if (DevRowIdx == (uint64_t)-1)
 		return;
 
 	CheckSceneCode(DevRowIdx, devType, subType, cmnd, szTmp);
@@ -12463,7 +12463,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string> &sd, const float 
 		else if (pHardware->HwdType == hardware::type::OpenWebNetTCP)
 		{
 			COpenWebNetTCP *pGateway = reinterpret_cast<COpenWebNetTCP*>(pHardware);
-			return pGateway->SetSetpoint(ID4, TempValue);
+			return pGateway->SetSetpoint(ID, TempValue);
 		}
 	}
 	else
@@ -13430,7 +13430,7 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 	}
 
 	std::string devname = "Unknown";
-	uint64_t devidx = m_sql.UpdateValue(
+	const uint64_t devidx = m_sql.UpdateValue(
 		HardwareID,
 		DeviceID.c_str(),
 		(const uint8_t)unit,
@@ -13443,7 +13443,7 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 		devname,
 		false
 	);
-	if (devidx == -1)
+	if (devidx == (uint64_t)-1)
 		return false;
 
 	if (pHardware)
@@ -13480,11 +13480,9 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 	m_pluginsystem.DeviceModified(devidx);
 #endif
 
-	// signal connected devices (MQTT, fibaro, http push ... ) about the web update
+	// signal connected devices (MQTT, fibaro, http push ... ) about the update
 	if (parseTrigger)
-	{
-		sOnDeviceReceived(HardwareID, devidx, devname, NULL);
-	}
+	sOnDeviceReceived(HardwareID, devidx, devname, nullptr);
 
 	std::stringstream sidx;
 	sidx << devidx;

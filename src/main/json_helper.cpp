@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "json_helper.h"
+#include "main/json_helper.h"
 
 bool ParseJSon(const std::string& inStr, Json::Value& json_output, std::string *errstr)
 {

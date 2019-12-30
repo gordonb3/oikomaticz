@@ -215,11 +215,7 @@ void daemonize(const char *rundir, const char *pidfile)
 		/* Could not fork */
 		exit(EXIT_FAILURE);
 	}
-
-	/* call srand once for the entire app */
-	std::srand((unsigned int)std::time(nullptr));
-	szRandomUUID = GenerateUUID();
-
+    
 	if (pid > 0)
 	{
 		/* Child created ok, so exit parent process */
@@ -249,7 +245,7 @@ void daemonize(const char *rundir, const char *pidfile)
 
 	/* write pid to lockfile */
 	int twrite=write(pidFilehandle, str, strlen(str));
-	if (twrite != strlen(str))
+	if (twrite != int(strlen(str)))
 	{
 		syslog(LOG_INFO, "Could not write to lock file %s, exiting", pidfile);
 		exit(EXIT_FAILURE);
@@ -807,6 +803,11 @@ int main(int argc, char**argv)
 #if defined(__linux__)
 	g_bIsWSL = IsWSL();
 #endif
+
+	/* call srand once for the entire app */
+	std::srand((unsigned int)std::time(nullptr));
+	szRandomUUID = GenerateUUID();    
+
 	GetAppVersion();
 	DisplayAppVersion();
 
@@ -1134,9 +1135,9 @@ int main(int argc, char**argv)
 
 	if ((g_bRunAsDaemon)||(g_bUseSyslog))
 	{
-		int idx, logfacility = 0;
+		int logfacility = 0;
 
-		for ( idx = 0; idx < sizeof(facilities)/sizeof(facilities[0]); idx++ ) 
+		for ( size_t idx = 0; idx < sizeof(facilities)/sizeof(facilities[0]); idx++ ) 
 		{
 			if (strcmp(facilities[idx].facname, logfacname.c_str()) == 0) 
 			{

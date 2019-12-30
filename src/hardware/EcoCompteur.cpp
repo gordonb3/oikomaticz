@@ -98,6 +98,13 @@ void CEcoCompteur::GetScript()
 		_log.Log(LOG_ERROR, "EcoCompteur: Error getting 'inst.json' from url : " + m_url);
 		return;
 	}
+	// Parse inst.json
+	Json::Value root;
+	if (!ParseJSon(sInst, root))
+	{
+		_log.Log(LOG_ERROR, "EcoCompteur: Error parsing JSON from url : " + m_url);
+		return;
+	}
 
 	// Download hourly report
 	std::stringstream szLogURL;
@@ -107,10 +114,6 @@ void CEcoCompteur::GetScript()
 		_log.Log(LOG_ERROR, "EcoCompteur: Error getting 'log2.csv' from url : " + m_url);
 		return;
 	}
-
-	// Parse inst.json
-	Json::Value root;
-	ParseJSon(sInst, root);
 
 	// Parse log2.csv
 	if (sLog2.length() == 0)

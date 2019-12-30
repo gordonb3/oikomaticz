@@ -144,10 +144,7 @@ void COpenWeatherMap::GetMeterDetails()
 
 	try
 	{
-		bool bret;
-		std::string szURL = sURL.str();
-		bret = HTTPClient::GET(szURL, sResult);
-		if (!bret)
+		if (!HTTPClient::GET(sURL.str(), sResult))
 		{
 			_log.Log(LOG_ERROR, "OpenWeatherMap: Error getting http data!");
 			return;
@@ -165,7 +162,7 @@ void COpenWeatherMap::GetMeterDetails()
 
 	Json::Value root;
 
-	bool ret=ParseJSon(sResult,root);
+	bool ret= ParseJSon(sResult,root);
 	if ((!ret) || (!root.isObject()))
 	{
 		_log.Log(LOG_ERROR,"OpenWeatherMap: Invalid data received!");

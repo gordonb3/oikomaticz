@@ -8,7 +8,7 @@
 #include "Logger.h"
 
 
-const char *findTableIDSingle1(const STR_TABLE_SINGLE *t, const unsigned long id)
+const char* findTableIDSingle1(const STR_TABLE_SINGLE* t, const unsigned long id)
 {
 	while (t->str1) {
 		if (t->id == id)
@@ -18,7 +18,7 @@ const char *findTableIDSingle1(const STR_TABLE_SINGLE *t, const unsigned long id
 	return "Unknown";
 }
 
-const char *findTableIDSingle2(const STR_TABLE_SINGLE *t, const unsigned long id)
+const char* findTableIDSingle2(const STR_TABLE_SINGLE* t, const unsigned long id)
 {
 	while (t->str2) {
 		if (t->id == id)
@@ -28,7 +28,7 @@ const char *findTableIDSingle2(const STR_TABLE_SINGLE *t, const unsigned long id
 	return "Unknown";
 }
 
-const char *findTableID1ID2(const _STR_TABLE_ID1_ID2 *t, const unsigned long id1, const unsigned long id2)
+const char* findTableID1ID2(const _STR_TABLE_ID1_ID2* t, const unsigned long id1, const unsigned long id2)
 {
 	while (t->str1) {
 		if ((t->id1 == id1) && (t->id2 == id2))
@@ -38,7 +38,7 @@ const char *findTableID1ID2(const _STR_TABLE_ID1_ID2 *t, const unsigned long id1
 	return "Unknown";
 }
 
-const char *RFX_Humidity_Status_Desc(const unsigned char status)
+const char* RFX_Humidity_Status_Desc(const unsigned char status)
 {
 	static const STR_TABLE_SINGLE	Table[] =
 	{
@@ -62,7 +62,7 @@ unsigned char Get_Humidity_Level(const unsigned char hlevel)
 	return humstat_normal;
 }
 
-const char *Security_Status_Desc(const unsigned char status)
+const char* Security_Status_Desc(const unsigned char status)
 {
 	static const STR_TABLE_SINGLE	Table[] =
 	{
@@ -99,7 +99,7 @@ const char *Security_Status_Desc(const unsigned char status)
 }
 
 
-const char *RFX_Forecast_Desc(const unsigned char Forecast)
+const char* RFX_Forecast_Desc(const unsigned char Forecast)
 {
 	static const STR_TABLE_SINGLE	Table[] =
 	{
@@ -644,7 +644,7 @@ const char* RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 	return findTableID1ID2(Table, dType, sType);
 }
 
-const char *ZWave_Clock_Days(const unsigned char Day)
+const char* ZWave_Clock_Days(const unsigned char Day)
 {
 	static const STR_TABLE_SINGLE	Table[] =
 	{
@@ -680,7 +680,7 @@ const char *ZWave_Thermostat_Modes[] =
 NULL
 };
 */
-const char *ZWave_Thermostat_Fan_Modes[] =
+const char* ZWave_Thermostat_Fan_Modes[] =
 {
 	"Auto Low",
 	"On Low",
@@ -693,10 +693,10 @@ const char *ZWave_Thermostat_Fan_Modes[] =
 	NULL
 };
 
-int Lookup_ZWave_Thermostat_Modes(const std::vector<std::string> &Modes, const std::string &sMode)
+int Lookup_ZWave_Thermostat_Modes(const std::vector<std::string>& Modes, const std::string& sMode)
 {
 	int ii = 0;
-	for (const auto & itt : Modes)
+	for (const auto& itt : Modes)
 	{
 		if (itt == sMode)
 			return ii;
@@ -705,7 +705,7 @@ int Lookup_ZWave_Thermostat_Modes(const std::vector<std::string> &Modes, const s
 	return -1;
 }
 
-int Lookup_ZWave_Thermostat_Fan_Modes(const std::string &sMode)
+int Lookup_ZWave_Thermostat_Fan_Modes(const std::string& sMode)
 {
 	int ii = 0;
 	while (ZWave_Thermostat_Fan_Modes[ii] != NULL)
@@ -725,12 +725,12 @@ void GetLightStatus(
 	const unsigned char dSubType,
 	const device::tswitch::type::value switchtype,
 	const unsigned char nValue,
-	const std::string &sValue,
-	std::string &lstatus,
-	int &llevel,
-	bool &bHaveDimmer,
-	int &maxDimLevel,
-	bool &bHaveGroupCmd)
+	const std::string& sValue,
+	std::string& lstatus,
+	int& llevel,
+	bool& bHaveDimmer,
+	int& maxDimLevel,
+	bool& bHaveGroupCmd)
 {
 	bHaveDimmer = false;
 	maxDimLevel = 0;
@@ -817,7 +817,7 @@ void GetLightStatus(
 
 		if (switchtype != device::tswitch::type::Media) {
 			// Calculate % that the light is currently on, taking the maxdimlevel into account.
-			llevel = (int)float((100.0f / float(maxDimLevel))*atof(sValue.c_str()));
+			llevel = (int)float((100.0f / float(maxDimLevel)) * atof(sValue.c_str()));
 		}
 
 		// Fill in other parameters
@@ -874,16 +874,16 @@ void GetLightStatus(
 		break;
 	case pTypeLighting5:
 		if (dSubType == sTypeLivolo)
-			llevel = int((100.0f / 7.0f)*atof(sValue.c_str()));
+			llevel = int((100.0f / 7.0f) * atof(sValue.c_str()));
 		else
-			llevel = int((100.0f / 31.0f)*atof(sValue.c_str()));
+			llevel = int((100.0f / 31.0f) * atof(sValue.c_str()));
 		switch (dSubType)
 		{
 		case sTypeLightwaveRF:
 			bHaveGroupCmd = true;
 			bHaveDimmer = true;
 			maxDimLevel = 32;
-			llevel = (int)float((100.0f / float(maxDimLevel))*atof(sValue.c_str()));
+			llevel = (int)float((100.0f / float(maxDimLevel)) * atof(sValue.c_str()));
 			switch (nValue)
 			{
 			case light5_sOff:
@@ -1071,7 +1071,7 @@ void GetLightStatus(
 			break;
 		case sTypeIT:
 			maxDimLevel = 9;
-			llevel = (int)float((100.0f / float(maxDimLevel))*atof(sValue.c_str()));
+			llevel = (int)float((100.0f / float(maxDimLevel)) * atof(sValue.c_str()));
 			switch (nValue)
 			{
 			case light5_sOff:
@@ -1146,7 +1146,7 @@ void GetLightStatus(
 		maxDimLevel = 100;
 
 		// Calculate % that the light is currently on, taking the maxdimlevel into account.
-		llevel = (int)float((100.0f / float(maxDimLevel))*atof(sValue.c_str()));
+		llevel = (int)float((100.0f / float(maxDimLevel)) * atof(sValue.c_str()));
 
 		// Fill in other parameters
 		switch (dSubType)
@@ -1255,7 +1255,7 @@ void GetLightStatus(
 			lstatus = "Set Level";
 			bHaveDimmer = 1;
 			llevel = nValue - fs20_sDimlevel_1 + 1;
-			llevel = (int)float((100.0f / float(maxDimLevel))*llevel);
+			llevel = (int)float((100.0f / float(maxDimLevel)) * llevel);
 			break;
 		case fs20_sOn_100:
 			lstatus = "On";
@@ -1300,7 +1300,7 @@ void GetLightStatus(
 		maxDimLevel = 100;
 
 		// Calculate % that the light is currently on, taking the maxdimlevel into account.
-		llevel = (int)float((100.0f / float(maxDimLevel))*atof(sValue.c_str()));
+		llevel = (int)float((100.0f / float(maxDimLevel)) * atof(sValue.c_str()));
 
 		switch (nValue)
 		{
@@ -1666,7 +1666,7 @@ void GetLightStatus(
 	case pTypeEvohomeRelay:
 		bHaveDimmer = true;
 		maxDimLevel = 200;
-		llevel = int(0.5f*atof(sValue.c_str()));
+		llevel = int(0.5f * atof(sValue.c_str()));
 		switch (nValue)
 		{
 		case light1_sOff:
@@ -1783,33 +1783,33 @@ void GetLightStatus(
 		break;
 		}
 		break;
-		case pTypeHunter:
-			switch (dSubType)
+	case pTypeHunter:
+		switch (dSubType)
+		{
+		case sTypeHunterfan:
+		{
+			switch (nValue)
 			{
-			case sTypeHunterfan:
-			{
-				switch (nValue)
-				{
-				case HunterOff:
-					lstatus = "off";
-					break;
-				case HunterLight:
-					lstatus = "light";
-					break;
-				case HunterSpeed1:
-					lstatus = "low";
-					break;
-				case HunterSpeed2:
-					lstatus = "med";
-					break;
-				case HunterSpeed3:
-					lstatus = "high";
-					break;
-				}
+			case HunterOff:
+				lstatus = "off";
+				break;
+			case HunterLight:
+				lstatus = "light";
+				break;
+			case HunterSpeed1:
+				lstatus = "low";
+				break;
+			case HunterSpeed2:
+				lstatus = "med";
+				break;
+			case HunterSpeed3:
+				lstatus = "high";
+				break;
 			}
-			break;
-			}
-			break;
+		}
+		break;
+		}
+		break;
 	}
 	//_log.Debug(DEBUG_NORM, "RFXN : GetLightStatus Typ:%2d STyp:%2d nVal:%d sVal:%-4s llvl:%2d isDim:%d maxDim:%2d GrpCmd:%d lstat:%s",
 	//dType, dSubType, nValue, sValue.c_str(), llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd, lstatus.c_str());
@@ -1818,7 +1818,7 @@ void GetLightStatus(
 /**
 * Returns a map associating a level value to its name.
 */
-void GetSelectorSwitchStatuses(const std::map<std::string, std::string> & options, std::map<std::string, std::string> & statuses) {
+void GetSelectorSwitchStatuses(const std::map<std::string, std::string>& options, std::map<std::string, std::string>& statuses) {
 	std::map< std::string, std::string >::const_iterator itt = options.find("LevelNames");
 	if (itt != options.end()) {
 		//_log.Log(LOG_STATUS, "DEBUG : Get selector switch statuses...");
@@ -1827,7 +1827,7 @@ void GetSelectorSwitchStatuses(const std::map<std::string, std::string> & option
 		StringSplit(sOptions, "|", strarray);
 		int i = 0;
 		std::stringstream ss;
-		for (const auto & itt : strarray)
+		for (const auto& itt : strarray)
 		{
 			ss.clear();
 			ss.str("");
@@ -1844,7 +1844,7 @@ void GetSelectorSwitchStatuses(const std::map<std::string, std::string> & option
 /**
 * Returns the level value associated to a name.
 */
-int GetSelectorSwitchLevel(const std::map<std::string, std::string> & options, const std::string & levelName) {
+int GetSelectorSwitchLevel(const std::map<std::string, std::string>& options, const std::string& levelName) {
 	int level = -1; // not found
 	std::map< std::string, std::string >::const_iterator itt = options.find("LevelNames");
 	if (itt != options.end()) {
@@ -1853,7 +1853,7 @@ int GetSelectorSwitchLevel(const std::map<std::string, std::string> & options, c
 		std::vector<std::string> strarray;
 		StringSplit(sOptions, "|", strarray);
 		int i = 0;
-		for (const auto & itt : strarray)
+		for (const auto& itt : strarray)
 		{
 			if (itt == levelName)
 			{
@@ -1869,7 +1869,7 @@ int GetSelectorSwitchLevel(const std::map<std::string, std::string> & options, c
 /**
 * Returns the action associated with a level
 */
-std::string GetSelectorSwitchLevelAction(const std::map<std::string, std::string> & options, const int level) {
+std::string GetSelectorSwitchLevelAction(const std::map<std::string, std::string>& options, const int level) {
 	std::map< std::string, std::string >::const_iterator itt = options.find("LevelActions");
 	if (itt != options.end()) {
 		//_log.Log(LOG_STATUS, "DEBUG : Get selector switch level action...");
@@ -1877,7 +1877,7 @@ std::string GetSelectorSwitchLevelAction(const std::map<std::string, std::string
 		std::vector<std::string> strarray;
 		StringSplit(sOptions, "|", strarray);
 		int i = 0;
-		for (const auto & itt : strarray)
+		for (const auto& itt : strarray)
 		{
 			if (i == level)
 			{
@@ -1894,8 +1894,8 @@ bool GetLightCommand(
 	const unsigned char dSubType,
 	device::tswitch::type::value switchtype,
 	std::string switchcmd,
-	unsigned char &cmd,
-	const std::map<std::string, std::string> & options
+	unsigned char& cmd,
+	const std::map<std::string, std::string>& options
 )
 {
 	if (switchtype == device::tswitch::type::Contact && dType != pTypeGeneralSwitch)
@@ -3252,7 +3252,7 @@ bool GetLightCommand(
 	return false;
 }
 
-bool IsLightSwitchOn(const std::string &lstatus)
+bool IsLightSwitchOn(const std::string& lstatus)
 {
 	return (
 		(lstatus == "On") ||
@@ -3274,7 +3274,7 @@ bool IsLightSwitchOn(const std::string &lstatus)
 		);
 }
 
-const char *Get_Moisture_Desc(const int moisture)
+const char* Get_Moisture_Desc(const int moisture)
 {
 	if (moisture < 10)
 		return "saturated";
@@ -3288,7 +3288,7 @@ const char *Get_Moisture_Desc(const int moisture)
 		return "dangerously dry";
 }
 
-const char *Get_Alert_Desc(const int level)
+const char* Get_Alert_Desc(const int level)
 {
 	if (level == 0)
 		return "undefined";
@@ -3379,7 +3379,7 @@ bool IsNetworkDevice(const hardware::type::value htype)
 	}
 }
 
-void ConvertToGeneralSwitchType(std::string &devid, int &dtype, int &subtype)
+void ConvertToGeneralSwitchType(std::string& devid, int& dtype, int& subtype)
 {
 	if (dtype == pTypeLighting1) {
 		dtype = pTypeGeneralSwitch;

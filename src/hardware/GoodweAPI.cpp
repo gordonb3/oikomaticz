@@ -326,7 +326,7 @@ void GoodweAPI::GetMeterDetails()
 	SaveString2Disk(sResult, "/tmp/Goodwe2.json");
 #endif
 	Json::Value root;
-	bool ret=ParseJSon(sResult,root);
+	bool ret= ParseJSon(sResult,root);
 	if (!ret)
 	{
 		_log.Log(LOG_ERROR,"GoodweAPI: Invalid user data received!");
