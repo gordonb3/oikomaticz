@@ -39,6 +39,8 @@ bool CNotificationPushbullet::SendMessageImplementation(
 	json["type"] = "note";
 	json["title"] = CURLEncode::URLDecode(cSubject);
 	json["body"] = CURLEncode::URLDecode(Text);
+
+
 	sPostData = JSonToFormatString(json);
 
 	//Add the required Access Token and Content Type

@@ -212,6 +212,7 @@ images/Light48_Off.png
 images/Light48_On.png
 images/lightbulb.png
 images/lightbulboff.png
+images/location.png
 images/lock_closed.png
 images/lock_open.png
 images/log.png
@@ -270,7 +271,8 @@ images/PV48.png
 images/radiation.png
 images/radiation48.png
 images/rain.png
-images/rain48.png
+images/Rain48_On.png
+images/Rain48_Off.png
 images/rainraining.png
 images/remote.png
 images/remote48.png
@@ -307,6 +309,9 @@ images/Speaker.png
 images/Speaker48_Off.png
 images/Speaker48_On.png
 images/Stop48.png
+images/Sun.png
+images/Sun48_On.png
+images/Sun48_Off.png
 images/switch.png
 images/temp-0-5.png
 images/temp-10-15.png
@@ -576,6 +581,7 @@ app/ForecastController.js
 app/FrontpageController.js
 app/HistoryController.js
 app/LightsController.js
+app/livesocket.js
 app/LogController.js
 app/LoginController.js
 app/LogoutController.js
@@ -589,7 +595,6 @@ app/SetupController.js
 app/TemperatureController.js
 app/TemperatureCustomLogController.js
 app/TimerplanController.js
-app/UpdateController.js
 app/UsersController.js
 app/UserVariablesController.js
 app/UtilityController.js
@@ -630,6 +635,7 @@ js/angular-websocket.js
 js/angular.min.js
 js/angularAMD.min.js
 js/babel-polyfill-6.26.0.js
+js/base64.min.js
 js/bootbox.min.js
 js/bootstrap.min.js
 js/colpick.js
@@ -641,7 +647,7 @@ js/FileSaver.js
 js/highcharts-ng.min.js
 js/html5shiv.js
 js/i18next-1.8.0.min.js
-js/jquery-3.3.1.min.js
+js/jquery-3.4.1.min.js
 js/jquery-ui.min.js
 js/jquery.ddslick.min.js
 js/jquery.isotope.min.js
@@ -703,7 +709,6 @@ views/temperature_widget.html
 views/temperature_custom_temp_log.html
 views/timerplan.html
 views/timers.html
-views/update.html
 views/users.html
 views/utility.html
 views/weather.html

@@ -18,3 +18,5 @@ Cooling;Cooling;Cooling device
 ComputerPC;Computer PC;Personal Computer System
 Phone;Phone;Mobile Phone
 counter;Counter;Counter
+Sun;Sun;Sun
+Rain;Rain;Rain

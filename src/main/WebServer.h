@@ -47,7 +47,8 @@ public:
 	void GetDatabaseBackup(WebEmSession & session, const request& req, reply & rep);
 	void Post_UploadCustomIcon(WebEmSession & session, const request& req, reply & rep);
 
-	void PostSettings(WebEmSession & session, const request& req, std::string & redirect_uri);
+	void PostSettings(WebEmSession& session, const request& req, reply& rep);
+	void PostLoginCheck(WebEmSession& session, const request& req, reply& rep);
 	void SetRFXCOMMode(WebEmSession & session, const request& req, std::string & redirect_uri);
 	void RFXComUpgradeFirmware(WebEmSession & session, const request& req, std::string & redirect_uri);
 	void UploadFloorplanImage(WebEmSession & session, const request& req, std::string & redirect_uri);
@@ -185,7 +186,8 @@ private:
 	void Cmd_GetAuth(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetUptime(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetActualHistory(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_GetConfig(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_GetConfig(WebEmSession& session, const request& req, Json::Value& root);
+	void Cmd_GetLocation(WebEmSession& session, const request& req, Json::Value& root);
 	void Cmd_SendNotification(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_EmailCameraSnapshot(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_UpdateDevice(WebEmSession & session, const request& req, Json::Value &root);
