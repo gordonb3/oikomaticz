@@ -27,6 +27,7 @@
 #include "hardware/Arilux.h"
 #include "hardware/AtagOne.h"
 #include "hardware/BleBox.h"
+#include "hardware/Buienradar.h"
 #include "hardware/Comm5Serial.h"
 #include "hardware/Comm5SMTCP.h"
 #include "hardware/Comm5TCP.h"
@@ -1087,8 +1088,10 @@ bool MainWorker::AddHardwareFromParams(
 		pHardware = new CEcoCompteur(ID, Address, Port);
 		break;
 	case hardware::type::TTN_MQTT:
-		//LAN
 		pHardware = new CTTNMQTT(ID, Address, Port, Username, Password, Extra);
+		break;
+	case hardware::type::BuienRadar:
+		pHardware = new CBuienRadar(ID, Mode1, Mode2);
 		break;
 	}
 

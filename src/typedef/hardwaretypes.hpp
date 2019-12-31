@@ -83,7 +83,7 @@ enum value {
 	EVOHOME_WEB,			//75
 	RAVEn,	    			//76
 	S0SmartMeterTCP,		//77
-	UNUSED_1,		//78
+	BuienRadar,			//78
 	AccuWeather,			//79
 	Comm5Serial,			//80
 	Ec3kMeterTCP,			//81
@@ -252,6 +252,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ DenkoviHTTPDevices,		"Denkovi Modules with LAN (HTTP) Interface",			"Denkovi"		},
 	{ DenkoviUSBDevices,		"Denkovi Modules with USB Interface",				"Denkovi"		},
 	{ DenkoviTCPDevices,		"Denkovi Modules with LAN (TCP) Interface",			"Denkovi"		},
+	{ BuienRadar,			"Buienradar (Dutch Weather Information)",			"BuienRadar"		},
 	{ 0, NULL, NULL }
 };
 

@@ -782,7 +782,32 @@ define(['app'], function (app) {
 					}
 				});
 			}
-			else if (text.indexOf("SolarEdge via Web") >= 0) {
+			else if (text.indexOf("Buienradar") >= 0) {
+				var timeframe = $("#hardwarecontent #divbuienradar #timeframe").val();
+				if (timeframe == 0) {
+					timeframe = 30;
+				}
+				var threshold = $("#hardwarecontent #divbuienradar #threshold").val();
+				if (threshold == 0) {
+					threshold = 25;
+				}
+				$.ajax({
+					url: "json.htm?type=command&param=updatehardware&htype=" + hardwaretype +
+					"&name=" + encodeURIComponent(name) +
+					"&enabled=" + bEnabled +
+					"&idx=" + idx +
+					"&datatimeout=" + datatimeout +
+					"&Mode1=" + timeframe + "&Mode2=" + threshold + "&Mode3=" + Mode3 + "&Mode4=" + Mode4 + "&Mode5=" + Mode5 + "&Mode6=" + Mode6,
+					async: false,
+					dataType: 'json',
+					success: function (data) {
+						RefreshHardwareTable();
+					},
+					error: function () {
+						ShowNotify($.t('Problem updating hardware!'), 2500, true);
+					}
+				});
+			} else if (text.indexOf("SolarEdge via Web") >= 0) {
 				var apikey = $("#hardwarecontent #divsolaredgeapi #apikey").val();
 				if (apikey == "") {
 					ShowNotify($.t('Please enter an API Key!'), 2500, true);
@@ -1840,6 +1865,30 @@ define(['app'], function (app) {
 				}
 				$.ajax({
 					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype + "&username=" + encodeURIComponent(apikey) + "&password=" + encodeURIComponent(location) + "&name=" + encodeURIComponent(name) + "&enabled=" + bEnabled + "&datatimeout=" + datatimeout,
+					async: false,
+					dataType: 'json',
+					success: function (data) {
+						RefreshHardwareTable();
+					},
+					error: function () {
+						ShowNotify($.t('Problem adding hardware!'), 2500, true);
+					}
+				});
+			}
+			else if (text.indexOf("Buienradar") >= 0) {
+				var timeframe = $("#hardwarecontent #divbuienradar #timeframe").val();
+				if (timeframe == 0) {
+					timeframe = 30;
+				}
+				var threshold = $("#hardwarecontent #divbuienradar #threshold").val();
+				if (threshold == 0) {
+					threshold = 25;
+				}
+				$.ajax({
+					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype +
+					"&username=" + encodeURIComponent(apikey) + "&password=" + encodeURIComponent(location) +
+					"&name=" + encodeURIComponent(name) + "&enabled=" + bEnabled + "&datatimeout=" + datatimeout +
+					"&Mode1=" + timeframe + "&Mode2=" + threshold,
 					async: false,
 					dataType: 'json',
 					success: function (data) {
@@ -3537,6 +3586,14 @@ define(['app'], function (app) {
 							$("#hardwarecontent #hardwareparamsunderground #apikey").val(data["Username"]);
 							$("#hardwarecontent #hardwareparamsunderground #location").val(data["Password"]);
 						}
+						else if (data["Type"].indexOf("Buienradar") >= 0) {
+							var timeframe = parseInt(data["Mode1"]);
+							var threshold = parseInt(data["Mode2"]);
+							if (timeframe == 0) timeframe = 15;
+							if (threshold == 0) threshold = 25;
+							$("#hardwarecontent #divbuienradar #timeframe").val(timeframe);
+							$("#hardwarecontent #divbuienradar #threshold").val(threshold);
+						}
 						else if ((data["Type"].indexOf("HTTP/HTTPS") >= 0)) {
 							$("#hardwarecontent #hardwareparamshttp #url").val(data["Address"]);
 							var tmp = data["Extra"];
@@ -3851,6 +3908,7 @@ define(['app'], function (app) {
             $("#hardwarecontent #divmodeldenkoviusbdevices").hide();
             $("#hardwarecontent #divmodeldenkovitcpdevices").hide();
 			$("#hardwarecontent #divunderground").hide();
+			$("#hardwarecontent #divbuienradar").hide();
 			$("#hardwarecontent #divserial").hide();
 			$("#hardwarecontent #divremote").hide();
 			$("#hardwarecontent #divlogin").hide();
@@ -4033,6 +4091,9 @@ define(['app'], function (app) {
 			}
 			else if ((text.indexOf("Underground") >= 0) || (text.indexOf("DarkSky") >= 0) || (text.indexOf("AccuWeather") >= 0) || (text.indexOf("Open Weather Map") >= 0)) {
 				$("#hardwarecontent #divunderground").show();
+			}
+			else if (text.indexOf("Buienradar") >= 0) {
+				$("#hardwarecontent #divbuienradar").show();
 			}
 			else if (text.indexOf("Philips Hue") >= 0) {
 				$("#hardwarecontent #divremote").show();
