@@ -44,13 +44,14 @@ DomoticzTCP::~DomoticzTCP(void)
 
 bool DomoticzTCP::StartHardware()
 {
+	RequestStart();
+
 	if (m_username.empty())
 	{
 		_log.Log(LOG_ERROR, "DomoticzTCP: cannot authenticate with remote due to missing username");
 		return false;
 	}
 
-	m_stoprequested = false;
 #ifndef NOCLOUD
 	b_useProxy = IsMyDomoticzAPIKey(m_szIPAddress);
 	if (b_useProxy) {
@@ -58,11 +59,10 @@ bool DomoticzTCP::StartHardware()
 		return StartHardwareProxy();
 	}
 #endif
-	m_bIsStarted = true;
 
 	//Start worker thread
 	m_thread = std::make_shared<std::thread>(&DomoticzTCP::Do_Work, this);
-	SetThreadName(m_thread->native_handle(), "DomoticzTCP");
+	SetThreadNameInt(m_thread->native_handle());
 
 	return (m_thread != nullptr);
 }
@@ -70,34 +70,19 @@ bool DomoticzTCP::StartHardware()
 
 bool DomoticzTCP::StopHardware()
 {
-	m_stoprequested = true;
 #ifndef NOCLOUD
 	if (b_useProxy) {
 		return StopHardwareProxy();
 	}
 #endif
-  try {
-		if (m_thread)
-		{
-			m_thread->join();
-			m_thread.reset();
-		}
-	}
-	catch (...)
+	if (m_thread)
 	{
-		//Don't throw from a Stop command
+		RequestStop();
+		m_thread->join();
+		m_thread.reset();
 	}
-	if (mIsConnected)
-	{
-		try {
-			disconnect();
-		}
-		catch (...)
-		{
-			//Don't throw from a Stop command
-		}
-	}
-	m_bIsStarted = false;
+	if (ASyncTCP::isConnected())
+		disconnect();
 	return true;
 }
 
@@ -106,9 +91,9 @@ void DomoticzTCP::Do_Work()
 {
 	int heartbeat_counter = 0;
 	int retry_counter = 0;
-	while (!m_stoprequested)
+	while (!IsStopRequested(100))
 	{
-		if (!mIsConnected)
+		if (!ASyncTCP::isConnected())
 		{
 			if ((retry_counter % (RETRY_DELAY_SECONDS * 1000 / SLEEP_MILLISECONDS)) == 0)
 			{
@@ -118,13 +103,12 @@ void DomoticzTCP::Do_Work()
 			retry_counter++;
 		}
 
-		sleep_milliseconds(SLEEP_MILLISECONDS);
 		heartbeat_counter++;
 		if ((heartbeat_counter % (HEARTBEAT_SECONDS * 1000 / SLEEP_MILLISECONDS)) == 0)
-		{
-			m_LastHeartbeat = mytime(NULL);
-		}
+			mytime(&m_LastHeartbeat);
 	}
+	terminate();
+
 	_log.Log(LOG_STATUS, "DomoticzTCP: TCP/IP Worker stopped...");
 }
 
@@ -132,15 +116,17 @@ void DomoticzTCP::Do_Work()
 bool DomoticzTCP::WriteToHardware(const char *pdata, const unsigned char length)
 {
 #ifndef NOCLOUD
-	if (b_useProxy) {
-		if (isConnectedProxy()) {
+	if (b_useProxy)
+	{
+		if (isConnectedProxy())
+		{
 			writeProxy(pdata, length);
 			return true;
 		}
 		return false;
 	}
 #endif
-	if (mIsConnected)
+	if (ASyncTCP::isConnected())
 	{
 		write((const unsigned char*)pdata, length);
 		return true;
@@ -155,7 +141,7 @@ bool DomoticzTCP::isConnected()
 	if (b_useProxy) {
 		return isConnectedProxy();
 	}
-	return mIsConnected;
+	return ASyncTCP::isConnected();
 }
 #endif
 
@@ -170,36 +156,33 @@ void DomoticzTCP::OnConnect()
 {
 	_log.Log(LOG_STATUS, "DomoticzTCP: connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 
-	m_bIsAuthenticated = false;
-	char szAuth[300];
-	snprintf(szAuth, sizeof(szAuth), "AUTH;%s;%s", m_username.c_str(), m_password.c_str());
-	WriteToHardware((const char*)&szAuth, (const unsigned char)strlen(szAuth));
+	if (!m_username.empty())
+	{
+		m_bIsAuthenticated = false;
+		char szAuth[300];
+		snprintf(szAuth, sizeof(szAuth), "AUTH;%s;%s", m_username.c_str(), m_password.c_str());
+		WriteToHardware((const char*)&szAuth, (const unsigned char)strlen(szAuth));
+	}
 }
 
 
 void DomoticzTCP::OnDisconnect()
 {
-	_log.Log(LOG_STATUS, "DomoticzTCP: disconnected");
+	_log.Log(LOG_STATUS, "disconnected from: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 }
 
 
 void DomoticzTCP::OnData(const unsigned char *pData, size_t length)
 {
-	if (!m_bIsAuthenticated)
+	if (length == 6 && strstr(reinterpret_cast<const char *>(pData), "NOAUTH") != 0)
 	{
-		m_bIsAuthenticated = true;
-		sOnConnected(this);
+		Log(LOG_ERROR, "Authentication failed for user %s on %s:%d", m_username.c_str(), m_szIPAddress.c_str(), m_usIPPort);
+		return;
 	}
 
 	std::lock_guard<std::mutex> l(readQueueMutex);
 	onInternalMessage((const unsigned char *)pData, length, false); // Do not check validity, this might be non RFX-message
 }
-
-
-//void DomoticzTCP::OnError(const std::exception e)
-//{
-//	_log.Log(LOG_ERROR, "DomoticzTCP: Error: %s", e.what());
-//}
 
 
 void DomoticzTCP::OnError(const boost::system::error_code& error)
@@ -209,10 +192,11 @@ void DomoticzTCP::OnError(const boost::system::error_code& error)
 		(error == boost::asio::error::connection_refused) ||
 		(error == boost::asio::error::access_denied) ||
 		(error == boost::asio::error::host_unreachable) ||
-		(error == boost::asio::error::timed_out)
+		(error == boost::asio::error::timed_out) ||
+		(error == boost::asio::error::host_not_found)
 		)
 	{
-		_log.Log(LOG_ERROR, "DomoticzTCP: Can not connect to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+		_log.Log(LOG_ERROR, "DomoticzTCP: Can not connect to: %s:%d (%s)", m_szIPAddress.c_str(), m_usIPPort, error.message().c_str());
 	}
 	else if (
 		(error == boost::asio::error::eof) ||
@@ -222,7 +206,6 @@ void DomoticzTCP::OnError(const boost::system::error_code& error)
 		if (!m_bIsAuthenticated)
 		{
 			_log.Log(LOG_ERROR, "DomoticzTCP: Authentication with remote failed! Wrong password?");
-			mDoReconnect = false;
 			StopHardware();
 		}
 		_log.Log(LOG_STATUS, "DomoticzTCP: Connection reset!");
