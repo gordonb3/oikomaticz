@@ -659,16 +659,12 @@ namespace http {
 			m_pWebEm->RegisterPageCode("/ozwcp/buttonpost.html", boost::bind(&CWebServer::ZWaveCPNodeSetButton, this, _1, _2, _3));
 			m_pWebEm->RegisterPageCode("/ozwcp/admpost.html", boost::bind(&CWebServer::ZWaveCPAdminCommand, this, _1, _2, _3));
 			m_pWebEm->RegisterPageCode("/ozwcp/nodepost.html", boost::bind(&CWebServer::ZWaveCPNodeChange, this, _1, _2, _3));
-			m_pWebEm->RegisterPageCode("/ozwcp/savepost.html", boost::bind(&CWebServer::ZWaveCPSaveConfig, this, _1, _2, _3));
 			m_pWebEm->RegisterPageCode("/ozwcp/thpost.html", boost::bind(&CWebServer::ZWaveCPTestHeal, this, _1, _2, _3));
 			m_pWebEm->RegisterPageCode("/ozwcp/topopost.html", boost::bind(&CWebServer::ZWaveCPGetTopo, this, _1, _2, _3));
 			m_pWebEm->RegisterPageCode("/ozwcp/statpost.html", boost::bind(&CWebServer::ZWaveCPGetStats, this, _1, _2, _3));
 			m_pWebEm->RegisterPageCode("/ozwcp/grouppost.html", boost::bind(&CWebServer::ZWaveCPSetGroup, this, _1, _2, _3));
-			m_pWebEm->RegisterPageCode("/ozwcp/scenepost.html", boost::bind(&CWebServer::ZWaveCPSceneCommand, this, _1, _2, _3));
 			//
 			//pollpost.html
-			//scenepost.html
-			//thpost.html
 			RegisterRType("openzwavenodes", boost::bind(&CWebServer::RType_OpenZWaveNodes, this, _1, _2, _3));
 #endif
 #ifdef TELLDUSCORE_INCLUDE
@@ -2877,6 +2873,9 @@ namespace http {
 
 			std::string nvalue = request::findValue(&req, "nvalue");
 			std::string svalue = request::findValue(&req, "svalue");
+			std::string ptrigger = request::findValue(&req, "parsetrigger");
+
+			bool parseTrigger = (ptrigger != "false");
 
 			if ((nvalue.empty() && svalue.empty()))
 			{
@@ -2933,7 +2932,7 @@ namespace http {
 			{
 				batterylevel = atoi(sBatteryLevel.c_str());
 			}
-			if (m_mainworker.UpdateDevice(HardwareID, DeviceID, unit, devType, subType, invalue, svalue, signallevel, batterylevel))
+			if (m_mainworker.UpdateDevice(HardwareID, DeviceID, unit, devType, subType, invalue, svalue, signallevel, batterylevel, parseTrigger))
 			{
 				root["status"] = "OK";
 				root["title"] = "Update Device";
@@ -4088,6 +4087,9 @@ namespace http {
 			}
 			else if (cparam == "testswitch")
 			{
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
 				if (session.rights < 2)
 				{
 					session.reply_status = reply::forbidden;
@@ -4675,7 +4677,7 @@ namespace http {
 					if (switchtype == device::tswitch::type::Dimmer)
 						level = 5;
 				}
-				m_mainworker.SwitchLightInt(sd, switchcmd, level, NoColor, true);
+				m_mainworker.SwitchLightInt(sd, switchcmd, level, NoColor, true, Username);
 			}
 			else if (cparam == "addswitch")
 			{
@@ -6597,7 +6599,7 @@ namespace http {
 				_log.Log(LOG_STATUS, "User: %s initiated a switch command (%s/%s/%s)", Username.c_str(), idx.c_str(), sSwitchName.c_str(), switchcmd.c_str());
 
 				root["title"] = "SwitchLight";
-				if (m_mainworker.SwitchLight(idx, switchcmd, level, "-1", onlyonchange, 0) == true)
+				if (m_mainworker.SwitchLight(idx, switchcmd, level, "-1", onlyonchange, 0, Username) == true)
 				{
 					root["status"] = "OK";
 				}
@@ -6658,7 +6660,7 @@ namespace http {
 				}
 				_log.Log(LOG_STATUS, "User: %s initiated a scene/group command", Username.c_str());
 
-				if (m_mainworker.SwitchScene(idx, switchcmd) == true)
+				if (m_mainworker.SwitchScene(idx, switchcmd, Username) == true)
 				{
 					root["status"] = "OK";
 					root["title"] = "SwitchScene";
@@ -6745,6 +6747,16 @@ namespace http {
 			}
 			else if (cparam == "setcolbrightnessvalue")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				std::string idx = request::findValue(&req, "idx");
 
 				if (idx.empty())
@@ -6856,13 +6868,23 @@ namespace http {
 				ival = std::min(ival, 100);
 
 				_log.Log(LOG_STATUS, "setcolbrightnessvalue: ID: %" PRIx64 ", bri: %d, color: '%s'", ID, ival, color.toString().c_str());
-				m_mainworker.SwitchLight(ID, "Set Color", (unsigned char)ival, color, false, 0);
+				m_mainworker.SwitchLight(ID, "Set Color", (unsigned char)ival, color, false, 0, Username);
 
 				root["status"] = "OK";
 				root["title"] = "SetColBrightnessValue";
 			}
 			else if (cparam.find("setkelvinlevel") == 0)
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set Kelvin Level";
 
@@ -6882,10 +6904,20 @@ namespace http {
 				_tColor color = _tColor(round(ival*255.0f/100.0f), ColorModeTemp);
 				_log.Log(LOG_STATUS, "setkelvinlevel: t: %f, color: '%s'", ival, color.toString().c_str());
 
-				m_mainworker.SwitchLight(ID, "Set Color", -1, color, false, 0);
+				m_mainworker.SwitchLight(ID, "Set Color", -1, color, false, 0, Username);
 			}
 			else if (cparam == "brightnessup")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set brightness up!";
 
@@ -6897,10 +6929,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Bright Up", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Bright Up", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "brightnessdown")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set brightness down!";
 
@@ -6912,10 +6954,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Bright Down", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Bright Down", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "discomode")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set to last known disco mode!";
 
@@ -6927,10 +6979,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Disco Mode", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Disco Mode", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam.find("discomodenum") == 0 && cparam != "discomode" && cparam.size() == 13)
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set to disco mode!";
 
@@ -6944,10 +7006,20 @@ namespace http {
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
 				char szTmp[40];
 				sprintf(szTmp, "Disco Mode %s", cparam.substr(12).c_str());
-				m_mainworker.SwitchLight(ID, szTmp, 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, szTmp, 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "discoup")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set to next disco mode!";
 
@@ -6959,10 +7031,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Disco Up", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Disco Up", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "discodown")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set to previous disco mode!";
 
@@ -6974,10 +7056,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Disco Down", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Disco Down", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "speedup")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set disco speed up!";
 
@@ -6989,10 +7081,19 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Speed Up", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Speed Up", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "speeduplong")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
 
 				root["status"] = "OK";
 				root["title"] = "Set speed long!";
@@ -7005,10 +7106,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Speed Up Long", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Speed Up Long", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "speeddown")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set disco speed down!";
 
@@ -7020,10 +7131,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Speed Down", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Speed Down", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "speedmin")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set disco speed minimal!";
 
@@ -7035,10 +7156,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Speed Minimal", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Speed Minimal", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "speedmax")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set disco speed maximal!";
 
@@ -7050,10 +7181,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Speed Maximal", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Speed Maximal", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "warmer")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set Kelvin up!";
 
@@ -7065,10 +7206,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Warmer", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Warmer", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "cooler")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set Kelvin down!";
 
@@ -7080,10 +7231,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Cooler", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Cooler", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "fulllight")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set Full!";
 
@@ -7095,10 +7256,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Set Full", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Set Full", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "nightlight")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set to nightlight!";
 
@@ -7110,10 +7281,20 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Set Night", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Set Night", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "whitelight")
 			{
+				if (session.rights < 1)
+				{
+					session.reply_status = reply::forbidden;
+					return; //Only user/admin allowed
+				}
+
+				std::string Username = "Admin";
+				if (!session.username.empty())
+					Username = session.username;
+
 				root["status"] = "OK";
 				root["title"] = "Set to clear white!";
 
@@ -7126,7 +7307,7 @@ namespace http {
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
 				//TODO: Change to color with mode=ColorModeWhite and level=100?
-				m_mainworker.SwitchLight(ID, "Set White", 0, NoColor, false, 0);
+				m_mainworker.SwitchLight(ID, "Set White", 0, NoColor, false, 0, Username);
 			}
 			else if (cparam == "getfloorplanimages")
 			{
@@ -13110,7 +13291,7 @@ namespace http {
 			root["status"] = "OK";
 			root["title"] = "LightLog";
 
-			result = m_sql.safe_query("SELECT ROWID, nValue, sValue, Date FROM LightingLog WHERE (DeviceRowID==%" PRIu64 ") ORDER BY Date DESC", idx);
+			result = m_sql.safe_query("SELECT ROWID, nValue, sValue, User, Date FROM LightingLog WHERE (DeviceRowID==%" PRIu64 ") ORDER BY Date DESC", idx);
 			if (!result.empty())
 			{
 				std::map<std::string, std::string> selectorStatuses;
@@ -13126,7 +13307,8 @@ namespace http {
 					std::string lidx = sd.at(0);
 					int nValue = atoi(sd.at(1).c_str());
 					std::string sValue = sd.at(2);
-					std::string ldate = sd.at(3);
+					std::string sUser = sd.at(3);
+					std::string ldate = sd.at(4);
 
 					//add light details
 					std::string lstatus;
@@ -13212,7 +13394,7 @@ namespace http {
 					root["result"][ii]["Data"] = ldata;
 					root["result"][ii]["Status"] = lstatus;
 					root["result"][ii]["Level"] = llevel;
-
+					root["result"][ii]["User"] = sUser;
 					ii++;
 				}
 			}
@@ -13230,7 +13412,7 @@ namespace http {
 			root["status"] = "OK";
 			root["title"] = "TextLog";
 
-			result = m_sql.safe_query("SELECT ROWID, sValue, Date FROM LightingLog WHERE (DeviceRowID==%" PRIu64 ") ORDER BY Date DESC",
+			result = m_sql.safe_query("SELECT ROWID, sValue, User, Date FROM LightingLog WHERE (DeviceRowID==%" PRIu64 ") ORDER BY Date DESC",
 				idx);
 			if (!result.empty())
 			{
@@ -13240,8 +13422,9 @@ namespace http {
 					std::vector<std::string> sd = itt;
 
 					root["result"][ii]["idx"] = sd[0];
-					root["result"][ii]["Date"] = sd[2];
 					root["result"][ii]["Data"] = sd[1];
+					root["result"][ii]["User"] = sd[2];
+					root["result"][ii]["Date"] = sd[3];
 					ii++;
 				}
 			}
@@ -13259,7 +13442,7 @@ namespace http {
 			root["status"] = "OK";
 			root["title"] = "SceneLog";
 
-			result = m_sql.safe_query("SELECT ROWID, nValue, Date FROM SceneLog WHERE (SceneRowID==%" PRIu64 ") ORDER BY Date DESC", idx);
+			result = m_sql.safe_query("SELECT ROWID, nValue, User, Date FROM SceneLog WHERE (SceneRowID==%" PRIu64 ") ORDER BY Date DESC", idx);
 			if (!result.empty())
 			{
 				int ii = 0;
@@ -13267,10 +13450,11 @@ namespace http {
 				{
 					std::vector<std::string> sd = itt;
 
-					int nValue = atoi(sd[1].c_str());
 					root["result"][ii]["idx"] = sd[0];
-					root["result"][ii]["Date"] = sd[2];
+					int nValue = atoi(sd[1].c_str());
 					root["result"][ii]["Data"] = (nValue == 0) ? "Off" : "On";
+					root["result"][ii]["User"] = sd[2];
+					root["result"][ii]["Date"] = sd[3];
 					ii++;
 				}
 			}

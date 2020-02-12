@@ -3868,7 +3868,7 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 				oParseResults.sCommand == "On"
 				|| oParseResults.sCommand == "Off"
 				) {
-				tItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, oParseResults.sCommand, eventName);
+				tItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, oParseResults.sCommand, eventName, "EventSystem/" + eventName);
 			}
 			else if (oParseResults.sCommand == "Active") {
 				std::vector<std::vector<std::string> > result;
@@ -3883,7 +3883,7 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 
 		}
 		else {
-			tItem = _tTaskItem::SwitchLightEvent(fDelayTime, deviceID, oParseResults.sCommand, level, NoColor, eventName);
+			tItem = _tTaskItem::SwitchLightEvent(fDelayTime, deviceID, oParseResults.sCommand, level, NoColor, eventName, "EventSystem/" + eventName);
 		}
 		m_sql.AddTaskItem(tItem);
 #ifdef _DEBUG
@@ -3905,14 +3905,14 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 			_tTaskItem tDelayedtItem;
 			if (isScene) {
 				if (oParseResults.sCommand == "On") {
-					tDelayedtItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, "Off", eventName);
+					tDelayedtItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, "Off", eventName, "EventSystem/" + eventName);
 				}
 				else if (oParseResults.sCommand == "Off") {
-					tDelayedtItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, "On", eventName);
+					tDelayedtItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, "On", eventName, "EventSystem/" + eventName);
 				}
 			}
 			else {
-				tDelayedtItem = _tTaskItem::SwitchLightEvent(fDelayTime, deviceID, previousState, previousLevel, NoColor, eventName);
+				tDelayedtItem = _tTaskItem::SwitchLightEvent(fDelayTime, deviceID, previousState, previousLevel, NoColor, eventName, "EventSystem/" + eventName);
 			}
 			m_sql.AddTaskItem(tDelayedtItem);
 #ifdef _DEBUG
