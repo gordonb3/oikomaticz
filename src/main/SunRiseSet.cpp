@@ -3,9 +3,6 @@
 
 #include <math.h>
 #include "localtime_r.h"
-//#include <sys/timeb.h>
-#include <boost/date_time/c_local_time_adjustor.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 
 #ifndef PI
@@ -95,17 +92,32 @@
 #define astronomical_twilight(year,month,day,lon,lat,start,end)  \
 		__sunriset__( year, month, day, lon, lat, -18.0, 0, start, end )
 
-boost::posix_time::time_duration get_utc_offset() {
-	using namespace boost::posix_time;
+double get_utc_offset() {
+	time_t gmt, rawtime = time(NULL);
+	struct tm* ptm;
 
-	// boost::date_time::c_local_adjustor uses the C-API to adjust a
-	// moment given in utc to the same moment in the local time zone.
-	typedef boost::date_time::c_local_adjustor<ptime> local_adj;
+#if !defined(WIN32)
+	struct tm gbuf;
+	ptm = gmtime_r(&rawtime, &gbuf);
+#else
+	ptm = gmtime(&rawtime);
+#endif
+	// Request that mktime() looksup dst in timezone database
+	ptm->tm_isdst = -1;
+	gmt = mktime(ptm);
 
-	const ptime utc_now = second_clock::universal_time();
-	const ptime now = local_adj::utc_to_local(utc_now);
+	double utc_offset = (double)difftime(rawtime, gmt) / 3600.0;
 
-	return now - utc_now;
+	return utc_offset;
+}
+
+void SunRiseSet::fixRoundIssue(int* hour, int* minute)
+{
+	if (*minute > 59)
+	{
+		*minute = 0;
+		*hour = ( *hour + 1 ) % 24;
+	}
 }
 
 bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, _tSubRiseSetResults& result)
@@ -122,6 +134,7 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, _tSubRis
 	return GetSunRiseSet(latit, longit, year, month, day, result);
 }
 
+
 bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const int year, const int month, const int day, _tSubRiseSetResults& result)
 {
 	result.latit = latit;
@@ -129,9 +142,8 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
 	result.year = year;
 	result.month = month;
 	result.day = day;
-
-	boost::posix_time::time_duration uoffset = get_utc_offset();
-	double timezone = (double)(uoffset.ticks()/3600000000LL);
+	
+	double timezone = get_utc_offset();
 	// Assuming we now got the diff in hours and minutes here. Do we?
 
 	double daylen; //, civlen, nautlen, astrlen;
@@ -143,9 +155,12 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
 	//nautlen = day_nautical_twilight_length(year,month,day,longit,latit);
 	//astrlen = day_astronomical_twilight_length(year,month,day,longit,latit);
 
+
 	double _tmpH;
 	result.DaylengthMins = static_cast<int>(round(modf(daylen, &_tmpH) * 60));
 	result.DaylengthHours = static_cast<int>(_tmpH);
+	//fix a possible rounding issue above
+	SunRiseSet::fixRoundIssue(&result.DaylengthHours, &result.DaylengthMins);
 
 	rs = sun_rise_set(year, month, day, longit, latit, &rise, &set);
 	civ = civil_twilight(year, month, day, longit, latit, &civ_start, &civ_end);
@@ -154,7 +169,7 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
 
 	rise = UtcToLocal(rise, timezone);
 	set = UtcToLocal(set, timezone);
-	result.SunAtSouthMin = static_cast<int>(round(modf((rise+set) / 2.0, &_tmpH) * 60));
+	result.SunAtSouthMin = static_cast<int>(round(modf((rise + set) / 2.0, &_tmpH) * 60));
 	result.SunAtSouthHour = static_cast<int>(_tmpH);
 
 	switch (rs) {
@@ -164,16 +179,8 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
 		result.SunSetMin = static_cast<int>(round(modf(set, &_tmpH) * 60));
 		result.SunSetHour = static_cast<int>(_tmpH);
 		//fix a possible rounding issue above
-		if (result.SunRiseMin > 59)
-		{
-			result.SunRiseMin = 0;
-			result.SunRiseHour = (result.SunRiseHour + 1) % 24;
-		}
-		if (result.SunSetMin > 59)
-		{
-			result.SunSetMin = 0;
-			result.SunSetHour = (result.SunSetHour + 1) % 24;
-		}
+		SunRiseSet::fixRoundIssue(&result.SunRiseHour, &result.SunRiseMin);
+		SunRiseSet::fixRoundIssue(&result.SunSetHour, &result.SunSetMin);
 		break;
 	case +1:
 	case -1:
@@ -193,6 +200,9 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
 		result.CivilTwilightStartHour = static_cast<int>(_tmpH);
 		result.CivilTwilightEndMin = static_cast<int>(round(modf(civ_end, &_tmpH) * 60));
 		result.CivilTwilightEndHour = static_cast<int>(_tmpH);
+		//fix a possible rounding issue above
+		SunRiseSet::fixRoundIssue(&result.CivilTwilightStartHour, &result.CivilTwilightStartMin);
+		SunRiseSet::fixRoundIssue(&result.CivilTwilightEndHour, &result.CivilTwilightEndMin);
 		break;
 	case +1:
 	case -1:
@@ -212,6 +222,9 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
 		result.NauticalTwilightStartHour = static_cast<int>(_tmpH);
 		result.NauticalTwilightEndMin = static_cast<int>(round(modf(naut_end, &_tmpH) * 60));
 		result.NauticalTwilightEndHour = static_cast<int>(_tmpH);
+		//fix a possible rounding issue above
+		SunRiseSet::fixRoundIssue(&result.NauticalTwilightStartHour, &result.NauticalTwilightStartMin);
+		SunRiseSet::fixRoundIssue(&result.NauticalTwilightEndHour, &result.NauticalTwilightEndMin);
 		break;
 	case +1:
 	case -1:
@@ -231,6 +244,9 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
 		result.AstronomicalTwilightStartHour = static_cast<int>(_tmpH);
 		result.AstronomicalTwilightEndMin = static_cast<int>(round(modf(astr_end, &_tmpH) * 60));
 		result.AstronomicalTwilightEndHour = static_cast<int>(_tmpH);
+		//fix a possible rounding issue above
+		SunRiseSet::fixRoundIssue(&result.AstronomicalTwilightStartHour, &result.AstronomicalTwilightStartMin);
+		SunRiseSet::fixRoundIssue(&result.AstronomicalTwilightEndHour, &result.AstronomicalTwilightEndMin);
 		break;
 	case +1:
 	case -1:
@@ -244,6 +260,8 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
 
 	return true;
 }
+
+
 /* The "workhorse" function for sun rise/set times */
 
 int SunRiseSet::__sunriset__(int year, int month, int day, double lon, double lat,
@@ -430,7 +448,7 @@ void SunRiseSet::sunpos(double d, double* lon, double* r)
 }
 
 void SunRiseSet::sun_RA_dec(double d, double* RA, double* dec, double* r)
-/******************************************************/ 
+/******************************************************/
 /* Computes the Sun's equatorial coordinates RA, Decl */
 /* and also its distance, at an instant given in d,   */
 /* the number of days since 2000 Jan 0.0.             */
