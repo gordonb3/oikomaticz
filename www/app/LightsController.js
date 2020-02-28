@@ -3,7 +3,6 @@ define(['app', 'livesocket'], function (app) {
 		var $element = $('#main-view #lightcontent').last();
 
 		$scope.HasInitializedAddManualDialog = false;
-		$scope.broadcast_unsubscribe = undefined;
 
 		MakeFavorite = function (id, isfavorite) {
 			deviceApi.makeFavorite(id, isfavorite).then(function() {
@@ -24,7 +23,7 @@ define(['app', 'livesocket'], function (app) {
 				async: false,
 				dataType: 'json'
 			});
-		}
+		};
 
 		AddManualLightDevice = function () {
 			$("#dialog-addmanuallightdevice #combosubdevice").html("");
@@ -582,7 +581,7 @@ define(['app', 'livesocket'], function (app) {
 				var RO = (item.Unit < 64 || item.Unit > 95) ? true : false;
 				isdimmer = true;
 				if (
-					(item.Status == 'On')
+					(item.Status != 'Off')
 				) {
 					img = '<img src="images/Fireplace48_On.png" title="' + $.t(RO ? "On" : "Turn Off") + (RO ? '"' : '" onclick="SwitchLight(' + item.idx + ',\'Off\',' + item.Protected + ');" class="lcursor"') + ' height="48" width="48">';
 				}
@@ -758,29 +757,10 @@ define(['app', 'livesocket'], function (app) {
 					});
 				}
 			});
-
-			$scope.broadcast_unsubscribe = $scope.$on('jsonupdate', function (event, data) {
-				/*
-					When this event is caught, a widget status update is received.
-					We call RefreshItem to update the widget.
-				*/
-				if (typeof data.ServerTime != 'undefined') {
-					$rootScope.SetTimeAndSun(data.Sunrise, data.Sunset, data.ServerTime);
-				}
-				if (typeof data.ActTime != 'undefined') {
-					$.LastUpdateTime = parseInt(data.ActTime);
-				}
-				RefreshItem(data.item);
-			});
 		}
 
 		ShowLights = function () {
 			$('#modal').show();
-
-			if (typeof $scope.broadcast_unsubscribe != 'undefined') {
-				$scope.broadcast_unsubscribe();
-				$scope.broadcast_unsubscribe = undefined;
-			}
 
 			var htmlcontent = '';
 			var bShowRoomplan = false;
@@ -1212,7 +1192,7 @@ define(['app', 'livesocket'], function (app) {
 							else if (item.SwitchType == "TPI") {
 								var RO = (item.Unit < 64 || item.Unit > 95) ? true : false;
 								bIsDimmer = true;
-								if (item.Status == 'On') {
+								if (item.Status != 'Off') {
 									xhtm += '\t      <td id="img"><img src="images/Fireplace48_On.png" title="' + $.t(RO ? "On" : "Turn Off") + (RO ? '"' : '" onclick="SwitchLight(' + item.idx + ',\'Off\',' + item.Protected + ');" class="lcursor"') + ' height="48" width="48"></td>\n';
 								}
 								else {
@@ -2281,6 +2261,10 @@ define(['app', 'livesocket'], function (app) {
 				$.myglobals.WeekdayStr.push($(this).text());
 			});
 
+			$scope.$on('device_update', function (event, deviceData) {
+				RefreshItem(deviceData);
+			});
+
 			$(window).resize(function () { $scope.ResizeDimSliders(); });
 
 			$("#dialog-addlightdevice").dialog({
@@ -2412,10 +2396,6 @@ define(['app', 'livesocket'], function (app) {
 		};
 
 		$scope.$on('$destroy', function () {
-			if (typeof $scope.broadcast_unsubscribe != 'undefined') {
-				$scope.broadcast_unsubscribe();
-				$scope.broadcast_unsubscribe = undefined;
-			}
 			$(window).off("resize");
 			var popup = $("#rgbw_popup");
 			if (typeof popup != 'undefined') {

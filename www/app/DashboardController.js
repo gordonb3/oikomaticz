@@ -3,8 +3,6 @@ define(['app', 'livesocket'], function (app) {
 		var $element = $('#main-view #dashcontent').last();
 
 		$scope.LastUpdateTime = parseInt(0);
-		$scope.broadcast_unsubscribe_devices = undefined;
-		$scope.broadcast_unsubscribe_scenes = undefined;
 
 		//Evohome...
 		//FIXME move evohome functions to a shared js ...see temperaturecontroller.js and lightscontroller.js
@@ -773,7 +771,7 @@ define(['app', 'livesocket'], function (app) {
 							var RO = (item.Unit < 64 || item.Unit > 95) ? true : false;
 							isdimmer = true;
 							if (
-								(item.Status == 'On')
+								(item.Status != 'Off')
 							) {
 								img = '<img src="images/Fireplace48_On.png" title="' + $.t(RO ? "On" : "Turn Off") + (RO ? '"' : '" onclick="SwitchLight(' + item.idx + ',\'Off\',' + item.Protected + ');" class="lcursor"') + ' height="40" width="40">';
 								$(id + " #div.item").removeClass('Off-fireplace').addClass('on-fireplace');
@@ -1670,37 +1668,9 @@ define(['app', 'livesocket'], function (app) {
 					});
 				}
 			});
-
-			$scope.broadcast_unsubscribe_devices = $scope.$on('jsonupdate', function (event, data) {
-				if (typeof data.ServerTime != 'undefined') {
-					$rootScope.SetTimeAndSun(data.Sunrise, data.Sunset, data.ServerTime);
-				}
-				if (typeof data.ActTime != 'undefined') {
-					$.LastUpdateTime = parseInt(data.ActTime);
-				}
-				RefreshItem(data.item);
-			});
-			$scope.broadcast_unsubscribe_scenes = $scope.$on('scene_update', function (event, data) {
-				if (typeof data.ServerTime != 'undefined') {
-					$rootScope.SetTimeAndSun(data.Sunrise, data.Sunset, data.ServerTime);
-				}
-				if (typeof data.ActTime != 'undefined') {
-					$.LastUpdateTime = parseInt(data.ActTime);
-				}
-				RefreshItem(data.item);
-			});
 		}
 
 		ShowFavorites = function () {
-			if (typeof $scope.broadcast_unsubscribe_devices != 'undefined') {
-				$scope.broadcast_unsubscribe_devices();
-				$scope.broadcast_unsubscribe_devices = undefined;
-			}
-			if (typeof $scope.broadcast_unsubscribe_scenes != 'undefined') {
-				$scope.broadcast_unsubscribe_scenes();
-				$scope.broadcast_unsubscribe_scenes = undefined;
-			}
-
 			var totdevices = 0;
 			var jj = 0;
 			var bHaveAddedDivider = false;
@@ -2615,7 +2585,7 @@ define(['app', 'livesocket'], function (app) {
 									}
 									else if (item.SwitchType == "TPI") {
 										var RO = (item.Unit < 64 || item.Unit > 95) ? true : false;
-										if (item.Status == 'On') {
+										if (item.Status != 'Off') {
 											xhtm += '\t      <td id="img" class="img img1"><img src="images/Fireplace48_On.png" title="' + $.t(RO ? "On" : "Turn Off") + (RO ? '"' : '" onclick="SwitchLight(' + item.idx + ',\'Off\',' + item.Protected + ');" class="lcursor"') + ' height="40" width="40"></td>\n';
 										}
 										else {
@@ -4242,17 +4212,17 @@ define(['app', 'livesocket'], function (app) {
 			$scope.MakeGlobalConfig();
 			MobilePhoneDetection();
 			ShowFavorites();
+
+			$scope.$on('device_update', function (event, deviceData) {
+				RefreshItem(deviceData);
+			});
+
+			$scope.$on('scene_update', function (event, sceneData) {
+				RefreshItem(sceneData);
+			});
 		};
 
 		$scope.$on('$destroy', function () {
-			if (typeof $scope.broadcast_unsubscribe_devices != 'undefined') {
-				$scope.broadcast_unsubscribe_devices();
-				$scope.broadcast_unsubscribe_devices = undefined;
-			}
-			if (typeof $scope.broadcast_unsubscribe_scenes != 'undefined') {
-				$scope.broadcast_unsubscribe_scenes();
-				$scope.broadcast_unsubscribe_scenes = undefined;
-			}
 			$(window).off("resize");
 			var popup = $("#rgbw_popup");
 			if (typeof popup != 'undefined') {
