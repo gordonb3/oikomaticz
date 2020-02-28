@@ -1251,6 +1251,7 @@ namespace http {
 				(htype == hardware::type::ANNATHERMOSTAT) ||
 				(htype == hardware::type::THERMOSMART) ||
 				(htype == hardware::type::Tado) ||
+				(htype == hardware::type::Tesla) ||
 				(htype == hardware::type::Netatmo)
 				)
 			{
@@ -1645,6 +1646,7 @@ namespace http {
 				(htype == hardware::type::ANNATHERMOSTAT) ||
 				(htype == hardware::type::THERMOSMART) ||
 				(htype == hardware::type::Tado) ||
+				(htype == hardware::type::Tesla) ||
 				(htype == hardware::type::Netatmo)
 				)
 			{

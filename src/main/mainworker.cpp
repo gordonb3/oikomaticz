@@ -51,6 +51,7 @@
 #include "hardware/EnOceanESP3.h"
 #include "hardware/EnphaseAPI.h"
 #include "hardware/ETH8020.h"
+#include "hardware/eVehicles/eVehicle.h"
 #include "hardware/Honeywell/EvohomeBase.h"
 #include "hardware/Honeywell/EvohomeScript.h"
 #include "hardware/Honeywell/EvohomeSerial.h"
@@ -980,6 +981,9 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case hardware::type::Tado:
 		pHardware = new CTado(ID, Username, Password);
+		break;
+	case hardware::type::Tesla:
+		pHardware = new CeVehicle(ID, CeVehicle::Tesla, Username, Password, Mode1, Mode2, Extra);
 		break;
 	case hardware::type::HoneywellLyric:
 		pHardware = new Lyric(ID, Username, Password, Extra);

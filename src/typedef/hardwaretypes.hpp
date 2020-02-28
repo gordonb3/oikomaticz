@@ -125,6 +125,7 @@ enum value {
 	DenkoviUSBDevices,		//117
 	DenkoviTCPDevices,		//118
 	OctoPrint,			//119
+	Tesla,		                //120
 	END
 };
 
@@ -255,6 +256,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ DenkoviTCPDevices,		"Denkovi Modules with LAN (TCP) Interface",			"Denkovi"		},
 	{ BuienRadar,			"Buienradar (Dutch Weather Information)",			"BuienRadar"		},
 	{ OctoPrint,			"OctoPrint (MQTT/Gina Haussge) with LAN interface",		"OctoPrint"		},
+	{ Tesla,			"Tesla Model S/3/X",						"Tesla"			},
 	{ 0, NULL, NULL }
 };
 
