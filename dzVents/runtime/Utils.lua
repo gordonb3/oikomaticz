@@ -1,6 +1,13 @@
-
-local jsonParser
+local jsonParser = require('JSON')
 local _ = require('lodash')
+
+function jsonParser:unsupportedTypeEncoder(value_of_unsupported_type)
+	if type(value_of_unsupported_type) == 'function' then
+		return '"Function"'
+	else
+		return nil
+	end
+end
 
 local self = {
 	LOG_ERROR = 1,
@@ -8,7 +15,7 @@ local self = {
 	LOG_MODULE_EXEC_INFO = 2,
 	LOG_INFO = 3,
 	LOG_DEBUG = 4,
-	DZVERSION = '2.5.7',
+	DZVERSION = '3.0.1',
 }
 
 function math.pow(x, y)
@@ -47,13 +54,14 @@ function self.numDecimals(num, int, dec)
 end
 
 function self.fileExists(name)
-	local f = io.open(name, "r")
-	if f ~= nil then
-		io.close(f)
-		return true
-	else
-		return false
+	local ok, err, code = os.rename(name, name)
+	if not ok then
+		if code == 13 then
+			-- Permission denied, but it exists
+			return true
+		end
 	end
+	return ok or false
 end
 
 function self.stringSplit(text, sep)
@@ -64,6 +72,42 @@ function self.stringSplit(text, sep)
 		table.insert(t, str)
 	end
 	return t
+end
+
+function self.stringToSeconds(str)
+
+	local now = os.date('*t')
+	local daySeconds = 24 * 3600
+	local weekSeconds = 7 * daySeconds
+	local num2Days = { 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat' }
+	local days2Num = { sun = 1, mon = 2, tue = 3, wed = 4, thu = 5, fri = 6, sat = 7 }
+
+	local function calcDelta(str)
+		local function timeDelta(str)
+			local hours, minutes, seconds = 0, 0, 0
+			if str:match('%d+:%d%d:%d%d') then
+				hours, minutes, seconds = str:match("(%d+):(%d%d):(%d%d)")
+			else
+				hours, minutes = str:match("(%d+):(%d%d)")
+			end
+			return ( hours * 3600 + minutes * 60 + seconds - ( now.hour * 3600 + now.min * 60 + now.sec ))
+		end
+
+		local delta
+		local deltaT = timeDelta(str)
+		for _, day in ipairs(num2Days) do
+			if str:lower():find(day) then
+				local newDelta = ( days2Num[day] - now.wday + 7 ) % 7 * daySeconds + deltaT
+				if newDelta < 0 then newDelta = newDelta + weekSeconds end
+				if delta == nil or newDelta < delta then delta = newDelta end
+			end
+		end
+
+		if delta == nil and deltaT < 0 then deltaT = deltaT + weekSeconds end
+		return delta or deltaT
+	end
+
+	return math.tointeger(calcDelta(str))
 end
 
 function self.inTable(searchTable, element)
@@ -106,9 +150,18 @@ function self.osExecute(cmd)
 	os.execute(cmd)
 end
 
-function self.print(msg)
+function self.print(msg, filename)
 	if (_G.TESTMODE) then return end
-	print(msg)
+	if filename == nil then print(msg) return end
+
+	local targetDirectory = _G.dataFolderPath .. '/../dumps/'
+	if not( self.fileExists(targetDirectory)) then
+		os.execute( 'mkdir ' .. targetDirectory )
+	end
+
+	local f = io.open(_G.dataFolderPath .. '/../dumps/' .. filename, 'a' )
+	f:write(msg,'\n')
+	f:close()
 end
 
 function self.urlEncode(str, strSub)
@@ -147,9 +200,9 @@ function self.fromJSON(json, fallback)
 		return fallback
 	end
 
-	if (jsonParser == nil) then
-		jsonParser = require('JSON')
-	end
+	--if (jsonParser == nil) then
+	--	jsonParser = require('JSON')
+	--end
 
 	ok, results = pcall(parse, json)
 
@@ -263,9 +316,9 @@ function self.toJSON(luaTable)
 		return jsonParser:encode(j)
 	end
 
-	if (jsonParser == nil) then
-		jsonParser = require('JSON')
-	end
+	--if (jsonParser == nil) then
+	--	jsonParser = require('JSON')
+	--end
 
 	ok, results = pcall(toJSON, luaTable)
 
@@ -373,18 +426,18 @@ function self.cameraExists(parm)
 	return loopGlobal(parm, 'camera')
 end
 
-function self.dumpTable(t, level)
+function self.dumpTable(t, level, filename)
 	local level = level or "> "
 	for attr, value in pairs(t or {}) do
 		if (type(value) ~= 'function') then
 			if (type(value) == 'table') then
-				self.print(level .. attr .. ':')
-				self.dumpTable(value, level .. '	')
+				self.print(level .. attr .. ':', filename)
+				self.dumpTable(value, level .. '	', filename)
 			else
-				self.print(level .. attr .. ': ' .. tostring(value))
+				self.print(level .. attr .. ': ' .. tostring(value), filename)
 			end
 		else
-			self.print(level .. attr .. '()')
+			self.print(level .. attr .. '()', filename)
 		end
 	end
 end
