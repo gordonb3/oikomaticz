@@ -86,6 +86,7 @@
 #include "hardware/Nest.h"
 #include "hardware/NestOAuthAPI.h"
 #include "hardware/Netatmo.h"
+#include "hardware/OctoPrintMQTT.h"
 #include "hardware/OnkyoAVTCP.h"
 #include "hardware/OpenWeatherMap.h"
 #include "hardware/OTGWSerial.h"
@@ -1093,6 +1094,9 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case hardware::type::BuienRadar:
 		pHardware = new CBuienRadar(ID, Mode1, Mode2);
+		break;
+	case hardware::type::OctoPrint:
+		pHardware = new COctoPrintMQTT(ID, Address, Port, Username, Password, Extra);
 		break;
 	}
 

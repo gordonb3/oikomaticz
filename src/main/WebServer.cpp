@@ -1529,13 +1529,14 @@ namespace http {
 				}
 			}
 			else if (
-				(htype == hardware::type::RFXLAN) || (htype == hardware::type::P1SmartMeterLAN) ||
-				(htype == hardware::type::YouLess) || (htype == hardware::type::OpenThermGatewayTCP) || (htype == hardware::type::LimitlessLights) ||
-				(htype == hardware::type::SolarEdgeTCP) || (htype == hardware::type::WOL) || (htype == hardware::type::S0SmartMeterTCP) || (htype == hardware::type::ECODEVICES) || (htype == hardware::type::Mochad) ||
-				(htype == hardware::type::MySensorsTCP) || (htype == hardware::type::MySensorsMQTT) || (htype == hardware::type::MQTT) || (htype == hardware::type::TTN_MQTT) || (htype == hardware::type::FRITZBOX) || (htype == hardware::type::ETH8020) || (htype == hardware::type::Sterbox) ||
-				(htype == hardware::type::KMTronicTCP) || (htype == hardware::type::KMTronicUDP) || (htype == hardware::type::SOLARMAXTCP) || (htype == hardware::type::RelayNet) || (htype == hardware::type::SatelIntegra) || (htype == hardware::type::eHouseTCP) || (htype == hardware::type::RFLINKTCP) ||
-				(htype == hardware::type::Comm5TCP || (htype == hardware::type::Comm5SMTCP) || (htype == hardware::type::CurrentCostMeterLAN)) ||
-				(htype == hardware::type::NefitEastLAN) || (htype == hardware::type::DenkoviHTTPDevices) || (htype == hardware::type::DenkoviTCPDevices) || (htype == hardware::type::Ec3kMeterTCP) || (htype == hardware::type::MultiFun) || (htype == hardware::type::ZIBLUETCP) || (htype == hardware::type::OnkyoAVTCP)
+				(htype == hardware::type::RFXLAN) || (htype == hardware::type::P1SmartMeterLAN)
+				|| (htype == hardware::type::YouLess) || (htype == hardware::type::OpenThermGatewayTCP) || (htype == hardware::type::LimitlessLights)
+				|| (htype == hardware::type::SolarEdgeTCP) || (htype == hardware::type::WOL) || (htype == hardware::type::S0SmartMeterTCP) || (htype == hardware::type::ECODEVICES) || (htype == hardware::type::Mochad)
+				|| (htype == hardware::type::MySensorsTCP) || (htype == hardware::type::MySensorsMQTT) || (htype == hardware::type::MQTT) || (htype == hardware::type::TTN_MQTT) || (htype == hardware::type::FRITZBOX) || (htype == hardware::type::ETH8020) || (htype == hardware::type::Sterbox)
+				|| (htype == hardware::type::KMTronicTCP) || (htype == hardware::type::KMTronicUDP) || (htype == hardware::type::SOLARMAXTCP) || (htype == hardware::type::RelayNet) || (htype == hardware::type::SatelIntegra) || (htype == hardware::type::eHouseTCP) || (htype == hardware::type::RFLINKTCP)
+				|| (htype == hardware::type::Comm5TCP || (htype == hardware::type::Comm5SMTCP) || (htype == hardware::type::CurrentCostMeterLAN))
+				|| (htype == hardware::type::NefitEastLAN) || (htype == hardware::type::DenkoviHTTPDevices) || (htype == hardware::type::DenkoviTCPDevices) || (htype == hardware::type::Ec3kMeterTCP) || (htype == hardware::type::MultiFun) || (htype == hardware::type::ZIBLUETCP) || (htype == hardware::type::OnkyoAVTCP)
+				|| (htype == hardware::type::OctoPrint)
 				) {
 				//Lan
 				if (address.empty())

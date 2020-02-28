@@ -1673,7 +1673,13 @@ void GetLightStatus(
 			lstatus = "Off";
 			break;
 		case light1_sOn:
-			lstatus = "On";
+			sprintf(szTmp, "Set Level: %d %%", llevel);
+			if (llevel == 100) {
+				lstatus = "On";
+			}
+			else {
+				lstatus = szTmp;
+			}
 			break;
 		}
 		break;
@@ -3373,6 +3379,7 @@ bool IsNetworkDevice(const hardware::type::value htype)
 	case hardware::type::eHouseTCP:
 	case hardware::type::TTN_MQTT:
 	case hardware::type::S0SmartMeterTCP:
+	case hardware::type::OctoPrint:
 		return true;
 	default:
 		return false;
