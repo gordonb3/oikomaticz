@@ -1816,11 +1816,6 @@ bool CEvohomeWeb::v1_login(const std::string &user, const std::string &password)
 
 void CEvohomeWeb::v1_renew_session()
 {
-	if (m_v1uid.empty()) {
-		v1_login(m_username, m_password);
-		return;
-	}
-
 	std::string sz_url = EVOHOME_HOST"/WebAPI/api/Session";
 	std::string sz_response = put_receive_data(sz_url, "", m_v1SessionHeaders);
 
@@ -1832,8 +1827,8 @@ void CEvohomeWeb::v1_renew_session()
 	if (pos == std::string::npos)
 		return;
 
-	std::string sz_code = sz_response.substr(pos+8, 2);
-	if (sz_code != "-1")
+	std::string sz_code = sz_response.substr(pos+8, 3);
+	if ((sz_code != "204") && (sz_code != "-1\"") && (sz_code != "200"))
 	{
 		// session is no longer valid
 		_log.Debug(DEBUG_HARDWARE, "(%s) discard expired v1 API session ID", m_Name.c_str());
@@ -1844,7 +1839,8 @@ void CEvohomeWeb::v1_renew_session()
 
 void CEvohomeWeb::get_v1_temps()
 {
-	v1_renew_session();
+	if (!m_v1uid.empty())
+		v1_renew_session();
 
 	if (m_v1uid.empty() && !v1_login(m_username, m_password))
 		return;
@@ -2061,7 +2057,6 @@ std::string CEvohomeWeb::process_response(std::vector<unsigned char> vHTTPRespon
 			sz_response.append("HTTP ");
 			sz_response.append(sz_retcode);
 		}
-		sz_response.append(sz_retcode);
 		sz_response.append("\"}");
 		return sz_response;
 	}
