@@ -1,17 +1,15 @@
+#ifndef WITH_EXTERNAL_LUA
+#define WITH_LUA53
+#endif
+
 #include "stdafx.h"
 #include "LuaTable.h"
 #include "main/Logger.h"
 
 extern "C" {
-#ifdef WITH_EXTERNAL_LUA
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-#else
-#include "lua/src/lua.h"
-#include "lua/src/lualib.h"
-#include "lua/src/lauxlib.h"
-#endif
 }
 
 CLuaTable::CLuaTable(lua_State *lua_state, std::string Name)
@@ -161,7 +159,16 @@ void CLuaTable::CloseSubTableEntry()
 void CLuaTable::PushRow(std::vector<_tEntry>::iterator itt)
 {
 	if (itt->label_type == TYPE_VALUE_INDEX)
+	{
+#ifdef WITH_LUA53
 		lua_pushinteger(m_lua_state, (lua_Integer)itt->index);
+#else
+		{
+			double dValue = static_cast<double>(itt->index);
+			lua_pushnumber(m_lua_state, (lua_Number)dValue);
+		}
+#endif
+	}
 	else
 		lua_pushstring(m_lua_state, itt->label.c_str());
 
@@ -171,7 +178,14 @@ void CLuaTable::PushRow(std::vector<_tEntry>::iterator itt)
 		lua_pushboolean(m_lua_state, itt->bValue);
 		break;
 	case TYPE_INTEGER:
+#ifdef WITH_LUA53
 		lua_pushinteger(m_lua_state, (lua_Integer)itt->iValue);
+#else
+		{
+			double dValue = static_cast<double>(itt->iValue);
+			lua_pushnumber(m_lua_state, (lua_Number)dValue);
+		}
+#endif
 		break;
 	case TYPE_NUMBER:
 		lua_pushnumber(m_lua_state, (lua_Number)itt->dValue);
@@ -201,7 +215,14 @@ void CLuaTable::Publish()
 				lua_createtable(m_lua_state, itt->nrCols, itt->nrRows);
 				break;
 			case TYPE_SUBTABLE_OPEN_INDEX:
+#ifdef WITH_LUA53
 				lua_pushinteger(m_lua_state, (lua_Integer)itt->index);
+#else
+				{
+					double dValue = static_cast<double>(itt->index);
+					lua_pushnumber(m_lua_state, (lua_Number)dValue);
+				}
+#endif
 				lua_createtable(m_lua_state, itt->nrCols, itt->nrRows);
 				break;
 			case TYPE_SUBTABLE_CLOSE:

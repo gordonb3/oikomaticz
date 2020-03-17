@@ -1,3 +1,7 @@
+#ifndef WITH_EXTERNAL_LUA
+#define WITH_LUA53
+#endif
+
 #include "stdafx.h"
 #include "Helper.h"
 #include "Logger.h"
@@ -152,7 +156,11 @@ bool CLuaHandler::executeLuaScript(const std::string &script, const std::string 
 	lua_pushcfunction(lua_state, l_domoticz_applyXPath);
 	lua_setglobal(lua_state, "domoticz_applyXPath");
 
-	lua_pushinteger(lua_state, m_HwdID);
+#ifdef WITH_LUA53
+	lua_pushinteger(lua_state, static_cast<long long>(m_HwdID))
+#else
+	lua_pushnumber(lua_state, static_cast<double>(m_HwdID));
+#endif
 	lua_setglobal(lua_state, "hwdId");
 
 	lua_createtable(lua_state, 1, 0);
