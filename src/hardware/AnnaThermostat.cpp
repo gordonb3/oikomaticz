@@ -9,7 +9,7 @@
 #include "protocols/HTTPClient.h"
 #include "main/mainworker.h"
 
-#include <tinyxpath/tinyxml.h>
+#include "tinyxpath/tinyxml.h"
 
 #define round(a) ( int ) ( a + .5 )
 
