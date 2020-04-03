@@ -10,7 +10,7 @@ extern "C" {
 #include <lauxlib.h>
 }
 
-#include <tinyxpath/xpath_processor.h>
+#include "tinyxpath/xpath_processor.h"
 
 #include "main/json_helper.h"
 #include "SQLHelper.h"

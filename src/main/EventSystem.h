@@ -3,11 +3,6 @@
 #include <string>
 #include <boost/thread/shared_mutex.hpp>
 
-extern "C" {
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-}
 #include "protocols/HTTPClient.h"
 
 #include "LuaCommon.h"
