@@ -275,7 +275,7 @@ else(Boost_FOUND)
     MESSAGE(FATAL_ERROR "Boost thread/system library not found on your system, try to get this installed.")
 endif(Boost_FOUND)
 
-target_link_libraries(domoticz Boost::thread Boost::system)
+target_link_libraries(oikomaticz Boost::thread Boost::system)
 
 # compare found vs required libBoost version
 IF(Boost_VERSION VERSION_LESS DZ_MIN_LIBBOOST_VERSION)
@@ -362,10 +362,105 @@ ELSE()
   TARGET_LINK_LIBRARIES(oikomaticz -lrt -lresolv ${EXECINFO_LIBRARIES})
 ENDIF()
 
+
+# Macro for setting up precompiled headers. Usage:
+#
+#   add_precompiled_header(target header.h [FORCEINCLUDE])
+#
+# MSVC: A source file with the same name as the header must exist and
+# be included in the target (E.g. header.cpp).
+#
+# MSVC: Add FORCEINCLUDE to automatically include the precompiled
+# header file from every source file.
+#
+# GCC: The precompiled header is always automatically included from
+# every header file.
+macro(ADD_PRECOMPILED_HEADER _targetName _input)
+  get_filename_component(_inputWe ${_input} NAME_WE)
+  set(pch_source ${_inputWe}.cpp)
+  foreach(arg ${ARGN})
+    if(arg STREQUAL FORCEINCLUDE)
+      set(FORCEINCLUDE ON)
+    else(arg STREQUAL FORCEINCLUDE)
+      set(FORCEINCLUDE OFF)
+    endif(arg STREQUAL FORCEINCLUDE)
+  endforeach(arg)
+
+  if(MSVC)
+    get_target_property(sources ${_targetName} SOURCES)
+    set(_sourceFound FALSE)
+    foreach(_source ${sources})
+      set(PCH_COMPILE_FLAGS "")
+      if(_source MATCHES \\.\(cc|cxx|cpp\)$)
+        get_filename_component(_sourceWe ${_source} NAME_WE)
+        if(_sourceWe STREQUAL ${_inputWe})
+          set(PCH_COMPILE_FLAGS "${PCH_COMPILE_FLAGS} /Yc${_input}")
+          set(_sourceFound TRUE)
+        else(_sourceWe STREQUAL ${_inputWe})
+          set(PCH_COMPILE_FLAGS "${PCH_COMPILE_FLAGS} /Yu${_input}")
+          if(FORCEINCLUDE)
+            set(PCH_COMPILE_FLAGS "${PCH_COMPILE_FLAGS} /FI${_input}")
+          endif(FORCEINCLUDE)
+        endif(_sourceWe STREQUAL ${_inputWe})
+        set_source_files_properties(${_source} PROPERTIES COMPILE_FLAGS "${PCH_COMPILE_FLAGS}")
+      endif(_source MATCHES \\.\(cc|cxx|cpp\)$)
+    endforeach()
+    if(NOT _sourceFound)
+      message(FATAL_ERROR "A source file for ${_input} was not found. Required for MSVC builds.")
+    endif(NOT _sourceFound)
+  endif(MSVC)
+
+  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch -Wno-parentheses-equality -Wno-deprecated-declarations -Wno-tautological-compare -Wno-unused-value -Wno-comment -Wno-unsequenced -Wno-logical-op-parentheses -Wno-literal-conversion")
+  endif()
+  if(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+  endif()
+  if(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+  endif()
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-switch")
+    #ADD_DEFINITIONS( -Wall -O0 -ggdb )
+    #ADD_DEFINITIONS( -Wfatal-errors -Wformat=2 -Werror=format-security )
+
+    get_filename_component(_name ${_input} NAME)
+    set(_source "${CMAKE_CURRENT_SOURCE_DIR}/${_input}")
+    set(_outdir "${CMAKE_CURRENT_BINARY_DIR}/${_name}.gch")
+    MAKE_DIRECTORY(${_outdir})
+    set(_output "${_outdir}/.c++")
+
+    string(TOUPPER "CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}" _flags_var_name)
+    # Strip out -Wl,… linker directives as they make GCC fail
+    string(REGEX REPLACE " -Wl,[^ ]*" " " _compiler_FLAGS " ${CMAKE_CXX_FLAGS} ${${_flags_var_name}}")
+
+    get_directory_property(_directory_flags INCLUDE_DIRECTORIES)
+    foreach(item ${_directory_flags})
+      list(APPEND _compiler_FLAGS "-I${item}")
+    endforeach(item)
+
+    get_directory_property(_directory_flags COMPILE_DEFINITIONS)
+    foreach(item ${_directory_flags})
+      list(APPEND _compiler_FLAGS "-D${item}")
+    endforeach(item)
+
+    separate_arguments(_compiler_FLAGS)
+    message("${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1} ${_compiler_FLAGS} -x c++-header -o ${_output} ${_source}")
+    add_custom_command(
+      OUTPUT ${_output}
+      COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1} ${_compiler_FLAGS} -x c++-header -o ${_output} ${_source}
+      DEPENDS ${_source} )
+    add_custom_target(${_targetName}_gch DEPENDS ${_output})
+    add_dependencies(${_targetName} ${_targetName}_gch)
+    set_target_properties(${_targetName} PROPERTIES COMPILE_FLAGS "-include ${_name} -Winvalid-pch")
+  endif(CMAKE_COMPILER_IS_GNUCXX)
+endmacro()
+
 option(USE_PRECOMPILED_HEADER "Use precompiled header feature to speed up build time " YES)
 if(USE_PRECOMPILED_HEADER)
   message(STATUS "Using precompiled headers")
-  target_precompile_headers(oikomaticz PRIVATE "src/stdafx.h")
+  ADD_PRECOMPILED_HEADER(oikomaticz "src/stdafx.h")
 ENDIF(USE_PRECOMPILED_HEADER)
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
