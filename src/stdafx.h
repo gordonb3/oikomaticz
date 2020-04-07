@@ -55,11 +55,11 @@ typedef unsigned char       BYTE;
 #include <thread>
 
 // third-party
-#include "RFXtrx.h"
+#include "main/RFXtrx.h"
 
 // rarely changing project-specific
-#include "concurrent_queue.h"
-#include "localtime_r.h"
-#include "Logger.h"
-#include "Noncopyable.h"
-#include "StoppableTask.h"
+#include "main/concurrent_queue.h"
+#include "main/localtime_r.h"
+#include "main/Logger.h"
+#include "main/Noncopyable.h"
+#include "main/StoppableTask.h"
