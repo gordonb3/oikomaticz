@@ -922,7 +922,7 @@ bool CTado::SendToTadoApi(const eTadoApiMethod eMethod, const std::string &sUrl,
 				break;
 
 			case Delete:
-				if (!HTTPClient::Delete(sUrl, sPostData, _vExtraHeaders, sResponse, bIgnoreEmptyResponse)) {
+				if (!HTTPClient::DELETE(sUrl, sPostData, _vExtraHeaders, sResponse, bIgnoreEmptyResponse)) {
 					{
 						_log.Log(LOG_ERROR, "Tado: Failed to perform DELETE request to Tado Api: %s", sResponse.c_str());
 						return false;

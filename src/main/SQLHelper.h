@@ -216,9 +216,9 @@ struct _tTaskItem
 	}
 	static _tTaskItem GetHTTPPage(const float DelayTime, const std::string &URL, const std::string &/*eventName*/)
 	{
-		return GetHTTPPage(DelayTime, URL, "", HTTPClient::HTTP_METHOD_GET, "", "");
+		return GetHTTPPage(DelayTime, URL, "", connection::HTTP::method::GET, "", "");
 	}
-	static _tTaskItem GetHTTPPage(const float DelayTime, const std::string &URL, const std::string &extraHeaders, const HTTPClient::_eHTTPmethod method, const std::string &postData, const std::string &trigger)
+	static _tTaskItem GetHTTPPage(const float DelayTime, const std::string &URL, const std::string &extraHeaders, const connection::HTTP::method::value method, const std::string &postData, const std::string &trigger)
 	{
 		_tTaskItem tItem;
 		tItem._ItemType = TITEM_GETURL;

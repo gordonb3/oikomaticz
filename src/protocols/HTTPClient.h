@@ -1,43 +1,19 @@
+/*
+ * Copyright (c) 2020 Gordon Bos <gordon@bosvangennip.nl> All rights reserved.
+ *
+ *
+ *
+ * Source code subject to GNU GENERAL PUBLIC LICENSE version 3
+ */
 #pragma once
+#include "RESTClient.hpp"
 
 class HTTPClient
 {
 	// give MainWorker acces to the protected Cleanup() function
 	friend class MainWorker;
 
-
 public:
-	enum _eHTTPmethod
-	{
-		HTTP_METHOD_GET,
-		HTTP_METHOD_POST,
-		HTTP_METHOD_PUT,
-		HTTP_METHOD_DELETE
-	};
-
-
-protected:
-	//Cleanup function, should be called before application closed
-	static void Cleanup();
-
-
-public:
-	/************************************************************************
-	 *									*
-	 * Configuration functions						*
-	 *									*
-	 * CAUTION!								*
-	 * Because these settings are global they may affect other classes	*
-	 * that use HTTPClient. Please add a debug line to your class if you	*
-	 * access any of these functions.					*
-	 *									*
-	 ************************************************************************/
-	
-	static void SetConnectionTimeout(const long timeout);
-	static void SetTimeout(const long timeout);
-	static void SetUserAgent(const std::string &useragent);
-	static void SetSecurityOptions(const bool verifypeer, const bool verifyhost);
-
 
 	/************************************************************************
 	 *									*
@@ -46,10 +22,9 @@ public:
 	 *									*
 	 ************************************************************************/
 
-	static bool GET(const std::string &url, std::string &response, const bool bIgnoreNoDataReturned = false);
-	static bool GETSingleLine(const std::string &url, std::string &response, const bool bIgnoreNoDataReturned = false);
-	static bool GETBinaryToFile(const std::string &url, const std::string &outputfile);
-
+	static bool GET(const std::string &szUrl, std::string &szResponse, const bool bIgnoreNoDataReturned = false);
+	static bool GETSingleLine(const std::string &szUrl, std::string &szResponse, const bool bIgnoreNoDataReturned = false);
+	static bool GETBinaryToFile(const std::string &szUrl, const std::string &szOutputFile);
 
 	/************************************************************************
 	 *									*
@@ -59,10 +34,10 @@ public:
 	 *									*
 	 ************************************************************************/
 
-	static bool GET(const std::string &url, const std::vector<std::string> &ExtraHeaders, std::string &response, const bool bIgnoreNoDataReturned = false);
-	static bool POST(const std::string &url, const std::string &postdata, const std::vector<std::string> &ExtraHeaders, std::string &response, const bool bFollowRedirect=true, const bool bIgnoreNoDataReturned = false);
-	static bool PUT(const std::string &url, const std::string &putdata, const std::vector<std::string> &ExtraHeaders, std::string &response, const bool bIgnoreNoDataReturned = false);
-	static bool Delete(const std::string &url, const std::string &putdata, const std::vector<std::string> &ExtraHeaders, std::string &response, const bool bIgnoreNoDataReturned = false);
+	static bool GET(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bIgnoreNoDataReturned = false);
+	static bool POST(const std::string &szUrl, const std::string &szPostdata, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bFollowRedirect = true, const bool bIgnoreNoDataReturned = false);
+	static bool PUT(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bIgnoreNoDataReturned = false);
+	static bool DELETE(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bIgnoreNoDataReturned = false);
 
 
 	/************************************************************************
@@ -73,10 +48,10 @@ public:
 	 *									*
 	 ************************************************************************/
 
-	static bool GET(const std::string &url, const std::vector<std::string> &ExtraHeaders, std::string &response, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned = false);
-	static bool POST(const std::string &url, const std::string &postdata, const std::vector<std::string> &ExtraHeaders, std::string &response, std::vector<std::string> &vHeaderData, const bool bFollowRedirect=true, const bool bIgnoreNoDataReturned = false);
-	static bool PUT(const std::string &url, const std::string &putdata, const std::vector<std::string> &ExtraHeaders, std::string &response, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned = false);
-	static bool Delete(const std::string &url, const std::string &putdata, const std::vector<std::string> &ExtraHeaders, std::string &response, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned = false);
+	static bool GET(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned = false);
+	static bool POST(const std::string &szUrl, const std::string &szPostdata, const std::vector<std::string> &ExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bFollowRedirect = true, const bool bIgnoreNoDataReturned = false);
+	static bool PUT(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &ExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned = false);
+	static bool DELETE(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &ExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned = false);
 
 
 	/************************************************************************
@@ -87,12 +62,11 @@ public:
 	 *									*
 	 ************************************************************************/
 
-	static bool GETBinary(const std::string &url, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &response, const long TimeOut = -1);
-	static bool GETBinarySingleLine(const std::string &url, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &response, const long TimeOut = -1);
-	static bool POSTBinary(const std::string &url, const std::string &postdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &response, const bool bFollowRedirect = true, const long TimeOut = -1);
-	static bool PUTBinary(const std::string &url, const std::string &putdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &response, const long TimeOut = -1);
-	static bool DeleteBinary(const std::string &url, const std::string &putdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &response, const long TimeOut = -1);
-
+	static bool GETBinary(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, const long iTimeOut = -1);
+	static bool GETBinarySingleLine(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, const long iTimeOut = -1);
+	static bool POSTBinary(const std::string &szUrl, const std::string &szPostdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, const bool bFollowRedirect = true, const long iTimeOut = -1);
+	static bool PUTBinary(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, const long iTimeOut = -1);
+	static bool DELETEBinary(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, const long iTimeOut = -1);
 
 	/************************************************************************
 	 *									*
@@ -100,26 +74,32 @@ public:
 	 *									*
 	 ************************************************************************/
 
-	static bool GETBinary(const std::string &url, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &response, std::vector<std::string> &vHeaderData, const long TimeOut = -1);
-	static bool POSTBinary(const std::string &url, const std::string &postdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &response, std::vector<std::string> &vHeaderData, const bool bFollowRedirect = true, const long TimeOut = -1);
-	static bool PUTBinary(const std::string &url, const std::string &putdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &response,
-std::vector<std::string> &vHeaderData, const long TimeOut = -1);
-	static bool DeleteBinary(const std::string &url, const std::string &putdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &response,
-std::vector<std::string> &vHeaderData, const long TimeOut = -1);
+	static bool GETBinary(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, std::vector<std::string> &vHeaderData, const long iTimeOut = -1);
+	static bool GETBinarySingleLine(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, std::vector<std::string> &vHeaderData, const long iTimeOut = -1);
+	static bool POSTBinary(const std::string &szUrl, const std::string &szPostdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, std::vector<std::string> &vHeaderData, const bool bFollowRedirect = true, const long iTimeOut = -1);
+	static bool PUTBinary(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse,
+std::vector<std::string> &vHeaderData, const long iTimeOut = -1);
+	static bool DELETEBinary(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse,
+std::vector<std::string> &vHeaderData, const long iTimeOut = -1);
 
 
+	/************************************************************************
+	 *									*
+	 * can't inherit static public methods					*
+	 *									*
+	 ************************************************************************/
 
-private:
-	static void SetGlobalOptions(void *curlobj);
-	static bool CheckIfGlobalInitDone();
-	static void LogError(const long response_code);
+	static void SetConnectionTimeout(const long timeout);
+	static void SetTimeout(const long timeout);
+	static void SetUserAgent(const std::string &useragent);
+	static void SetSecurityOptions(const bool verifypeer, const bool verifyhost);
+	static void SetCookieFile(const std::string &cookiefile);
 
-private:
-	static bool m_bCurlGlobalInitialized;
-	static bool m_bVerifyHost;
-	static bool m_bVerifyPeer;
-	static long m_iConnectionTimeout;
-	static long m_iTimeout;
-	static std::string m_sUserAgent;
+
+protected:
+	//Cleanup function, should be called before application closed
+	static void Cleanup();
+
 };
+
 

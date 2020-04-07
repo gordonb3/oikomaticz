@@ -3494,24 +3494,24 @@ void CSQLHelper::Do_Work()
 				if (!itt->_relatedEvent.empty())
 					StringSplit(itt->_relatedEvent, "!#", extraHeaders);
 
-				HTTPClient::_eHTTPmethod method = static_cast<HTTPClient::_eHTTPmethod>(itt->_switchtype);
+				connection::HTTP::method::value method = static_cast<connection::HTTP::method::value>(itt->_switchtype);
 
 				bool ret = false;
-				if (method == HTTPClient::HTTP_METHOD_GET)
+				if (method == connection::HTTP::method::GET)
 				{
 					ret = HTTPClient::GET(itt->_sValue, extraHeaders, response, headerData);
 				}
-				else if (method == HTTPClient::HTTP_METHOD_POST)
+				else if (method == connection::HTTP::method::POST)
 				{
 					ret = HTTPClient::POST(itt->_sValue, postData, extraHeaders, response, headerData, true, true);
 				}
-				else if (method == HTTPClient::HTTP_METHOD_PUT)
+				else if (method == connection::HTTP::method::PUT)
 				{
 					ret = HTTPClient::PUT(itt->_sValue, postData, extraHeaders, response, headerData, true);
 				}
-				else if (method == HTTPClient::HTTP_METHOD_DELETE)
+				else if (method == connection::HTTP::method::DELETE)
 				{
-					ret = HTTPClient::Delete(itt->_sValue, postData, extraHeaders, response, headerData, true);
+					ret = HTTPClient::DELETE(itt->_sValue, postData, extraHeaders, response, headerData, true);
 				}
 				else
 					return; //unsupported method
