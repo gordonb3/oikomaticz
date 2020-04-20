@@ -239,7 +239,8 @@ void RESTClient::LogStatus(const long responseCode)
  * main method								*
  *									*
  * Note:								*
- * for DOWNLOAD method the target file name must be in szPostdata	*
+ * for DOWNLOAD method the target file name must be in szResponse	*
+ * (vResponse[0] for binary method)					*
  *									*
  ************************************************************************/
 
@@ -278,17 +279,22 @@ bool RESTClient::ExecuteBinary(const connection::HTTP::method::value eMethod, co
 		}
 
 		std::ofstream outfile;
-		if (eMethod & connection::HTTP::method::DOWNLOAD)
+		if (eMethod == connection::HTTP::method::HEAD)
 		{
-			// szPostdata contains the output file name
-			outfile.open(szPostdata.c_str(), std::ios::out|std::ios::binary|std::ios::trunc);
+			curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+		}
+		else if (eMethod & connection::HTTP::method::DOWNLOAD)
+		{
+			// vResponse[0] contains the output file name
+			std::string szFilename;
+			szFilename.insert(szFilename.begin(), vResponse.begin(), vResponse.end());
+			outfile.open(szFilename.c_str(), std::ios::out|std::ios::binary|std::ios::trunc);
 			if (!outfile.is_open())
 				return false;
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, connection::HTTP::callback::write_curl_data_file);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&outfile);
 		}
-
-		else if (eMethod != connection::HTTP::method::HEAD)
+		else
 		{
 			if (eMethod & connection::HTTP::method::GETSINGLELINE)
 				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, connection::HTTP::callback::write_curl_data_single_line);
@@ -344,8 +350,11 @@ bool RESTClient::ExecuteBinary(const connection::HTTP::method::value eMethod, co
 bool RESTClient::Execute(const connection::HTTP::method::value eMethod, const std::string &szUrl, const std::string &szPostdata, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bFollowRedirect, const long iTimeOut, const bool bIgnoreNoDataReturned)
 {
 
-	szResponse = "";
 	std::vector<unsigned char> vResponse;
+	if (eMethod & connection::HTTP::method::DOWNLOAD)
+		vResponse.insert(vResponse.begin(), szResponse.begin(), szResponse.end());
+
+	szResponse = "";
 	if (!ExecuteBinary(eMethod, szUrl, szPostdata, vExtraHeaders, vResponse, vHeaderData, bFollowRedirect, iTimeOut))
 		return false;
 	if (!bIgnoreNoDataReturned && vResponse.empty())

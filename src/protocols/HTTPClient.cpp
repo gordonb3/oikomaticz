@@ -167,7 +167,8 @@ bool HTTPClient::GETBinaryToFile(const std::string &szUrl, const std::string &sz
 	std::vector<std::string> vHeaderData;
 	std::vector<std::string> vExtraHeaders;
 	std::vector<unsigned char> vResponse;
-	return RESTClient::ExecuteBinary(connection::HTTP::method::DOWNLOAD, szUrl, szOutputFile, vExtraHeaders, vResponse, vHeaderData, true, -1);
+	vResponse.insert(vResponse.begin(), szOutputFile.begin(), szOutputFile.end());
+	return RESTClient::ExecuteBinary(connection::HTTP::method::DOWNLOAD, szUrl, "", vExtraHeaders, vResponse, vHeaderData, true, -1);
 }
 
 
