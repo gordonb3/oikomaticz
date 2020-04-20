@@ -8,6 +8,7 @@ OPTION(WITH_LINUX_I2C "Include I2C support" YES)
 OPTION(WITH_SPI "Include SPI support" YES)
 OPTION(WITH_LIBUSB "Enable libusb support" YES)
 OPTION(WITH_PYTHON "Use Python for Plugins and Event-Scripts" YES)
+OPTION(WITH_OPENZWAVE "Include OpenZwave support" YES)
 
 OPTION(USE_STATIC_BOOST "Build with static BOOST libraries" YES)
 OPTION(USE_STATIC_OPENSSL "Build with static OpenSSL libraries" YES)
@@ -197,6 +198,7 @@ ENDIF(WITH_LIBUSB)
 # OpenZWave
 # try to find open-zwave, if found, include support
 #
+IF(WITH_OPENZWAVE)
 IF(USE_STATIC_OPENZWAVE)
   FIND_LIBRARY(OpenZWave NAMES libopenzwave.a HINTS "../open-zwave-read-only" "../open-zwave-read-only/cpp/build")
   SET(OPENZWAVE_LIB ${OpenZWave})
@@ -207,6 +209,7 @@ ELSE(USE_STATIC_OPENZWAVE)
     FIND_LIBRARY(OpenZWave NAMES libopenzwave.so HINTS ${OPENZWAVE_LIBRARY_DIRS})
   ENDIF(OPENZWAVE_FOUND)
 ENDIF(USE_STATIC_OPENZWAVE)
+ENDIF(WITH_OPENZWAVE)
 
 
 #
@@ -314,7 +317,7 @@ IF(OpenZWave)
   MESSAGE(STATUS "OpenZWave found at: ${OpenZWave}")
   TARGET_LINK_LIBRARIES(oikomaticz ${OpenZWave})
   INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/libs/openzwave)
-  add_definitions(-DWITH_OPENZWAVE)
+#  add_definitions(-DWITH_OPENZWAVE)
 ELSE()
   MESSAGE(STATUS "==== OpenZWave not found, support disabled!")
 ENDIF(OpenZWave)
