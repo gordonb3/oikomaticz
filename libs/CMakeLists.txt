@@ -26,7 +26,13 @@ file(GLOB_RECURSE serial_SRCS serial/*.cpp)
 list(FILTER serial_SRCS EXCLUDE REGEX "win")
 add_library(serial STATIC ${serial_SRCS})
 
-set(STATIC_LIBRARIES jsoncpp tinyxpath serial)
+# evohomeclient
+file(GLOB_RECURSE evohome_SRCS evohomeclient/src/*.cpp)
+include_directories(evohomeclient/src/)
+list(FILTER evohome_SRCS EXCLUDE REGEX "RESTClient")
+add_library(evohome STATIC ${evohome_SRCS})
+
+set(STATIC_LIBRARIES jsoncpp tinyxpath serial evohome)
 
 # openzwave
 if(OpenZWave)

@@ -1,0 +1,21 @@
+#fill in Evohome username
+usr=''
+#fill in Evohome password
+pw=''
+
+#uncomment and complete the following line to enable logging to a file
+;logfile=''
+
+
+#The following applies if you have multiple Evohome systems:
+
+#uncomment the following lines if you like to use the first Evohome system returned
+#change numbers to access different installations
+;location=0
+;gateway=0
+;controlsystem=0
+
+#or supply the Evohome systemId
+;systemId=''
+
+

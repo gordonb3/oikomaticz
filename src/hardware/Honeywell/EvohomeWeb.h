@@ -14,51 +14,11 @@
 
 #include "EvohomeBase.h"
 
+#include "evohomeclient/src/evohome/devices.hpp"
 #include "main/json_helper.h"
 
 class CEvohomeWeb : public CEvohomeBase
 {
-	struct zone
-	{
-		Json::Value *installationInfo;
-		Json::Value *status;
-		std::string locationId;
-		std::string gatewayId;
-		std::string systemId;
-		std::string zoneId;
-		std::string hdtemp;
-		Json::Value schedule;
-	};
-
-	struct temperatureControlSystem
-	{
-		std::vector<zone> zones;
-		std::vector<zone> dhw;
-		Json::Value *installationInfo;
-		Json::Value *status;
-		std::string locationId;
-		std::string gatewayId;
-		std::string systemId;
-	};
-
-	struct gateway
-	{
-		std::vector<temperatureControlSystem> temperatureControlSystems;
-		Json::Value *installationInfo;
-		Json::Value *status;
-		std::string locationId;
-		std::string gatewayId;
-	};
-
-
-	struct location
-	{
-		std::vector<gateway> gateways;
-		Json::Value *installationInfo;
-		Json::Value *status;
-		std::string locationId;
-	};
-
 public:
 	CEvohomeWeb(const int ID, const std::string &Username, const std::string &Password, const unsigned int refreshrate, const int UseFlags, const unsigned int installation);
 	~CEvohomeWeb(void);
@@ -77,85 +37,41 @@ private:
 	bool SetSetpoint(const char *pdata);
 	bool SetDHWState(const char *pdata);
 
-	// evohome client library - don't ask about naming convention - these are imported from another project
-	bool login(const std::string &user, const std::string &password);
-	bool renew_login();
-	bool user_account();
-
-	void get_gateways(int location);
-	void get_temperatureControlSystems(int location, int gateway);
-	void get_zones(int location, int gateway, int temperatureControlSystem);
-	void get_dhw(int location, int gateway, int temperatureControlSystem);
-
-
-	bool full_installation();
-	bool get_status(int location);
-	bool get_status(const std::string &locationId);
-
-	zone* get_zone_by_ID(const std::string &zoneId);
-
-	bool has_dhw(temperatureControlSystem *tcs);
-
-	bool get_dhw_schedule(const std::string &dhwId);
-	bool get_zone_schedule(const std::string &zoneId);
-	bool get_zone_schedule(const std::string &zoneId, const std::string &zoneType);
-	std::string get_next_switchpoint(temperatureControlSystem* tcs, int zone);
-	std::string get_next_switchpoint(zone* hz);
-	std::string get_next_switchpoint(Json::Value &schedule);
-	std::string get_next_switchpoint_ex(Json::Value &schedule, std::string &current_setpoint);
-
-
-	bool set_system_mode(const std::string &systemId, int mode);
-	bool set_temperature(const std::string &zoneId, const std::string &temperature, const std::string &time_until);
-	bool cancel_temperature_override(const std::string &zoneId);
-	bool set_dhw_mode(const std::string &dhwId, const std::string &mode, const std::string &time_until);
-
-	bool verify_datetime(const std::string &datetime);
-
 	// status readers
-	void DecodeControllerMode(temperatureControlSystem* tcs);
-	void DecodeDHWState(temperatureControlSystem* tcs);
-	void DecodeZone(zone* hz);
+	void DecodeControllerMode(evohome::device::temperatureControlSystem* tcs);
+	void DecodeDHWState(evohome::device::temperatureControlSystem* tcs);
+	void DecodeZone(evohome::device::zone* hz);
 
 	// helpers
 	uint8_t GetUnit_by_ID(unsigned long evoID);
-	std::string local_to_utc(const std::string &local_time);
 
-	// Evohome v1 API
-	bool v1_login(const std::string &user, const std::string &password);
-	void v1_renew_session();
-	void get_v1_temps();
 
-	// HTTP helpers
-	std::string send_receive_data(std::string url, std::vector<std::string> &headers);
-	std::string send_receive_data(std::string url, std::string postdata, std::vector<std::string> &headers);
-	std::string put_receive_data(std::string url, std::string putdata, std::vector<std::string> &headers);
-	std::string process_response(std::vector<unsigned char> vHTTPResponse, std::vector<std::string> vHeaderData, bool httpOK);
+
+	int GetLastV2ResponseCode();
+
 
 private:
 	std::shared_ptr<std::thread> m_thread;
 
 	std::string m_username;
 	std::string m_password;
-	std::string m_v2refresh_token;
+
 	bool m_updatedev;
 	bool m_showschedule;
 	int m_refreshrate;
 
-	int m_tzoffset;
-	int m_lastDST;
 	bool m_loggedon;
 	int m_logonfailures;
 	unsigned long m_zones[13];
 	time_t m_sessiontimer;
-	bool m_bequiet;
+
 	bool m_showlocation;
 	std::string m_szlocationName;
 	int m_lastconnect;
 
-	uint8_t m_locationId;
-	uint8_t m_gatewayId;
-	uint8_t m_systemId;
+	uint8_t m_locationIdx;
+	uint8_t m_gatewayIdx;
+	uint8_t m_systemIdx;
 	double m_awaysetpoint;
 	bool m_showhdtemps;
 	uint8_t m_hdprecision;
@@ -164,18 +80,13 @@ private:
 
 	static const uint8_t m_dczToEvoWebAPIMode[7];
 	static const std::string weekdays[7];
-	std::vector<std::string> m_SessionHeaders;
 
-	Json::Value m_j_fi;
+
 	Json::Value m_j_stat;
 
-	std::string m_evouid;
-	std::vector<location> m_locations;
 
-	temperatureControlSystem* m_tcs;
+	std::vector<evohome::device::location> m_locations;
 
-	// Evohome v1 API
-	std::string m_v1uid;
-	std::vector<std::string> m_v1SessionHeaders;
+
 };
 
