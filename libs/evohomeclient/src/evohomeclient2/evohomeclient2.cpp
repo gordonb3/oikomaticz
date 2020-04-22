@@ -181,7 +181,6 @@ void EvohomeClient2::set_empty_field_response(std::string szResponse)
 	szPostdata.append("&Cache-Control=no-store%20no-cache&Pragma=no-cache&scope=EMEA-V1-Basic%20EMEA-V1-Anonymous&Connection=Keep-Alive&");
 	szPostdata.append(szCredentials);
 
-std::cout << szPostdata << "\n";
 	std::string szUrl = EVOHOME_HOST"/Auth/OAuth/Token";
 	EvoHTTPBridge::SafePOST(szUrl, szPostdata, vLoginHeader, m_szResponse, -1);
 

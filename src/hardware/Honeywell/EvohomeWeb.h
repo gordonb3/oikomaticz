@@ -23,6 +23,7 @@ public:
 	CEvohomeWeb(const int ID, const std::string &Username, const std::string &Password, const unsigned int refreshrate, const int UseFlags, const unsigned int installation);
 	~CEvohomeWeb(void);
 	bool WriteToHardware(const char *pdata, const unsigned char length) override;
+
 private:
 	// base functions
 	void Init();
@@ -46,7 +47,6 @@ private:
 	uint8_t GetUnit_by_ID(unsigned long evoID);
 
 
-
 	int GetLastV2ResponseCode();
 
 
@@ -57,36 +57,35 @@ private:
 	std::string m_password;
 
 	bool m_updatedev;
-	bool m_showschedule;
-	int m_refreshrate;
-
-	bool m_loggedon;
-	int m_logonfailures;
-	unsigned long m_zones[13];
-	time_t m_sessiontimer;
-
-	bool m_showlocation;
-	std::string m_szlocationName;
-	int m_lastconnect;
+	bool m_showSchedule;
+	bool m_showLocation;
+	bool m_showhdtemps;
+	uint8_t m_hdprecision;
+	unsigned int m_refreshRate;
 
 	uint8_t m_locationIdx;
 	uint8_t m_gatewayIdx;
 	uint8_t m_systemIdx;
+
+
+	bool m_loggedon;
+	unsigned int m_logonfailures;
+	unsigned long m_zones[13];
+
+	unsigned int m_lastAccessTimer;
+
+	std::string m_szLocationName;
 	double m_awaysetpoint;
-	bool m_showhdtemps;
-	uint8_t m_hdprecision;
-	int m_wdayoff;
+	uint8_t m_wdayoff;
 
 
 	static const uint8_t m_dczToEvoWebAPIMode[7];
 	static const std::string weekdays[7];
 
-
 	Json::Value m_j_stat;
-
 
 	std::vector<evohome::device::location> m_locations;
 
-
+	std::vector<std::vector<unsigned long>> m_vUnits;
 };
 
