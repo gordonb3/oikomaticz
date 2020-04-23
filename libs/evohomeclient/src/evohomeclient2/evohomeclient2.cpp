@@ -181,6 +181,7 @@ void EvohomeClient2::set_empty_field_response(std::string szResponse)
 	szPostdata.append("&Cache-Control=no-store%20no-cache&Pragma=no-cache&scope=EMEA-V1-Basic%20EMEA-V1-Anonymous&Connection=Keep-Alive&");
 	szPostdata.append(szCredentials);
 
+std::cout << szPostdata << "\n";
 	std::string szUrl = EVOHOME_HOST"/Auth/OAuth/Token";
 	EvoHTTPBridge::SafePOST(szUrl, szPostdata, vLoginHeader, m_szResponse, -1);
 
@@ -1244,9 +1245,10 @@ bool EvohomeClient2::set_system_mode(const std::string szSystemId, const unsigne
 		return false;
 	else
 	{
+		std::string szTimeUntil = szDateUntil + "T00:00:00";
 		szPutData.append("\"");
-		szPutData.append(szDateUntil.substr(0,10));
-		szPutData.append("T00:00:00Z\"");
+		szPutData.append(IsoTimeString::local_to_utc(szTimeUntil));
+		szPutData.append("\"");
 	}
 	szPutData.append(",\"Permanent\":");
 	if (szDateUntil.empty())
@@ -1440,11 +1442,11 @@ std::string EvohomeClient2::get_zone_mode_until(const std::string szZoneId, cons
 	if (myZone == NULL)
 		return m_szEmptyFieldResponse;
 
-	return get_zone_mode(myZone);
+	return get_zone_mode_until(myZone);
 }
 std::string EvohomeClient2::get_zone_mode_until(const evohome::device::zone *zone, const bool bLocaltime)
 {
-	Json::Value *jZoneSetpoint = &(*zone->jInstallationInfo)["setpointStatus"];
+	Json::Value *jZoneSetpoint = &(*zone->jStatus)["setpointStatus"];
 	std::string szResult;
 	if ((*jZoneSetpoint).isMember("until"))
 		szResult = (*jZoneSetpoint)["until"].asString();
@@ -1486,6 +1488,43 @@ std::string EvohomeClient2::get_location_name(const unsigned int locationIdx)
 
 	Json::Value *jLocation = m_vLocations[locationIdx].jInstallationInfo;
 	return (*jLocation)["name"].asString();
+}
+
+
+std::string EvohomeClient2::get_system_mode(const std::string szSystemId)
+{
+	evohome::device::temperatureControlSystem *myTCS = get_temperatureControlSystem_by_ID(szSystemId);
+	if (myTCS == NULL)
+		return m_szEmptyFieldResponse;
+
+	return get_system_mode(myTCS);
+}
+std::string EvohomeClient2::get_system_mode(const evohome::device::temperatureControlSystem *tcs)
+{
+	Json::Value *jSystemMode = &(*tcs->jStatus)["systemModeStatus"];
+	return (*jSystemMode)["mode"].asString();
+}
+
+
+std::string EvohomeClient2::get_system_mode_until(const std::string szSystemId, const bool bLocaltime)
+{
+	evohome::device::temperatureControlSystem *myTCS = get_temperatureControlSystem_by_ID(szSystemId);
+	if (myTCS == NULL)
+		return m_szEmptyFieldResponse;
+
+	return get_system_mode_until(myTCS);
+}
+std::string EvohomeClient2::get_system_mode_until(const evohome::device::temperatureControlSystem *tcs, const bool bLocaltime)
+{
+	Json::Value *jSystemMode = &(*tcs->jStatus)["systemModeStatus"];
+	std::string szResult;
+	if ((*jSystemMode).isMember("timeUntil"))
+		szResult = (*jSystemMode)["timeUntil"].asString();
+	if (szResult.size() < 10)
+		return m_szEmptyFieldResponse;
+	if (!bLocaltime)
+		return szResult;
+	return IsoTimeString::utc_to_local(szResult);
 }
 
 

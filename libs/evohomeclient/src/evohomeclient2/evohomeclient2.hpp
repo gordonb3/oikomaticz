@@ -173,6 +173,11 @@ public:
 	std::string get_location_name(const std::string szLocationId);
 	std::string get_location_name(const unsigned int locationIdx);
 
+	std::string get_system_mode(const std::string szSystemId);
+	std::string get_system_mode(const evohome::device::temperatureControlSystem *tcs);
+
+	std::string get_system_mode_until(const std::string szSystemId, const bool bLocaltime = true);
+	std::string get_system_mode_until(const evohome::device::temperatureControlSystem *tcs, const bool bLocaltime = true);
 
 /************************************************************************
  *									*

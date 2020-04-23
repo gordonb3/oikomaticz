@@ -1,9 +1,7 @@
 /**
- * Json client for UK/EMEA Evohome API
+ * client interface for UK/EMEA Evohome API
  *
- *  Adapted for integration with Domoticz
- *
- *  Copyright 2017 - gordonb3 https://github.com/gordonb3/evohomeclient
+ *  Copyright 2017-2020 - gordonb3 https://github.com/gordonb3/evohomeclient
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See COPYING, AUTHORS.
@@ -159,7 +157,7 @@ bool CEvohomeWeb::StartSession()
 	m_logonfailures = 0;
 
 	// (re)initialize Evohome installation info
-	m_zones[0] = 0;
+	std::vector<std::vector<unsigned long>>().swap(m_vUnits);
 	if (!evohome::WebAPI::v2->full_installation())
 	{
 		_log.Log(LOG_ERROR, "(%s) failed to retrieve installation info from server", m_Name.c_str());
@@ -347,23 +345,21 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 			for (int i = 0; i < numZones; ++i)
 			{
 				evohome::device::zone* HeatingZone = &evohome::WebAPI::tcs2->zones[i];
-				std::string szId, sztemperature;
-				szId = HeatingZone->szZoneId;
+				std::string sztemperature, szUpdateStat;
 				if (m_showhdtemps)
-					sztemperature = evohome::WebAPI::v1->get_zone_temperature(szId, m_hdprecision);
-				else if (HeatingZone->jStatus != NULL)
+					sztemperature = evohome::WebAPI::v1->get_zone_temperature(HeatingZone->szZoneId, m_hdprecision);
+
+				if (sztemperature.empty())
 					sztemperature = evohome::WebAPI::v2->get_zone_temperature(HeatingZone);
 
-				if ((sztemperature.empty()) || (sztemperature == "128"))
-				{
-					sztemperature = "-";
-					sznewmode = "Offline";
-				}
-				unsigned long evoID = atol(szId.c_str());
-				std::stringstream ssUpdateStat;
-				ssUpdateStat << sztemperature << ";5;" << sznewmode;
+				if (sztemperature.empty() || (sztemperature == "128"))
+					szUpdateStat = "-;-;Offline";
+				else
+					szUpdateStat = sztemperature + ";5;" + sznewmode;
+
+				uint8_t unit = GetUnit_by_ID(atol(HeatingZone->szZoneId.c_str()));
 				std::string szDeviceName;
-				m_sql.UpdateValue(this->m_HwdID, szId.c_str(), GetUnit_by_ID(evoID), pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, ssUpdateStat.str().c_str(), szDeviceName);
+				m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName);
 			}
 			return true;
 		}
@@ -391,7 +387,7 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 			// Away unconditionally sets all zones to a preset temperature, even if Normal mode is lower
 			if (sznewmode == "Away")
 				setpoint = m_awaysetpoint;
-			else
+			else if (sznewmode != "Custom")
 			{
 				if ((!HeatingZone->jSchedule.isNull()) || evohome::WebAPI::v2->get_zone_schedule(HeatingZone->szZoneId))
 				{
@@ -410,24 +406,25 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 			else if (HeatingZone->jStatus != NULL)
 				sztemperature = evohome::WebAPI::v2->get_zone_temperature(HeatingZone);
 
+			std::string szUpdateStat;
 			if ((sztemperature.empty()) || (sztemperature == "128"))
-			{
-				sztemperature = "-";
-				sznewmode = "Offline";
-			}
-
-			unsigned long evoID = atol(HeatingZone->szZoneId.c_str());
-			std::stringstream ssUpdateStat;
-			if (setpoint < 5) // there was an error - no schedule?
-				ssUpdateStat << sztemperature << ";5;Unknown";
+				szUpdateStat = "-;-;Offline";
+			else if (sznewmode == "Custom")
+				szUpdateStat = sztemperature + ";-;" + sznewmode;
+			else if (setpoint < 5) // there was an error - no schedule?
+				szUpdateStat = sztemperature + ";5;Unknown";
 			else
 			{
-				ssUpdateStat << sztemperature << ";" << setpoint << ";" << sznewmode;
-				if ((m_showSchedule) && !(szuntil.empty()) && (sznewmode != "Custom"))
-					ssUpdateStat << ";" << szuntil;
+				std::stringstream ssSetpoint;
+				ssSetpoint << setpoint;
+				szUpdateStat = sztemperature + ";" + ssSetpoint.str() + ";" + sznewmode;
+				if ((m_showSchedule) && !(szuntil.empty()))
+					szUpdateStat.append(";" + szuntil);
 			}
+
+			uint8_t unit = GetUnit_by_ID(atol(HeatingZone->szZoneId.c_str()));
 			std::string szDeviceName;
-			m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), GetUnit_by_ID(evoID), pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, ssUpdateStat.str().c_str(), szDeviceName);
+			m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName);
 		}
 		return true;
 	}
@@ -527,15 +524,17 @@ bool CEvohomeWeb::SetDHWState(const char *pdata)
 void CEvohomeWeb::DecodeControllerMode(evohome::device::temperatureControlSystem* tcs)
 {
 	unsigned long ID = (unsigned long)(strtod(tcs->szSystemId.c_str(), NULL));
-	std::string szsystemMode, szmodelType;
+	std::string szsystemMode;
 	uint8_t sysmode = 0;
 
 	if (tcs->jStatus == NULL)
 		szsystemMode = "Unknown";
 	else
-		szsystemMode = (*tcs->jStatus)["systemModeStatus"]["mode"].asString();
+		szsystemMode = evohome::WebAPI::v2->get_system_mode(tcs);
 	while (sysmode < 7 && strcmp(szsystemMode.c_str(), m_szWebAPIMode[sysmode]) != 0)
 		sysmode++;
+
+	std::string szsystemModeUntil = evohome::WebAPI::v2->get_system_mode_until(tcs, RETURN_UTC_TIME);
 
 	_tEVOHOME1 tsen;
 	memset(&tsen, 0, sizeof(_tEVOHOME1));
@@ -543,13 +542,20 @@ void CEvohomeWeb::DecodeControllerMode(evohome::device::temperatureControlSystem
 	tsen.type = pTypeEvohome;
 	tsen.subtype = sTypeEvohome;
 	RFX_SETID3(ID, tsen.id1, tsen.id2, tsen.id3);
-	tsen.mode = 0; // web API does not support temp override of controller mode
+	if (szsystemModeUntil.empty())
+		tsen.mode = 0;
+	else
+	{
+		// Note: standard web frontend does not allow display of the end time for temporary controller mode
+		tsen.mode = 1;
+		CEvohomeDateTime::DecodeISODate(tsen, szsystemModeUntil.c_str());
+	}
 	tsen.status = sysmode;
 	sDecodeRXMessage(this, (const unsigned char *)&tsen, "Controller mode", -1);
 
 	if (GetControllerName().empty() || m_updatedev)
 	{
-		szmodelType = (*tcs->jInstallationInfo)["modelType"].asString();
+		std::string szmodelType = (*tcs->jInstallationInfo)["modelType"].asString();
 		SetControllerName(szmodelType);
 		if (szmodelType.empty())
 			return;
@@ -600,7 +606,7 @@ void CEvohomeWeb::DecodeZone(evohome::device::zone* HeatingZone)
 		szmode = evohome::WebAPI::v2->get_zone_mode(HeatingZone);
 
 		if (szmode == "TemporaryOverride")
-			szuntil = evohome::WebAPI::v2->get_zone_mode_until(HeatingZone);
+			szuntil = evohome::WebAPI::v2->get_zone_mode_until(HeatingZone, RETURN_UTC_TIME);
 	}
 
 	unsigned long evoID = atol(HeatingZone->szZoneId.c_str());
@@ -608,7 +614,7 @@ void CEvohomeWeb::DecodeZone(evohome::device::zone* HeatingZone)
 	if (evohome::WebAPI::tcs2->jStatus == NULL)
 		szsysmode = "Unknown";
 	else
-		szsysmode = (*evohome::WebAPI::tcs2->jStatus)["systemModeStatus"]["mode"].asString();
+		szsysmode = evohome::WebAPI::v2->get_system_mode(evohome::WebAPI::tcs2);
 	if ((szsysmode == "Away") && (szmode == "FollowSchedule"))
 	{
 		double new_awaysetpoint = strtod(szsetpoint.c_str(), NULL);
@@ -663,7 +669,7 @@ void CEvohomeWeb::DecodeZone(evohome::device::zone* HeatingZone)
 		}
 	}
 
-	std::string szUpdateStat = sztemperature + ";" + szsetpoint + ";" + szsysmode;
+	std::string szUpdateStat = sztemperature + ";" + szsetpoint + ";" + szmode;
 	if (!szuntil.empty())
 		szUpdateStat.append(";" + szuntil);
 
@@ -730,7 +736,7 @@ void CEvohomeWeb::DecodeDHWState(evohome::device::temperatureControlSystem* tcs)
 			szuntil = (*HotWater->jStatus)["stateStatus"]["until"].asString();
 		else if (m_showSchedule)
 		{
-			std::string szsysmode = (*tcs->jStatus)["systemModeStatus"]["mode"].asString();
+			std::string szsysmode = evohome::WebAPI::v2->get_system_mode(tcs);
 			if (szsysmode != "Custom") // can't use schedule to find next switchpoint
 			{
 				szuntil = evohome::WebAPI::v2->get_next_switchpoint(HotWater, RETURN_UTC_TIME);
