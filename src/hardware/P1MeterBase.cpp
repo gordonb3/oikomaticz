@@ -14,6 +14,7 @@
 
 #define CUSTOM_IMAGE_ID 19	// row index inside 'switch_icons.txt'
 
+#define OBIS_MAX_VALUE_LENGTH 20	// the maximum number of characters that a value can have
 
 P1MeterBase::P1MeterBase(void)
 {
@@ -85,7 +86,7 @@ bool P1MeterBase::MatchLine()
 
 	device::tmeter::COSEM::OBIS::type matchtype;
 	std::string vString;
-	char value[20] = "";
+	char value[(OBIS_MAX_VALUE_LENGTH + 1)] = "";
 	unsigned char phase = 0; // L1..L3
 	unsigned char tariff_id = 0;
 
@@ -420,7 +421,7 @@ bool P1MeterBase::MatchLine()
 		return false;
 	}
 
-	if (ePos > 19)
+	if (ePos > OBIS_MAX_VALUE_LENGTH)
 	{
 		// invalid message: line too long
 		_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - value in line \"%s\" is oversized", m_lbuffer);

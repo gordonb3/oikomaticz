@@ -7,21 +7,17 @@
  * Source code subject to GNU GENERAL PUBLIC LICENSE version 3
  */
 
-#include <cstring>
-#include <string>
-#include <ctime>
-#include <iostream>
-#include <fstream>
 #include <cstdlib>
-#include <stdexcept>
+#include <string>
+#include <cstring>
+#include <fstream>
+#include <iostream>
 
+#include "API2.hpp"
 #include "evohomeclient2.hpp"
 #include "../connection/EvoHTTPBridge.hpp"
-#include "../evohome/jsoncppbridge.hpp"
+#include "../common/jsoncppbridge.hpp"
 #include "../time/IsoTimeString.hpp"
-
-
-#define EVOHOME_HOST "https://tccna.honeywell.com"
 
 
 #ifdef _WIN32
@@ -32,85 +28,6 @@
 #ifndef _WIN32
 #define sprintf_s(buffer, buffer_size, stringbuffer, ...) (sprintf(buffer, stringbuffer, __VA_ARGS__))
 #endif
-
-
-namespace evohome {
-
-  namespace schedule {
-    static const std::string dayOfWeek[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-  }; // namespace schedule
-
-  namespace API {
-
-    namespace header {
-//      static const std::string authkey = "Authorization: Basic YjAxM2FhMjYtOTcyNC00ZGJkLTg4OTctMDQ4YjlhYWRhMjQ5OnRlc3Q=";
-      static const std::string authkey = "Authorization: Basic NGEyMzEwODktZDJiNi00MWJkLWE1ZWItMTZhMGE0MjJiOTk5OjFhMTVjZGI4LTQyZGUtNDA3Yi1hZGQwLTA1OWY5MmM1MzBjYg==";
-      static const std::string accept = "Accept: application/json, application/xml, text/json, text/x-json, text/javascript, text/xml";
-      static const std::string jsondata = "Content-Type: application/json";
-
-    }; // namespace auth
-
-    namespace system {
-      static const std::string mode[7] = {"Auto", "HeatingOff", "AutoWithEco", "Away", "DayOff", "", "Custom"};
-    }; // namespace system
-
-    namespace zone {
-      static const std::string mode[7] = {"FollowSchedule", "PermanentOverride", "TemporaryOverride", "OpenWindow", "LocalOverride", "RemoteOverride", "Unknown"};
-      static const std::string type[2] = {"temperatureZone", "domesticHotWater"};
-    }; // namespace zone
-
-    namespace dhw {
-      static const std::string state[2] = {"Off", "On"};
-    }; // namespace dhw
-
-    namespace uri {
-      static const std::string base = EVOHOME_HOST"/WebAPI/emea/api/v1/";
-
-      static const std::string userAccount = "userAccount";
-      static const std::string installationInfo = "location/installationInfo?includeTemperatureControlSystems=True&userId={id}";
-      static const std::string status = "location/{id}/status?includeTemperatureControlSystems=True";
-      static const std::string systemMode = "temperatureControlSystem/{id}/mode";
-      static const std::string zoneSetpoint = "temperatureZone/{id}/heatSetpoint";
-      static const std::string dhwState = "domesticHotWater/{id}/state";
-      static const std::string zoneSchedule = "{type}/{id}/schedule";
-      static const std::string zoneUpcoming = "{type}/{id}/schedule/upcommingSwitchpoints?count=1";
-
-
-      static std::string get_uri(const std::string &szApiFunction, const std::string &szId = "", const uint8_t zoneType = 0)
-      {
-        std::string result = szApiFunction;
-
-        if (szApiFunction == userAccount)
-        {
-          // all done
-        }
-        else if (szApiFunction == installationInfo)
-          result.replace(71, 4, szId);
-        else if (szApiFunction == status)
-          result.replace(9, 4, szId);
-        else if ((szApiFunction == zoneSchedule) || (szApiFunction == zoneUpcoming))
-        {
-          result.replace(7, 4, szId);
-          result.replace(0, 6, evohome::API::zone::type[zoneType]);
-        }
-        else if (szApiFunction == systemMode)
-          result.replace(25, 4, szId);
-        else if (szApiFunction == zoneSetpoint)
-          result.replace(16, 4, szId);
-        else if (szApiFunction == dhwState)
-          result.replace(17, 4, szId);
-        else
-          return ""; // invalid input
-
-        return result.insert(0, evohome::API::uri::base);
-      }
-
-
-    }; // namespace uri
-
-  }; // namespace API
-
-}; // namespace evohome
 
 
 /*
@@ -174,14 +91,13 @@ void EvohomeClient2::set_empty_field_response(std::string szResponse)
 /* private */ bool EvohomeClient2::obtain_access_token(const std::string &szCredentials)
 {
 	std::vector<std::string> vLoginHeader;
-	vLoginHeader.push_back(evohome::API::header::authkey);
-	vLoginHeader.push_back(evohome::API::header::accept);
+	vLoginHeader.push_back(evohome::API2::header::authkey);
+	vLoginHeader.push_back(evohome::API2::header::accept);
 
 	std::string szPostdata = "Content-Type=application%2Fx-www-form-urlencoded;charset%3Dutf-8&Host=rs.alarmnet.com%2F";
 	szPostdata.append("&Cache-Control=no-store%20no-cache&Pragma=no-cache&scope=EMEA-V1-Basic%20EMEA-V1-Anonymous&Connection=Keep-Alive&");
 	szPostdata.append(szCredentials);
 
-std::cout << szPostdata << "\n";
 	std::string szUrl = EVOHOME_HOST"/Auth/OAuth/Token";
 	EvoHTTPBridge::SafePOST(szUrl, szPostdata, vLoginHeader, m_szResponse, -1);
 
@@ -212,8 +128,8 @@ std::cout << szPostdata << "\n";
 
 	m_vEvoHeader.clear();
 	m_vEvoHeader.push_back(szAuthBearer);
-	m_vEvoHeader.push_back(evohome::API::header::accept);
-	m_vEvoHeader.push_back(evohome::API::header::jsondata);
+	m_vEvoHeader.push_back(evohome::API2::header::accept);
+	m_vEvoHeader.push_back(evohome::API2::header::jsondata);
 
 	return get_user_id();
 }
@@ -317,8 +233,8 @@ bool EvohomeClient2::load_auth_from_file(const std::string &szFilename)
 
 	m_vEvoHeader.clear();
 	m_vEvoHeader.push_back(szAuthBearer);
-	m_vEvoHeader.push_back(evohome::API::header::accept);
-	m_vEvoHeader.push_back(evohome::API::header::jsondata);
+	m_vEvoHeader.push_back(evohome::API2::header::accept);
+	m_vEvoHeader.push_back(evohome::API2::header::jsondata);
 
 	return get_user_id();
 }
@@ -329,7 +245,7 @@ bool EvohomeClient2::load_auth_from_file(const std::string &szFilename)
  */
 bool EvohomeClient2::get_user_id()
 {
-	std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::userAccount);
+	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::userAccount);
 	EvoHTTPBridge::SafeGET(szUrl, m_vEvoHeader, m_szResponse, -1);
 
 	Json::Value jUserAccount;
@@ -468,7 +384,7 @@ bool EvohomeClient2::full_installation()
 	std::vector<evohome::device::location>().swap(m_vLocations);
 	std::vector<evohome::device::path::zone>().swap(m_vZonePaths);
 
-	std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::installationInfo, m_szUserId);
+	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::installationInfo, m_szUserId);
 	EvoHTTPBridge::SafeGET(szUrl, m_vEvoHeader, m_szResponse, -1);
 
 	// evohome API returns an unnamed json array which is not accepted by our parser
@@ -515,7 +431,7 @@ bool EvohomeClient2::get_status(const unsigned int locationIdx)
 		return false;
 	}
 
-	std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::status, m_vLocations[locationIdx].szLocationId);
+	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::status, m_vLocations[locationIdx].szLocationId);
 	if (!EvoHTTPBridge::SafeGET(szUrl, m_vEvoHeader, m_szResponse, -1))
 	{
 		m_szLastError = "HTTP error during fetch status";
@@ -742,7 +658,7 @@ evohome::device::temperatureControlSystem *EvohomeClient2::get_zone_temperatureC
  */
 std::string EvohomeClient2::request_next_switchpoint(const std::string szZoneId)
 {
-	std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::zoneUpcoming, szZoneId, 0);
+	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::zoneUpcoming, szZoneId, 0);
 	EvoHTTPBridge::SafeGET(szUrl, m_vEvoHeader, m_szResponse, -1);
 
 	Json::Value jSwitchPoint;
@@ -772,7 +688,7 @@ bool EvohomeClient2::get_dhw_schedule(const std::string szDHWId)
 /* private */ bool EvohomeClient2::get_zone_schedule_ex(const std::string szZoneId, const unsigned int zoneType)
 {
 
-	std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::zoneSchedule, szZoneId, zoneType);
+	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::zoneSchedule, szZoneId, zoneType);
 	EvoHTTPBridge::SafeGET(szUrl, m_vEvoHeader, m_szResponse, -1);
 
 	if (!m_szResponse.find("\"id\""))
@@ -984,7 +900,7 @@ bool EvohomeClient2::schedules_backup(const std::string &szFilename)
 						if (szZoneId.empty())
 							continue;
 
-						std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::zoneSchedule, szZoneId, 0);
+						std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::zoneSchedule, szZoneId, 0);
 						EvoHTTPBridge::SafeGET(szUrl, m_vEvoHeader, m_szResponse, -1);
 
 						if (!m_szResponse.find("\"id\""))
@@ -1014,7 +930,7 @@ bool EvohomeClient2::schedules_backup(const std::string &szFilename)
 						if (szHotWaterId.empty())
 							continue;
 
-						std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::zoneSchedule, szHotWaterId, 1);
+						std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::zoneSchedule, szHotWaterId, 1);
 						EvoHTTPBridge::SafeGET(szUrl, m_vEvoHeader, m_szResponse, -1);
 
 						if ( ! m_szResponse.find("\"id\""))
@@ -1155,7 +1071,7 @@ bool EvohomeClient2::set_dhw_schedule(const std::string szDHWId, Json::Value *jS
 		insertAt +=17;
 	}
 
-	std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::zoneSchedule, szZoneId, zoneType);
+	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::zoneSchedule, szZoneId, zoneType);
 	EvoHTTPBridge::SafePUT(szUrl, szPutdata, m_vEvoHeader, m_szResponse, -1);
 
 	if (m_szResponse.find("\"id\""))
@@ -1224,12 +1140,12 @@ bool EvohomeClient2::schedules_restore(const std::string &szFilename)
 bool EvohomeClient2::set_system_mode(const std::string szSystemId, const std::string szMode, const std::string szDateUntil)
 {
 	int i = 0;
-	int s = static_cast<int>(sizeof(evohome::API::system::mode));
+	int s = static_cast<int>(sizeof(evohome::API2::system::mode));
 	while (s > 0)
 	{
-		if (evohome::API::system::mode[i] == szMode)
+		if (evohome::API2::system::mode[i] == szMode)
 			return set_system_mode(szSystemId, i, szDateUntil);
-		s -= static_cast<int>(sizeof(evohome::API::system::mode[i]));
+		s -= static_cast<int>(sizeof(evohome::API2::system::mode[i]));
 		i++;
 	}
 	return false;
@@ -1237,7 +1153,7 @@ bool EvohomeClient2::set_system_mode(const std::string szSystemId, const std::st
 bool EvohomeClient2::set_system_mode(const std::string szSystemId, const unsigned int mode, const std::string szDateUntil)
 {
 	std::string szPutData = "{\"SystemMode\":\"";
-	szPutData.append(evohome::API::system::mode[mode]);
+	szPutData.append(evohome::API2::system::mode[mode]);
 	szPutData.append("\",\"TimeUntil\":");
 	if (szDateUntil.empty())
 		szPutData.append("null");
@@ -1256,7 +1172,7 @@ bool EvohomeClient2::set_system_mode(const std::string szSystemId, const unsigne
 	else
 		szPutData.append("false}");
 
-	std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::systemMode, szSystemId);
+	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::systemMode, szSystemId);
 	EvoHTTPBridge::SafePUT(szUrl, szPutData, m_vEvoHeader, m_szResponse, -1);
 
 	if (m_szResponse.find("\"id\""))
@@ -1274,11 +1190,11 @@ bool EvohomeClient2::set_temperature(const std::string szZoneId, const std::stri
 	szPutData.append(temperature);
 	szPutData.append(",\"SetpointMode\":\"");
 	if (szTimeUntil.empty())
-		szPutData.append(evohome::API::zone::mode[1]);
+		szPutData.append(evohome::API2::zone::mode[1]);
 	else if (!IsoTimeString::verify_datetime(szTimeUntil))
 		return false;
 	else
-		szPutData.append(evohome::API::zone::mode[2]);
+		szPutData.append(evohome::API2::zone::mode[2]);
 	szPutData.append("\",\"TimeUntil\":");
 	if (szTimeUntil.empty())
 		szPutData.append("null}");
@@ -1291,7 +1207,7 @@ bool EvohomeClient2::set_temperature(const std::string szZoneId, const std::stri
 		szPutData.append("Z\"}");
 	}
 
-	std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::zoneSetpoint, szZoneId);
+	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::zoneSetpoint, szZoneId);
 	EvoHTTPBridge::SafePUT(szUrl, szPutData, m_vEvoHeader, m_szResponse, -1);
 
 	if (m_szResponse.find("\"id\""))
@@ -1307,7 +1223,7 @@ bool EvohomeClient2::cancel_temperature_override(const std::string szZoneId)
 {
 	std::string szPutData = "{\"HeatSetpointValue\":0.0,\"SetpointMode\":\"FollowSchedule\",\"TimeUntil\":null}";
 
-	std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::zoneSetpoint, szZoneId);
+	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::zoneSetpoint, szZoneId);
 	EvoHTTPBridge::SafePUT(szUrl, szPutData, m_vEvoHeader, m_szResponse, -1);
 
 	if (m_szResponse.find("\"id\""))
@@ -1351,18 +1267,18 @@ bool EvohomeClient2::set_dhw_mode(const std::string szDHWId, const std::string s
 {
 	std::string szPutData = "{\"State\":\"";
 	if (szMode == "on")
-		szPutData.append(evohome::API::dhw::state[1]);
+		szPutData.append(evohome::API2::dhw::state[1]);
 	else if (szMode == "off")
-		szPutData.append(evohome::API::dhw::state[0]);
+		szPutData.append(evohome::API2::dhw::state[0]);
 	szPutData.append("\",\"Mode\":\"");
 	if (szMode == "auto")
-		szPutData.append(evohome::API::zone::mode[0]);
+		szPutData.append(evohome::API2::zone::mode[0]);
 	else if (szTimeUntil.empty())
-		szPutData.append(evohome::API::zone::mode[1]);
+		szPutData.append(evohome::API2::zone::mode[1]);
 	else if (!IsoTimeString::verify_datetime(szTimeUntil))
 		return false;
 	else
-		szPutData.append(evohome::API::zone::mode[2]);
+		szPutData.append(evohome::API2::zone::mode[2]);
 	szPutData.append("\",\"UntilTime\":");
 	if (szTimeUntil.empty())
 		szPutData.append("null}");
@@ -1375,7 +1291,7 @@ bool EvohomeClient2::set_dhw_mode(const std::string szDHWId, const std::string s
 		szPutData.append("Z\"}");
 	}
 
-	std::string szUrl = evohome::API::uri::get_uri(evohome::API::uri::dhwState, szDHWId);
+	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::dhwState, szDHWId);
 	EvoHTTPBridge::SafePUT(szUrl, szPutData, m_vEvoHeader, m_szResponse, -1);
 
 	if (m_szResponse.find("\"id\""))

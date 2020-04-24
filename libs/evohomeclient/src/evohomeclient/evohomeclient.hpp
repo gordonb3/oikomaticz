@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Gordon Bos <gordon@bosvangennip.nl> All rights reserved.
+ * Copyright (c) 2016-2020 Gordon Bos <gordon@bosvangennip.nl> All rights reserved.
  *
  * Json client for 'Old' US Evohome API
  *
@@ -14,7 +14,7 @@
 #include <string>
 #include "jsoncpp/json.h"
 
-#include "../evohome/devices.hpp"
+#include "../common/devices.hpp"
 
 
 class EvohomeClient
@@ -73,11 +73,13 @@ public:
  *									*
  *	Evohome heating installations retrieval				*
  *									*
- *	full_installation() retrieves the basic information of your	*
- *	registered Evohome installation(s) and prepares the internal	*
- *	structs. Because this information is static, unless you are	*
- *	adding or removing hardware components, you will only need to	*
- *	make this call once at the start of your application.		*
+ *	full_installation() retrieves all the available information	*
+ *	of your registered Evohome installation(s) and stores these	*
+ *	in our internal structs. Because this information contains	*
+ *	both the static and dynamic data, this will destroy existing	*
+ *	structs and recreate them, thereby invalidating all pointers	*
+ *	and references you may have towards a specific location or	*
+ *	zone.								*
  *									*
  ************************************************************************/
 
@@ -152,7 +154,6 @@ public:
 
 	int get_location_index(const std::string szLocationId);
 	int get_zone_index(const unsigned int locationIdx, const unsigned int gatewayIdx, const std::string szZoneId);
-
 
 	evohome::device::zone *get_zone_by_ID(const std::string szZoneId);
 	evohome::device::zone *get_zone_by_Name(std::string szZoneName);
