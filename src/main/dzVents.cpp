@@ -24,7 +24,7 @@ extern http::server::CWebServerHelper m_webservers;
 CdzVents CdzVents::m_dzvents;
 
 CdzVents::CdzVents(void) :
-	m_version("3.0.1")
+	m_version("3.0.3")
 {
 	m_bdzVentsExist = false;
 }
@@ -366,12 +366,26 @@ bool CdzVents::OpenURL(lua_State *lua_state, const std::vector<_tLuaTableValues>
 	}
 
 	connection::HTTP::method::value eMethod = connection::HTTP::method::GET; // defaults to GET
-	if (!method.empty() && method == "POST")
-		eMethod = connection::HTTP::method::POST;
-
-	if (!postData.empty() && eMethod != connection::HTTP::method::POST)
+	if (!method.empty())
 	{
-		_log.Log(LOG_ERROR, "dzVents: You can only use postdata with method POST..");
+		if (method == "GET")
+			eMethod = connection::HTTP::method::GET;
+		else if (method == "POST")
+			eMethod = connection::HTTP::method::POST;
+		else if (method == "PUT")
+			eMethod = connection::HTTP::method::PUT;
+		else if (method == "DELETE")
+			eMethod = connection::HTTP::method::DELETE;
+		else
+		{
+			_log.Log(LOG_ERROR, "dzVents: Invalid HTTP method '%s'", method.c_str());
+			return false;
+		}
+	}
+
+	if (!postData.empty() && eMethod == connection::HTTP::method::GET)
+	{
+		_log.Log(LOG_ERROR, "dzVents: You cannot use postdata with method GET.");
 		return false;
 	}
 
