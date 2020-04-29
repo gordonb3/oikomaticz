@@ -1134,6 +1134,7 @@ bool MainWorker::Start()
 	}
 
 	HTTPClient::SetUserAgent(GenerateUserAgent());
+	HTTPClient::SetCookieFile(szUserDataFolder + "domocookie.txt");
 	m_notifications.Init();
 	GetSunSettings();
 	GetAvailableWebThemes();
