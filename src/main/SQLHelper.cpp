@@ -32,7 +32,7 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 2
-#define DOMOTICZ_DB_VERSION 139
+#define DOMOTICZ_DB_VERSION 140
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
@@ -489,54 +489,18 @@ const char *sqlCreateEnoceanSensors =
 "[Profile] INTEGER NOT NULL, "
 "[Type] INTEGER NOT NULL);";
 
-const char *sqlCreateHttpLink =
-"CREATE TABLE IF NOT EXISTS [HttpLink] ("
-"[ID] INTEGER PRIMARY KEY, "
-"[DeviceID]  BIGINT NOT NULL, "
-"[DelimitedValue] INTEGER DEFAULT 0, "
-"[TargetType] INTEGER DEFAULT 0, "
-"[TargetVariable] VARCHAR(100), "
-"[TargetDeviceID] INTEGER, "
-"[TargetProperty] VARCHAR(100), "
-"[Enabled] INTEGER DEFAULT 1, "
-"[IncludeUnit] INTEGER default 0); ";
-
 const char *sqlCreatePushLink =
 "CREATE TABLE IF NOT EXISTS [PushLink] ("
 "[ID] INTEGER PRIMARY KEY, "
 "[PushType] INTEGER, "
-"[DeviceID]  BIGINT NOT NULL, "
+"[DeviceRowID] BIGINT NOT NULL, "
 "[DelimitedValue] INTEGER DEFAULT 0, "
 "[TargetType] INTEGER DEFAULT 0, "
 "[TargetVariable] VARCHAR(100), "
 "[TargetDeviceID] INTEGER, "
 "[TargetProperty] VARCHAR(100), "
 "[Enabled] INTEGER DEFAULT 1, "
-"[IncludeUnit] INTEGER default 0); ";
-
-const char *sqlCreateGooglePubSubLink =
-"CREATE TABLE IF NOT EXISTS [GooglePubSubLink] ("
-"[ID] INTEGER PRIMARY KEY, "
-"[DeviceID]  BIGINT NOT NULL, "
-"[DelimitedValue] INTEGER DEFAULT 0, "
-"[TargetType] INTEGER DEFAULT 0, "
-"[TargetVariable] VARCHAR(100), "
-"[TargetDeviceID] INTEGER, "
-"[TargetProperty] VARCHAR(100), "
-"[Enabled] INTEGER DEFAULT 1, "
-"[IncludeUnit] INTEGER default 0); ";
-
-const char *sqlCreateFibaroLink =
-"CREATE TABLE IF NOT EXISTS [FibaroLink] ("
-"[ID] INTEGER PRIMARY KEY, "
-"[DeviceID]  BIGINT NOT NULL, "
-"[DelimitedValue] INTEGER DEFAULT 0, "
-"[TargetType] INTEGER DEFAULT 0, "
-"[TargetVariable] VARCHAR(100), "
-"[TargetDeviceID] INTEGER, "
-"[TargetProperty] VARCHAR(100), "
-"[Enabled] INTEGER DEFAULT 1, "
-"[IncludeUnit] INTEGER default 0); ";
+"[IncludeUnit] INTEGER default 0);";
 
 const char *sqlCreateUserVariables =
 "CREATE TABLE IF NOT EXISTS [UserVariables] ("
@@ -739,10 +703,7 @@ bool CSQLHelper::OpenDatabase()
 	query(sqlCreateFan_Calendar);
 	query(sqlCreateBackupLog);
 	query(sqlCreateEnoceanSensors);
-	query(sqlCreateFibaroLink);
-	query(sqlCreateHttpLink);
 	query(sqlCreatePushLink);
-	query(sqlCreateGooglePubSubLink);
 	query(sqlCreateUserVariables);
 	query(sqlCreateFloorplans);
 	query(sqlCreateFloorplanOrderTrigger);
@@ -2646,41 +2607,41 @@ bool CSQLHelper::OpenDatabase()
 		}
 		if (dbversion < 136)
 		{
-			//SolarEdge WEB API Frequency sensor change from Percentage to Custom type
+      //SolarEdge WEB API Frequency sensor change from Percentage to Custom type
 			std::stringstream szQuery;
-			std::vector<std::vector<std::string> > hwResult, dsResult;
-			std::vector<std::string> sd;
-			szQuery.clear();
-			szQuery.str("");
-			szQuery << "SELECT ID FROM Hardware WHERE([Type]==" << hardware::type::SolarEdgeAPI << ")";
-			hwResult = query(szQuery.str());
-			if (!hwResult.empty())
-			{
-				for (const auto & itt : hwResult)
-				{
-					sd = itt;
-					szQuery.clear();
-					szQuery.str("");
-					szQuery << "SELECT ID, DeviceID FROM DeviceStatus WHERE ([Type]=" << pTypeGeneral << ") AND (SubType=" << sTypePercentage << ") AND (HardwareID=" << sd[0] << ")";
-					dsResult = query(szQuery.str());
-					if (!dsResult.empty())
-					{
-						for (const auto & itt2 : dsResult)
-						{
-							sd = itt2;
+        		std::vector<std::vector<std::string> > hwResult, dsResult;
+        		std::vector<std::string> sd;
+        		szQuery.clear();
+        		szQuery.str("");
+        		szQuery << "SELECT ID FROM Hardware WHERE([Type]==" << hardware::type::SolarEdgeAPI << ")";
+        		hwResult = query(szQuery.str());
+        		if (!hwResult.empty())
+        		{
+                		for (const auto & itt : hwResult)
+                		{
+                        		sd = itt;
+                        		szQuery.clear();
+                        		szQuery.str("");
+                        		szQuery << "SELECT ID, DeviceID FROM DeviceStatus WHERE ([Type]=" << pTypeGeneral << ") AND (SubType=" << sTypePercentage << ") AND (HardwareID=" << sd[0] << ")";
+                        		dsResult = query(szQuery.str());
+                        		if (!dsResult.empty())
+                        		{
+                                		for (const auto & itt2 : dsResult)
+                                		{
+                                        		sd = itt2;
 							int id = atoi(sd[1].c_str());
 							char szTmp[20];
 							sprintf(szTmp, "%06X01", id);
 
-							szQuery.clear();
-							szQuery.str("");
-							szQuery << "UPDATE DeviceStatus SET DeviceID='" << szTmp << "', [Type]=" << pTypeGeneral << ", SubType=" << sTypeCustom << ", Options=\"1;Hz\" WHERE (ID=" << sd[0] << ")";
-							query(szQuery.str());
-						}
-					}
-				}
-			}
-		}
+                                        		szQuery.clear();
+                                        		szQuery.str("");
+                                        		szQuery << "UPDATE DeviceStatus SET DeviceID='" << szTmp << "', [Type]=" << pTypeGeneral << ", SubType=" << sTypeCustom << ", Options=\"1;Hz\" WHERE (ID=" << sd[0] << ")";
+                                        		query(szQuery.str());
+                                		}
+                        		}
+                		}
+        		}
+		} 
     
 		if (dbversion < 137)
 		{
@@ -2757,6 +2718,45 @@ bool CSQLHelper::OpenDatabase()
 			{
 				query("ALTER TABLE SceneLog ADD COLUMN [User] VARCHAR(100) DEFAULT ('')");
 			}
+		}
+		if (dbversion < 140)
+		{
+			//Migrate all Pushers into one table
+			safe_query("UPDATE PushLink SET PushType = %d", CBasePush::PushType::PUSHTYPE_INFLUXDB);
+
+			struct _tPushHelper
+			{
+				std::string DBName;
+				CBasePush::PushType PushType;
+				_tPushHelper(const std::string& dbname, const CBasePush::PushType pushtype)
+				{
+					DBName = dbname;
+					PushType = pushtype;
+				}
+			};
+			std::vector<_tPushHelper> dbToMigrate;
+			dbToMigrate.push_back(_tPushHelper("HttpLink", CBasePush::PushType::PUSHTYPE_HTTP));
+			dbToMigrate.push_back(_tPushHelper("GooglePubSubLink", CBasePush::PushType::PUSHTYPE_GOOGLE_PUB_SUB));
+			dbToMigrate.push_back(_tPushHelper("FibaroLink", CBasePush::PushType::PUSHTYPE_FIBARO));
+
+			for (auto itt : dbToMigrate)
+			{
+				safe_query(
+					"INSERT INTO PushLink (PushType, DeviceID, DelimitedValue, TargetType, TargetVariable, TargetDeviceID, TargetProperty, Enabled, IncludeUnit) "
+					"SELECT %d, [DeviceID], [DelimitedValue], [TargetType], [TargetVariable], [TargetDeviceID], [TargetProperty], [Enabled], [IncludeUnit] FROM %s",
+					itt.PushType,
+					itt.DBName.c_str()
+					);
+				safe_query("DROP TABLE %s", itt.DBName.c_str());
+			}
+			//Change DeviceID to DeviceRowID
+			query("ALTER TABLE PushLink RENAME TO tmp_PushLink");
+			query(sqlCreatePushLink);
+			//Copy values from tmp_PushLink back into our new table
+			query(
+				"INSERT INTO PushLink (PushType, DeviceRowID, DelimitedValue, TargetType, TargetVariable, TargetDeviceID, TargetProperty, Enabled, IncludeUnit) "
+				"SELECT [PushType], [DeviceID], [DelimitedValue], [TargetType], [TargetVariable], [TargetDeviceID], [TargetProperty], [Enabled], [IncludeUnit] FROM tmp_PushLink");
+			query("DROP TABLE tmp_PushLink");
 		}
 	}
 
@@ -7213,6 +7213,7 @@ void CSQLHelper::DeleteDevices(const std::string &idx)
 			safe_exec_no_return("DELETE FROM DeviceToPlansMap WHERE (DeviceRowID == '%q')", itt.c_str());
 			safe_exec_no_return("DELETE FROM CamerasActiveDevices WHERE (DevSceneType==0) AND (DevSceneRowID == '%q')", itt.c_str());
 			safe_exec_no_return("DELETE FROM SharedDevices WHERE (DeviceRowID== '%q')", itt.c_str());
+			safe_exec_no_return("DELETE FROM PushLink WHERE (DeviceRowID== '%q')", itt.c_str());
 			//notify eventsystem device is no longer present
 			uint64_t ullidx = std::stoull(itt);
 			m_mainworker.m_eventsystem.RemoveSingleState(ullidx, m_mainworker.m_eventsystem.REASON_DEVICE);
