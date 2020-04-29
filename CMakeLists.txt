@@ -189,9 +189,6 @@ IF(WITH_LIBUSB)
   SET(LIBUSB_LIBRARIES ${LIBUSB_LIBRARY})
 
   find_package_handle_standard_args(LIBUSB  DEFAULT_MSG  LIBUSB_LIBRARIES LIBUSB_INCLUDE_DIR)
-  IF(NOT LIBUSB_FOUND)
-    MESSAGE(STATUS "==== LibUSB not found, support for TE923/Voltcraft disabled!")
-  ENDIF(NOT LIBUSB_FOUND)
 ENDIF(WITH_LIBUSB)
 
 #
@@ -199,16 +196,15 @@ ENDIF(WITH_LIBUSB)
 # try to find open-zwave, if found, include support
 #
 IF(WITH_OPENZWAVE)
-IF(USE_STATIC_OPENZWAVE)
-  FIND_LIBRARY(OpenZWave NAMES libopenzwave.a HINTS "../open-zwave-read-only" "../open-zwave-read-only/cpp/build")
-  SET(OPENZWAVE_LIB ${OpenZWave})
-ELSE(USE_STATIC_OPENZWAVE)
-  pkg_check_modules(OPENZWAVE libopenzwave)
-  IF(OPENZWAVE_FOUND)
-    MESSAGE(STATUS "==== OpenZWave package found!")
-    FIND_LIBRARY(OpenZWave NAMES libopenzwave.so HINTS ${OPENZWAVE_LIBRARY_DIRS})
-  ENDIF(OPENZWAVE_FOUND)
-ENDIF(USE_STATIC_OPENZWAVE)
+  IF(USE_STATIC_OPENZWAVE)
+    FIND_LIBRARY(OpenZWave NAMES libopenzwave.a HINTS "../open-zwave-read-only" "../open-zwave-read-only/cpp/build")
+    SET(OPENZWAVE_LIB ${OpenZWave})
+  ELSE(USE_STATIC_OPENZWAVE)
+    pkg_check_modules(OPENZWAVE libopenzwave)
+    IF(OPENZWAVE_FOUND)
+      FIND_LIBRARY(OpenZWave NAMES libopenzwave.so HINTS ${OPENZWAVE_LIBRARY_DIRS})
+    ENDIF(OPENZWAVE_FOUND)
+  ENDIF(USE_STATIC_OPENZWAVE)
 ENDIF(WITH_OPENZWAVE)
 
 
@@ -287,9 +283,6 @@ ENDIF(Boost_VERSION VERSION_LESS DZ_MIN_LIBBOOST_VERSION)
 
 include_directories(${Boost_INCLUDE_DIRS})
 
-#
-# CURL
-#
 IF(CURL_FOUND)
   MESSAGE(STATUS "Curl ${CURL_VERSION} found at: ${CURL_LIBRARIES}")
   MESSAGE(STATUS "Curl includes found at: ${CURL_INCLUDE_DIRS}")
@@ -299,26 +292,23 @@ ELSE()
   MESSAGE(FATAL_ERROR "cURL not found on your system, see install.txt how to get them installed. (for example 'sudo apt-get install curl libcurl4-gnutls-dev')")
 ENDIF(CURL_FOUND)
 
-#
-# USB
-#
+
 IF(LIBUSB_FOUND)
   MESSAGE(STATUS "Libusb found at: ${LIBUSB_LIBRARIES}")
   add_definitions(-DWITH_LIBUSB)
   TARGET_LINK_LIBRARIES(oikomaticz ${LIBUSB_LIBRARIES})
+else()
+  MESSAGE(STATUS "==== LibUSB not found, support for TE923/Voltcraft disabled!")
 ENDIF(LIBUSB_FOUND)
 
 
-#
-# OpenZWave
-# try to find open-zwave, if found, include support
-#
 IF(OpenZWave)
   MESSAGE(STATUS "OpenZWave found at: ${OpenZWave}")
   TARGET_LINK_LIBRARIES(oikomaticz ${OpenZWave})
-  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/libs/openzwave)
-#  add_definitions(-DWITH_OPENZWAVE)
-ELSE()
+  INCLUDE_DIRECTORIES(${OPENZWAVE_INCLUDE_DIRS})
+  add_definitions(-DWITH_OPENZWAVE)
+  pkg_get_variable(OpenZWave_Config libopenzwave sysconfdir)
+ELSE(OpenZWave)
   MESSAGE(STATUS "==== OpenZWave not found, support disabled!")
 ENDIF(OpenZWave)
 
@@ -486,7 +476,13 @@ INSTALL(TARGETS oikomaticz DESTINATION ${CMAKE_INSTALL_PREFIX})
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/www DESTINATION ${CMAKE_INSTALL_PREFIX})
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/License.txt DESTINATION ${CMAKE_INSTALL_PREFIX})
 IF(OpenZWave)
-  INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Config DESTINATION ${CMAKE_INSTALL_PREFIX})
+  IF(OpenZWave_Config)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${OpenZWave_Config} ${CMAKE_CURRENT_SOURCE_DIR}/libs/Config)
+  ELSE(OpenZWave_Config)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/libs/Config)
+    MESSAGE(WARNING "==== Openzwave config files could not be found")
+  ENDIF(OpenZWave_Config)
+  INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libs/Config DESTINATION ${CMAKE_INSTALL_PREFIX})
 ENDIF(OpenZWave)
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dzVents DESTINATION ${CMAKE_INSTALL_PREFIX} PATTERN ".gitignore" EXCLUDE)
 
