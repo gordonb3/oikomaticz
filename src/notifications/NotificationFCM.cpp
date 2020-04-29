@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "NotificationGCM.h"
+#include "NotificationFCM.h"
 #include "protocols/HTTPClient.h"
 #include "main/Logger.h"
 #include "main/SQLHelper.h"
@@ -8,16 +8,51 @@
 #define GAPI_POST_URL "https://fcm.googleapis.com/fcm/send"
 #define GAPI "AIzaSyBnRMroiDaXCKbwPeOmoxkNiQfjWkGMre8"
 
-CNotificationGCM::CNotificationGCM() : CNotificationBase(std::string("gcm"), OPTIONS_NONE)
+const char* FCMMessage = R"FCM(
 {
-	SetupConfig(std::string("GCMEnabled"), &m_IsEnabled);
+  "to": "<to>",
+  "message": {
+    "notification": {
+      "title": "<title>",
+      "body": "<body>"
+    },
+    "data": {
+      "param1": "<extradata>"
+    },
+    "apns": {
+      "headers": {
+        "apns-priority": "5"
+      },
+      "payload": {
+        "aps": {
+          "sound": "default"
+        }
+      }
+    },
+    "android": {
+      "priority": "medium",
+      "notification": {
+        "sound": "default"
+      }
+    }
+  }
+})FCM";
+
+CNotificationFCM::CNotificationFCM() : CNotificationBase(std::string("fcm"), OPTIONS_NONE)
+{
+	SetupConfig(std::string("FCMEnabled"), &m_IsEnabled);
 }
 
-CNotificationGCM::~CNotificationGCM()
+CNotificationFCM::~CNotificationFCM()
 {
 }
 
-bool CNotificationGCM::SendMessageImplementation(
+bool CNotificationFCM::IsConfigured()
+{
+	return true;
+}
+
+bool CNotificationFCM::SendMessageImplementation(
 	const uint64_t Idx,
 	const std::string &Name,
 	const std::string &Subject,
@@ -27,8 +62,14 @@ bool CNotificationGCM::SendMessageImplementation(
 	const std::string &Sound,
 	const bool bFromNotification)
 {
-	//send message to GCM
+	//send message to FCM
 	//ExtraData should be empty, is only filled currently when hitting the test button from the mobile devices setup page in the web gui
+
+	//std::string szPostData(FCMMessage);
+	//stdreplace(szPostData, "<to>", sTo);
+	//stdreplace(szPostData, "<title>", Subject);
+	//stdreplace(szPostData, "<body>", Text);
+	//stdreplace(szPostData, "<extradata>", ExtraData);
 
 	//Get All Devices
 	std::vector<std::vector<std::string> > result;
@@ -52,6 +93,14 @@ bool CNotificationGCM::SendMessageImplementation(
 	if (result.empty())
 		return true;
 
+	std::string sTo;
+	for (const auto itt : result)
+	{
+		if (!sTo.empty())
+			sTo += ", ";
+		sTo += itt[0];
+	}
+
 	//We need to distinguish between Android and iOS devices for the following JSon notification call
 
 	std::vector<std::string> androidDevices;
@@ -71,7 +120,7 @@ bool CNotificationGCM::SendMessageImplementation(
 	}
 
 	std::vector<std::string>::const_iterator ittDevice;
-	
+
 	//Android Devices
 	if (!androidDevices.empty())
 	{
@@ -101,7 +150,7 @@ bool CNotificationGCM::SendMessageImplementation(
 
 		if (!HTTPClient::POST(GAPI_POST_URL, szPostdata, ExtraHeaders, sResult))
 		{
-			_log.Log(LOG_ERROR, "GCM: Could not send message, HTTP Error");
+			_log.Log(LOG_ERROR, "FCM: Could not send message, HTTP Error");
 			return false;
 		}
 
@@ -110,7 +159,7 @@ bool CNotificationGCM::SendMessageImplementation(
 		bool ret = ParseJSon(sResult, root);
 		if (!ret)
 		{
-			_log.Log(LOG_ERROR, "GCM: Can not connect to GCM API URL");
+			_log.Log(LOG_ERROR, "FCM: Can not connect to FCM API URL");
 			return false;
 		}
 	}
@@ -132,7 +181,7 @@ bool CNotificationGCM::SendMessageImplementation(
 			ii++;
 		}
 
-		sstr << "], \"notification\" : { \"subject\": \"" << Subject << "\", \"body\": \"" << Text << "\", \"extradata\": \"" << ExtraData << "\", \"priority\": \"" << std::to_string(Priority) << "\", ";
+		sstr << "], \"notification\" : { \"subject\": \"" << Subject << "\", \"body\": \"" << Text << "\", \"extradata\": \"" << ExtraData << "\", \"priority\": \"" << std::to_string(Priority) << "\", \"sound\": \"default\", ";
 		sstr << "\"deviceid\": \"" << std::to_string(Idx) << "\", \"message\": \"" << Subject << "\", \"content_available\": true } }";
 		std::string szPostdata = sstr.str();
 
@@ -144,7 +193,7 @@ bool CNotificationGCM::SendMessageImplementation(
 
 		if (!HTTPClient::POST(GAPI_POST_URL, szPostdata, ExtraHeaders, sResult))
 		{
-			_log.Log(LOG_ERROR, "GCM: Could not send message, HTTP Error");
+			_log.Log(LOG_ERROR, "FCM: Could not send message, HTTP Error");
 			return false;
 		}
 
@@ -153,14 +202,18 @@ bool CNotificationGCM::SendMessageImplementation(
 		bool ret = ParseJSon(sResult, root);
 		if (!ret)
 		{
-			_log.Log(LOG_ERROR, "GCM: Can not connect to GCM API URL");
+			_log.Log(LOG_ERROR, "FCM: Can not connect to FCM API URL");
 			return false;
 		}
+
+		if (!root["failure"].empty())
+		{
+			int iFailure = root["failure"].asInt();
+			return (iFailure == 0);
+		}
+
+
 	}
 	return true;
 }
 
-bool CNotificationGCM::IsConfigured()
-{
-	return true;
-}

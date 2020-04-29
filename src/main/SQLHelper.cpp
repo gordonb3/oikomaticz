@@ -32,7 +32,7 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 2
-#define DOMOTICZ_DB_VERSION 142
+#define DOMOTICZ_DB_VERSION 143
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
@@ -657,6 +657,7 @@ bool CSQLHelper::OpenDatabase()
 	dbversion = dbversion & 0x03FF;
 
 	//create database (if not exists)
+	sqlite3_exec(m_dbase, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 	query(sqlCreateDeviceStatus);
 	query(sqlCreateDeviceStatusTrigger);
 	query(sqlCreateLightingLog);
@@ -752,6 +753,7 @@ bool CSQLHelper::OpenDatabase()
 	query("create index if not exists w_id_date_idx   on Wind(DeviceRowID, Date);");
 	query("create index if not exists wc_id_idx       on Wind_Calendar(DeviceRowID);");
 	query("create index if not exists wc_id_date_idx  on Wind_Calendar(DeviceRowID, Date);");
+	sqlite3_exec(m_dbase, "END TRANSACTION;", NULL, NULL, NULL);
 
 	if ((!bNewInstall) && (ozdbversion == 0) && (dbversion == 136))
 	{
@@ -2775,6 +2777,13 @@ bool CSQLHelper::OpenDatabase()
 			//(MySensors)MQTT, prevent loop by default
 			safe_query("UPDATE Hardware SET Mode3=1 WHERE ([Type]==%d OR [Type]==%d)", hardware::type::MQTT, hardware::type::MySensorsMQTT);
 		}
+		if (dbversion < 143)
+		{
+			//Rename Google Cloud Messaging setting to Firebase Cloud Messaging
+			int iEnabled = 0;
+			if (!GetPreferencesVar("GCMEnabled", iEnabled))
+				UpdatePreferencesVar("FCMEnabled", iEnabled);
+		}
 	}
 
 	if ((!bNewInstall) && (ozdbversion < OIKOMATICZ_DB_VERSION))
@@ -3644,10 +3653,16 @@ void CSQLHelper::Do_Work()
 			{
 				std::vector<std::string> splitresults;
 				StringSplit(itt->_command, "!#", splitresults);
-				if (splitresults.size() == 5) {
-					std::string subsystem = splitresults[4];
-					if (subsystem.empty() || subsystem == " ") {
+				if (splitresults.size() >= 4) {
+					std::string subsystem;
+					if (splitresults.size() > 4)
+						subsystem = splitresults[4];
+					if (subsystem.empty()) {
 						subsystem = NOTIFYALL;
+					}
+					if (subsystem == "gcm") {
+						_log.Log(LOG_STATUS, "Deprecated Notification system specified (gcm), change this to 'fcm'!");
+						subsystem = "fcm";
 					}
 					m_notifications.SendMessageEx(0, std::string(""), subsystem, splitresults[0], splitresults[1], splitresults[2], static_cast<int>(itt->_idx), splitresults[3], true);
 				}
@@ -4467,8 +4482,12 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 	uint64_t ulID = 0;
 	bool bDeviceUsed = false;
 	bool bSameDeviceStatusValue = false;
+	int old_nValue = -1;
+	std::string old_sValue;
+	device::tswitch::type::value stype = device::tswitch::type::OnOff;
+
 	std::vector<std::vector<std::string> > result;
-	result = safe_query("SELECT ID,Name, Used, SwitchType, nValue, sValue, LastUpdate, Options FROM DeviceStatus WHERE (HardwareID=%d AND DeviceID='%q' AND Unit=%d AND Type=%d AND SubType=%d)", HardwareID, ID, unit, devType, subType);
+	result = safe_query("SELECT ID, Name, Used, SwitchType, nValue, sValue, LastUpdate, Options FROM DeviceStatus WHERE (HardwareID=%d AND DeviceID='%q' AND Unit=%d AND Type=%d AND SubType=%d)", HardwareID, ID, unit, devType, subType);
 	if (result.empty())
 	{
 		//Insert
@@ -4496,9 +4515,9 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 		auto options = BuildDeviceOptions(sOption);
 		devname = result[0][1];
 		bDeviceUsed = atoi(result[0][2].c_str()) != 0;
-		device::tswitch::type::value stype = (device::tswitch::type::value)atoi(result[0][3].c_str());
-		int old_nValue = atoi(result[0][4].c_str());
-		std::string old_sValue = result[0][5];
+		stype = (device::tswitch::type::value)atoi(result[0][3].c_str());
+		old_nValue = atoi(result[0][4].c_str());
+		old_sValue = result[0][5];
 		time_t now = time(0);
 		struct tm ltime;
 		localtime_r(&now, &ltime);
@@ -4676,17 +4695,26 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 	case pTypeHunter:
 		if ((devType == pTypeRadiator1) && (subType != sTypeSmartwaresSwitchRadiator))
 			break;
-		//Add Lighting log
 		m_LastSwitchID = ID;
 		m_LastSwitchRowID = ulID;
-		result = safe_query(
-			"INSERT INTO LightingLog (DeviceRowID, nValue, sValue, User) "
-			"VALUES ('%" PRIu64 "', '%d', '%q', '%q')",
-			ulID,
-			nValue, sValue,
-			m_mainworker.m_szLastSwitchUser.c_str()
-		);
 
+		//Add Lighting log (Skip duplicates)
+		if (
+			(nValue != old_nValue)
+			|| (sValue != old_sValue)
+			|| (stype == device::tswitch::type::Doorbell)
+			|| (stype == device::tswitch::type::PushOn)
+			|| (stype == device::tswitch::type::PushOff)
+			)
+		{
+			result = safe_query(
+				"INSERT INTO LightingLog (DeviceRowID, nValue, sValue, User) "
+				"VALUES ('%" PRIu64 "', '%d', '%q', '%q')",
+				ulID,
+				nValue, sValue,
+				m_mainworker.m_szLastSwitchUser.c_str()
+			);
+		}
 		if (!bDeviceUsed)
 			return ulID;	//don't process further as the device is not used
 		std::string lstatus = "";
