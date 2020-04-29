@@ -157,7 +157,7 @@ endif(USE_BUILTIN_ZLIB)
 #
 if(USE_BUILTIN_MINIZIP)
   message(STATUS "Using builtin minizip library")
-  set(MINIZIP_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/zlib/contrib/minizip")
+  set(MINIZIP_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/zlib/contrib")
   set(MINIZIP_LIBRARIES minizip)
   set(minizip_SRCS zlib/contrib/minizip/unzip.c zlib/contrib/minizip/ioapi.c)
   add_library(minizip STATIC ${minizip_SRCS})
