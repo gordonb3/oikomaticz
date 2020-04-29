@@ -12,7 +12,7 @@
 
 #include "EvohomeBase.h"
 
-#include "evohomeclient/src/evohome/devices.hpp"
+#include "evohomeclient/src/common/devices.hpp"
 #include "main/json_helper.h"
 
 class CEvohomeWeb : public CEvohomeBase

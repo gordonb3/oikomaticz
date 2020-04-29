@@ -21,7 +21,7 @@
 
 #include "evohomeclient/src/evohomeclient/evohomeclient.hpp"
 #include "evohomeclient/src/evohomeclient2/evohomeclient2.hpp"
-#include "evohomeclient/src/evohome/jsoncppbridge.hpp"
+#include "evohomeclient/src/common/jsoncppbridge.hpp"
 
 #define LOGONFAILTRESHOLD 3
 #define MINPOLINTERVAL 10
