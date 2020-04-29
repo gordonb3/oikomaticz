@@ -34,9 +34,9 @@ add_library(evohome STATIC ${evohome_SRCS})
 
 set(STATIC_LIBRARIES jsoncpp tinyxpath serial evohome)
 
-# openzwave
+# openzwave control panel
 if(OpenZWave)
-  file(GLOB_RECURSE openzwave_SRCS openzwave/*.cpp)
+  file(GLOB_RECURSE openzwave_SRCS open-zwave-control-panel/*.cpp)
   add_library(openzwave STATIC ${openzwave_SRCS})
   list(APPEND STATIC_LIBRARIES openzwave)
 endif()

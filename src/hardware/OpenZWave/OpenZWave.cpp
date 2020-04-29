@@ -22,10 +22,10 @@
 #include "main/localtime_r.h"
 
 //OpenZWave includes
-#include "openzwave/Options.h"
-#include "openzwave/Manager.h"
-#include "openzwave/platform/Log.h"
-#include "openzwave/ValueIDIndexesDefines.h"
+#include <openzwave/Options.h>
+#include <openzwave/Manager.h>
+#include <openzwave/platform/Log.h>
+#include <openzwave/ValueIDIndexesDefines.h>
 
 #include "ZWaveCommands.h"
 
@@ -2042,12 +2042,9 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 	}
 	else if (commandclass == COMMAND_CLASS_BATTERY)
 	{
-		if (_device.isListening)
+		if (vType == OpenZWave::ValueID::ValueType_Byte)
 		{
-			if (vType == OpenZWave::ValueID::ValueType_Byte)
-			{
-				UpdateDeviceBatteryStatus(NodeID, byteValue);
-			}
+			UpdateDeviceBatteryStatus(NodeID, byteValue);
 		}
 	}
 	else if (commandclass == COMMAND_CLASS_THERMOSTAT_SETPOINT)
