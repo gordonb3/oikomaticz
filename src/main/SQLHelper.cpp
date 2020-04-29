@@ -2758,6 +2758,49 @@ bool CSQLHelper::OpenDatabase()
 				"SELECT [PushType], [DeviceID], [DelimitedValue], [TargetType], [TargetVariable], [TargetDeviceID], [TargetProperty], [Enabled], [IncludeUnit] FROM tmp_PushLink");
 			query("DROP TABLE tmp_PushLink");
 		}
+    if (dbversion < 141)
+    {
+      // Patch for OpenWebNetTCP: update unit and deviceID for Alert devices, update subtype for GeneralSwitch devices
+			std::stringstream szQuery;
+			std::vector<std::vector<std::string> > result, result2;
+			std::vector<std::string> sd;
+			szQuery.clear();
+			szQuery.str("");
+			szQuery << "SELECT ID FROM Hardware WHERE([Type]==" << hardware::type::OpenWebNetTCP << ")";
+			result = query(szQuery.str());
+			if (!result.empty())
+			{
+				for (const auto& itt : result)
+				{
+					sd = itt;
+
+					szQuery.clear();
+					szQuery.str("");
+					szQuery << "SELECT ID, DeviceID, Type, SubType FROM DeviceStatus WHERE (HardwareID=" << sd[0] << ")";
+					result2 = query(szQuery.str());
+
+					if (!result2.empty())
+					{
+						for (const auto& itt2 : result2)
+						{
+							sd = itt2;
+
+							int type = atoi(sd[2].c_str());
+							int sub_type = atoi(sd[3].c_str());
+	
+							if ((type == pTypeLighting2) && (sub_type == sTypeAC))
+							{
+								_log.Log(LOG_STATUS, "COpenWebNetTCP: ID:%s, change type and subtype!", sd[0].c_str());
+								szQuery.clear();
+								szQuery.str("");
+								szQuery << "UPDATE DeviceStatus SET DeviceID='0" << sd[1] << "', Type='" << pTypeGeneralSwitch << "', SubType='" << sSwitchTypeAC << "' WHERE (ID=" << sd[0] << ")";
+								query(szQuery.str());
+							}
+						}
+					}
+				}
+			}
+    }
 	}
 
 	if ((!bNewInstall) && (ozdbversion < OIKOMATICZ_DB_VERSION))
