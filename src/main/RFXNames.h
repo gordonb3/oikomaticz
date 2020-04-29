@@ -9,9 +9,6 @@
 #include "typedef/mediaplayerstates.hpp"
 
 
-#define sTypeTH_LC_TC 0xA0   //La Cross Temp_Hum combined
-#define sTypeTEMP_SYSTEM 0xA0  //Internal sensor
-
 const char *RFX_Type_Desc(const unsigned char i, const unsigned char snum);
 const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char sType);
 unsigned char Get_Humidity_Level(const unsigned char hlevel);
