@@ -1097,7 +1097,7 @@ bool MainWorker::AddHardwareFromParams(
 		pHardware = new CTTNMQTT(ID, Address, Port, Username, Password, Extra);
 		break;
 	case hardware::type::BuienRadar:
-		pHardware = new CBuienRadar(ID, Mode1, Mode2);
+		pHardware = new CBuienRadar(ID, Mode1, Mode2, Password);
 		break;
 	case hardware::type::OctoPrint:
 		pHardware = new COctoPrintMQTT(ID, Address, Port, Username, Password, Extra);
