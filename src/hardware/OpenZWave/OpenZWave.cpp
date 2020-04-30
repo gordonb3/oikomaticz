@@ -28,6 +28,7 @@
 #include <openzwave/ValueIDIndexesDefines.h>
 
 #include "ZWaveCommands.h"
+#include "ZWaveConfig.h"
 
 #include "serial/serial.h"
 
@@ -871,12 +872,17 @@ bool COpenZWave::OpenSerialConnector()
 	CloseSerialConnector();
 
 	m_nodes.clear();
+#ifdef ZWAVE_CONFIG_PATH
+	std::string ConfigPath = ZWAVE_CONFIG_PATH;
+	std::string UserPath = szUserDataFolder;
+#else
 	std::string ConfigPath = szStartupFolder + "Config/";
 	std::string UserPath = ConfigPath;
 	if (szStartupFolder != szUserDataFolder)
 	{
 		UserPath = szUserDataFolder;
 	}
+#endif
 	// Create the OpenZWave Manager.
 	// The first argument is the path to the config files (where the manufacturer_specific.xml file is located
 	// The second argument is the path for saved Z-Wave network state and the log file.  If you leave it NULL
