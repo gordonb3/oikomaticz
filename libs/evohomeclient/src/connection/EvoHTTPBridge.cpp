@@ -167,7 +167,9 @@ bool EvoHTTPBridge::ProcessResponse(std::string &szResponse, const std::vector<s
 	if ((szResponse[0] == '[') || (szResponse[0] == '{')) // okay, appears to be json
 		return bhttpOK;
 
-	if (szResponse.find("<title>") != std::string::npos) // extract the title from the returned HTML page
+
+	int i = static_cast<int>(szResponse.find("<title>"));
+	if (i != std::string::npos) // extract the title from the returned HTML page
 	{
 		std::string szTemp = "{\"code\":\"";
 		if (!szCode.empty())
@@ -175,15 +177,13 @@ bool EvoHTTPBridge::ProcessResponse(std::string &szResponse, const std::vector<s
 		else
 			szTemp.append("-1");
 		szTemp.append("\",\"message\":\"");
-		int i = static_cast<int>(szResponse.find("<title>"));
-		char* html = &szResponse[i];
-		i = 7;
-		char c = html[i];
-		while (c != '<')
+		i += 7;
+		char c = szResponse[i];
+		while ((c != '<') && (i < static_cast<int>(szResponse.size() - 1)))
 		{
 			szTemp.insert(szTemp.end(), 1, c);
 			i++;
-			c = html[i];
+			c = szResponse[i];
 		}
 		szTemp.append("\"}");
 		szResponse = szTemp;
@@ -199,24 +199,23 @@ bool EvoHTTPBridge::ProcessResponse(std::string &szResponse, const std::vector<s
 			szTemp.append("-1");
 		szTemp.append("\",\"message\":\"");
 		int i = 0;
+		int maxchars = static_cast<int>(szResponse.size());
 		char* html = &szResponse[0];
 		char c;
-		while (i < static_cast<int>(szResponse.size()))
+		for (int i = 0; i < maxchars; i++)
 		{
 			c = html[i];
 			if (c == '<')
 			{
-				while (c != '>')
+				while ((c != '>') && (i < (maxchars - 1)))
 				{
 					i++;
 					c = html[i];
 				}
-				i++;
 			}
 			else if (c != '<')
 			{
 				szTemp.insert(szTemp.end(), 1, c);
-				i++;
 			}
 		}
 		szTemp.append("\"}");
