@@ -19,9 +19,14 @@ private:
 	void Init();
 	bool MatchLine();
 	void ParseP1Data(const unsigned char *pData, const int Len, const bool disable_crc, int ratelimit);
+	void ParseP1PlaintextData(const unsigned char *pData, const int Len, const bool disable_crc);
 
 	bool CheckCRC();
 	void UpsertSwitch(const int NodeID, const device::tswitch::type::value switchtype, const int switchstate, const char* defaultname);
+
+	// Luxembourgian Smarty encrypted telegram support
+	bool ImportKey(std::string szhexencoded);
+	void ParseP1EncryptedData(const unsigned char *pData, const int Len, const bool disable_crc);
 
 public:
 	P1Power	m_power;
@@ -38,7 +43,6 @@ private:
 		float instpwrdel[4];
 		float instpwruse[4];
 	} P1PhaseData;
-
 
 	P1PhaseData m_phasedata;
 
@@ -65,4 +69,22 @@ private:
 	time_t m_lastSharedSendGas;
 	time_t m_gasoktime;
 	double m_gasclockskew;
+
+
+	// Luxembourgian Smarty encrypted telegram support
+	bool m_isencrypteddata;
+	std::string m_decryptkey;
+
+	typedef struct _tAES_GCM_data
+	{
+		int pos;
+		int datasize;
+		int payloadend;
+		std::string iv;
+		std::string payload;
+		std::string tag;
+	} AES_GCM_data;
+
+	AES_GCM_data m_p1gcmdata;
+
 };

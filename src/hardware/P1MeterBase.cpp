@@ -9,6 +9,9 @@
 #include "main/WebServer.h"
 #include "typedef/metertypes.hpp"
 
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+
 #define CRC16_ARC	0x8005
 #define CRC16_ARC_REFL	0xA001
 
@@ -75,8 +78,9 @@ void P1MeterBase::Init()
 	{
 		m_lastTariff = 2 - static_cast<float>(stod(result[0][0]));
 	}
-}
 
+	m_isencrypteddata = false;
+}
 
 // returns false if an error is detected
 bool P1MeterBase::MatchLine()
@@ -645,7 +649,7 @@ void P1MeterBase::ParseP1Data(const unsigned char *pData, const int Len, const b
 		ii++;
 
 	// re enable reading pData when a new datagram starts, empty buffers
-	if (pData[ii] == 0x2f)
+	if (!m_isencrypteddata && ((pData[ii] == 0x2f) || (pData[ii] == 0xdb)))
 	{
 		m_receivetime = mytime(NULL);
 		if (difftime(m_receivetime, m_lastUpdateTime) < m_ratelimit)
@@ -664,10 +668,31 @@ void P1MeterBase::ParseP1Data(const unsigned char *pData, const int Len, const b
 		m_lbufferpos = 0;
 		m_bufferpos = 0;
 		m_exclmarkfound = 0;
+		if (pData[ii] == 0xdb)
+		{
+			m_isencrypteddata = true;
+			m_p1gcmdata.pos = 0;
+			m_p1gcmdata.datasize = 0;
+			m_p1gcmdata.payloadend = 0;
+			m_p1gcmdata.iv = "";
+			m_p1gcmdata.payload = "";
+			m_p1gcmdata.tag = "";
+		}
 	}
 
 	if (m_linecount == 0)
 		return;
+
+	if (m_isencrypteddata)
+		ParseP1EncryptedData(&pData[ii], (Len - ii), disable_crc);
+	else
+		ParseP1PlaintextData(&pData[ii], (Len - ii), disable_crc);
+}
+
+
+void P1MeterBase::ParseP1PlaintextData(const unsigned char *pData, const int Len, const bool disable_crc)
+{
+	int ii = 0;
 
 	// read pData, ignore/stop if there is a datagram validation failure
 	while ((ii < Len) && (m_linecount > 0) && (m_bufferpos < sizeof(m_buffer)))
@@ -741,6 +766,115 @@ void P1MeterBase::ParseP1Data(const unsigned char *pData, const int Len, const b
 }
 
 
+void P1MeterBase::ParseP1EncryptedData(const unsigned char *pData, const int Len, const bool disable_crc)
+{
+	for (int ii = 0; ((ii < Len) && (m_linecount > 0)); ii++)
+	{
+		m_p1gcmdata.pos++;
+		if (m_p1gcmdata.pos == 1)
+			continue;
+		if (m_p1gcmdata.pos == 2)
+		{
+			// if system title size is not 8 then discard this telegram
+			if (pData[ii] != 0x08)
+				m_linecount = 0;
+			continue;
+		}
+		if (m_p1gcmdata.pos < 11)
+		{
+			// 8 byte system title needs to got into the Initialization Vector property
+			m_p1gcmdata.iv.insert(m_p1gcmdata.iv.end(), 1, pData[ii]);
+			continue;
+			}
+		if (m_p1gcmdata.pos == 11)
+		{
+			// if separator value is not 0x82 then discard this telegram
+			if (pData[ii] != 0x82)
+				m_linecount = 0;
+			continue;
+		}
+		if (m_p1gcmdata.pos == 12)
+		{
+			// bytes 12 and 13 give the number of remaining bytes in the message in big endian notation
+			m_p1gcmdata.datasize = (pData[ii] << 8);
+			ii++;
+			m_p1gcmdata.pos++;
+			m_p1gcmdata.datasize += pData[ii];
+			m_p1gcmdata.payload.reserve((size_t)m_p1gcmdata.datasize);
+			m_p1gcmdata.datasize += ii; // header size = 13
+			m_p1gcmdata.payloadend = m_p1gcmdata.datasize - 12;
+			continue;
+		}
+		if (m_p1gcmdata.pos == 14)
+		{
+			// if separator value is not 0x30 then discard this telegram
+			if (pData[ii] != 0x30)
+				m_linecount = 0;
+			continue;
+		}
+		if (m_p1gcmdata.pos < 18)
+		{
+			// 4 byte sequence number must be appended to the Initialization Vector property
+			m_p1gcmdata.iv.insert(m_p1gcmdata.iv.end(), 1, pData[ii]);
+			continue;
+		}
+		if (m_p1gcmdata.pos < m_p1gcmdata.payloadend)
+		{
+			// payload
+			m_p1gcmdata.payload.insert(m_p1gcmdata.payload.end(), 1, pData[ii]);
+			continue;
+		}
+		if (m_p1gcmdata.pos < m_p1gcmdata.datasize)
+		{
+			// GCM tag
+			m_p1gcmdata.payload.insert(m_p1gcmdata.payload.end(), 1, pData[ii]);
+			m_p1gcmdata.tag.insert(m_p1gcmdata.tag.end(), 1, pData[ii]);
+			continue;
+		}
+	}
+
+	if (m_p1gcmdata.tag.size() == 12)
+	{
+		// telegram is complete - decode and send to plain text parser
+
+		uint8_t* decryptedData = new uint8_t[m_p1gcmdata.payload.size() + 16];
+		int decryptedsize = 0;
+
+		try
+		{
+
+			EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+			if (ctx == nullptr)
+					return;
+			EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), NULL, NULL, NULL);
+			EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, m_p1gcmdata.iv.size(), NULL);
+
+			EVP_DecryptInit_ex(ctx, NULL, NULL, (const unsigned uint8_t*)m_decryptkey.c_str(), (const unsigned uint8_t*)m_p1gcmdata.iv.c_str());
+
+			uint8_t AddAuthData[] = {0x30, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+			EVP_DecryptUpdate(ctx, NULL, &decryptedsize, (const unsigned uint8_t*) AddAuthData, 17);
+
+			EVP_DecryptUpdate(ctx, (uint8_t*)decryptedData, &decryptedsize, (uint8_t*)m_p1gcmdata.payload.c_str(), m_p1gcmdata.payload.size());
+			EVP_CIPHER_CTX_free(ctx);
+		}
+		catch (const std::exception& e)
+		{
+			_log.Log(LOG_ERROR, "P1 Smart Meter: Error decrypting payload (%s)", e.what());
+		}
+
+
+		if (decryptedsize <= 0)
+			return;
+		decryptedData[decryptedsize] = 0;
+
+		m_isencrypteddata = false;
+		ParseP1PlaintextData(decryptedData, decryptedsize, disable_crc);
+
+		delete[] decryptedData;
+	}
+}
+
+
 void P1MeterBase::UpsertSwitch(const int NodeID, const device::tswitch::type::value switchtype, const int switchstate, const char* defaultname)
 {
 	char szID[10];
@@ -805,6 +939,44 @@ bool P1MeterBase::SetOptions(const bool disable_crc, const unsigned int ratelimi
 	m_ratelimit = ratelimit;
 	return true;
 }
+
+
+bool P1MeterBase::ImportKey(std::string szhexencoded)
+{
+	m_decryptkey = "";
+	if (szhexencoded.empty()) // nothing to do
+		return true;
+	uint8_t byte;
+	bool validkey = (!(szhexencoded.size() & 0x1));
+	for (int i = 0; (i < static_cast<int>(szhexencoded.size())) && validkey; i++)
+	{
+		uint8_t c = szhexencoded[i] | 0x20;
+		// valid chars 0x30-0x39, 0x61-0x67
+		if (c & 0x10)
+			c -= 0x30; // 0-9
+		else
+			c -= 87; // 10-15
+		if (c & 0xF0)
+		{
+			m_decryptkey = "";
+			validkey = false;
+		}
+		if (!(i & 0x1))
+			byte = c << 4;
+		else
+		{
+			byte += c;
+			m_decryptkey.insert(m_decryptkey.end(), 1, (char)byte);
+		}
+	}
+	if (!validkey)
+	{
+		_log.Log(LOG_ERROR, "P1 Smart Meter: Invalid decryption key in hardware settings");
+		return false;
+	}
+	return true;
+}
+
 
 
 //Webserver helpers

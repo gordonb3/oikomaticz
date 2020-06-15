@@ -6,7 +6,7 @@
 class P1MeterTCP : public P1MeterBase, ASyncTCP
 {
 public:
-	P1MeterTCP(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const bool disable_crc, const unsigned int ratelimit, const unsigned int gasmeterchannel);
+	P1MeterTCP(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const bool disable_crc, const unsigned int ratelimit, const unsigned int gasmeterchannel, const std::string& DecryptionKey);
 	~P1MeterTCP(void);
 	bool WriteToHardware(const char *pdata, const unsigned char length) override;
 public:
