@@ -131,10 +131,11 @@ bool CEvohomeWeb::StartSession()
 	{
 		if (!evohome::WebAPI::v2->is_session_valid() && !evohome::WebAPI::v2->renew_login())
 		{
-			_log.Log(LOG_ERROR, "(%s) login failed with message: %s", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str());
 			int returnCode = GetLastV2ResponseCode();
+			_log.Log(LOG_ERROR, "(%s) session renewal failed with message: %s (RC=%d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
 			if (returnCode >= 400)
 				m_loggedon = false;
+			return false;
 		}
 	}
 
@@ -143,7 +144,8 @@ bool CEvohomeWeb::StartSession()
 		_log.Log(LOG_STATUS, "(%s) connect to Evohome server", m_Name.c_str());
 		if (!evohome::WebAPI::v2->login(m_username, m_password))
 		{
-			_log.Log(LOG_ERROR, "(%s) login failed with message: %s", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str());
+			int returnCode = GetLastV2ResponseCode();
+			_log.Log(LOG_ERROR, "(%s) login failed with message: %s (RC=%d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
 			m_logonfailures++;
 			if (m_logonfailures == LOGONFAILTRESHOLD)
 				_log.Log(LOG_STATUS, "(%s) logon fail treshold reached - trottling", m_Name.c_str());
@@ -293,6 +295,8 @@ bool CEvohomeWeb::WriteToHardware(const char *pdata, const unsigned char length)
 bool CEvohomeWeb::GetStatus()
 {
 	if (!evohome::WebAPI::v2->is_session_valid() && !StartSession())
+		return false;
+	if (evohome::WebAPI::v2->m_vLocations.size() < (size_t)m_locationIdx)
 		return false;
 	if (!evohome::WebAPI::v2->get_status(evohome::WebAPI::v2->m_vLocations[m_locationIdx].szLocationId))
 	{
