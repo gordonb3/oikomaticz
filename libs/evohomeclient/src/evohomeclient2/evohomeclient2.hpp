@@ -147,6 +147,7 @@ public:
 	bool cancel_temperature_override(const std::string szZoneId);
 
 	bool set_dhw_mode(const std::string szDHWId, const std::string szMode, const std::string szTimeUntil = "");
+	bool cancel_dhw_override(const std::string szDHWId);
 
 
 /************************************************************************
@@ -178,6 +179,7 @@ public:
 
 	std::string get_system_mode_until(const std::string szSystemId, const bool bLocaltime = true);
 	std::string get_system_mode_until(const evohome::device::temperatureControlSystem *tcs, const bool bLocaltime = true);
+
 
 /************************************************************************
  *									*

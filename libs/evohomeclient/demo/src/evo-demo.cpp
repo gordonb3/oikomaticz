@@ -86,7 +86,6 @@ int main(int argc, char** argv)
 		else
 		{
 			std::cout << "    login failed (UK/EMEA)\n";
-std::cout << eclient->get_last_response() << "\n";
 			exit(1);
 		}
 	}
@@ -107,6 +106,14 @@ std::cout << eclient->get_last_response() << "\n";
 			highdef = false;
 		}
 	}
+
+// what to return if there is no data
+	eclient->set_empty_field_response("<null>");
+	if (highdef)
+	{
+		v1client->set_empty_field_response("<null>");
+	}
+
 // retrieve Evohome installation
 	std::cout << "retrieve Evohome installation\n";
 	if (!eclient->full_installation())
@@ -169,7 +176,7 @@ std::cout << eclient->get_last_response() << "\n";
 	std::cout << "\nSystem info:\n";
 	std::cout << "    Model Type = " << (*tcs->jInstallationInfo)["modelType"] << "\n";
 	std::cout << "    System ID = " << (*tcs->jInstallationInfo)["systemId"] << "\n";
-	std::cout << "    System mode = " << (*tcs->jStatus)["systemModeStatus"]["mode"] << "\n";
+	std::cout << "    System mode = " << eclient->get_system_mode(tcs) << "\n";
 
 	std::cout << "\nZones:\n";
 	std::cout << "      ID       temp    ";
@@ -215,7 +222,8 @@ std::cout << eclient->get_last_response() << "\n";
 		}
 
 		std::cout << "    " << zone["zoneId"];
-		std::cout << " => " << zone["temperature"];
+//		std::cout << " => " << zone["temperature"];
+		std::cout << " => " << eclient->get_zone_temperature(&tcs->zones[i]);
 		if (highdef)
 			std::cout << " => " << v1client->get_zone_temperature(zone["zoneId"], SHOW_DECIMALS);
 		std::cout << " => " << zone["setpointMode"];
@@ -246,6 +254,7 @@ std::cout << eclient->get_last_response() << "\n";
 	std::cout << eclient->m_vLocations[0].jStatus.toStyledString() << "\n";
 */
 
+
 /*
 	if (highdef)
 	{
@@ -253,6 +262,7 @@ std::cout << eclient->get_last_response() << "\n";
 		std::cout << v1client->m_vLocations[0].jInstallationInfo->toStyledString() << "\n";
 	}
 */
+
 
 	if (highdef)
 	{

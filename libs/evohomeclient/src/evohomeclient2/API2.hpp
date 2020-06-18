@@ -24,7 +24,7 @@ namespace evohome {
     namespace header {
 //      static const std::string authkey = "Authorization: Basic YjAxM2FhMjYtOTcyNC00ZGJkLTg4OTctMDQ4YjlhYWRhMjQ5OnRlc3Q=";
       static const std::string authkey = "Authorization: Basic NGEyMzEwODktZDJiNi00MWJkLWE1ZWItMTZhMGE0MjJiOTk5OjFhMTVjZGI4LTQyZGUtNDA3Yi1hZGQwLTA1OWY5MmM1MzBjYg==";
-      static const std::string accept = "Accept: application/json, application/xml, text/json, text/x-json, text/javascript, text/xml";
+      static const std::string accept = "Accept: application/json, application/xml, text/json, text/x-json, text/xml";
       static const std::string jsondata = "Content-Type: application/json";
 
     }; // namespace auth

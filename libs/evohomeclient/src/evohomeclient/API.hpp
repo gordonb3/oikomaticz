@@ -22,14 +22,10 @@ namespace evohome {
     }; // namespace auth
 
     namespace header {
-      static const std::string accept = "Accept: application/json, application/xml, text/json, text/x-json, text/javascript, text/xml";
+      static const std::string accept = "Accept: application/json, application/xml, text/json, text/x-json, text/xml";
       static const std::string jsondata = "Content-Type: application/json";
 
     }; // namespace header
-
-    namespace system {
-      static const std::string mode[7] = {"Auto", "HeatingOff", "AutoWithEco", "Away", "DayOff", "", "Custom"};
-    }; // namespace system
 
     namespace device {
       static const std::string mode[7] = {"Scheduled", "Hold", "Temporary", "", "", "", ""};
@@ -42,7 +38,6 @@ namespace evohome {
 
       static const std::string login = "Session";
       static const std::string installationInfo = "locations/?allData=True&userId={id}";
-      static const std::string systemMode = "evoTouchSystems?locationIdx={id}";
       static const std::string deviceMode = "devices/{id}/thermostat/changeableValues";
       static const std::string deviceSetpoint = "/heatSetpoint";
 
@@ -56,8 +51,6 @@ namespace evohome {
         }
         else if (szApiFunction == installationInfo)
           result.replace(31, 4, szId);
-        else if (szApiFunction == systemMode)
-          result.replace(27, 4, szId);
         else if (szApiFunction == deviceMode)
           result.replace(8, 4, szId);
         else if (szApiFunction == deviceSetpoint)

@@ -168,8 +168,8 @@ bool EvoHTTPBridge::ProcessResponse(std::string &szResponse, const std::vector<s
 		return bhttpOK;
 
 
-	int i = static_cast<int>(szResponse.find("<title>"));
-	if (i != std::string::npos) // extract the title from the returned HTML page
+	size_t pos = static_cast<int>(szResponse.find("<title>"));
+	if (pos != std::string::npos) // extract the title from the returned HTML page
 	{
 		std::string szTemp = "{\"code\":\"";
 		if (!szCode.empty())
@@ -177,7 +177,7 @@ bool EvoHTTPBridge::ProcessResponse(std::string &szResponse, const std::vector<s
 		else
 			szTemp.append("-1");
 		szTemp.append("\",\"message\":\"");
-		i += 7;
+		int i = static_cast<int>(pos) + 7;
 		char c = szResponse[i];
 		while ((c != '<') && (i < static_cast<int>(szResponse.size() - 1)))
 		{
@@ -198,7 +198,6 @@ bool EvoHTTPBridge::ProcessResponse(std::string &szResponse, const std::vector<s
 		else
 			szTemp.append("-1");
 		szTemp.append("\",\"message\":\"");
-		int i = 0;
 		int maxchars = static_cast<int>(szResponse.size());
 		char* html = &szResponse[0];
 		char c;

@@ -92,9 +92,6 @@ public:
  *									*
  ************************************************************************/
 
-	bool set_system_mode(const std::string szLocationId, const unsigned int mode, const std::string szDateUntil = "");
-	bool set_system_mode(const std::string szLocationId, const std::string szMode, const std::string szDateUntil = "");
-
 	bool set_temperature(const std::string szZoneId, const std::string temperature, const std::string szTimeUntil = "");
 	bool cancel_temperature_override(const std::string szZoneId);
 
