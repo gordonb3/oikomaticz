@@ -796,6 +796,26 @@ define(['app'], function (app) {
 					}
 				});
 			}
+			else if(text.indexOf("Meteorologisk") >= 0){
+				var location = $("#hardwarecontent #divlocation #location").val();
+				$.ajax({
+					url: "json.htm?type=command&param=updatehardware&htype=" + hardwaretype +
+					"&password=" + encodeURIComponent(location) +
+					"&name=" + encodeURIComponent(name) +
+					"&enabled=" + bEnabled +
+					"&idx=" + idx +
+					"&datatimeout=" + datatimeout +
+					"&Mode1=" + Mode1 + "&Mode2=" + Mode2 + "&Mode3=" + Mode3 + "&Mode4=" + Mode4 + "&Mode5=" + Mode5 + "&Mode6=" + Mode6,
+					async: false,
+					dataType: 'json',
+					success: function (data) {
+						RefreshHardwareTable();
+					},
+					error: function () {
+						ShowNotify($.t('Problem updating hardware!'), 2500, true);
+					}
+				});
+			}
 			else if (text.indexOf("Buienradar") >= 0) {
 				var timeframe = $("#hardwarecontent #divbuienradar #timeframe").val();
 				if (timeframe == 0) {
@@ -1965,6 +1985,19 @@ define(['app'], function (app) {
 				}
 				$.ajax({
 					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype + "&username=" + encodeURIComponent(apikey) + "&password=" + encodeURIComponent(location) + "&name=" + encodeURIComponent(name) + "&enabled=" + bEnabled + "&datatimeout=" + datatimeout,
+					async: false,
+					dataType: 'json',
+					success: function (data) {
+						RefreshHardwareTable();
+					},
+					error: function () {
+						ShowNotify($.t('Problem adding hardware!'), 2500, true);
+					}
+				});
+			}else if(text.indexOf("Meteorologisk") >= 0){
+				var location = $("#hardwarecontent #divlocation #location").val();
+				$.ajax({
+					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype + "&password=" + encodeURIComponent(location) + "&name=" + encodeURIComponent(name) + "&enabled=" + bEnabled + "&datatimeout=" + datatimeout,
 					async: false,
 					dataType: 'json',
 					success: function (data) {
@@ -3727,9 +3760,8 @@ define(['app'], function (app) {
 							$("#hardwarecontent #hardwareparamsunderground #apikey").val(data["Username"]);
 							$("#hardwarecontent #hardwareparamsunderground #location").val(data["Password"]);
 						}
-						else if ((data["Type"].indexOf("Underground") >= 0) || (data["Type"].indexOf("DarkSky") >= 0) || (data["Type"].indexOf("AccuWeather") >= 0) || (data["Type"].indexOf("Open Weather Map") >= 0)) {
-							$("#hardwarecontent #hardwareparamsunderground #apikey").val(data["Username"]);
-							$("#hardwarecontent #hardwareparamsunderground #location").val(data["Password"]);
+						else if ((data["Type"].indexOf("Meteorologisk") >= 0)) {
+							$("#hardwarecontent #hardwareparamslocation #location").val(data["Password"]);
 						}
 						else if (data["Type"].indexOf("Buienradar") >= 0) {
 							var timeframe = parseInt(data["Mode1"]);
@@ -4259,6 +4291,9 @@ define(['app'], function (app) {
 			}
 			else if ((text.indexOf("Underground") >= 0) || (text.indexOf("DarkSky") >= 0) || (text.indexOf("AccuWeather") >= 0) || (text.indexOf("Open Weather Map") >= 0)) {
 				$("#hardwarecontent #divunderground").show();
+			}
+			else if(text.indexOf("Meteorologisk") >= 0){
+				$("#hardwarecontent #divlocation").show();
 			}
 			else if (text.indexOf("Buienradar") >= 0) {
 				$("#hardwarecontent #divbuienradar").show();

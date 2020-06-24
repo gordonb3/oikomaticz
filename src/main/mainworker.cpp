@@ -74,6 +74,7 @@
 #include "hardware/Kodi.h"
 #include "hardware/Limitless.h"
 #include "hardware/LogitechMediaServer.h"
+#include "hardware/Meteorologisk.h"
 #include "hardware/Meteostick.h"
 #include "hardware/MochadTCP.h"
 #include "hardware/MQTT.h"
@@ -1101,6 +1102,9 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case hardware::type::OctoPrint:
 		pHardware = new COctoPrintMQTT(ID, Address, Port, Username, Password, Extra);
+		break;
+	case hardware::type::Meteorologisk:
+		pHardware = new CMeteorologisk(ID, Password); //Password is location here.
 		break;
 	}
 

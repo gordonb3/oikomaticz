@@ -126,6 +126,7 @@ enum value {
 	DenkoviTCPDevices,		//118
 	OctoPrint,			//119
 	Tesla,		                //120
+	Meteorologisk,	                //121
 	END
 };
 
@@ -257,6 +258,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ BuienRadar,			"Buienradar (Dutch Weather Information)",			"BuienRadar"		},
 	{ OctoPrint,			"OctoPrint (MQTT/Gina Haussge) with LAN interface",		"OctoPrint"		},
 	{ Tesla,			"Tesla Model S/3/X",						"Tesla"			},
+	{ Meteorologisk,		"Meteorologisk institutt Norway (Weather Lookup)",		"Meteorologisk"		},
 	{ 0, NULL, NULL }
 };
 
