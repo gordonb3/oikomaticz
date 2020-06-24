@@ -7,7 +7,7 @@ local self = {
 	LOG_MODULE_EXEC_INFO = 2,
 	LOG_INFO = 3,
 	LOG_DEBUG = 4,
-	DZVERSION = '3.0.5',
+	DZVERSION = '3.0.9',
 }
 
 function jsonParser:unsupportedTypeEncoder(value_of_unsupported_type)
@@ -115,16 +115,18 @@ function self.inTable(searchTable, element)
 	return false
 end
 
-function self.round(x, n)
-	-- n = math.pow(10, n or 0)
-	n = 10^(n or 0)
-	x = x * n
-	if x >= 0 then
-		x = math.floor(x + 0.5)
+function self.round(value, decimals)
+	local nVal = tonumber(value)
+	local nDec = ( decimals == nil and 0 ) or tonumber(decimals)
+	if nVal >= 0 and nDec > 0 then
+		return math.floor( (nVal * 10 ^ nDec) + 0.5) / (10 ^ nDec)
+	elseif nVal >=0 then
+		return math.floor(nVal + 0.5)
+	elseif nDec and nDec > 0 then
+		return math.ceil ( (nVal * 10 ^ nDec) - 0.5) / (10 ^ nDec)
 	else
-		x = math.ceil(x - 0.5)
+		return math.ceil(nVal - 0.5)
 	end
-	return x / n
 end
 
 function string.sMatch(text, match) -- add sanitized match function to string "library"
@@ -188,21 +190,30 @@ function self.isJSON(str, content)
 
 	local str = str or ''
 	local content = content or ''
-	local jsonPattern = '^%s*%[*%s*{.+}%s*%]*%s*$'
-	local ret = str:match(jsonPattern) == str  or content:find('application/json')
+	local jsonPatternOK = '^%s*%[*%s*{.+}%s*%]*%s*$'
+	local jsonPatternOK2 = '^%s*%[.+%]*%s*$'
+	local ret = ( str:match(jsonPatternOK) == str ) or ( str:match(jsonPatternOK2) == str ) or content:find('application/json')
 	return ret ~= nil
-
 end
 
 function self.fromJSON(json, fallback)
 
-	if json and self.isJSON(json) then
+	if not(json) then
+		return fallback
+	end
+
+	if json:find("'") then
+		local _, singleQuotes = json:gsub("'","'")
+		local _, doubleQuotes = json:gsub('"','"')
+		if singleQuotes > doubleQuotes then
+			json = json:gsub("'",'"')
+		end
+	end
+
+	if self.isJSON(json) then
+
 		local parse = function(j)
 			return jsonParser:decode(j)
-		end
-
-		if json == nil then
-			return fallback
 		end
 
 		ok, results = pcall(parse, json)
@@ -266,8 +277,8 @@ function self.isXML(str, content)
 	local str = str or ''
 	local content = content or ''
 	local xmlPattern = '^%s*%<.+%>%s*$'
-	local ret = str:match(xmlPattern) == str  or content:find('application/xml') or content:find('text/xml')
-	return ret ~= nil
+	local ret = ( str:match(xmlPattern) == str  or content:find('application/xml') or content:find('text/xml')) and not(str:sub(1,30):find('DOCTYPE html') )
+	return ret
 
 end
 
@@ -297,11 +308,10 @@ function self.fromXML(xml, fallback)
 		if (ok) then
 			return results
 		end
-		self.log('Error parsing xml to Lua table: ' .. _.str(results), self.LOG_ERROR)
+		-- self.log('Error parsing xml to Lua table: ' .. _.str(results), self.LOG_ERROR)
 	else
 		self.log('Error parsing xml to LUA table: (invalid xml string) ' .. _.str(xml) , self.LOG_ERROR)
 	end
-
 	return fallback
 
 end
@@ -433,6 +443,10 @@ function self.groupExists(parm)
 	return loopGlobal(parm, 'group')
 end
 
+function self.hardwareExists(parm)
+	return loopGlobal(parm, 'hardware')
+end
+
 function self.variableExists(parm)
 	return loopGlobal(parm, 'uservariable')
 end
@@ -465,9 +479,11 @@ function self.dumpSelection(object, selection)
 				self.print('> ' .. attr .. ': ' .. tostring(value))
 			end
 		end
-		self.print('')
-		self.print('> lastUpdate: ' .. (object.lastUpdate.raw or '') )
-		if object.baseType ~= 'variable' then
+		if object.baseType ~= 'hardware' then
+			self.print('')
+			self.print('> lastUpdate: ' .. (object.lastUpdate.raw or '') )
+		end
+		if object.baseType ~= 'variable'  and object.baseType ~= 'hardware' then
 			self.print('> adapters: ' .. table.concat(object._adapters or {},', ') )
 		end
 		if object.baseType == 'device' then
