@@ -24,6 +24,9 @@ class ZWaveBase : public CDomoticzHardwareBase
 
 		ZDTYPE_SENSOR_POWER,
 		ZDTYPE_SENSOR_POWERENERGYMETER,
+		ZDTYPE_SENSOR_KVAH,
+		ZDTYPE_SENSOR_KVAR,
+		ZDTYPE_SENSOR_KVARH,
 		ZDTYPE_SENSOR_GAS,
 		ZDTYPE_SENSOR_VOLTAGE,
 		ZDTYPE_SENSOR_AMPERE,
@@ -124,6 +127,13 @@ public:
 	bool StopHardware() override;
 	bool WriteToHardware(const char *pdata, const unsigned char length) override;
 public:
+	bool m_bNodeReplaced;
+	uint8_t m_NodeToBeReplaced;
+
+	bool m_bHasNodeFailedDone;
+	std::string m_sHasNodeFailedResult;
+	uint8_t m_HasNodeFailedIdx;
+	
 	int m_LastIncludedNode;
 	std::string m_LastIncludedNodeType;
 	bool m_bHaveLastIncludedNodeInfo;
