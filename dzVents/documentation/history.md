@@ -1,3 +1,11 @@
+[3.0.11]
+- Add sensorValue attribute to custom sensor
+- Add solarnoon as moment in time (like sunrise / sunset ) 
+
+[3.0.10]
+- Add NSS_GOOGLE_DEVICES for notification casting to Google home / Google chromecast
+- Add optional parm delay to domoticz.sendCommand, domoticz.email, domoticz.sms and domoticz.notify
+
 [3.0.9]
 - Add dump() as function to object types: camera-, customEvent, hardware, systemEvent, HTTPResponse, security and time. 
 - Add function toUTC to time object.
