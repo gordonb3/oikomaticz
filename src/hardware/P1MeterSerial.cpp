@@ -116,6 +116,11 @@ bool P1MeterSerial::StartHardware()
 
 	setReadCallback(boost::bind(&P1MeterSerial::readCallback, this, _1, _2));
 	sOnConnected(this);
+
+#ifdef DEBUG_P1_R
+	ParseP1Data((const uint8_t*)szP1Test, static_cast<int>(strlen(szP1Test)), m_bDisableCRC, m_ratelimit);
+#endif
+
 	return true;
 }
 

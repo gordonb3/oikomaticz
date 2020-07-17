@@ -63,10 +63,12 @@ const char *szHelp =
 "\t-wwwroot file_path (for example D:\\www)\n"
 "\t-dbase file_path (for example D:\\oikomaticz.db)\n"
 "\t-userdata file_path (for example D:\\oikomaticzdata)\n"
+"\t-approot file_path (for example D:\\oikomaticz)\n"
 #else
 "\t-wwwroot file_path (for example /opt/oikomaticz/www)\n"
 "\t-dbase file_path (for example /opt/oikomaticz/oikomaticz.db)\n"
 "\t-userdata file_path (for example /opt/oikomaticz)\n"
+"\t-approot file_path (for example /opt/oikomaticz)\n"
 #endif
 "\t-webroot additional web root, useful with proxy servers (for example oikomaticz)\n"
 "\t-startupdelay seconds (default=0)\n"

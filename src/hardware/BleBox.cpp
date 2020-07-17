@@ -114,16 +114,6 @@ void BleBox::GetDevicesState()
 		{
 			switch (itt.second)
 			{
-			case 0:
-			{
-				if (DoesNodeExists(root, "state") == false)
-					break;
-
-				const bool state = root["state"].asBool();
-
-				SendSwitch(IP, 0, 255, state, 0, DevicesType[itt.second].name);
-				break;
-			}
 			case 1:
 			{
 				if (DoesNodeExists(root, "shutter") == false)
@@ -195,6 +185,7 @@ void BleBox::GetDevicesState()
 				SendSwitch(IP, 0, 255, level > 0, level, DevicesType[itt.second].name);
 				break;
 			}
+			case 0:
 			case 6:
 			{
 				if ((DoesNodeExists(root, "relays") == false) || (!root["relays"].isArray()))
@@ -356,33 +347,6 @@ bool BleBox::WriteToHardware(const char* pdata, const unsigned char /*length*/)
 		{
 			switch (type)
 			{
-			case 0:
-			{
-				std::string state;
-				if (output->LIGHTING2.cmnd == light2_sOn)
-				{
-					state = "1";
-				}
-				else
-				{
-					state = "0";
-				}
-
-				Json::Value root = SendCommand(IPAddress, "/s/" + state);
-				if (root.empty())
-					return false;
-
-				if (DoesNodeExists(root, "state") == false)
-					return false;
-
-				if (root["state"].asString() != state)
-				{
-					Log(LOG_ERROR, "state not changed!");
-					return false;
-				}
-				break;
-			}
-
 			case 1: // shutterbox
 			{
 				int percentage = 0;
@@ -495,7 +459,8 @@ bool BleBox::WriteToHardware(const char* pdata, const unsigned char /*length*/)
 				break;
 			}
 
-			case 6: //switchboxd
+			case 0: // switchbox
+			case 6: // switchboxd
 			{
 				std::string state;
 				std::string relayNumber;

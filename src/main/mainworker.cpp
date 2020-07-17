@@ -5729,6 +5729,12 @@ void MainWorker::decode_Fan(const CDomoticzHardwareBase* pHardware, const tRBUF*
 		case sTypeLucciAirDCII:
 			WriteMessage("subtype       = Lucci Air DC II");
 			break;
+		case sTypeIthoECO:
+			WriteMessage("subtype       = Itho ECO");
+			break;
+		case sTypeNovy:
+			WriteMessage("subtype       = Novy");
+			break;
 		default:
 			sprintf(szTmp, "ERROR: Unknown Sub type for Packet type= %02X:%02X", pResponse->LIGHTING6.packettype, pResponse->LIGHTING6.subtype);
 			WriteMessage(szTmp);
@@ -9803,7 +9809,7 @@ void MainWorker::decode_Usage(const CDomoticzHardwareBase* pHardware, const tRBU
 	std::string ID = szTmp;
 	uint8_t Unit = pMeter->dunit;
 	uint8_t cmnd = 0;
-	uint8_t SignalLevel = 12;
+	uint8_t SignalLevel = pMeter->rssi;
 	uint8_t BatteryLevel = 255;
 
 	sprintf(szTmp, "%.1f", pMeter->fusage);
@@ -12876,11 +12882,19 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd, const st
 
 		if (scenetype == SGTYPE_GROUP)
 		{
+			std::vector<std::string> validCmdArray {"On", "Off", "Toggle", "Group On" , "Chime", "All On"};
+			if (std::find(validCmdArray.begin(), validCmdArray.end(), switchcmd) == validCmdArray.end())
+				return false;
 			//when asking for Toggle, just switch to the opposite value
 			if (switchcmd == "Toggle") {
 				nValue = (atoi(status.c_str()) == 0 ? 1 : 0);
 				switchcmd = (nValue == 1 ? "On" : "Off");
 			}
+		}
+		else
+		{
+			if (switchcmd != "On")
+				return false; //A Scene can only be turned On
 		}
 		m_sql.HandleOnOffAction((nValue == 1), onaction, offaction);
 	}

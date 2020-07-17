@@ -54,37 +54,6 @@ std::string ReadFile(std::string filename)
 }
 #endif
 
-//Haversine formula to calculate distance between two points
-
-#define earthRadiusKm 6371.0
-
-// This function converts decimal degrees to radians
-double deg2rad(double deg)
-{
-	return (deg * 3.14159265358979323846264338327950288 / 180.0);
-}
-
-/**
- * Returns the distance between two points on the Earth.
- * Direct translation from http://en.wikipedia.org/wiki/Haversine_formula
- * @param lat1d Latitude of the first point in degrees
- * @param lon1d Longitude of the first point in degrees
- * @param lat2d Latitude of the second point in degrees
- * @param lon2d Longitude of the second point in degrees
- * @return The distance between the two points in kilometers
- */
-double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d)
-{
-	double lat1r, lon1r, lat2r, lon2r, u, v;
-	lat1r = deg2rad(lat1d);
-	lon1r = deg2rad(lon1d);
-	lat2r = deg2rad(lat2d);
-	lon2r = deg2rad(lon2d);
-	u = sin((lat2r - lat1r) / 2);
-	v = sin((lon2r - lon1r) / 2);
-	return 2.0 * earthRadiusKm * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
-}
-
 CBuienRadar::CBuienRadar(const int ID, const int iForecast, const int iThreshold, const std::string& Location)
 {
 	m_HwdID = ID;
@@ -101,6 +70,7 @@ CBuienRadar::CBuienRadar(const int ID, const int iForecast, const int iThreshold
 			{
 				try {
 					m_iStationID = std::stoi(strarray[0]);
+					m_stationidprovided=true;
 				}
 				catch (const std::exception& e) {
 					Log(LOG_ERROR, "Bad Station ID provided: %s (%s), please recheck hardware setup.", strarray[0].c_str(), e.what());
@@ -381,7 +351,7 @@ void CBuienRadar::GetMeterDetails()
 		return;
 	}
 
-	if (root["timestamp"].empty() == true || root["stationid"].empty() == true)
+	if (root["timestamp"].empty() == true || (root["stationid"].empty() == true && root["stationId"].empty() == true))
 	{
 		Log(LOG_ERROR, "Invalid data received (timestamp or staionid missing) or no data returned!");
 		return;
@@ -401,6 +371,26 @@ void CBuienRadar::GetMeterDetails()
 
 	//iconurl : "https://www.buienradar.nl/resources/images/icons/weather/30x30/a.png"
 	//graphUrl : "https://www.buienradar.nl/nederland/weerbericht/weergrafieken/a"
+
+	// Update Location details if a configured station is used
+	if (m_stationidprovided)
+	{
+		if (!root["lon"].empty())
+		{
+			if (root["lon"].asFloat()>0)
+			{
+				m_szMyLongitude = std::to_string(root["lon"].asDouble());
+			}
+		}
+
+		if (!root["lat"].empty())
+		{
+			if (root["lat"].asFloat()>0)
+			{
+				m_szMyLatitude = std::to_string(root["lat"].asDouble());
+			}
+		}
+	}
 
 	float temp = -999.9f;
 	int humidity = 0;
@@ -510,7 +500,7 @@ void CBuienRadar::GetMeterDetails()
 
 void CBuienRadar::GetRainPrediction()
 {
-	if (m_szMyLatitude.empty())
+	if (m_szMyLatitude.empty() || m_szMyLongitude.empty() ||  std::stoi(m_szMyLatitude)<1 || std::stoi(m_szMyLongitude)<1)
 		return;
 
 	std::string sResult;
@@ -534,6 +524,13 @@ void CBuienRadar::GetRainPrediction()
 		Log(LOG_ERROR, "Problem Connecting to Buienradar! (Check your Internet Connection!)");
 		return;
 	}
+	if (sResult.size()==0)
+	{
+		// Log(LOG_ERROR, "Problem getting Rainprediction: no prediction available at Buienradar");
+		// no data to process, so don't update the sensros
+		return;
+	}
+
 #ifdef DEBUG_BUIENRADARW
 	SaveString2Disk(sResult, "E:\\br_rain.txt");
 #endif

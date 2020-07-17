@@ -326,12 +326,13 @@ void CDomoticzHardwareBase::SendSetPointSensor(const uint8_t NodeID, const uint8
 }
 
 
-void CDomoticzHardwareBase::SendDistanceSensor(const int NodeID, const int ChildID, const int BatteryLevel, const float distance, const std::string& defaultname)
+void CDomoticzHardwareBase::SendDistanceSensor(const int NodeID, const int ChildID, const int BatteryLevel, const float distance, const std::string& defaultname, const int RssiLevel /* =12 */)
 {
 	_tGeneralDevice gdevice;
 	gdevice.subtype = sTypeDistance;
 	gdevice.intval1 = (NodeID << 8) | ChildID;
 	gdevice.floatval1 = distance;
+	gdevice.rssi = RssiLevel;
 	sDecodeRXMessage(this, (const unsigned char*)& gdevice, defaultname.c_str(), BatteryLevel);
 }
 
@@ -505,7 +506,7 @@ bool CDomoticzHardwareBase::GetWindSensorValue(const int NodeID, int& WindDir, f
 	return bExists;
 }
 
-void CDomoticzHardwareBase::SendWattMeter(const uint8_t NodeID, const uint8_t ChildID, const int BatteryLevel, const float musage, const std::string& defaultname)
+void CDomoticzHardwareBase::SendWattMeter(const uint8_t NodeID, const uint8_t ChildID, const int BatteryLevel, const float musage, const std::string& defaultname, const int RssiLevel /* =12 */)
 {
 	_tUsageMeter umeter;
 	umeter.id1 = 0;
@@ -513,24 +514,26 @@ void CDomoticzHardwareBase::SendWattMeter(const uint8_t NodeID, const uint8_t Ch
 	umeter.id3 = 0;
 	umeter.id4 = NodeID;
 	umeter.dunit = ChildID;
+	umeter.rssi = RssiLevel;
 	umeter.fusage = musage;
 	sDecodeRXMessage(this, (const unsigned char*)& umeter, defaultname.c_str(), BatteryLevel);
 }
 
 //Obsolete, we should not call this anymore
 //when all calls are removed, we should delete this function
-void CDomoticzHardwareBase::SendKwhMeterOldWay(const int NodeID, const int ChildID, const int BatteryLevel, const double musage, const double mtotal, const std::string& defaultname)
+void CDomoticzHardwareBase::SendKwhMeterOldWay(const int NodeID, const int ChildID, const int BatteryLevel, const double musage, const double mtotal, const std::string& defaultname, const int RssiLevel /* =12 */)
 {
 	SendKwhMeter(NodeID, ChildID, BatteryLevel, musage * 1000, mtotal, defaultname);
 }
 
-void CDomoticzHardwareBase::SendKwhMeter(const int NodeID, const int ChildID, const int BatteryLevel, const double musage, const double mtotal, const std::string& defaultname)
+void CDomoticzHardwareBase::SendKwhMeter(const int NodeID, const int ChildID, const int BatteryLevel, const double musage, const double mtotal, const std::string& defaultname, const int RssiLevel /* =12 */)
 {
 	_tGeneralDevice gdevice;
 	gdevice.subtype = sTypeKwh;
 	gdevice.intval1 = (NodeID << 8) | ChildID;
 	gdevice.floatval1 = (float)musage;
 	gdevice.floatval2 = (float)(mtotal * 1000.0);
+	gdevice.rssi = RssiLevel;
 	sDecodeRXMessage(this, (const unsigned char*)& gdevice, defaultname.c_str(), BatteryLevel);
 }
 
@@ -969,13 +972,14 @@ void CDomoticzHardwareBase::SendGeneralSwitch(const int NodeID, const int ChildI
 	sDecodeRXMessage(this, (const unsigned char*)& gSwitch, defaultname.c_str(), BatteryLevel);
 }
 
-void CDomoticzHardwareBase::SendMoistureSensor(const int NodeID, const int BatteryLevel, const int mLevel, const std::string& defaultname)
+void CDomoticzHardwareBase::SendMoistureSensor(const int NodeID, const int BatteryLevel, const int mLevel, const std::string& defaultname, const int RssiLevel /* =12 */)
 {
 	_tGeneralDevice gDevice;
 	gDevice.subtype = sTypeSoilMoisture;
 	gDevice.id = 1;
 	gDevice.intval1 = NodeID;
 	gDevice.intval2 = mLevel;
+	gDevice.rssi = RssiLevel;
 	sDecodeRXMessage(this, (const unsigned char*)& gDevice, defaultname.c_str(), BatteryLevel);
 }
 
@@ -1025,4 +1029,22 @@ void CDomoticzHardwareBase::SendFanSensor(const int Idx, const int BatteryLevel,
 	gDevice.intval1 = Idx;
 	gDevice.intval2 = FanSpeed;
 	sDecodeRXMessage(this, (const unsigned char*)& gDevice, defaultname.c_str(), BatteryLevel);
+}
+
+void CDomoticzHardwareBase::SendSecurity1Sensor(const int NodeID, const int DeviceSubType, const int BatteryLevel, const int Status, const std::string &defaultname, const int RssiLevel /* = 12 */)
+{
+	RBUF m_sec1;
+	memset(&m_sec1, 0, sizeof(RBUF));
+	
+	m_sec1.SECURITY1.packetlength = sizeof(m_sec1) -1;
+	m_sec1.SECURITY1.packettype = pTypeSecurity1;
+	m_sec1.SECURITY1.subtype = DeviceSubType;
+	m_sec1.SECURITY1.id1 = (NodeID & 0xFF0000) >> 16;
+	m_sec1.SECURITY1.id2 = (NodeID & 0xFF00) >> 8;
+	m_sec1.SECURITY1.id3 = (NodeID & 0xFF);
+	m_sec1.SECURITY1.status = Status;
+	m_sec1.SECURITY1.rssi = RssiLevel;
+	m_sec1.SECURITY1.battery_level = BatteryLevel;
+	
+	sDecodeRXMessage(this, (const unsigned char*)& m_sec1.SECURITY1, defaultname.c_str(), BatteryLevel);
 }

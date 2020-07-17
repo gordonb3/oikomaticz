@@ -237,6 +237,12 @@ define(['app'], function (app) {
 					}
 
 					Mode1 = baudrate;
+					var decryptionkey = $("#hardwarecontent #divkeyp1p1 #decryptionkey").val();
+					if (decryptionkey.length % 2 != 0 ) {
+						ShowNotify($.t("Invallid Descryption Key Length!"), 2500, true);
+						return;
+					}
+					password = decryptionkey;
 				}
 				if (text.indexOf("Teleinfo EDF") >= 0) {
 					var baudrate = $("#hardwarecontent #divbaudrateteleinfo #combobaudrateteleinfo option:selected").val();
@@ -318,7 +324,6 @@ define(['app'], function (app) {
 				)
 			) {
 				var password = "";
-
 				var address = $("#hardwarecontent #divremote #tcpaddress").val();
 				if (address == "") {
 					ShowNotify($.t('Please enter an Address!'), 2500, true);
@@ -343,6 +348,14 @@ define(['app'], function (app) {
 					extra = $.devExtra;
 				}
 
+				if (text.indexOf("P1 Smart Meter") >= 0) {
+					var decryptionkey = $("#hardwarecontent #divkeyp1p1 #decryptionkey").val();
+					if (decryptionkey.length % 2 != 0 ) {
+						ShowNotify($.t("Invallid Descryption Key Length!"), 2500, true);
+						return;
+					}
+					password = decryptionkey;
+				}
 				if (text.indexOf("Teleinfo EDF") >= 0) {
 					Mode2 = $("#hardwarecontent #divcrcp1 #disablecrcp1").prop("checked") ? 0 : 1;
 					var ratelimitp1 = $("#hardwarecontent #hardwareparamsratelimitp1 #ratelimitp1").val();
@@ -1972,7 +1985,12 @@ define(['app'], function (app) {
 					}
 				});
 			}
-			else if ((text.indexOf("Underground") >= 0) || (text.indexOf("DarkSky") >= 0) || (text.indexOf("AccuWeather") >= 0) || (text.indexOf("Open Weather Map") >= 0)) {
+			else if (
+					(text.indexOf("Underground") >= 0) ||
+					(text.indexOf("DarkSky") >= 0) ||
+					(text.indexOf("AccuWeather") >= 0) ||
+					(text.indexOf("Open Weather Map") >= 0)
+					) {
 				var apikey = $("#hardwarecontent #divunderground #apikey").val();
 				if (apikey == "") {
 					ShowNotify($.t('Please enter an API Key!'), 2500, true);

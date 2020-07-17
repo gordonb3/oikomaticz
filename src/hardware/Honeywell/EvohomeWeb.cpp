@@ -298,6 +298,7 @@ bool CEvohomeWeb::GetStatus()
 		return false;
 	if (evohome::WebAPI::v2->m_vLocations.size() < (size_t)m_locationIdx)
 		return false;
+	_log.Log(LOG_NORM, "(%s) fetch data from server", m_Name.c_str());
 	if (!evohome::WebAPI::v2->get_status(evohome::WebAPI::v2->m_vLocations[m_locationIdx].szLocationId))
 	{
 		int returnCode = GetLastV2ResponseCode();
@@ -305,7 +306,6 @@ bool CEvohomeWeb::GetStatus()
 			m_loggedon = false;
 		return false;
 	}
-	_log.Log(LOG_NORM, "(%s) fetch data from server", m_Name.c_str());
 
 	// system status
 	DecodeControllerMode(evohome::WebAPI::tcs2);
