@@ -129,6 +129,7 @@ bool CEvohomeWeb::StartSession()
 {
 	if (m_loggedon)
 	{
+		_log.Debug(DEBUG_HARDWARE, "(%s) renewing V2 session", m_Name.c_str());
 		if (!evohome::WebAPI::v2->is_session_valid() && !evohome::WebAPI::v2->renew_login())
 		{
 			int returnCode = GetLastV2ResponseCode();
@@ -296,8 +297,11 @@ bool CEvohomeWeb::GetStatus()
 {
 	if (!evohome::WebAPI::v2->is_session_valid() && !StartSession())
 		return false;
-	if (evohome::WebAPI::v2->m_vLocations.size() < (size_t)m_locationIdx)
+	if (evohome::WebAPI::v2->m_vLocations.size() <= (size_t)m_locationIdx)
+	{
+		_log.Log(LOG_ERROR, "(%s) location ID is invalid, verify your settings", m_Name.c_str());
 		return false;
+	}
 	_log.Log(LOG_NORM, "(%s) fetch data from server", m_Name.c_str());
 	if (!evohome::WebAPI::v2->get_status(evohome::WebAPI::v2->m_vLocations[m_locationIdx].szLocationId))
 	{
@@ -312,11 +316,17 @@ bool CEvohomeWeb::GetStatus()
 
 	if (m_showhdtemps)
 	{
-		if (!evohome::WebAPI::v1->is_session_valid() && !evohome::WebAPI::v1->login(m_username, m_password))
+		bool v1sessionvalid = evohome::WebAPI::v1->is_session_valid();
+		if (!v1sessionvalid)
 		{
-			_log.Log(LOG_ERROR, "(%s) failed login to v1 API", m_Name.c_str());
+			_log.Debug(DEBUG_HARDWARE, "(%s) renewing V1 session", m_Name.c_str());
+			v1sessionvalid = evohome::WebAPI::v1->login(m_username, m_password);
+			if (!v1sessionvalid)
+			{
+				_log.Log(LOG_ERROR, "(%s) failed login to v1 API", m_Name.c_str());
+			}
 		}
-		else if (!evohome::WebAPI::v1->full_installation())
+		if (v1sessionvalid && !evohome::WebAPI::v1->full_installation())
 		{
 			_log.Log(LOG_ERROR, "(%s) error fetching v1 data from server", m_Name.c_str());
 		}
