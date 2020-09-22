@@ -10307,48 +10307,35 @@ namespace http {
 						else
 						{
 							float EnergyDivider = 1000.0f;
+							double musage;
 							int tValue;
 							if (m_sql.GetPreferencesVar("MeterDividerEnergy", tValue))
-							{
 								EnergyDivider = float(tValue);
-							}
+							else
+								EnergyDivider = 1000.0f;
 
-							unsigned long long powerusage1 = std::strtoull(splitresults[0].c_str(), nullptr, 10);
-							unsigned long long powerusage2 = std::strtoull(splitresults[1].c_str(), nullptr, 10);
-							unsigned long long powerdeliv1 = std::strtoull(splitresults[2].c_str(), nullptr, 10);
-							unsigned long long powerdeliv2 = std::strtoull(splitresults[3].c_str(), nullptr, 10);
-							unsigned long long usagecurrent = std::strtoull(splitresults[4].c_str(), nullptr, 10);
-							unsigned long long delivcurrent = std::strtoull(splitresults[5].c_str(), nullptr, 10);
+							unsigned long long powerusage_1 = std::strtoull(splitresults[0].c_str(), nullptr, 10);
+							unsigned long long powerusage_2 = std::strtoull(splitresults[1].c_str(), nullptr, 10);
+							unsigned long long powerusage = powerusage_1 + powerusage_2;
 
-							powerdeliv1 = (powerdeliv1 < 10) ? 0 : powerdeliv1;
-							powerdeliv2 = (powerdeliv2 < 10) ? 0 : powerdeliv2;
-
-							unsigned long long powerusage = powerusage1 + powerusage2;
-							unsigned long long powerdeliv = powerdeliv1 + powerdeliv2;
-							if (powerdeliv < 2)
+							unsigned long long powerdeliv_1 = std::strtoull(splitresults[2].c_str(), nullptr, 10);
+							unsigned long long powerdeliv_2 = std::strtoull(splitresults[3].c_str(), nullptr, 10);
+							unsigned long long powerdeliv = powerdeliv_1 + powerdeliv_2;
+							if (powerdeliv < 1000)
 								powerdeliv = 0;
 
-							double musage = 0;
-
-							root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::ENERGY;
-							musage = double(powerusage) / EnergyDivider;
-							sprintf(szTmp, "%.03f", musage);
-							root["result"][ii]["Counter"] = szTmp;
-							musage = double(powerdeliv) / EnergyDivider;
-							sprintf(szTmp, "%.03f", musage);
-							root["result"][ii]["CounterDeliv"] = szTmp;
-
+							unsigned long long usagecurrent, delivcurrent;
 							if (bHaveTimeout)
 							{
 								usagecurrent = 0;
 								delivcurrent = 0;
 							}
-							sprintf(szTmp, "%llu Watt", usagecurrent);
-							root["result"][ii]["Usage"] = szTmp;
-							sprintf(szTmp, "%llu Watt", delivcurrent);
-							root["result"][ii]["UsageDeliv"] = szTmp;
-							root["result"][ii]["Data"] = sValue;
-							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
+							else
+							{
+								usagecurrent = std::strtoull(splitresults[4].c_str(), nullptr, 10);
+								delivcurrent = std::strtoull(splitresults[5].c_str(), nullptr, 10);
+							}
+
 
 							//get value of today
 							time_t now = mytime(NULL);
@@ -10357,6 +10344,7 @@ namespace http {
 							char szDate[40];
 							sprintf(szDate, "%04d-%02d-%02d", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday);
 
+							unsigned long long day_total_powerusage, day_total_powerdeliv;
 							std::vector<std::vector<std::string> > result2;
 							strcpy(szTmp, "0");
 							result2 = m_sql.safe_query("SELECT MIN(Value1), MIN(Value2), MIN(Value5), MIN(Value6) FROM MultiMeter WHERE (DeviceRowID='%q' AND Date>='%q')",
@@ -10365,28 +10353,51 @@ namespace http {
 							{
 								std::vector<std::string> sd2 = result2[0];
 
-								unsigned long long total_min_usage_1 = std::strtoull(sd2[0].c_str(), nullptr, 10);
-								unsigned long long total_min_deliv_1 = std::strtoull(sd2[1].c_str(), nullptr, 10);
-								unsigned long long total_min_usage_2 = std::strtoull(sd2[2].c_str(), nullptr, 10);
-								unsigned long long total_min_deliv_2 = std::strtoull(sd2[3].c_str(), nullptr, 10);
-								unsigned long long total_real_usage, total_real_deliv;
+								unsigned long long day_start_powerusage_1 = std::strtoull(sd2[0].c_str(), nullptr, 10);
+								unsigned long long day_start_powerusage_2 = std::strtoull(sd2[2].c_str(), nullptr, 10);
+								unsigned long long day_start_powerusage = day_start_powerusage_1 + day_start_powerusage_2;
 
-								total_real_usage = powerusage - (total_min_usage_1 + total_min_usage_2);
-								total_real_deliv = powerdeliv - (total_min_deliv_1 + total_min_deliv_2);
+								unsigned long long day_start_powerdeliv_1 = std::strtoull(sd2[1].c_str(), nullptr, 10);
+								unsigned long long day_start_powerdeliv_2 = std::strtoull(sd2[3].c_str(), nullptr, 10);
+								unsigned long long day_start_powerdeliv = day_start_powerdeliv_1 + day_start_powerdeliv_2;
 
-								musage = double(total_real_usage) / EnergyDivider;
-								sprintf(szTmp, "%.3f kWh", musage);
-								root["result"][ii]["CounterToday"] = szTmp;
-								musage = double(total_real_deliv) / EnergyDivider;
-								sprintf(szTmp, "%.3f kWh", musage);
-								root["result"][ii]["CounterDelivToday"] = szTmp;
+								day_total_powerusage = powerusage - day_start_powerusage;
+								if (powerdeliv > day_start_powerdeliv)
+									day_total_powerdeliv = powerdeliv - day_start_powerdeliv;
+								else
+								{
+									day_total_powerdeliv = 0;
+									if (powerdeliv < 1000)
+										powerdeliv = 0;  // clear phantom delivery
+								}
+
 							}
 							else
 							{
-								sprintf(szTmp, "%.3f kWh", 0.0f);
-								root["result"][ii]["CounterToday"] = szTmp;
-								root["result"][ii]["CounterDelivToday"] = szTmp;
+								day_total_powerusage = 0;
+								day_total_powerdeliv = 0;
 							}
+
+							root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::ENERGY;
+							root["result"][ii]["Data"] = sValue;
+							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
+
+							musage = double(powerusage) / EnergyDivider;
+							sprintf(szTmp, "%.03f", musage);
+							root["result"][ii]["Counter"] = szTmp;
+							musage = double(powerdeliv) / EnergyDivider;
+							sprintf(szTmp, "%.03f", musage);
+							root["result"][ii]["CounterDeliv"] = szTmp;
+							musage = double(day_total_powerusage) / EnergyDivider;
+							sprintf(szTmp, "%.3f kWh", musage);
+							root["result"][ii]["CounterToday"] = szTmp;
+							musage = double(day_total_powerdeliv) / EnergyDivider;
+							sprintf(szTmp, "%.3f kWh", musage);
+							root["result"][ii]["CounterDelivToday"] = szTmp;
+							sprintf(szTmp, "%llu Watt", usagecurrent);
+							root["result"][ii]["Usage"] = szTmp;
+							sprintf(szTmp, "%llu Watt", delivcurrent);
+							root["result"][ii]["UsageDeliv"] = szTmp;
 						}
 					}
 					else if (dType == pTypeP1Gas)
