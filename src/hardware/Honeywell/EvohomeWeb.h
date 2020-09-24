@@ -78,6 +78,9 @@ private:
 	double m_awaysetpoint;
 	uint8_t m_wdayoff;
 
+	// verbosity level (on/off)
+	bool m_beMoreVerbose;
+
 	std::vector<evohome::device::location> m_locations;
 	std::vector<std::vector<unsigned long>> m_vUnits;
 };

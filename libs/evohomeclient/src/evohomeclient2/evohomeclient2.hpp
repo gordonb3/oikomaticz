@@ -92,7 +92,7 @@ public:
  ************************************************************************/
 
 	bool get_status(const unsigned int locationIdx);
-	bool get_status(std::string szLocationId);
+	bool get_status(const std::string szLocationId);
 
 
 /************************************************************************
@@ -106,12 +106,12 @@ public:
 
 	int get_location_index(const std::string szLocationId);
 
-	evohome::device::zone *get_zone_by_ID(std::string szZoneId);
-	evohome::device::zone *get_zone_by_Name(std::string szZoneName);
-	evohome::device::location *get_location_by_ID(std::string szLocationId);
-	evohome::device::gateway *get_gateway_by_ID(std::string szGatewayId);
-	evohome::device::temperatureControlSystem *get_temperatureControlSystem_by_ID(std::string szSystemId);
-	evohome::device::temperatureControlSystem *get_zone_temperatureControlSystem(evohome::device::zone *zone);
+	evohome::device::zone *get_zone_by_ID(const std::string szZoneId);
+	evohome::device::zone *get_zone_by_Name(const std::string szZoneName);
+	evohome::device::location *get_location_by_ID(const std::string szLocationId);
+	evohome::device::gateway *get_gateway_by_ID(const std::string szGatewayId);
+	evohome::device::temperatureControlSystem *get_temperatureControlSystem_by_ID(const std::string szSystemId);
+	evohome::device::temperatureControlSystem *get_zone_temperatureControlSystem(const evohome::device::zone *zone);
 
 
 /************************************************************************
@@ -155,6 +155,8 @@ public:
  *	Return Data Fields						*
  *									*
  ************************************************************************/
+
+	std::string get_user_id();
 
 	std::string get_zone_temperature(const std::string szZoneId);
 	std::string get_zone_temperature(const evohome::device::zone *zone);
@@ -228,7 +230,7 @@ public:
 private:
 	void init();
 	bool obtain_access_token(const std::string &szCredentials);
-	bool get_user_id();
+	bool request_user_id();
 
 	void get_gateways(const unsigned int locationIdx);
 	void get_temperatureControlSystems(const unsigned int locationIdx, const unsigned int gatewayIdx);

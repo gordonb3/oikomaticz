@@ -101,6 +101,7 @@ void CEvohomeWeb::Init()
 	m_loggedon = false;
 	m_logonfailures = 0;
 	m_szLocationName = "";
+	m_beMoreVerbose = _log.IsDebugLevelEnabled(DEBUG_HARDWARE);
 
 	if (m_showhdtemps)
 	{
@@ -117,8 +118,11 @@ int CEvohomeWeb::GetLastV2ResponseCode()
 {
 	std::string szResponse = evohome::WebAPI::v2->get_last_response();
 
+	if (szResponse.empty())
+		return -1;
+
 	Json::Value jResponse;
-	if (!evohome::parse_json_string(szResponse, jResponse))
+	if (evohome::parse_json_string(szResponse, jResponse) < 0)
 		return -1;
 
 	return atoi(jResponse["code"].asString().c_str());
@@ -127,17 +131,19 @@ int CEvohomeWeb::GetLastV2ResponseCode()
 
 bool CEvohomeWeb::StartSession()
 {
-	if (m_loggedon)
+	if (m_loggedon && !evohome::WebAPI::v2->is_session_valid())
 	{
 		_log.Debug(DEBUG_HARDWARE, "(%s) renewing V2 session", m_Name.c_str());
-		if (!evohome::WebAPI::v2->is_session_valid() && !evohome::WebAPI::v2->renew_login())
+		if (!evohome::WebAPI::v2->renew_login())
 		{
+			_log.Debug(DEBUG_HARDWARE, "(%s) V2 session renewal failed", m_Name.c_str());
 			int returnCode = GetLastV2ResponseCode();
-			_log.Log(LOG_ERROR, "(%s) session renewal failed with message: %s (RC=%d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
+			_log.Log(LOG_ERROR, "(%s) session renewal failed with message: %s (RC = %d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
 			if (returnCode >= 400)
 				m_loggedon = false;
 			return false;
 		}
+		_log.Debug(DEBUG_HARDWARE, "(%s) V2 session renewal success", m_Name.c_str());
 	}
 
 	if (!m_loggedon)
@@ -146,7 +152,7 @@ bool CEvohomeWeb::StartSession()
 		if (!evohome::WebAPI::v2->login(m_username, m_password))
 		{
 			int returnCode = GetLastV2ResponseCode();
-			_log.Log(LOG_ERROR, "(%s) login failed with message: %s (RC=%d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
+			_log.Log(LOG_ERROR, "(%s) login failed with message: %s (RC = %d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
 			m_logonfailures++;
 			if (m_logonfailures == LOGONFAILTRESHOLD)
 				_log.Log(LOG_STATUS, "(%s) logon fail treshold reached - trottling", m_Name.c_str());
@@ -155,23 +161,27 @@ bool CEvohomeWeb::StartSession()
 			return false;
 		}
 		m_loggedon = true;
+		_log.Debug(DEBUG_HARDWARE, "(%s) V2 session established successfully", m_Name.c_str());
 	}
 
 	m_logonfailures = 0;
 
+	_log.Debug(DEBUG_HARDWARE, "(%s) retrieve installation info for user %s", m_Name.c_str(), evohome::WebAPI::v2->get_user_id().c_str());
 	// (re)initialize Evohome installation info
 	std::vector<std::vector<unsigned long>>().swap(m_vUnits);
 	if (!evohome::WebAPI::v2->full_installation())
 	{
-		_log.Log(LOG_ERROR, "(%s) failed to retrieve installation info from server", m_Name.c_str());
+		int returnCode = GetLastV2ResponseCode();
+		_log.Log(LOG_ERROR, "(%s) retrieve installation info failed with message: %s (RC = %d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
 		return false;
 	}
 
 	evohome::WebAPI::tcs2 = NULL;
+	size_t numLocations = evohome::WebAPI::v2->m_vLocations.size();
 	if (
-		(evohome::WebAPI::v2->m_vLocations.size() > m_locationIdx) &&
-		(evohome::WebAPI::v2->m_vLocations[m_locationIdx].gateways.size() > m_gatewayIdx) &&
-		(evohome::WebAPI::v2->m_vLocations[m_locationIdx].gateways[m_gatewayIdx].temperatureControlSystems.size() > m_systemIdx)
+		(numLocations > (size_t)m_locationIdx) &&
+		(evohome::WebAPI::v2->m_vLocations[m_locationIdx].gateways.size() > (size_t)m_gatewayIdx) &&
+		(evohome::WebAPI::v2->m_vLocations[m_locationIdx].gateways[m_gatewayIdx].temperatureControlSystems.size() > (size_t)m_systemIdx)
 		)
 	{
 		evohome::WebAPI::tcs2 = &evohome::WebAPI::v2->m_vLocations[m_locationIdx].gateways[m_gatewayIdx].temperatureControlSystems[m_systemIdx];
@@ -181,6 +191,13 @@ bool CEvohomeWeb::StartSession()
 	{
 		_log.Log(LOG_ERROR, "(%s) installation at [%d,%d,%d] does not exist - verify your settings", m_Name.c_str(), m_locationIdx, m_gatewayIdx, m_systemIdx);
 		return false;
+	}
+	if (m_beMoreVerbose)
+	{
+		char cMulti[2] = {'\0','\0'};
+		if (numLocations != 1)
+			cMulti[0] = 's';
+		_log.Debug(DEBUG_HARDWARE, "(%s) server reports %d registered location%s, selected `%s`", m_Name.c_str(), static_cast<int>(numLocations), cMulti, m_szLocationName.c_str());
 	}
 
 	if (m_awaysetpoint == 0) // first run - try to get our Away setpoint value from the controller device status
@@ -297,17 +314,24 @@ bool CEvohomeWeb::GetStatus()
 {
 	if (!evohome::WebAPI::v2->is_session_valid() && !StartSession())
 		return false;
-	if (evohome::WebAPI::v2->m_vLocations.size() <= (size_t)m_locationIdx)
+	if ((size_t)m_locationIdx > evohome::WebAPI::v2->m_vLocations.size())
 	{
 		_log.Log(LOG_ERROR, "(%s) location ID is invalid, verify your settings", m_Name.c_str());
 		return false;
 	}
 	_log.Log(LOG_NORM, "(%s) fetch data from server", m_Name.c_str());
-	if (!evohome::WebAPI::v2->get_status(evohome::WebAPI::v2->m_vLocations[m_locationIdx].szLocationId))
+	if (!evohome::WebAPI::v2->get_status(m_locationIdx))
 	{
 		int returnCode = GetLastV2ResponseCode();
 		if (returnCode >= 400)
+		{
+			_log.Log(LOG_ERROR, "(%s) V2 session was invalidated (RC = %d)", m_Name.c_str(), returnCode);
 			m_loggedon = false;
+		}
+		else
+		{
+			_log.Log(LOG_ERROR, "(%s) V2 status retrieval failed with message: %s (RC = %d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
+		}
 		return false;
 	}
 
@@ -319,16 +343,16 @@ bool CEvohomeWeb::GetStatus()
 		bool v1sessionvalid = evohome::WebAPI::v1->is_session_valid();
 		if (!v1sessionvalid)
 		{
-			_log.Debug(DEBUG_HARDWARE, "(%s) renewing V1 session", m_Name.c_str());
+			_log.Debug(DEBUG_HARDWARE, "(%s) login to V1 API", m_Name.c_str());
 			v1sessionvalid = evohome::WebAPI::v1->login(m_username, m_password);
 			if (!v1sessionvalid)
 			{
-				_log.Log(LOG_ERROR, "(%s) failed login to v1 API", m_Name.c_str());
+				_log.Log(LOG_ERROR, "(%s) login to v1 API failed with message: %s", m_Name.c_str(), evohome::WebAPI::v1->get_last_error().c_str());
 			}
 		}
 		if (v1sessionvalid && !evohome::WebAPI::v1->full_installation())
 		{
-			_log.Log(LOG_ERROR, "(%s) error fetching v1 data from server", m_Name.c_str());
+			_log.Log(LOG_ERROR, "(%s) v1 data retrieval failed with message: %s", m_Name.c_str(), evohome::WebAPI::v1->get_last_error().c_str());
 		}
 	}
 
@@ -395,10 +419,10 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 			double setpoint = 0;
 
 			/*  there is no strict definition for modes Away, DayOff and Custom so we'll have to wait
-			 *  for the next update to get the correct values. But we can make educated guesses
+			 *  for the next update to get the correct values, but we can make educated guesses
 			 */
 
-			// Away unconditionally sets all zones to a preset temperature, even if Normal mode is lower
+			// Away unconditionally sets all zones to a preset temperature, even if Normal mode is set to a lower temperature
 			if (sznewmode == "Away")
 				setpoint = m_awaysetpoint;
 			else if (sznewmode != "Custom")
