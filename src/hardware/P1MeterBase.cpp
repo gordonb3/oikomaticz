@@ -139,10 +139,13 @@ bool P1MeterBase::MatchLine()
 			{
 				// Try to match OBIS IDs:
 				//    active power usage L1-L3:		1-0:21.7.0	1-0:41.7.0	1-0:61.7.0
-				//    instantaneous current L1-L3:	1-0:31.7.0	1-0:51.7.0	1-0:71.7.0
+				//    active current L1-L3:		1-0:31.7.0	1-0:51.7.0	1-0:71.7.0
 
 				if (m_lbuffer[4] & 0x1)
-					return true;	 // instantaneous current has a 1 Ampere resolution which is too rough for our purpose
+					if (m_phasedata.ampere[0] < 0)
+						return true;	 // active current has a 1 Ampere resolution which is too rough for our purpose
+					else
+						matchtype = device::tmeter::COSEM::OBIS::activeAmpere;
 				else if (m_phasecount > 0)
 					matchtype = device::tmeter::COSEM::OBIS::activePowerUsage;
 				else
@@ -288,6 +291,11 @@ bool P1MeterBase::MatchLine()
 			}
 		}
 
+		if (m_phasedata.ampere[0] > 0)
+		{
+			SendCurrentSensor(0, 255, m_phasedata.ampere[1], m_phasedata.ampere[2], m_phasedata.ampere[3], "Current");
+		}
+
 		if (m_phasedata.instpwruse[0] && (m_phasecount > 0))
 		{
 			std::string defaultname = "Usage L1";
@@ -388,6 +396,7 @@ bool P1MeterBase::MatchLine()
 	case device::tmeter::COSEM::OBIS::activePowerUsage:
 	case device::tmeter::COSEM::OBIS::activePowerDelivery:
 	case device::tmeter::COSEM::OBIS::instantaneousVoltage:
+	case device::tmeter::COSEM::OBIS::activeAmpere:
 		if (m_lbuffer[9] == '(')
 			vString = (const char*)&m_lbuffer + 10;
 		else
@@ -442,7 +451,6 @@ bool P1MeterBase::MatchLine()
 	strcpy(value, vString.substr(0, ePos).c_str());
 	char *validate = value + ePos;
 	unsigned long temp_usage;
-	float temp_volt;
 
 	// STEP 5: convert and store the cleaned data content
 	switch (matchtype)
@@ -506,17 +514,36 @@ bool P1MeterBase::MatchLine()
 		}
 		break;
 	case device::tmeter::COSEM::OBIS::instantaneousVoltage:
-		m_phasedata.voltage[0] = 1;
-		temp_volt = strtof(value, &validate);
-		if (temp_volt < 300)
-			m_phasedata.voltage[phase] = temp_volt;
+		{
+			m_phasedata.voltage[0] = 1;
+			float temp_volt = strtof(value, &validate);
+			if (temp_volt < 300)
+				m_phasedata.voltage[phase] = temp_volt;
+		}
+		break;
+	case device::tmeter::COSEM::OBIS::activeAmpere:
+		if (m_phasedata.ampere[0] == 0)
+		{
+			vString = (const char*)&value;
+			ePos = vString.find('.');
+			if (ePos == std::string::npos)
+				m_phasedata.ampere[0] = -1;
+			else
+				m_phasedata.ampere[0] = 1;
+		}
+		if (m_phasedata.ampere[0] > 0)
+		{
+			float temp_ampere = strtof(value, &validate);
+			if (temp_ampere < 300)
+				m_phasedata.ampere[phase] = temp_ampere;
+		}
 		break;
 	case device::tmeter::COSEM::OBIS::gasUsageDSMR4:
 		m_gas.gasusage = (unsigned long)(strtod(value, &validate)*1000.0f);
 		// need to get timestamp from this line as well
 		vString = (const char*)&m_lbuffer + 11;
 		ePos = vString.find_first_of("*)");
-		if (ePos > 19)
+		if ((ePos == std::string::npos) || (ePos > OBIS_MAX_VALUE_LENGTH))
 			return false;
 		strcpy(value, vString.substr(0, ePos).c_str());
 		m_gastimestamp = std::string(value);

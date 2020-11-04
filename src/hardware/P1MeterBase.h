@@ -42,6 +42,7 @@ private:
 		float voltage[4];
 		float instpwrdel[4];
 		float instpwruse[4];
+		float ampere[4];
 	} P1PhaseData;
 
 	P1PhaseData m_phasedata;
