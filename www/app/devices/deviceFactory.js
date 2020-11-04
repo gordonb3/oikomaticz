@@ -5,7 +5,7 @@ define(function () {
 
         function DeviceIcon(device) {
             this.isConfigurable = function() {
-                return ['Light/Switch', 'Lighting 1', 'Lighting 2', 'Lighting 5','Lighting 6','Color Switch','Home Confort'].includes(device.Type) &&
+                return ['Light/Switch', 'Lighting 1', 'Lighting 2', 'Lighting 5','Lighting 6','Color Switch','Home Confort','Thermostat 3'].includes(device.Type) &&
                     [0, 2, 7, 9, 10, 11, 17, 18, 19, 20].includes(device.SwitchTypeVal);
             };
 
@@ -62,6 +62,7 @@ define(function () {
                 } else if (
                     (['Light/Switch', 'Lighting 2'].includes(this.Type) && [0, 7, 9, 10].includes(this.SwitchTypeVal))
                     || this.Type === 'Color Switch'
+                    || this.Type === 'Chime'
                 ) {
                     return this.isActive()
                         ? deviceLightApi.switchOff(this.idx)

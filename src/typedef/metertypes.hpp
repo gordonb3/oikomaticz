@@ -56,17 +56,16 @@ namespace OBIS { // Object identification system
 		version,			// 1
 		electricityUsed,		// 2
 		electricityDelivered,		// 3
-		activeTariff,			// 5
-		instantaneousAmpsUsage,		// 5
-		instantaneousAmpsDelivery,	// 6
-		instantaneousVoltage,		// 7
-		activePowerUsage,		// 8
-		activePowerDelivery,		// 9
-		mBusDeviceType,			//10
-		gasTimestampDSMR2,		//11
-		gasUsageDSMR2,			//12
-		gasUsageDSMR4,			//13
-		endOfTelegram			//14
+		activeTariff,			// 4
+		activeAmpere,			// 5
+		instantaneousVoltage,		// 6
+		activePowerUsage,		// 7
+		activePowerDelivery,		// 8
+		mBusDeviceType,			// 9
+		gasTimestampDSMR2,		//10
+		gasUsageDSMR2,			//11
+		gasUsageDSMR4,			//12
+		endOfTelegram			//13
 	};
 
 }; // namespace OBIS {

@@ -2,7 +2,6 @@
 
 #include "hardware/DomoticzHardware.h"
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
 
 class Yeelight : public CDomoticzHardwareBase
 {

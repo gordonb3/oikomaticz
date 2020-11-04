@@ -8,6 +8,8 @@
 #include "tinyxpath/tinyxml.h"
 #include "hardware/hardwaretypes.h"
 
+using namespace boost::placeholders;
+
 //Rainforest RAVEn USB ZigBee Smart Meter Adapter
 //https://rainforestautomation.com/rfa-z106-raven/
 

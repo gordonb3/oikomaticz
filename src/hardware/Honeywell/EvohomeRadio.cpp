@@ -23,6 +23,9 @@
 #include "main/WebServer.h"
 #include "webserver/cWebem.h"
 #include "main/json_helper.h"
+#include <boost/bind/bind.hpp>
+
+using namespace boost::placeholders;
 
 extern std::string szUserDataFolder;
 
@@ -1744,8 +1747,9 @@ bool CEvohomeRadio::DecodeDeviceInfo(CEvohomeMsg& msg)
 		nAlertType = 2;
 	}
 
-	if (nFaultCode == 0x04) { sprintf(sFaultCode, "BATTERY LOW"); }
-	else if (nFaultCode == 0x06) { sprintf(sFaultCode, "COMMS FAULT"); }
+	if (nFaultCode == 0x03) { sprintf(sFaultCode, "MAINS LOW"); }
+ 	else if (nFaultCode == 0x04) { sprintf(sFaultCode, "BATTERY LOW"); }
+ 	else if (nFaultCode == 0x06) { sprintf(sFaultCode, "COMMS FAULT"); }
 	else if (nFaultCode == 0x0a) { sprintf(sFaultCode, "SENSOR ERROR"); }
 	else { sprintf(sFaultCode, "UNKNOWN(%02x)", nFaultCode); }
 

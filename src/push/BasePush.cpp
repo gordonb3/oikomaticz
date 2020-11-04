@@ -494,7 +494,7 @@ std::string CBasePush::ProcessSendValue(const std::string &rawsendValue, const i
 		std::string vType = DropdownOptionsValue(m_DeviceRowIdx, delpos);
 		unsigned char tempsign = m_sql.m_tempsign[0];
 		device::tmeter::type::value metertype = (device::tmeter::type::value)metertypein;
-
+		
 		if ((vType == "Temperature") || (vType == "Temperature 1") || (vType == "Temperature 2") || (vType == "Set point"))
 		{
 			sprintf(szData, "%g", ConvertTemperature(std::stod(rawsendValue), tempsign));
@@ -583,7 +583,7 @@ std::string CBasePush::ProcessSendValue(const std::string &rawsendValue, const i
 		{
 			sprintf(szData, "%g", std::stof(rawsendValue));
 		}
-		else if (vType == "Counter")
+		else if (vType == "Counter" || vType == "Counter Incremental" )
 		{
 			strcpy(szData, rawsendValue.c_str());
 		}
@@ -597,7 +597,17 @@ std::string CBasePush::ProcessSendValue(const std::string &rawsendValue, const i
 		}
 		else if (vType == "Distance")
 		{
-			strcpy(szData, rawsendValue.c_str());
+			float vis = std::stof(rawsendValue);
+			if (metertype == 0)
+			{
+				//cm
+				sprintf(szData, "%g", vis);
+			}
+			else
+			{
+				//inches
+				sprintf(szData, "%g", vis * 0.3937007874015748f);
+			}
 		}
 		else if (vType == "Status")
 		{

@@ -4,6 +4,10 @@
 #include "hardware/hardwaretypes.h"
 #include "notifications/NotificationBase.h"
 
+#ifdef ENABLE_PYTHON
+#include "PythonObjects.h"
+#endif
+
 #ifndef byte
 typedef unsigned char byte;
 #endif
@@ -129,4 +133,13 @@ namespace Plugins {
 			const bool bFromNotification);
 	};
 
+#ifdef ENABLE_PYTHON
+	//
+//	Holds per plugin state details, specifically plugin object, read using PyModule_GetState(PyObject *module)
+//
+	struct module_state {
+		CPlugin* pPlugin;
+		PyObject* error;
+	};
+#endif
 }

@@ -5,6 +5,8 @@
 #include "main/Logger.h"
 #include "main/RFXtrx.h"
 
+using namespace boost::placeholders;
+
 /*
 	This driver allows Oikomaticz to control any I/O module from the MA-4xxx Family
 
@@ -260,9 +262,11 @@ void Comm5Serial::ParseData(const unsigned char* data, const size_t len)
 		case STFRAME_CRC2:
 			frame.push_back(data[i]);
 			frameCRC = crc16_update(frameCRC, 0);
-			readCRC =  (uint16_t)(frame.at(frame.size() - 2) << 8) | (frame.at(frame.size() - 1) & 0xFF);
+			readCRC = (static_cast<uint16_t>(frame.at(frame.size() - 2)) << 8) | frame.at(frame.size() - 1);
 			if (frameCRC == readCRC)
 				parseFrame(frame);
+			else
+				Log(LOG_ERROR, "Frame CRC error");			
 			currentState = STSTART_OCTET1;
 			frame.clear();
 			break;

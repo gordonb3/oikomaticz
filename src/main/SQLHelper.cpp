@@ -32,7 +32,7 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 2
-#define DOMOTICZ_DB_VERSION 144
+#define DOMOTICZ_DB_VERSION 145
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
@@ -2598,7 +2598,7 @@ bool CSQLHelper::OpenDatabase()
 			//OpenZWave COMMAND_CLASS_METER new index, need to delete the cache!
 			std::vector<std::string> root_files_;
 			DirectoryListing(root_files_, szUserDataFolder + "Config", false, true);
-			for (auto itt : root_files_)
+			for (const auto& itt : root_files_)
 			{
 				if (itt.find("ozwcache_0x") != std::string::npos)
 				{
@@ -2736,7 +2736,7 @@ bool CSQLHelper::OpenDatabase()
 			dbToMigrate.push_back(_tPushHelper("GooglePubSubLink", CBasePush::PushType::PUSHTYPE_GOOGLE_PUB_SUB));
 			dbToMigrate.push_back(_tPushHelper("FibaroLink", CBasePush::PushType::PUSHTYPE_FIBARO));
 
-			for (auto itt : dbToMigrate)
+			for (const auto& itt : dbToMigrate)
 			{
 				safe_query(
 					"INSERT INTO PushLink (PushType, DeviceID, DelimitedValue, TargetType, TargetVariable, TargetDeviceID, TargetProperty, Enabled, IncludeUnit) "
@@ -2792,6 +2792,60 @@ bool CSQLHelper::OpenDatabase()
 			safe_query("CREATE TABLE [Preferences] ([Key] VARCHAR(50) PRIMARY KEY, [nValue] INTEGER DEFAULT 0, [sValue] VARCHAR(200))");
 			safe_query("INSERT INTO Preferences SELECT * from Preferences_without_primary_key");
 			safe_query("DROP TABLE Preferences_without_primary_key;");
+		}
+		if (dbversion < 145)
+		{
+			// Patch for OpenWebNetTCP: update deviceID for Area devices
+			std::stringstream szQuery;
+			std::vector<std::vector<std::string> > result, result2;
+			std::vector<std::string> sd;
+			szQuery << "SELECT ID FROM Hardware WHERE([Type]==" << hardware::type::OpenWebNetTCP << ")";
+			result = query(szQuery.str());
+			if (!result.empty())
+			{
+				for (const auto& itt : result)
+				{
+					sd = itt;
+
+					szQuery.clear();
+					szQuery.str("");
+					szQuery << "SELECT ID, DeviceID FROM DeviceStatus WHERE (HardwareID=" << sd[0] << ")";
+					result2 = query(szQuery.str());
+
+					if (!result2.empty())
+					{
+						for (const auto& itt2 : result2)
+						{
+							sd = itt2;
+
+							uint32_t NodeID = 0UL;
+							std::stringstream s_strid;
+							s_strid << std::hex << sd[1];
+							s_strid >> NodeID;
+							int who = (NodeID >> 16) & 0xffff;
+							int where = NodeID & 0xffff;
+							if (((who == 1) || (who == 2)) && (where < 1000))	// light or automation								
+							{
+								if ((where > 0) && (where < 10))			// < 10 mean area device
+									NodeID += 0x4000; // Area devices flag!
+								else if ((where > 99) && (where < 1000))	// need 4 chars
+									NodeID += 0x2000; // 4 chars devices flag!
+								if (NodeID & 0xF000)
+								{
+									char ndeviceid[10];
+									sprintf(ndeviceid, "%08X", NodeID);
+
+									_log.Log(LOG_STATUS, "COpenWebNetTCP: ID:%s, DeviceID change from %s to %s!", sd[0].c_str(), sd[1].c_str(), ndeviceid);
+									szQuery.clear();
+									szQuery.str("");
+									szQuery << "UPDATE DeviceStatus SET DeviceID='" << ndeviceid << "' WHERE (ID=" << sd[0] << ")";
+									query(szQuery.str());
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -4476,15 +4530,13 @@ uint64_t CSQLHelper::InsertDevice(const int HardwareID, const char* ID, const un
 	return ulID;
 }
 
-bool CSQLHelper::DoesDeviceExist(const int HardwareID, const char* ID, const unsigned char unit, const unsigned char devType, const unsigned char subType) {
+uint64_t CSQLHelper::GetDeviceIndex(const int HardwareID, const std::string& ID, const unsigned char unit, const unsigned char devType, const unsigned char subType, std::string& devname) {
 	std::vector<std::vector<std::string> > result;
-	result = safe_query("SELECT ID,Name FROM DeviceStatus WHERE (HardwareID=%d AND DeviceID='%q' AND Unit=%d AND Type=%d AND SubType=%d)", HardwareID, ID, unit, devType, subType);
-	if (result.empty()) {
-		return false;
-	}
-	else {
-		return true;
-	}
+	result = safe_query("SELECT ID, Name FROM DeviceStatus WHERE (HardwareID=%d AND DeviceID='%q' AND Unit=%d AND Type=%d AND SubType=%d)", HardwareID, ID.c_str(), unit, devType, subType);
+	if (result.empty())
+		return -1;
+	devname = result[0].at(1);
+	return std::stoull(result[0].at(0));
 }
 
 uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const unsigned char unit, const unsigned char devType, const unsigned char subType, const unsigned char signallevel, const unsigned char batterylevel, const int nValue, const char* sValue, std::string& devname, const bool bUseOnOffAction)
@@ -7817,16 +7869,28 @@ bool CSQLHelper::BackupDatabase(const std::string& OutputFile)
 
 	// Open the sqlite3_backup object used to accomplish the transfer
 	pBackup = sqlite3_backup_init(pFile, "main", m_dbase, "main");
+
+	time_t startTime = time(nullptr);
+
 	if (pBackup)
 	{
 		// Each iteration of this loop copies 5 database pages from database
 		// pDb to the backup database.
 		do {
-			rc = sqlite3_backup_step(pBackup, 5);
+			rc = sqlite3_backup_step(pBackup, 256);
 			//xProgress(  sqlite3_backup_remaining(pBackup), sqlite3_backup_pagecount(pBackup) );
-			//if( rc==SQLITE_OK || rc==SQLITE_BUSY || rc==SQLITE_LOCKED ){
-			  //sqlite3_sleep(250);
-			//}
+			if( rc==SQLITE_BUSY || rc==SQLITE_LOCKED ){
+			  sqlite3_sleep(250);
+			}
+			if (rc == SQLITE_BUSY || rc == SQLITE_LOCKED) {
+				time_t actTime = time(nullptr);
+				if (actTime - startTime > 2 * 60)
+				{
+					//Backup should be done in 2 minutes
+					_log.Log(LOG_ERROR, "SQLHelper: Problem making backup! Check destination folder/rights. Process timeout!");
+					break;
+				}
+			}
 		} while (rc == SQLITE_OK || rc == SQLITE_BUSY || rc == SQLITE_LOCKED);
 
 		/* Release resources allocated by backup_init(). */

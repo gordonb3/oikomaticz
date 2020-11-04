@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "WebServer.h"
 #include "WebServerHelper.h"
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <iostream>
 #include <fstream>
 #include "mainworker.h"
@@ -36,6 +36,7 @@
 #include "hardware/eHouseTCP.h"
 #include "hardware/USBtin.h"
 #include "hardware/USBtin_MultiblocV8.h"
+#include "hardware/AirconWithMe.h"
 #ifdef WITH_GPIO
 #include "hardware/Gpio.h"
 #include "hardware/GpioPin.h"
@@ -67,6 +68,8 @@
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+
+using namespace boost::placeholders;
 
 #define round(a) ( int ) ( a + .5 )
 
@@ -1022,8 +1025,7 @@ namespace http {
 						bDoAdd = false;
 					}
 #endif
-
-		}
+				}
 #endif
 #endif
 #ifndef WITH_OPENZWAVE
@@ -1043,9 +1045,11 @@ namespace http {
 #endif
 				if (ii == hardware::type::PythonPlugin)
 					bDoAdd = false;
+
 				if (bDoAdd)
 					_htypes[hardware::type::Long_Desc(ii)] = ii;
-	}
+			}
+
 			//return a sorted hardware list
 			int ii = 0;
 			for (const auto & itt : _htypes)
@@ -1257,6 +1261,7 @@ namespace http {
 				(htype == hardware::type::THERMOSMART) ||
 				(htype == hardware::type::Tado) ||
 				(htype == hardware::type::Tesla) ||
+				(htype == hardware::type::Mercedes) ||
 				(htype == hardware::type::Netatmo)
 				)
 			{
@@ -1345,7 +1350,11 @@ namespace http {
 			}
 			else if (htype == hardware::type::EcoCompteur) {
 				//all fine here!
-			} else if (htype == hardware::type::Meteorologisk) {
+			}
+			else if (htype == hardware::type::Meteorologisk) {
+				//all fine here!
+			} 
+			else if (htype == hardware::type::AirconWithMe) {
 				//all fine here!
 			}
 			else
@@ -1654,6 +1663,7 @@ namespace http {
 				(htype == hardware::type::THERMOSMART) ||
 				(htype == hardware::type::Tado) ||
 				(htype == hardware::type::Tesla) ||
+				(htype == hardware::type::Mercedes) ||
 				(htype == hardware::type::Netatmo)
 				)
 			{
@@ -1742,7 +1752,10 @@ namespace http {
 			else if (htype == hardware::type::EnphaseAPI) {
 				//all fine here!
 			}
-			else if(htype == hardware::type::Meteorologisk) {
+			else if (htype == hardware::type::Meteorologisk) {
+				//all fine here!
+			}
+			else if (htype == hardware::type::AirconWithMe) {
 				//all fine here!
 			}
 			else
@@ -2992,7 +3005,10 @@ namespace http {
 			}
 			Json::Value eventInfo;
 			eventInfo["name"] = request::findValue(&req, "event");
-			eventInfo["data"] = request::findValue(&req, "data");
+			if (!req.content.empty())
+				eventInfo["data"] = req.content.c_str(); // data from POST
+			else
+				eventInfo["data"] = request::findValue(&req, "data"); // data in URL
 
 			if (eventInfo["name"].empty())
 			{
@@ -4585,6 +4601,72 @@ namespace http {
 						devid = id;
 						sunitcode = "0";
 					}
+					else if (lighttype == 308)
+					{
+						//Casafan
+						dtype = pTypeFan;
+						subtype = sTypeCasafan;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 309)
+					{
+						//FT1211R
+						dtype = pTypeFan;
+						subtype = sTypeFT1211R;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 310)
+					{
+						//Falmec
+						dtype = pTypeFan;
+						subtype = sTypeFalmec;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 311)
+					{
+						//Lucci Air DC II
+						dtype = pTypeFan;
+						subtype = sTypeLucciAirDCII;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 312)
+					{
+						//Itho ECO
+						dtype = pTypeFan;
+						subtype = sTypeIthoECO;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 313)
+					{
+						//Novy
+						dtype = pTypeFan;
+						subtype = sTypeNovy;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
 					else if (lighttype == 400) {
 						//Openwebnet Bus Blinds
 						dtype = pTypeGeneralSwitch;
@@ -5213,6 +5295,72 @@ namespace http {
 						//Westinghouse
 						dtype = pTypeFan;
 						subtype = sTypeWestinghouse;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 308)
+					{
+						//Casafan
+						dtype = pTypeFan;
+						subtype = sTypeCasafan;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 309)
+					{
+						//FT1211R
+						dtype = pTypeFan;
+						subtype = sTypeFT1211R;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 310)
+					{
+						//Falmec
+						dtype = pTypeFan;
+						subtype = sTypeFalmec;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 311)
+					{
+						//Lucci Air DC II
+						dtype = pTypeFan;
+						subtype = sTypeLucciAirDCII;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 312)
+					{
+						//Itho ECO
+						dtype = pTypeFan;
+						subtype = sTypeIthoECO;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 313)
+					{
+						//Novy
+						dtype = pTypeFan;
+						subtype = sTypeNovy;
 						std::string id = request::findValue(&req, "id");
 						if (id.empty())
 							return;
@@ -9901,6 +10049,7 @@ namespace http {
 							sprintf(szTmp, "%" PRIu64, total_real);
 
 							float divider = m_sql.GetCounterDivider(int(metertype), int(dType), float(AddjValue2));
+
 							float musage = 0.0f;
 							switch (metertype)
 							{
@@ -9918,7 +10067,8 @@ namespace http {
 								sprintf(szTmp, "%d Liter", round(musage));
 								break;
 							case device::tmeter::type::COUNTER:
-								sprintf(szTmp, "%" PRIu64, total_real);
+								musage = float(total_real) / divider;
+								sprintf(szTmp, "%g", musage);
 								if (!ValueUnits.empty())
 								{
 									strcat(szTmp, " ");
@@ -9961,7 +10111,7 @@ namespace http {
 							root["result"][ii]["Counter"] = szTmp;
 							break;
 						case device::tmeter::type::COUNTER:
-							sprintf(szTmp, "%g %s", meteroffset + dvalue, ValueUnits.c_str());
+							sprintf(szTmp, "%g %s", meteroffset + (dvalue / divider), ValueUnits.c_str());
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							root["result"][ii]["ValueQuantity"] = ValueQuantity;
@@ -10023,7 +10173,7 @@ namespace http {
 								sprintf(szTmp, "%.3f m3", musage);
 								break;
 							case device::tmeter::type::COUNTER:
-								sprintf(szTmp, "%" PRIu64, total_real);
+								sprintf(szTmp, "%g", float(total_real) / divider);
 								if (!ValueUnits.empty())
 								{
 									strcat(szTmp, " ");
@@ -10064,7 +10214,7 @@ namespace http {
 							root["result"][ii]["Counter"] = szTmp;
 							break;
 						case device::tmeter::type::COUNTER:
-							sprintf(szTmp, "%" PRIu64 " %s", static_cast<uint64_t>(meteroffset + dvalue), ValueUnits.c_str());
+							sprintf(szTmp, "%g %s", meteroffset + (dvalue / divider), ValueUnits.c_str());
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							root["result"][ii]["ValueQuantity"] = ValueQuantity;
@@ -10131,7 +10281,7 @@ namespace http {
 							root["result"][ii]["Counter"] = szTmp;
 							break;
 						case device::tmeter::type::COUNTER:
-							sprintf(szTmp, "%g %s", meteroffset + dvalue, ValueUnits.c_str());
+							sprintf(szTmp, "%g %s", meteroffset + (dvalue / divider), ValueUnits.c_str());
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							root["result"][ii]["ValueQuantity"] = ValueQuantity;
@@ -10196,7 +10346,7 @@ namespace http {
 								sprintf(szTmp, "%.3f m3", musage);
 								break;
 							case device::tmeter::type::COUNTER:
-								sprintf(szTmp, "%llu %s", total_real, ValueUnits.c_str());
+								sprintf(szTmp, "%g %s", float(total_real) / divider, ValueUnits.c_str());
 								break;
 							default:
 								strcpy(szTmp, "0");
@@ -10226,7 +10376,7 @@ namespace http {
 							sprintf(szTmp, "%.03f", musage);
 							break;
 						case device::tmeter::type::COUNTER:
-							sprintf(szTmp, "%llu", total_actual);
+							sprintf(szTmp, "%g", float(total_actual) / divider);
 							break;
 						default:
 							strcpy(szTmp, "0");
@@ -10254,7 +10404,7 @@ namespace http {
 							sprintf(szTmp, "%.3f m3", musage);
 							break;
 						case device::tmeter::type::COUNTER:
-							sprintf(szTmp, "%llu %s", acounter, ValueUnits.c_str());
+							sprintf(szTmp, "%g %s", float(acounter) / divider, ValueUnits.c_str());
 							break;
 						default:
 							strcpy(szTmp, "0");
@@ -10307,35 +10457,48 @@ namespace http {
 						else
 						{
 							float EnergyDivider = 1000.0f;
-							double musage;
 							int tValue;
 							if (m_sql.GetPreferencesVar("MeterDividerEnergy", tValue))
+							{
 								EnergyDivider = float(tValue);
-							else
-								EnergyDivider = 1000.0f;
+							}
 
-							unsigned long long powerusage_1 = std::strtoull(splitresults[0].c_str(), nullptr, 10);
-							unsigned long long powerusage_2 = std::strtoull(splitresults[1].c_str(), nullptr, 10);
-							unsigned long long powerusage = powerusage_1 + powerusage_2;
+							unsigned long long powerusage1 = std::strtoull(splitresults[0].c_str(), nullptr, 10);
+							unsigned long long powerusage2 = std::strtoull(splitresults[1].c_str(), nullptr, 10);
+							unsigned long long powerdeliv1 = std::strtoull(splitresults[2].c_str(), nullptr, 10);
+							unsigned long long powerdeliv2 = std::strtoull(splitresults[3].c_str(), nullptr, 10);
+							unsigned long long usagecurrent = std::strtoull(splitresults[4].c_str(), nullptr, 10);
+							unsigned long long delivcurrent = std::strtoull(splitresults[5].c_str(), nullptr, 10);
 
-							unsigned long long powerdeliv_1 = std::strtoull(splitresults[2].c_str(), nullptr, 10);
-							unsigned long long powerdeliv_2 = std::strtoull(splitresults[3].c_str(), nullptr, 10);
-							unsigned long long powerdeliv = powerdeliv_1 + powerdeliv_2;
-							if (powerdeliv < 1000)
+							powerdeliv1 = (powerdeliv1 < 10) ? 0 : powerdeliv1;
+							powerdeliv2 = (powerdeliv2 < 10) ? 0 : powerdeliv2;
+
+							unsigned long long powerusage = powerusage1 + powerusage2;
+							unsigned long long powerdeliv = powerdeliv1 + powerdeliv2;
+							if (powerdeliv < 2)
 								powerdeliv = 0;
 
-							unsigned long long usagecurrent, delivcurrent;
+							double musage = 0;
+
+							root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::ENERGY;
+							musage = double(powerusage) / EnergyDivider;
+							sprintf(szTmp, "%.03f", musage);
+							root["result"][ii]["Counter"] = szTmp;
+							musage = double(powerdeliv) / EnergyDivider;
+							sprintf(szTmp, "%.03f", musage);
+							root["result"][ii]["CounterDeliv"] = szTmp;
+
 							if (bHaveTimeout)
 							{
 								usagecurrent = 0;
 								delivcurrent = 0;
 							}
-							else
-							{
-								usagecurrent = std::strtoull(splitresults[4].c_str(), nullptr, 10);
-								delivcurrent = std::strtoull(splitresults[5].c_str(), nullptr, 10);
-							}
-
+							sprintf(szTmp, "%llu Watt", usagecurrent);
+							root["result"][ii]["Usage"] = szTmp;
+							sprintf(szTmp, "%llu Watt", delivcurrent);
+							root["result"][ii]["UsageDeliv"] = szTmp;
+							root["result"][ii]["Data"] = sValue;
+							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
 
 							//get value of today
 							time_t now = mytime(NULL);
@@ -10344,7 +10507,6 @@ namespace http {
 							char szDate[40];
 							sprintf(szDate, "%04d-%02d-%02d", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday);
 
-							unsigned long long day_total_powerusage, day_total_powerdeliv;
 							std::vector<std::vector<std::string> > result2;
 							strcpy(szTmp, "0");
 							result2 = m_sql.safe_query("SELECT MIN(Value1), MIN(Value2), MIN(Value5), MIN(Value6) FROM MultiMeter WHERE (DeviceRowID='%q' AND Date>='%q')",
@@ -10353,51 +10515,28 @@ namespace http {
 							{
 								std::vector<std::string> sd2 = result2[0];
 
-								unsigned long long day_start_powerusage_1 = std::strtoull(sd2[0].c_str(), nullptr, 10);
-								unsigned long long day_start_powerusage_2 = std::strtoull(sd2[2].c_str(), nullptr, 10);
-								unsigned long long day_start_powerusage = day_start_powerusage_1 + day_start_powerusage_2;
+								unsigned long long total_min_usage_1 = std::strtoull(sd2[0].c_str(), nullptr, 10);
+								unsigned long long total_min_deliv_1 = std::strtoull(sd2[1].c_str(), nullptr, 10);
+								unsigned long long total_min_usage_2 = std::strtoull(sd2[2].c_str(), nullptr, 10);
+								unsigned long long total_min_deliv_2 = std::strtoull(sd2[3].c_str(), nullptr, 10);
+								unsigned long long total_real_usage, total_real_deliv;
 
-								unsigned long long day_start_powerdeliv_1 = std::strtoull(sd2[1].c_str(), nullptr, 10);
-								unsigned long long day_start_powerdeliv_2 = std::strtoull(sd2[3].c_str(), nullptr, 10);
-								unsigned long long day_start_powerdeliv = day_start_powerdeliv_1 + day_start_powerdeliv_2;
+								total_real_usage = powerusage - (total_min_usage_1 + total_min_usage_2);
+								total_real_deliv = powerdeliv - (total_min_deliv_1 + total_min_deliv_2);
 
-								day_total_powerusage = powerusage - day_start_powerusage;
-								if (powerdeliv > day_start_powerdeliv)
-									day_total_powerdeliv = powerdeliv - day_start_powerdeliv;
-								else
-								{
-									day_total_powerdeliv = 0;
-									if (powerdeliv < 1000)
-										powerdeliv = 0;  // clear phantom delivery
-								}
-
+								musage = double(total_real_usage) / EnergyDivider;
+								sprintf(szTmp, "%.3f kWh", musage);
+								root["result"][ii]["CounterToday"] = szTmp;
+								musage = double(total_real_deliv) / EnergyDivider;
+								sprintf(szTmp, "%.3f kWh", musage);
+								root["result"][ii]["CounterDelivToday"] = szTmp;
 							}
 							else
 							{
-								day_total_powerusage = 0;
-								day_total_powerdeliv = 0;
+								sprintf(szTmp, "%.3f kWh", 0.0f);
+								root["result"][ii]["CounterToday"] = szTmp;
+								root["result"][ii]["CounterDelivToday"] = szTmp;
 							}
-
-							root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::ENERGY;
-							root["result"][ii]["Data"] = sValue;
-							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
-
-							musage = double(powerusage) / EnergyDivider;
-							sprintf(szTmp, "%.03f", musage);
-							root["result"][ii]["Counter"] = szTmp;
-							musage = double(powerdeliv) / EnergyDivider;
-							sprintf(szTmp, "%.03f", musage);
-							root["result"][ii]["CounterDeliv"] = szTmp;
-							musage = double(day_total_powerusage) / EnergyDivider;
-							sprintf(szTmp, "%.3f kWh", musage);
-							root["result"][ii]["CounterToday"] = szTmp;
-							musage = double(day_total_powerdeliv) / EnergyDivider;
-							sprintf(szTmp, "%.3f kWh", musage);
-							root["result"][ii]["CounterDelivToday"] = szTmp;
-							sprintf(szTmp, "%llu Watt", usagecurrent);
-							root["result"][ii]["Usage"] = szTmp;
-							sprintf(szTmp, "%llu Watt", delivcurrent);
-							root["result"][ii]["UsageDeliv"] = szTmp;
 						}
 					}
 					else if (dType == pTypeP1Gas)
@@ -10661,7 +10800,7 @@ namespace http {
 							else
 							{
 								//Imperial
-								sprintf(szTmp, "%.1f in", vis*0.6214f);
+								sprintf(szTmp, "%.1f in", vis * 0.3937007874015748f);
 							}
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
@@ -11102,7 +11241,10 @@ namespace http {
 
 		void CWebServer::UploadFloorplanImage(WebEmSession & session, const request& req, std::string & redirect_uri)
 		{
-			redirect_uri = "/index.html";
+			Json::Value root;
+			root["title"] = "UploadFloorplanImage";
+			root["status"] = "ERR";
+
 			if (session.rights != 2)
 			{
 				session.reply_status = reply::forbidden;
@@ -11119,8 +11261,13 @@ namespace http {
 			if (!result.empty())
 			{
 				if (!m_sql.safe_UpdateBlobInTableWithID("Floorplans", "Image", result[0][0], imagefile))
+				{
 					_log.Log(LOG_ERROR, "SQL: Problem inserting floorplan image into database! ");
+				}
+				else
+					root["status"] = "OK";
 			}
+			redirect_uri = root.toStyledString();
 		}
 
 		void CWebServer::GetFloorplanImage(WebEmSession & session, const request& req, reply & rep)
@@ -12291,10 +12438,26 @@ namespace http {
 			std::string smessage = request::findValue(&req, "message");
 			if (smessage.empty())
 				return;
-			root["status"] = "OK";
 			root["title"] = "AddLogMessage";
 
-			_log.Log(LOG_STATUS, "%s", smessage.c_str());
+			_eLogLevel logLevel = LOG_STATUS;
+			std::string slevel = request::findValue(&req, "level");
+			if (!slevel.empty())
+			{
+				if ((slevel == "1") || (slevel == "normal"))
+					logLevel = LOG_NORM;
+				else if ((slevel == "2") || (slevel == "status"))
+					logLevel = LOG_STATUS;
+				else if ((slevel == "4") || (slevel == "error"))
+					logLevel = LOG_ERROR;
+				else {
+					root["status"] = "ERR";
+					return;
+				}
+			}
+			root["status"] = "OK";
+
+			_log.Log(logLevel, "%s", smessage.c_str());
 		}
 
 		void CWebServer::Cmd_ClearShortLog(WebEmSession & session, const request& req, Json::Value &root)
@@ -14023,7 +14186,12 @@ namespace http {
 								root["result"][ii]["d"] = sd[1].substr(0, 16);
 								float fValue = float(atof(sd[0].c_str())) / vdiv;
 								if (metertype == 1)
-									fValue *= 0.6214f;
+								{
+									if ((dType == pTypeGeneral) && (dSubType == sTypeDistance))
+										fValue *= 0.3937007874015748f; //inches
+									else
+										fValue *= 0.6214f; //miles
+								}
 								if ((dType == pTypeGeneral) && (dSubType == sTypeVoltage))
 									sprintf(szTmp, "%.3f", fValue);
 								else if ((dType == pTypeGeneral) && (dSubType == sTypeCurrent))
@@ -14352,7 +14520,7 @@ namespace http {
 												sprintf(szTmp, "%.3f", TotalValue / divider);
 												break;
 											case device::tmeter::type::COUNTER:
-												sprintf(szTmp, "%.1f", TotalValue);
+												sprintf(szTmp, "%g", TotalValue / divider);
 												break;
 											default:
 												strcpy(szTmp, "0");
@@ -14398,7 +14566,7 @@ namespace http {
 										sprintf(szTmp, "%.3f", TotalValue / divider);
 										break;
 									case device::tmeter::type::COUNTER:
-										sprintf(szTmp, "%.1f", TotalValue);
+										sprintf(szTmp, "%g", TotalValue / divider);
 										break;
 									default:
 										strcpy(szTmp, "0");
@@ -14493,7 +14661,7 @@ namespace http {
 													sprintf(szTmp, "%.3f", TotalValue / divider);
 													break;
 												case device::tmeter::type::COUNTER:
-													sprintf(szTmp, "%.1f", TotalValue);
+													sprintf(szTmp, "%g", TotalValue / divider);
 													break;
 												default:
 													strcpy(szTmp, "0");
@@ -14553,7 +14721,7 @@ namespace http {
 												sprintf(szTmp, "%.3f", TotalValue / divider);
 												break;
 											case device::tmeter::type::COUNTER:
-												sprintf(szTmp, "%.1f", TotalValue);
+												sprintf(szTmp, "%g", TotalValue / divider);
 												break;
 											default:
 												strcpy(szTmp, "0");
@@ -14597,7 +14765,7 @@ namespace http {
 									sprintf(szTmp, "%.3f", TotalValue / divider);
 									break;
 								case device::tmeter::type::COUNTER:
-									sprintf(szTmp, "%.1f", TotalValue);
+									sprintf(szTmp, "%g", TotalValue / divider);
 									break;
 								default:
 									strcpy(szTmp, "0");
@@ -14696,6 +14864,7 @@ namespace http {
 
 							int intSpeed = atoi(sd[1].c_str());
 							int intGust = atoi(sd[2].c_str());
+
 							if (m_sql.m_windunit != WINDUNIT_Beaufort)
 							{
 								sprintf(szTmp, "%.1f", float(intSpeed) * m_sql.m_windscale);
@@ -15080,7 +15249,8 @@ namespace http {
 									szValue = szTmp;
 									break;
 								case device::tmeter::type::COUNTER:
-									//value already set above!
+									sprintf(szTmp, "%g", atof(szValue.c_str()) / divider);
+									szValue = szTmp;
 									break;
 								default:
 									szValue = "0";
@@ -15180,7 +15350,8 @@ namespace http {
 								szValue = szTmp;
 								break;
 							case device::tmeter::type::COUNTER:
-								//value already set above!
+								sprintf(szTmp, "%g", atof(szValue.c_str()) / divider);
+								szValue = szTmp;
 								break;
 							default:
 								szValue = "0";
@@ -15948,8 +16119,18 @@ namespace http {
 
 								if (metertype == 1)
 								{
-									fValue1 *= 0.6214f;
-									fValue2 *= 0.6214f;
+									if ((dType == pTypeGeneral) && (dSubType == sTypeDistance))
+									{
+										//Inches
+										fValue1 *= 0.3937007874015748f;
+										fValue2 *= 0.3937007874015748f;
+									}
+									else
+									{
+										//Miles
+										fValue1 *= 0.6214f;
+										fValue2 *= 0.6214f;
+									}
 								}
 								if (
 									((dType == pTypeGeneral) && (dSubType == sTypeVoltage)) ||
@@ -16348,10 +16529,10 @@ namespace http {
 									root["result"][ii]["c"] = szTmp;
 									break;
 								case device::tmeter::type::COUNTER:
-									sprintf(szTmp, "%.0f", atof(szValue.c_str()));
+									sprintf(szTmp, "%g", atof(szValue.c_str()) / divider);
 									root["result"][ii]["v"] = szTmp;
 									if (fcounter != 0)
-										sprintf(szTmp, "%.0f", AddjValue + ((fcounter - atof(szValue.c_str()))));
+										sprintf(szTmp, "%g", AddjValue + ((fcounter - atof(szValue.c_str())) / divider));
 									else
 										strcpy(szTmp, "0");
 									root["result"][ii]["c"] = szTmp;
@@ -16388,7 +16569,7 @@ namespace http {
 									root["resultprev"][iPrev]["v"] = szTmp;
 									break;
 								case device::tmeter::type::COUNTER:
-									sprintf(szTmp, "%.0f", atof(szValue.c_str()));
+									sprintf(szTmp, "%g", atof(szValue.c_str()) / divider);
 									root["resultprev"][iPrev]["v"] = szTmp;
 									break;
 								}
@@ -16552,8 +16733,18 @@ namespace http {
 							float fValue2 = float(atof(result[0][1].c_str())) / vdiv;
 							if (metertype == 1)
 							{
-								fValue1 *= 0.6214f;
-								fValue2 *= 0.6214f;
+								if ((dType == pTypeGeneral) && (dSubType == sTypeDistance))
+								{
+									//Inches
+									fValue1 *= 0.3937007874015748f;
+									fValue2 *= 0.3937007874015748f;
+								}
+								else
+								{
+									//Miles
+									fValue1 *= 0.6214f;
+									fValue2 *= 0.6214f;
+								}
 							}
 
 							if ((dType == pTypeGeneral) && (dSubType == sTypeVoltage))
@@ -16667,9 +16858,9 @@ namespace http {
 								root["result"][ii]["c"] = szTmp;
 								break;
 							case device::tmeter::type::COUNTER:
-								sprintf(szTmp, "%.0f", atof(szValue.c_str()));
+								sprintf(szTmp, "%g", atof(szValue.c_str()) / divider);
 								root["result"][ii]["v"] = szTmp;
-								sprintf(szTmp, "%.0f", AddjValue + ((atof(sValue.c_str()) - atof(szValue.c_str()))));
+								sprintf(szTmp, "%g", AddjValue + ((atof(sValue.c_str()) - atof(szValue.c_str())) / divider));
 								root["result"][ii]["c"] = szTmp;
 								break;
 							}

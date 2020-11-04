@@ -12,7 +12,7 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <ctime>
 
@@ -22,6 +22,8 @@
 #include <sys/types.h>
 #include <pwd.h>
 #endif
+
+using namespace boost::placeholders;
 
 #define RETRY_DELAY 30
 
@@ -310,7 +312,7 @@ bool RFXComSerial::UpgradeFirmware()
 
 	m_szUploadMessage = "Bootloader, Start programming...";
 	Log(LOG_STATUS, m_szUploadMessage);
-	for (auto itt : firmwareBuffer)
+	for (const auto& itt : firmwareBuffer)
 	{
 		icntr++;
 		if (icntr % 5 == 0)

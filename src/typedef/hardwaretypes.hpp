@@ -127,6 +127,8 @@ enum value {
 	OctoPrint,			//119
 	Tesla,		                //120
 	Meteorologisk,	                //121
+	Mercedes,			//122
+	AirconWithMe,			//123
 	END
 };
 
@@ -259,6 +261,8 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ OctoPrint,			"OctoPrint (MQTT/Gina Haussge) with LAN interface",		"OctoPrint"		},
 	{ Tesla,			"Tesla Model S/3/X",						"Tesla"			},
 	{ Meteorologisk,		"Meteorologisk institutt Norway (Weather Lookup)",		"Meteorologisk"		},
+	{ Mercedes,			"Mercedes ME Connect",						"Mercedes"		},
+	{ AirconWithMe,			"AirconWithMe Wifi Airco module",				"AirconWithMe"		},
 	{ 0, NULL, NULL }
 };
 

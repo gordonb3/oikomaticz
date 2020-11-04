@@ -257,6 +257,7 @@ bool EvohomeClient2::load_auth_from_file(const std::string &szFilename)
 	if (evohome::parse_json_string(m_szResponse, jUserAccount) < 0)
 	{
 		m_szLastError = evohome::messages::invalidResponse;
+		m_szUserId = "";
 		return false;
 	}
 
