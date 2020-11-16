@@ -262,6 +262,11 @@ bool EvohomeClient2::load_auth_from_file(const std::string &szFilename)
 	}
 
 	m_szUserId = jUserAccount["userId"].asString();
+	if (m_szUserId.empty())
+	{
+		m_szLastError = evohome::messages::unhandledResponse;
+		return false;
+	}
 	return true;
 }
 
@@ -395,9 +400,12 @@ bool EvohomeClient2::full_installation()
 	std::string szUrl = evohome::API2::uri::get_uri(evohome::API2::uri::installationInfo, m_szUserId);
 	EvoHTTPBridge::SafeGET(szUrl, m_vEvoHeader, m_szResponse, -1);
 
-	// evohome API returns an unnamed json array which is not accepted by our parser
-	m_szResponse.insert(0, "{\"locations\": ");
-	m_szResponse.append("}");
+	if (m_szResponse[0] == '[')
+	{
+		// evohome API returns an unnamed json array which is not accepted by our parser
+		m_szResponse.insert(0, "{\"locations\": ");
+		m_szResponse.append("}");
+	}
 
 	m_jFullInstallation.clear();
 	if (evohome::parse_json_string(m_szResponse, m_jFullInstallation) < 0)

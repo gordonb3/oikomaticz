@@ -312,7 +312,7 @@ bool CEvohomeWeb::WriteToHardware(const char *pdata, const unsigned char length)
 
 bool CEvohomeWeb::GetStatus()
 {
-	if (!evohome::WebAPI::v2->is_session_valid() && !StartSession())
+	if ((!m_loggedon || !evohome::WebAPI::v2->is_session_valid()) && !StartSession())
 		return false;
 	if ((size_t)m_locationIdx > evohome::WebAPI::v2->m_vLocations.size())
 	{
@@ -323,7 +323,11 @@ bool CEvohomeWeb::GetStatus()
 	if (!evohome::WebAPI::v2->get_status(m_locationIdx))
 	{
 		int returnCode = GetLastV2ResponseCode();
-		if (returnCode >= 400)
+		if (returnCode >= 500)
+		{
+			_log.Log(LOG_ERROR, "(%s) V2 status request returned a server error (RC = %d)", m_Name.c_str(), returnCode);
+		}
+		else if (returnCode >= 400)
 		{
 			_log.Log(LOG_ERROR, "(%s) V2 session was invalidated (RC = %d)", m_Name.c_str(), returnCode);
 			m_loggedon = false;

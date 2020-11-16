@@ -21,6 +21,7 @@ namespace evohome {
     static const std::string invalidTimestamp = "Invalid timestamp";
     static const std::string invalidAuthfile = "Failed to parse auth file content as JSON";
     static const std::string invalidResponse = "Failed to parse server response as JSON";
+    static const std::string unhandledResponse = "Server returned an unhandled response";
 
   }; // namespace messages
 
