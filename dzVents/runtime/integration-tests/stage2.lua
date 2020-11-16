@@ -63,8 +63,6 @@ local testSwitch = function(name)
 	local res = true
 	res = res and checkAttributes(dev, {["state"] = "On",})
 	handleResult ('Test switch device', res)
-	res = res and checkAttributes(dev, {["updatedBy"] = "dzVents",})
-	handleResult ('Test switch device', res)
 	return res
 end
 
@@ -768,8 +766,6 @@ local testSceneDumps = function(name)
 	res = res and ( sc.dumpSelection('attributes') == nil )
 	res = res and ( sc.dumpSelection('functions') == nil )
 	res = res and ( sc.dumpSelection('tables') == nil )
-    utils.log('updatedBy is ' .. sc.updatedBy, utils.LOG_FORCE)
-    res = res and checkAttributes(sc, {["updatedBy"] = "dzVents",})
 	handleResult('Test scene dumps', res)
 	return res
 end

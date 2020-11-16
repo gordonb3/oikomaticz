@@ -4490,16 +4490,15 @@ uint64_t CSQLHelper::UpdateValue(const int HardwareID, const char* ID, const uns
 uint64_t CSQLHelper::InsertDevice(const int HardwareID, const char* ID, const unsigned char unit, const unsigned char devType, const unsigned char subType, const int switchType, const int nValue, const char* sValue, const std::string& devname, const unsigned char signallevel, const unsigned char batterylevel, const int used)
 {
 	//TODO: 'unsigned char unit' only allows 256 devices / plugin
-	//TODO: return -1 as error code does not make sense for a function returning an unsigned value
+	//DONE: return -1 as error code does not make sense for a function returning an unsigned value
+	// -> better checking at receiving end needed (value becomes 0xFFFFFFFFFFFFFFFF)
 	std::vector<std::vector<std::string> > result;
 	uint64_t ulID = 0;
 	std::string name = devname;
 
 	if (!m_bAcceptNewHardware)
 	{
-#ifdef _DEBUG
-		_log.Log(LOG_STATUS, "Device creation failed, Oikomaticz settings prevent accepting new devices.");
-#endif
+		_log.Debug(DEBUG_NORM, "Device creation failed, Oikomaticz settings prevent accepting new devices.");
 		return -1; //We do not allow new devices
 	}
 
@@ -4558,8 +4557,10 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 		//Insert
 		ulID = InsertDevice(HardwareID, ID, unit, devType, subType, 0, nValue, sValue, devname, signallevel, batterylevel);
 
-		if (ulID < 1)
+		if (ulID == (uint64_t)-1)
+		{
 			return -1;
+		}
 
 #ifdef ENABLE_PYTHON
 		//TODO: Plugins should perhaps be blocked from implicitly adding a device by update? It's most likely a bug due to updating a removed device..
@@ -5151,7 +5152,6 @@ bool CSQLHelper::GetPreferencesVar(const std::string& Key, std::string& sValue)
 	if (!m_dbase)
 		return false;
 
-
 	std::vector<std::vector<std::string> > result;
 	result = safe_query("SELECT sValue FROM Preferences WHERE (Key='%q')",
 		Key.c_str());
@@ -5164,7 +5164,6 @@ bool CSQLHelper::GetPreferencesVar(const std::string& Key, std::string& sValue)
 
 bool CSQLHelper::GetPreferencesVar(const std::string& Key, double& Value)
 {
-
 	std::string sValue;
 	int nValue;
 	Value = 0;
@@ -5195,6 +5194,7 @@ bool CSQLHelper::GetPreferencesVar(const std::string& Key, int& nValue)
 	std::string sValue;
 	return GetPreferencesVar(Key, nValue, sValue);
 }
+
 void CSQLHelper::DeletePreferencesVar(const std::string& Key)
 {
 	std::string sValue;
@@ -8525,6 +8525,22 @@ void CSQLHelper::DeleteUserVariable(const std::string& idx)
 	}
 }
 
+bool CSQLHelper::GetUserVariable(const std::string& varname, const _eUsrVariableType eVartype, std::string& varvalue)
+{
+	std::string errorMessage;
+	std::vector<std::vector<std::string> > result;
+	result = safe_query("SELECT ValueType, Value FROM UserVariables WHERE (Name=='%q')", varname.c_str());
+	if (!result.empty())
+	{
+		if(CheckUserVariable(eVartype, result[0][1], errorMessage))
+		{
+			varvalue = result[0][1];
+			return true;
+		}
+	}
+	return false;
+}
+
 bool CSQLHelper::AddUserVariable(const std::string& varname, const _eUsrVariableType eVartype, const std::string& varvalue, std::string& errorMessage)
 {
 	std::vector<std::vector<std::string> > result;
@@ -8574,7 +8590,6 @@ bool CSQLHelper::UpdateUserVariable(const std::string& idx, const std::string& v
 
 bool CSQLHelper::CheckUserVariable(const _eUsrVariableType eVartype, const std::string& varvalue, std::string& errorMessage)
 {
-
 	if (varvalue.size() > 200) {
 		errorMessage = "String exceeds maximum size";
 		return false;

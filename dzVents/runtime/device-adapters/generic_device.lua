@@ -80,16 +80,11 @@ return {
 		device.isHTTPResponse = false
 		device.isSecurity = false
 
-        -- All baseTypes
-        device['changed'] = data.changed
-        device['protected'] = data.protected
-        device['description'] = data.description
-        device['lastUpdate'] = Time(data.lastUpdate)
-        device['updatedBy'] = data.updatedBy or 'n/a'
-        if device.updatedBy == '' then device.updatedBy = 'n/a'
-        elseif device.updatedBy == 'Admin' then device.updatedBy = 'Admin (or userless login)'
-        elseif device.updatedBy:find('EventSystem') and device.updatedBy:find('dzVents') then device.updatedBy = 'dzVents'
-        end
+		-- All baseTypes
+		device['changed'] = data.changed
+		device['protected'] = data.protected
+		device['description'] = data.description
+		device['lastUpdate'] = Time(data.lastUpdate)
 
 		if (data.baseType == 'device') then
 

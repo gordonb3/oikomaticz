@@ -2001,29 +2001,6 @@ describe('device', function()
 		end)
 	end)
 
-	it('Device should have a updatedBy', function()
-		device = getDevice_(domoticz, 'myDevice', 'On', false)
-		assert.is_same(device.updatedBy,'n/a')
-	end)
-
-	it('Group should have a updatedBy', function()
-		local group = getDevice(domoticz, {
-					['baseType'] = 'group',
-					['name'] = 'myGroup',
-					['state'] = 'On'
-				})
-		assert.is_same(group.updatedBy,'n/a')
-	end)
-
-	it('Scene should have a updatedBy', function()
-		local scene = getDevice(domoticz, {
-					['baseType'] = 'scene',
-					['name'] = 'myScene',
-					['state'] = 'On'
-				})
-		assert.is_same(scene.updatedBy,'n/a')
-	end)
-
 	it('should set the state', function()
 		local cmd = device.setState('Off')
 		assert.is_table(cmd)
