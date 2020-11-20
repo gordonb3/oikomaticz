@@ -291,7 +291,7 @@ boost::tribool request_parser::consume(request& req, const char* &pInput, const 
   case expecting_newline_3:
 	  if (input == '\n')
 	  {
-		  if( req.method != "POST" ) 
+		  if( req.method != "POST" )
 		  {
 			  // finished
 			  return true;

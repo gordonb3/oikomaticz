@@ -37,14 +37,14 @@
           {"type", T_INT, offsetof(PDevice, type), 0, "Device type"},
           {"sub_type", T_INT, offsetof(PDevice, sub_type), 0, "Device subType"},
           {"switch_type", T_INT, offsetof(PDevice, switch_type), 0, "Device switchType"},
-          {NULL}  /* Sentinel */
+          {nullptr}  /* Sentinel */
       };
 
       static PyMethodDef PDevice_methods[] = {
           {"Describe", (PyCFunction)PDevice_Describe, METH_NOARGS,
            "Return the name, combining the first and last name"
           },
-          {NULL}  /* Sentinel */
+          {nullptr}  /* Sentinel */
       };
 
       static PyModuleDef PDevicemodule = {
@@ -52,11 +52,11 @@
           "DomoticzEvents",
           "Example module that creates an extension type.",
           -1,
-          NULL, NULL, NULL, NULL, NULL
+          nullptr, nullptr, nullptr, nullptr, nullptr
       };
 
       static PyTypeObject PDeviceType = {
-          PyVarObject_HEAD_INIT(NULL, 0)
+          PyVarObject_HEAD_INIT(nullptr, 0)
           "DomoticzEvents.PDevice",             /* tp_name */
           sizeof(PDevice),             /* tp_basicsize */
           0,                         /* tp_itemsize */

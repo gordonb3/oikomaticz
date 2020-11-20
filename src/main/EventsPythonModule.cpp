@@ -24,7 +24,7 @@
         static PyMethodDef DomoticzEventsMethods[] = {
             { "Log", PyDomoticz_EventsLog, METH_VARARGS, "Write message to Oikomaticz log." },
             { "Command", PyDomoticz_EventsCommand, METH_VARARGS, "Schedule a command." },
-            { NULL, NULL, 0, NULL }
+            { NULL, nullptr, 0, nullptr }
         };
 
 
@@ -86,13 +86,13 @@
         struct PyModuleDef DomoticzEventsModuleDef = {
     		PyModuleDef_HEAD_INIT,
     		"DomoticzEvents",
-    		NULL,
+    		nullptr,
     		sizeof(struct eventModule_state),
     		DomoticzEventsMethods,
-    		NULL,
+    		nullptr,
     		DomoticzEventsTraverse,
     		DomoticzEventsClear,
-    		NULL
+    		nullptr
     	};
 
         PyMODINIT_FUNC PyInit_DomoticzEvents(void)
@@ -160,7 +160,7 @@
 				PyEval_RestoreThread((PyThreadState*)m_PyInterpreter);
 				if (Plugins::Py_IsInitialized())
 					Py_EndInterpreter((PyThreadState*)m_PyInterpreter);
-				m_PyInterpreter = NULL;
+				m_PyInterpreter = nullptr;
 				PyEval_ReleaseLock();
 				_log.Log(LOG_STATUS, "EventSystem - Python stopped...");
                 return true;
@@ -175,7 +175,7 @@
                 // _log.Log(LOG_STATUS, "Python Event System: Module found");
                 return pModule;
             } else {
-                Plugins::PyRun_SimpleStringFlags("import DomoticzEvents", NULL);
+                Plugins::PyRun_SimpleStringFlags("import DomoticzEvents", nullptr);
                 pModule = PyState_FindModule(&DomoticzEventsModuleDef);
 
                 if (pModule) {
@@ -183,7 +183,7 @@
                 } else {
                     //Py_INCREF(Py_None);
                     //return Py_None;
-                    return NULL;
+                    return nullptr;
                 }
             }
         }
@@ -294,7 +294,7 @@
                    // Time related
 
                    // Do not correct for DST change - we only need this to compare with intRise and intSet which aren't as well
-                   time_t now = mytime(NULL);
+                   time_t now = mytime(nullptr);
                    struct tm ltime;
                    localtime_r(&now, &ltime);
                    int minutesSinceMidnight = (ltime.tm_hour * 60) + ltime.tm_min;
@@ -359,26 +359,26 @@
                    Py_INCREF(pModule);
 
                    // Override sys.stderr
-                   Plugins::PyRun_SimpleStringFlags("import sys\nclass StdErrRedirect:\n    def __init__(self):\n        self.buffer = ''\n    def write(self, msg):\n        self.buffer += msg\nstdErrRedirect = StdErrRedirect()\nsys.stderr = stdErrRedirect\n", NULL);
+                   Plugins::PyRun_SimpleStringFlags("import sys\nclass StdErrRedirect:\n    def __init__(self):\n        self.buffer = ''\n    def write(self, msg):\n        self.buffer += msg\nstdErrRedirect = StdErrRedirect()\nsys.stderr = stdErrRedirect\n", nullptr);
 
                    if(PyString.length() > 0) {
                        // Python-string from WebEditor
-                       Plugins::PyRun_SimpleStringFlags(PyString.c_str(), NULL);
+                       Plugins::PyRun_SimpleStringFlags(PyString.c_str(), nullptr);
                    } else {
                        // Script-file
                        FILE* PythonScriptFile = fopen(filename.c_str(), "r");
-                       Plugins::PyRun_SimpleFileExFlags(PythonScriptFile, filename.c_str(), 0, NULL);
+                       Plugins::PyRun_SimpleFileExFlags(PythonScriptFile, filename.c_str(), 0, nullptr);
 
-                       if (PythonScriptFile!=NULL)
+                       if (PythonScriptFile != nullptr)
                            fclose(PythonScriptFile);
                    }
 
                    // Get message from stderr redirect
-                   PyObject *stdErrRedirect = NULL, *logBuffer = NULL, *logBytes = NULL;
+                   PyObject *stdErrRedirect = nullptr, *logBuffer = nullptr, *logBytes = nullptr;
                    std::string logString;
-                   if ((stdErrRedirect = Plugins::PyObject_GetAttrString(pModule, "stdErrRedirect")) == NULL) goto free_module;
-                   if ((logBuffer = Plugins::PyObject_GetAttrString(stdErrRedirect, "buffer")) == NULL) goto free_stderrredirect;
-                   if ((logBytes = PyUnicode_AsUTF8String(logBuffer)) == NULL) goto free_logbuffer;
+                   if ((stdErrRedirect = Plugins::PyObject_GetAttrString(pModule, "stdErrRedirect")) == nullptr) goto free_module;
+                   if ((logBuffer = Plugins::PyObject_GetAttrString(stdErrRedirect, "buffer")) == nullptr) goto free_stderrredirect;
+                   if ((logBytes = PyUnicode_AsUTF8String(logBuffer)) == nullptr) goto free_logbuffer;
                    logString.append(PyBytes_AsString(logBytes));
 
                    // Check if there were some errors written to stderr

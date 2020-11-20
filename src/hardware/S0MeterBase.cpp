@@ -106,7 +106,7 @@ void S0MeterBase::ReloadLastTotals()
 
 		std::vector<std::vector<std::string> > result;
 		std::vector<std::string> results;
-		
+
 		/*
 		result=m_sql.safe_query("SELECT sValue FROM DeviceStatus WHERE (HardwareID=%d AND DeviceID='%d' AND Unit=0 AND Type=%d AND SubType=%d)",m_HwdID, ii+1, pTypeENERGY, sTypeELEC2);
 		if (result.size()==1)
@@ -118,7 +118,7 @@ void S0MeterBase::ReloadLastTotals()
 			}
 		}
 		*/
-		
+
 		int metertype = m_meters[ii].m_type;
 		int hardware_type;
 		if (metertype == device::tmeter::type::ENERGY)
@@ -135,7 +135,7 @@ void S0MeterBase::ReloadLastTotals()
 		}
 
 		result = m_sql.safe_query("SELECT sValue FROM DeviceStatus WHERE (HardwareID=%d AND Type=%d AND DeviceID LIKE('%%%d'))", m_HwdID, hardware_type, (ii+1));
-		
+
 		if (result.size() == 1)
 		{
 			StringSplit(result[0][0], ";", results);
@@ -221,7 +221,7 @@ void S0MeterBase::SendMeter(unsigned char ID, double musage, double mtotal)
 		total-=tsen.ENERGY.total5*0x100;
 		tsen.ENERGY.total6=(unsigned char)(total);
 
-		sDecodeRXMessage(this, (const unsigned char *)&tsen.ENERGY, NULL, 255);
+		sDecodeRXMessage(this, (const unsigned char *)&tsen.ENERGY, nullptr, 255);
 
 	}
 	else if (meterype==device::tmeter::type::GAS)
@@ -232,7 +232,7 @@ void S0MeterBase::SendMeter(unsigned char ID, double musage, double mtotal)
 		m_p1gas.subtype=sTypeP1Gas;
 		m_p1gas.gasusage=(unsigned long)(mtotal*1000.0);
 		m_p1gas.ID = ID;
-		sDecodeRXMessage(this, (const unsigned char *)&m_p1gas, NULL, 255);
+		sDecodeRXMessage(this, (const unsigned char *)&m_p1gas, nullptr, 255);
 	}
 	else
 	{
@@ -253,7 +253,7 @@ void S0MeterBase::SendMeter(unsigned char ID, double musage, double mtotal)
 		tsen.RFXMETER.count2 = (BYTE)((counterA & 0x00FF0000) >> 16);
 		tsen.RFXMETER.count3 = (BYTE)((counterA & 0x0000FF00) >> 8);
 		tsen.RFXMETER.count4 = (BYTE)(counterA & 0x000000FF);
-		sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXMETER, NULL, 255);
+		sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXMETER, nullptr, 255);
 	}
 }
 

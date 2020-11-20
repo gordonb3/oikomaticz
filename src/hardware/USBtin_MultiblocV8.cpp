@@ -585,7 +585,7 @@ void USBtin_MultiblocV8::Traitement_Trame_EtatBloc(const unsigned char RefBloc, 
 					lcmd.LIGHTING2.level = 0; //level_value;
 					lcmd.LIGHTING2.filler = 2;
 					lcmd.LIGHTING2.rssi = 12;
-					sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, NULL, 255);
+					sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, nullptr, 255);
 
 				}*/
 			}

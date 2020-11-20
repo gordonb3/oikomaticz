@@ -183,7 +183,7 @@ int CPiFace::LoadConfig(void)
     unsigned char PortType=0;
     int NameFound=0;
     int ValueFound=0;
-    CIOPort *IOport=NULL;
+    CIOPort *IOport = nullptr;
     bool Regenerate_Config=false;
 
     std::string configfile=szUserDataFolder + "piface.conf";
@@ -240,7 +240,7 @@ int CPiFace::LoadConfig(void)
                 EndPos=GetParameterString(Line,".",StartPos,Parameter);
                 if (EndPos>=0)
                 {
-                    Address=(unsigned char)(strtol(Parameter.c_str(),NULL,0) & 0xFF); //data can be restricted further but as we check later on keep it wide for future use.
+                    Address=(unsigned char)(strtol(Parameter.c_str(),nullptr ,0) & 0xFF); //data can be restricted further but as we check later on keep it wide for future use.
                     StartPos=EndPos;
                 }
 
@@ -266,7 +266,7 @@ int CPiFace::LoadConfig(void)
                 EndPos=GetParameterString(Line,".",StartPos,Parameter);
                 if (EndPos>=0)
                 {
-                    PinNumber=(unsigned char)(strtol(Parameter.c_str(),NULL,0) & 0xFF); //data can be restricted further but as we check later on keep it wide for future use.
+                    PinNumber=(unsigned char)(strtol(Parameter.c_str(),nullptr ,0) & 0xFF); //data can be restricted further but as we check later on keep it wide for future use.
                     StartPos=EndPos;
                 }
 
@@ -373,7 +373,7 @@ int CPiFace::LoadConfig(void)
                             //count_update_interval(_s)(ec)
                             unsigned long UpdateInterval;
 
-                            UpdateInterval=strtol(Parametervalue.c_str(),NULL,0);
+                            UpdateInterval=strtol(Parametervalue.c_str(),nullptr ,0);
                             IOport->Pin[PinNumber].Count.SetUpdateInterval(UpdateInterval*1000);
                             result++;
                             break;
@@ -382,7 +382,7 @@ int CPiFace::LoadConfig(void)
                             //count_update_interval_diff_perc
                             unsigned long UpdateIntervalPerc;
 
-                            UpdateIntervalPerc=strtol(Parametervalue.c_str(),NULL,0);
+                            UpdateIntervalPerc=strtol(Parametervalue.c_str(),nullptr ,0);
                             if ( UpdateIntervalPerc < 1 || UpdateIntervalPerc > 1000 )
                             {
                                 _log.Log(LOG_ERROR,"PiFace: Error config file: invalid value %s found", Parametervalue.c_str());
@@ -397,7 +397,7 @@ int CPiFace::LoadConfig(void)
                             //count_initial_value
                             unsigned long StartValue;
 
-                            StartValue=strtol(Parametervalue.c_str(),NULL,0);
+                            StartValue=strtol(Parametervalue.c_str(),nullptr ,0);
                             IOport->Pin[PinNumber].Count.SetTotal(StartValue);
                             result++;
                             Regenerate_Config=true;
@@ -407,7 +407,7 @@ int CPiFace::LoadConfig(void)
                             //count_minimum_pulse_period_msec
                             unsigned long Min_Pulse_Period;
 
-                            Min_Pulse_Period=strtol(Parametervalue.c_str(),NULL,0); // results in 0 if str is invalid
+                            Min_Pulse_Period=strtol(Parametervalue.c_str(),nullptr ,0); // results in 0 if str is invalid
                             IOport->Pin[PinNumber].Count.SetRateLimit(Min_Pulse_Period);
                             result++;
                             break;
@@ -436,7 +436,7 @@ int CPiFace::LoadConfig(void)
 
                         case 12:
                             //count_divider
-                            IOport->Pin[PinNumber].Count.SetDivider(strtol(Parametervalue.c_str(), NULL, 0));
+                            IOport->Pin[PinNumber].Count.SetDivider(strtol(Parametervalue.c_str(), nullptr, 0));
                             result++;
                             break;
                     }
@@ -560,7 +560,7 @@ void CPiFace::AutoCreate_piface_config(void)
 		"//                                  0 = off \r\n",
 		"//                                  < 100 msec times will not be very effective.\r\n",
 		"//\r\n",
-		NULL
+		nullptr
 	};
 
     char configline[100];
@@ -577,7 +577,7 @@ void CPiFace::AutoCreate_piface_config(void)
     if (ConfigFile.is_open())
     {
 		int i = 0;
-		while (explanation[i]!=NULL)
+		while (explanation[i] != nullptr)
         {
             ConfigFile.write(explanation[i],strlen(explanation[i]));
 			i++;
@@ -832,7 +832,7 @@ void CPiFace::Do_Work()
             msec_counter = 0;
             sec_counter++;
             if (sec_counter % 12 == 0) {
-                m_LastHeartbeat = mytime(NULL);
+                m_LastHeartbeat = mytime(nullptr);
             }
         }
 
@@ -877,7 +877,7 @@ void CPiFace::Do_Work_Queue()
         sendData = *itt;
         m_send_queue.erase(itt);
         m_queue_mutex.unlock();
-        sDecodeRXMessage(this, (const unsigned char*)sendData.c_str(), NULL, 255);
+        sDecodeRXMessage(this, (const unsigned char*)sendData.c_str(), nullptr, 255);
     }
 }
 
@@ -1535,7 +1535,7 @@ CIOPort::CIOPort()
     Last=0;
     Current=0;
     Present=false;
-    Callback_pntr = NULL;
+    Callback_pntr = nullptr;
     PortType = 0;
     devId = 0;
     for (int PinNr=0; PinNr<=7 ;PinNr++)

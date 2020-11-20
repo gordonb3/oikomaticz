@@ -20,10 +20,10 @@ namespace domoticztypes {
 		BYTE	seqnbr;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("packetlength", packetlength);
-			ar& cereal::make_nvp("packettype", packettype);
-			ar& cereal::make_nvp("subtype", subtype);
-			ar& cereal::make_nvp("seqnbr", seqnbr);
+			ar &cereal::make_nvp("packetlength", packetlength);
+			ar &cereal::make_nvp("packettype", packettype);
+			ar &cereal::make_nvp("subtype", subtype);
+			ar &cereal::make_nvp("seqnbr", seqnbr);
 		};
 	};
 
@@ -40,16 +40,16 @@ namespace domoticztypes {
 		BYTE	msg9;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("freqsel", freqsel);
-			ar& cereal::make_nvp("xmitpwr", xmitpwr);
-			ar& cereal::make_nvp("msg3", msg3);
-			ar& cereal::make_nvp("msg4", msg4);
-			ar& cereal::make_nvp("msg5", msg5);
-			ar& cereal::make_nvp("msg6", msg6);
-			ar& cereal::make_nvp("msg7", msg7);
-			ar& cereal::make_nvp("msg8", msg8);
-			ar& cereal::make_nvp("msg9", msg9);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("freqsel", freqsel);
+			ar &cereal::make_nvp("xmitpwr", xmitpwr);
+			ar &cereal::make_nvp("msg3", msg3);
+			ar &cereal::make_nvp("msg4", msg4);
+			ar &cereal::make_nvp("msg5", msg5);
+			ar &cereal::make_nvp("msg6", msg6);
+			ar &cereal::make_nvp("msg7", msg7);
+			ar &cereal::make_nvp("msg8", msg8);
+			ar &cereal::make_nvp("msg9", msg9);
 		};
 	};
 
@@ -74,23 +74,23 @@ namespace domoticztypes {
 		BYTE	msg16;
 		template <class Archive>
 		void serialize(Archive& ar) {	//response on a mode command from the application
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("msg1", msg1);	//receiver/transceiver type
-			ar& cereal::make_nvp("msg2", msg2);	//firmware version
-			ar& cereal::make_nvp("msg3", msg3);
-			ar& cereal::make_nvp("msg4", msg4);
-			ar& cereal::make_nvp("msg5", msg5);
-			ar& cereal::make_nvp("msg6", msg6);
-			ar& cereal::make_nvp("msg7", msg7);
-			ar& cereal::make_nvp("msg8", msg8);
-			ar& cereal::make_nvp("msg9", msg9);
-			ar& cereal::make_nvp("msg10", msg10);
-			ar& cereal::make_nvp("msg11", msg11);
-			ar& cereal::make_nvp("msg12", msg12);
-			ar& cereal::make_nvp("msg13", msg13);
-			ar& cereal::make_nvp("msg14", msg14);
-			ar& cereal::make_nvp("msg15", msg15);
-			ar& cereal::make_nvp("msg16", msg16);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("msg1", msg1);	//receiver/transceiver type
+			ar &cereal::make_nvp("msg2", msg2);	//firmware version
+			ar &cereal::make_nvp("msg3", msg3);
+			ar &cereal::make_nvp("msg4", msg4);
+			ar &cereal::make_nvp("msg5", msg5);
+			ar &cereal::make_nvp("msg6", msg6);
+			ar &cereal::make_nvp("msg7", msg7);
+			ar &cereal::make_nvp("msg8", msg8);
+			ar &cereal::make_nvp("msg9", msg9);
+			ar &cereal::make_nvp("msg10", msg10);
+			ar &cereal::make_nvp("msg11", msg11);
+			ar &cereal::make_nvp("msg12", msg12);
+			ar &cereal::make_nvp("msg13", msg13);
+			ar &cereal::make_nvp("msg14", msg14);
+			ar &cereal::make_nvp("msg15", msg15);
+			ar &cereal::make_nvp("msg16", msg16);
 		};
 	};
 
@@ -115,23 +115,23 @@ namespace domoticztypes {
 		BYTE	msg16;
 		template <class Archive>
 		void serialize(Archive& ar) {	//response on a mode command from the application
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("msg1", msg1);	//receiver/transceiver type
-			ar& cereal::make_nvp("msg2", msg2);	//firmware version
-			ar& cereal::make_nvp("msg3", msg3);
-			ar& cereal::make_nvp("msg4", msg4);
-			ar& cereal::make_nvp("msg5", msg5);
-			ar& cereal::make_nvp("msg6", msg6);
-			ar& cereal::make_nvp("msg7", msg7);
-			ar& cereal::make_nvp("msg8", msg8);
-			ar& cereal::make_nvp("msg9", msg9);
-			ar& cereal::make_nvp("msg10", msg10);
-			ar& cereal::make_nvp("msg11", msg11);
-			ar& cereal::make_nvp("msg12", msg12);
-			ar& cereal::make_nvp("msg13", msg13);
-			ar& cereal::make_nvp("msg14", msg14);
-			ar& cereal::make_nvp("msg15", msg15);
-			ar& cereal::make_nvp("msg16", msg16);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("msg1", msg1);	//receiver/transceiver type
+			ar &cereal::make_nvp("msg2", msg2);	//firmware version
+			ar &cereal::make_nvp("msg3", msg3);
+			ar &cereal::make_nvp("msg4", msg4);
+			ar &cereal::make_nvp("msg5", msg5);
+			ar &cereal::make_nvp("msg6", msg6);
+			ar &cereal::make_nvp("msg7", msg7);
+			ar &cereal::make_nvp("msg8", msg8);
+			ar &cereal::make_nvp("msg9", msg9);
+			ar &cereal::make_nvp("msg10", msg10);
+			ar &cereal::make_nvp("msg11", msg11);
+			ar &cereal::make_nvp("msg12", msg12);
+			ar &cereal::make_nvp("msg13", msg13);
+			ar &cereal::make_nvp("msg14", msg14);
+			ar &cereal::make_nvp("msg15", msg15);
+			ar &cereal::make_nvp("msg16", msg16);
 		};
 
 	};
@@ -172,39 +172,39 @@ namespace domoticztypes {
 		BYTE	msg33;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("msg1", msg1);
-			ar& cereal::make_nvp("msg2", msg2);
-			ar& cereal::make_nvp("msg3", msg3);
-			ar& cereal::make_nvp("msg4", msg4);
-			ar& cereal::make_nvp("msg5", msg5);
-			ar& cereal::make_nvp("msg6", msg6);
-			ar& cereal::make_nvp("msg7", msg7);
-			ar& cereal::make_nvp("msg8", msg8);
-			ar& cereal::make_nvp("msg9", msg9);
-			ar& cereal::make_nvp("msg10", msg10);
-			ar& cereal::make_nvp("msg11", msg11);
-			ar& cereal::make_nvp("msg12", msg12);
-			ar& cereal::make_nvp("msg13", msg13);
-			ar& cereal::make_nvp("msg14", msg14);
-			ar& cereal::make_nvp("msg15", msg15);
-			ar& cereal::make_nvp("msg16", msg16);
-			ar& cereal::make_nvp("msg17", msg17);
-			ar& cereal::make_nvp("msg18", msg18);
-			ar& cereal::make_nvp("msg19", msg19);
-			ar& cereal::make_nvp("msg20", msg20);
-			ar& cereal::make_nvp("msg21", msg21);
-			ar& cereal::make_nvp("msg22", msg22);
-			ar& cereal::make_nvp("msg23", msg23);
-			ar& cereal::make_nvp("msg24", msg24);
-			ar& cereal::make_nvp("msg25", msg25);
-			ar& cereal::make_nvp("msg26", msg26);
-			ar& cereal::make_nvp("msg27", msg27);
-			ar& cereal::make_nvp("msg28", msg28);
-			ar& cereal::make_nvp("msg29", msg29);
-			ar& cereal::make_nvp("msg30", msg30);
-			ar& cereal::make_nvp("msg31", msg31);
-			ar& cereal::make_nvp("msg32", msg32);
-			ar& cereal::make_nvp("msg33", msg33);
+			ar &cereal::make_nvp("msg1", msg1);
+			ar &cereal::make_nvp("msg2", msg2);
+			ar &cereal::make_nvp("msg3", msg3);
+			ar &cereal::make_nvp("msg4", msg4);
+			ar &cereal::make_nvp("msg5", msg5);
+			ar &cereal::make_nvp("msg6", msg6);
+			ar &cereal::make_nvp("msg7", msg7);
+			ar &cereal::make_nvp("msg8", msg8);
+			ar &cereal::make_nvp("msg9", msg9);
+			ar &cereal::make_nvp("msg10", msg10);
+			ar &cereal::make_nvp("msg11", msg11);
+			ar &cereal::make_nvp("msg12", msg12);
+			ar &cereal::make_nvp("msg13", msg13);
+			ar &cereal::make_nvp("msg14", msg14);
+			ar &cereal::make_nvp("msg15", msg15);
+			ar &cereal::make_nvp("msg16", msg16);
+			ar &cereal::make_nvp("msg17", msg17);
+			ar &cereal::make_nvp("msg18", msg18);
+			ar &cereal::make_nvp("msg19", msg19);
+			ar &cereal::make_nvp("msg20", msg20);
+			ar &cereal::make_nvp("msg21", msg21);
+			ar &cereal::make_nvp("msg22", msg22);
+			ar &cereal::make_nvp("msg23", msg23);
+			ar &cereal::make_nvp("msg24", msg24);
+			ar &cereal::make_nvp("msg25", msg25);
+			ar &cereal::make_nvp("msg26", msg26);
+			ar &cereal::make_nvp("msg27", msg27);
+			ar &cereal::make_nvp("msg28", msg28);
+			ar &cereal::make_nvp("msg29", msg29);
+			ar &cereal::make_nvp("msg30", msg30);
+			ar &cereal::make_nvp("msg31", msg31);
+			ar &cereal::make_nvp("msg32", msg32);
+			ar &cereal::make_nvp("msg33", msg33);
 		};
 	};
 
@@ -212,7 +212,7 @@ namespace domoticztypes {
 		BYTE	msg;
 		template <class Archive>
 		void serialize(Archive& ar) {	//receiver/transmitter messages
-			ar& cereal::make_nvp("msg", msg);
+			ar &cereal::make_nvp("msg", msg);
 		};
 	};
 
@@ -223,10 +223,10 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("housecode", housecode);
-			ar& cereal::make_nvp("unitcode", unitcode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("housecode", housecode);
+			ar &cereal::make_nvp("unitcode", unitcode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -241,14 +241,14 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("id4", id4);
-			ar& cereal::make_nvp("unitcode", unitcode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("level", level);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("id4", id4);
+			ar &cereal::make_nvp("unitcode", unitcode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("level", level);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -260,11 +260,11 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("system", system);
-			ar& cereal::make_nvp("channel8_1", channel8_1);
-			ar& cereal::make_nvp("channel10_9", channel10_9);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("system", system);
+			ar &cereal::make_nvp("channel8_1", channel8_1);
+			ar &cereal::make_nvp("channel10_9", channel10_9);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -277,12 +277,12 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("cmd1", cmd1);
-			ar& cereal::make_nvp("cmd2", cmd2);
-			ar& cereal::make_nvp("cmd3", cmd3);
-			ar& cereal::make_nvp("pulseHigh", pulseHigh);
-			ar& cereal::make_nvp("pulseLow", pulseLow);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("cmd1", cmd1);
+			ar &cereal::make_nvp("cmd2", cmd2);
+			ar &cereal::make_nvp("cmd3", cmd3);
+			ar &cereal::make_nvp("pulseHigh", pulseHigh);
+			ar &cereal::make_nvp("pulseLow", pulseLow);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 
 		};
 	};
@@ -297,13 +297,13 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("unitcode", unitcode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("level", level);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("unitcode", unitcode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("level", level);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 
 		};
 	};
@@ -319,14 +319,14 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("groupcode", groupcode);
-			ar& cereal::make_nvp("unitcode", unitcode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("cmndseqnbr", cmndseqnbr);
-			ar& cereal::make_nvp("seqnbr2", seqnbr2);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("groupcode", groupcode);
+			ar &cereal::make_nvp("unitcode", unitcode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("cmndseqnbr", cmndseqnbr);
+			ar &cereal::make_nvp("seqnbr2", seqnbr2);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -337,10 +337,10 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("sound", sound);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("sound", sound);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 
 	};
@@ -353,11 +353,11 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -368,10 +368,10 @@ namespace domoticztypes {
 		BYTE	filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("housecode", housecode);
-			ar& cereal::make_nvp("unitcode", unitcode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("filler", filler);
+			ar &cereal::make_nvp("housecode", housecode);
+			ar &cereal::make_nvp("unitcode", unitcode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("filler", filler);
 		};
 	};
 
@@ -384,12 +384,12 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("unicode_id4", unicode_id4);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("unicode_id4", unicode_id4);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -405,15 +405,15 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("unitcode", unitcode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("rfu1", rfu1);
-			ar& cereal::make_nvp("rfu2", rfu2);
-			ar& cereal::make_nvp("rfu3", rfu3);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("unitcode", unitcode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("rfu1", rfu1);
+			ar &cereal::make_nvp("rfu2", rfu2);
+			ar &cereal::make_nvp("rfu3", rfu3);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -429,15 +429,15 @@ namespace domoticztypes {
 		BYTE filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("housecode", housecode);
-			ar& cereal::make_nvp("unitcode", unitcode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("rfu1", rfu1);
-			ar& cereal::make_nvp("rfu2", rfu2);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("housecode", housecode);
+			ar &cereal::make_nvp("unitcode", unitcode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("rfu1", rfu1);
+			ar &cereal::make_nvp("rfu2", rfu2);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 
 	};
@@ -453,14 +453,14 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("groupcode", groupcode);
-			ar& cereal::make_nvp("unitcode", unitcode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("cmndtime", cmndtime);
-			ar& cereal::make_nvp("devtype_filler", devtype_filler);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("groupcode", groupcode);
+			ar &cereal::make_nvp("unitcode", unitcode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("cmndtime", cmndtime);
+			ar &cereal::make_nvp("devtype_filler", devtype_filler);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -472,11 +472,11 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("status", status);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("status", status);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -508,31 +508,31 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("id4", id4);
-			ar& cereal::make_nvp("id5", id5);
-			ar& cereal::make_nvp("id6", id6);
-			ar& cereal::make_nvp("id7", id7);
-			ar& cereal::make_nvp("id8", id8);
-			ar& cereal::make_nvp("id9", id9);
-			ar& cereal::make_nvp("id10", id10);
-			ar& cereal::make_nvp("id11", id11);
-			ar& cereal::make_nvp("id12", id12);
-			ar& cereal::make_nvp("id13", id13);
-			ar& cereal::make_nvp("id14", id14);
-			ar& cereal::make_nvp("id15", id15);
-			ar& cereal::make_nvp("id16", id16);
-			ar& cereal::make_nvp("id17", id17);
-			ar& cereal::make_nvp("id18", id18);
-			ar& cereal::make_nvp("id19", id19);
-			ar& cereal::make_nvp("id20", id20);
-			ar& cereal::make_nvp("id21", id21);
-			ar& cereal::make_nvp("id22", id22);
-			ar& cereal::make_nvp("id23", id23);
-			ar& cereal::make_nvp("id24", id24);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("id4", id4);
+			ar &cereal::make_nvp("id5", id5);
+			ar &cereal::make_nvp("id6", id6);
+			ar &cereal::make_nvp("id7", id7);
+			ar &cereal::make_nvp("id8", id8);
+			ar &cereal::make_nvp("id9", id9);
+			ar &cereal::make_nvp("id10", id10);
+			ar &cereal::make_nvp("id11", id11);
+			ar &cereal::make_nvp("id12", id12);
+			ar &cereal::make_nvp("id13", id13);
+			ar &cereal::make_nvp("id14", id14);
+			ar &cereal::make_nvp("id15", id15);
+			ar &cereal::make_nvp("id16", id16);
+			ar &cereal::make_nvp("id17", id17);
+			ar &cereal::make_nvp("id18", id18);
+			ar &cereal::make_nvp("id19", id19);
+			ar &cereal::make_nvp("id20", id20);
+			ar &cereal::make_nvp("id21", id21);
+			ar &cereal::make_nvp("id22", id22);
+			ar &cereal::make_nvp("id23", id23);
+			ar &cereal::make_nvp("id24", id24);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -542,9 +542,9 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("housecode", housecode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("housecode", housecode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -554,9 +554,9 @@ namespace domoticztypes {
 		BYTE	toggle_cmndtype_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id", id);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("toggle_cmndtype_rssi", toggle_cmndtype_rssi);
+			ar &cereal::make_nvp("id", id);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("toggle_cmndtype_rssi", toggle_cmndtype_rssi);
 		};
 	};
 
@@ -569,12 +569,12 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("temperature", temperature);
-			ar& cereal::make_nvp("set_point", set_point);
-			ar& cereal::make_nvp("status_filler_mode", status_filler_mode);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("temperature", temperature);
+			ar &cereal::make_nvp("set_point", set_point);
+			ar &cereal::make_nvp("status_filler_mode", status_filler_mode);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -584,9 +584,9 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("unitcode", unitcode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("unitcode", unitcode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -598,11 +598,11 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("unitcode1", unitcode1);
-			ar& cereal::make_nvp("unitcode2", unitcode2);
-			ar& cereal::make_nvp("unitcode3", unitcode3);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("unitcode1", unitcode1);
+			ar &cereal::make_nvp("unitcode2", unitcode2);
+			ar &cereal::make_nvp("unitcode3", unitcode3);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -617,14 +617,14 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("unitcode1", unitcode1);
-			ar& cereal::make_nvp("unitcode2", unitcode2);
-			ar& cereal::make_nvp("unitcode3", unitcode3);
-			ar& cereal::make_nvp("beep", beep);
-			ar& cereal::make_nvp("fan1_speed", fan1_speed);
-			ar& cereal::make_nvp("flame_power", flame_power);
-			ar& cereal::make_nvp("mode", mode);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("unitcode1", unitcode1);
+			ar &cereal::make_nvp("unitcode2", unitcode2);
+			ar &cereal::make_nvp("unitcode3", unitcode3);
+			ar &cereal::make_nvp("beep", beep);
+			ar &cereal::make_nvp("fan1_speed", fan1_speed);
+			ar &cereal::make_nvp("flame_power", flame_power);
+			ar &cereal::make_nvp("mode", mode);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 
 	};
@@ -641,15 +641,15 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("id4", id4);
-			ar& cereal::make_nvp("unitcode", unitcode);
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("temperature", temperature);
-			ar& cereal::make_nvp("tempPoint5", tempPoint5);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("id4", id4);
+			ar &cereal::make_nvp("unitcode", unitcode);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("temperature", temperature);
+			ar &cereal::make_nvp("tempPoint5", tempPoint5);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -663,13 +663,13 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("sensor1h", sensor1h);
-			ar& cereal::make_nvp("sensor1l", sensor1l);
-			ar& cereal::make_nvp("sensor2h", sensor2h);
-			ar& cereal::make_nvp("sensor2l", sensor2l);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("sensor1h", sensor1h);
+			ar &cereal::make_nvp("sensor1l", sensor1l);
+			ar &cereal::make_nvp("sensor2h", sensor2h);
+			ar &cereal::make_nvp("sensor2l", sensor2l);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -683,13 +683,13 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
-			ar& cereal::make_nvp("temperaturel", temperaturel);
-			ar& cereal::make_nvp("raintotal1", raintotal1);
-			ar& cereal::make_nvp("raintotal2", raintotal2);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
+			ar &cereal::make_nvp("temperaturel", temperaturel);
+			ar &cereal::make_nvp("raintotal1", raintotal1);
+			ar &cereal::make_nvp("raintotal2", raintotal2);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -701,11 +701,11 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
-			ar& cereal::make_nvp("temperaturel", temperaturel);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
+			ar &cereal::make_nvp("temperaturel", temperaturel);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 
 	};
@@ -718,11 +718,11 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("humidity", humidity);
-			ar& cereal::make_nvp("humidity_status", humidity_status);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("humidity", humidity);
+			ar &cereal::make_nvp("humidity_status", humidity_status);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -736,13 +736,13 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
-			ar& cereal::make_nvp("temperaturel", temperaturel);
-			ar& cereal::make_nvp("humidity", humidity);
-			ar& cereal::make_nvp("humidity_status", humidity_status);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
+			ar &cereal::make_nvp("temperaturel", temperaturel);
+			ar &cereal::make_nvp("humidity", humidity);
+			ar &cereal::make_nvp("humidity_status", humidity_status);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -755,12 +755,12 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("baro1", baro1);
-			ar& cereal::make_nvp("baro2", baro2);
-			ar& cereal::make_nvp("forecast", forecast);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("baro1", baro1);
+			ar &cereal::make_nvp("baro2", baro2);
+			ar &cereal::make_nvp("forecast", forecast);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -777,16 +777,16 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
-			ar& cereal::make_nvp("temperaturel", temperaturel);
-			ar& cereal::make_nvp("humidity", humidity);
-			ar& cereal::make_nvp("humidity_status", humidity_status);
-			ar& cereal::make_nvp("baroh", baroh);
-			ar& cereal::make_nvp("barol", barol);
-			ar& cereal::make_nvp("forecast", forecast);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
+			ar &cereal::make_nvp("temperaturel", temperaturel);
+			ar &cereal::make_nvp("humidity", humidity);
+			ar &cereal::make_nvp("humidity_status", humidity_status);
+			ar &cereal::make_nvp("baroh", baroh);
+			ar &cereal::make_nvp("barol", barol);
+			ar &cereal::make_nvp("forecast", forecast);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -801,14 +801,14 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("rainrateh", rainrateh);
-			ar& cereal::make_nvp("rainratel", rainratel);
-			ar& cereal::make_nvp("raintotal1", raintotal1);
-			ar& cereal::make_nvp("raintotal2", raintotal2);
-			ar& cereal::make_nvp("raintotal3", raintotal3);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("rainrateh", rainrateh);
+			ar &cereal::make_nvp("rainratel", rainratel);
+			ar &cereal::make_nvp("raintotal1", raintotal1);
+			ar &cereal::make_nvp("raintotal2", raintotal2);
+			ar &cereal::make_nvp("raintotal3", raintotal3);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -828,19 +828,19 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("directionh", directionh);
-			ar& cereal::make_nvp("directionl", directionl);
-			ar& cereal::make_nvp("av_speedh", av_speedh);
-			ar& cereal::make_nvp("av_speedl", av_speedl);
-			ar& cereal::make_nvp("gusth", gusth);
-			ar& cereal::make_nvp("gustl", gustl);
-			ar& cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
-			ar& cereal::make_nvp("temperaturel", temperaturel);
-			ar& cereal::make_nvp("chillh_chillsign", chillh_chillsign);
-			ar& cereal::make_nvp("chilll", chilll);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("directionh", directionh);
+			ar &cereal::make_nvp("directionl", directionl);
+			ar &cereal::make_nvp("av_speedh", av_speedh);
+			ar &cereal::make_nvp("av_speedl", av_speedl);
+			ar &cereal::make_nvp("gusth", gusth);
+			ar &cereal::make_nvp("gustl", gustl);
+			ar &cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
+			ar &cereal::make_nvp("temperaturel", temperaturel);
+			ar &cereal::make_nvp("chillh_chillsign", chillh_chillsign);
+			ar &cereal::make_nvp("chilll", chilll);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -853,12 +853,12 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("uv", uv);
-			ar& cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
-			ar& cereal::make_nvp("temperaturel", temperaturel);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("uv", uv);
+			ar &cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
+			ar &cereal::make_nvp("temperaturel", temperaturel);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -875,16 +875,16 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("yy", yy);
-			ar& cereal::make_nvp("mm", mm);
-			ar& cereal::make_nvp("dd", dd);
-			ar& cereal::make_nvp("dow", dow);
-			ar& cereal::make_nvp("hr", hr);
-			ar& cereal::make_nvp("min", min);
-			ar& cereal::make_nvp("sec", sec);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("yy", yy);
+			ar &cereal::make_nvp("mm", mm);
+			ar &cereal::make_nvp("dd", dd);
+			ar &cereal::make_nvp("dow", dow);
+			ar &cereal::make_nvp("hr", hr);
+			ar &cereal::make_nvp("min", min);
+			ar &cereal::make_nvp("sec", sec);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -901,16 +901,16 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("count", count);
-			ar& cereal::make_nvp("ch1h", ch1h);
-			ar& cereal::make_nvp("ch1l", ch1l);
-			ar& cereal::make_nvp("ch2h", ch2h);
-			ar& cereal::make_nvp("ch2l", ch2l);
-			ar& cereal::make_nvp("ch3h", ch3h);
-			ar& cereal::make_nvp("ch3l", ch3l);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("count", count);
+			ar &cereal::make_nvp("ch1h", ch1h);
+			ar &cereal::make_nvp("ch1l", ch1l);
+			ar &cereal::make_nvp("ch2h", ch2h);
+			ar &cereal::make_nvp("ch2l", ch2l);
+			ar &cereal::make_nvp("ch3h", ch3h);
+			ar &cereal::make_nvp("ch3l", ch3l);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -931,20 +931,20 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("count", count);
-			ar& cereal::make_nvp("instant1", instant1);
-			ar& cereal::make_nvp("instant2", instant2);
-			ar& cereal::make_nvp("instant3", instant3);
-			ar& cereal::make_nvp("instant4", instant4);
-			ar& cereal::make_nvp("total1", total1);
-			ar& cereal::make_nvp("total2", total2);
-			ar& cereal::make_nvp("total3", total3);
-			ar& cereal::make_nvp("total4", total4);
-			ar& cereal::make_nvp("total5", total5);
-			ar& cereal::make_nvp("total6", total6);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("count", count);
+			ar &cereal::make_nvp("instant1", instant1);
+			ar &cereal::make_nvp("instant2", instant2);
+			ar &cereal::make_nvp("instant3", instant3);
+			ar &cereal::make_nvp("instant4", instant4);
+			ar &cereal::make_nvp("total1", total1);
+			ar &cereal::make_nvp("total2", total2);
+			ar &cereal::make_nvp("total3", total3);
+			ar &cereal::make_nvp("total4", total4);
+			ar &cereal::make_nvp("total5", total5);
+			ar &cereal::make_nvp("total6", total6);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -967,22 +967,22 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("count", count);
-			ar& cereal::make_nvp("ch1h", ch1h);
-			ar& cereal::make_nvp("ch1l", ch1l);
-			ar& cereal::make_nvp("ch2h", ch2h);
-			ar& cereal::make_nvp("ch2l", ch2l);
-			ar& cereal::make_nvp("ch3h", ch3h);
-			ar& cereal::make_nvp("ch3l", ch3l);
-			ar& cereal::make_nvp("total1", total1);
-			ar& cereal::make_nvp("total2", total2);
-			ar& cereal::make_nvp("total3", total3);
-			ar& cereal::make_nvp("total4", total4);
-			ar& cereal::make_nvp("total5", total5);
-			ar& cereal::make_nvp("total6", total6);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("count", count);
+			ar &cereal::make_nvp("ch1h", ch1h);
+			ar &cereal::make_nvp("ch1l", ch1l);
+			ar &cereal::make_nvp("ch2h", ch2h);
+			ar &cereal::make_nvp("ch2l", ch2l);
+			ar &cereal::make_nvp("ch3h", ch3h);
+			ar &cereal::make_nvp("ch3l", ch3l);
+			ar &cereal::make_nvp("total1", total1);
+			ar &cereal::make_nvp("total2", total2);
+			ar &cereal::make_nvp("total3", total3);
+			ar &cereal::make_nvp("total4", total4);
+			ar &cereal::make_nvp("total5", total5);
+			ar &cereal::make_nvp("total6", total6);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -1001,18 +1001,18 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("voltage", voltage);
-			ar& cereal::make_nvp("currentH", currentH);
-			ar& cereal::make_nvp("currentL", currentL);
-			ar& cereal::make_nvp("powerH", powerH);
-			ar& cereal::make_nvp("powerL", powerL);
-			ar& cereal::make_nvp("energyH", energyH);
-			ar& cereal::make_nvp("energyL", energyL);
-			ar& cereal::make_nvp("pf", pf);
-			ar& cereal::make_nvp("freq", freq);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("voltage", voltage);
+			ar &cereal::make_nvp("currentH", currentH);
+			ar &cereal::make_nvp("currentL", currentL);
+			ar &cereal::make_nvp("powerH", powerH);
+			ar &cereal::make_nvp("powerL", powerL);
+			ar &cereal::make_nvp("energyH", energyH);
+			ar &cereal::make_nvp("energyL", energyL);
+			ar &cereal::make_nvp("pf", pf);
+			ar &cereal::make_nvp("freq", freq);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -1024,11 +1024,11 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("weighthigh", weighthigh);
-			ar& cereal::make_nvp("weightlow", weightlow);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("weighthigh", weighthigh);
+			ar &cereal::make_nvp("weightlow", weightlow);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -1053,24 +1053,24 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("id4", id4);
-			ar& cereal::make_nvp("id5", id5);
-			ar& cereal::make_nvp("contract_type", contract_type);
-			ar& cereal::make_nvp("counter1_0", counter1_0);
-			ar& cereal::make_nvp("counter1_1", counter1_1);
-			ar& cereal::make_nvp("counter1_2", counter1_2);
-			ar& cereal::make_nvp("counter1_3", counter1_3);
-			ar& cereal::make_nvp("counter2_0", counter2_0);
-			ar& cereal::make_nvp("counter2_1", counter2_1);
-			ar& cereal::make_nvp("counter2_2", counter2_2);
-			ar& cereal::make_nvp("counter2_3", counter2_3);
-			ar& cereal::make_nvp("power_H", power_H);
-			ar& cereal::make_nvp("power_L", power_L);
-			ar& cereal::make_nvp("state", state);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("id4", id4);
+			ar &cereal::make_nvp("id5", id5);
+			ar &cereal::make_nvp("contract_type", contract_type);
+			ar &cereal::make_nvp("counter1_0", counter1_0);
+			ar &cereal::make_nvp("counter1_1", counter1_1);
+			ar &cereal::make_nvp("counter1_2", counter1_2);
+			ar &cereal::make_nvp("counter1_3", counter1_3);
+			ar &cereal::make_nvp("counter2_0", counter2_0);
+			ar &cereal::make_nvp("counter2_1", counter2_1);
+			ar &cereal::make_nvp("counter2_2", counter2_2);
+			ar &cereal::make_nvp("counter2_3", counter2_3);
+			ar &cereal::make_nvp("power_H", power_H);
+			ar &cereal::make_nvp("power_L", power_L);
+			ar &cereal::make_nvp("state", state);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -1091,20 +1091,20 @@ namespace domoticztypes {
 		BYTE	batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("id4", id4);
-			ar& cereal::make_nvp("counter1_0", counter1_0);
-			ar& cereal::make_nvp("counter1_1", counter1_1);
-			ar& cereal::make_nvp("counter1_2", counter1_2);
-			ar& cereal::make_nvp("counter1_3", counter1_3);
-			ar& cereal::make_nvp("counter2_0", counter2_0);
-			ar& cereal::make_nvp("counter2_1", counter2_1);
-			ar& cereal::make_nvp("counter2_2", counter2_2);
-			ar& cereal::make_nvp("counter2_3", counter2_3);
-			ar& cereal::make_nvp("state", state);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("id4", id4);
+			ar &cereal::make_nvp("counter1_0", counter1_0);
+			ar &cereal::make_nvp("counter1_1", counter1_1);
+			ar &cereal::make_nvp("counter1_2", counter1_2);
+			ar &cereal::make_nvp("counter1_3", counter1_3);
+			ar &cereal::make_nvp("counter2_0", counter2_0);
+			ar &cereal::make_nvp("counter2_1", counter2_1);
+			ar &cereal::make_nvp("counter2_2", counter2_2);
+			ar &cereal::make_nvp("counter2_3", counter2_3);
+			ar &cereal::make_nvp("state", state);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -1129,24 +1129,24 @@ namespace domoticztypes {
 		BYTE batterylevel_filler;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("id3", id3);
-			ar& cereal::make_nvp("id4", id4);
-			ar& cereal::make_nvp("runidx_0", runidx_0);
-			ar& cereal::make_nvp("runidx_1", runidx_1);
-			ar& cereal::make_nvp("runidx_2", runidx_2);
-			ar& cereal::make_nvp("runidx_3", runidx_3);
-			ar& cereal::make_nvp("prodidx1_0", prodidx1_0);
-			ar& cereal::make_nvp("prodidx1_1", prodidx1_1);
-			ar& cereal::make_nvp("prodidx1_2", prodidx1_2);
-			ar& cereal::make_nvp("prodidx1_3", prodidx1_3);
-			ar& cereal::make_nvp("currentidx_rfu", currentidx_rfu);
-			ar& cereal::make_nvp("av_voltage", av_voltage);
-			ar& cereal::make_nvp("power_H", power_H);
-			ar& cereal::make_nvp("power_L", power_L);
-			ar& cereal::make_nvp("state", state);
-			ar& cereal::make_nvp("batterylevel_filler", batterylevel_filler);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("id3", id3);
+			ar &cereal::make_nvp("id4", id4);
+			ar &cereal::make_nvp("runidx_0", runidx_0);
+			ar &cereal::make_nvp("runidx_1", runidx_1);
+			ar &cereal::make_nvp("runidx_2", runidx_2);
+			ar &cereal::make_nvp("runidx_3", runidx_3);
+			ar &cereal::make_nvp("prodidx1_0", prodidx1_0);
+			ar &cereal::make_nvp("prodidx1_1", prodidx1_1);
+			ar &cereal::make_nvp("prodidx1_2", prodidx1_2);
+			ar &cereal::make_nvp("prodidx1_3", prodidx1_3);
+			ar &cereal::make_nvp("currentidx_rfu", currentidx_rfu);
+			ar &cereal::make_nvp("av_voltage", av_voltage);
+			ar &cereal::make_nvp("power_H", power_H);
+			ar &cereal::make_nvp("power_L", power_L);
+			ar &cereal::make_nvp("state", state);
+			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
 	};
 
@@ -1161,14 +1161,14 @@ namespace domoticztypes {
 		BYTE filler2;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("cmnd", cmnd);
-			ar& cereal::make_nvp("baudrate", baudrate);
-			ar& cereal::make_nvp("parity", parity);
-			ar& cereal::make_nvp("databits", databits);
-			ar& cereal::make_nvp("stopbits", stopbits);
-			ar& cereal::make_nvp("polarity", polarity);
-			ar& cereal::make_nvp("filler1", filler1);
-			ar& cereal::make_nvp("filler2", filler2);
+			ar &cereal::make_nvp("cmnd", cmnd);
+			ar &cereal::make_nvp("baudrate", baudrate);
+			ar &cereal::make_nvp("parity", parity);
+			ar &cereal::make_nvp("databits", databits);
+			ar &cereal::make_nvp("stopbits", stopbits);
+			ar &cereal::make_nvp("polarity", polarity);
+			ar &cereal::make_nvp("filler1", filler1);
+			ar &cereal::make_nvp("filler2", filler2);
 		};
 	};
 
@@ -1176,7 +1176,7 @@ namespace domoticztypes {
 		BYTE datachar[252];
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("datachar", datachar);
+			ar &cereal::make_nvp("datachar", datachar);
 		};
 	};
 
@@ -1187,10 +1187,10 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id", id);
-			ar& cereal::make_nvp("msg1", msg1);
-			ar& cereal::make_nvp("msg2", msg2);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id", id);
+			ar &cereal::make_nvp("msg1", msg1);
+			ar &cereal::make_nvp("msg2", msg2);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -1204,13 +1204,13 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("id1", id1);
-			ar& cereal::make_nvp("id2", id2);
-			ar& cereal::make_nvp("count1", count1);
-			ar& cereal::make_nvp("count2", count2);
-			ar& cereal::make_nvp("count3", count3);
-			ar& cereal::make_nvp("count4", count4);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("id1", id1);
+			ar &cereal::make_nvp("id2", id2);
+			ar &cereal::make_nvp("count1", count1);
+			ar &cereal::make_nvp("count2", count2);
+			ar &cereal::make_nvp("count3", count3);
+			ar &cereal::make_nvp("count4", count4);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
@@ -1223,12 +1223,12 @@ namespace domoticztypes {
 		BYTE	filler_rssi;
 		template <class Archive>
 		void serialize(Archive& ar) {
-			ar& cereal::make_nvp("hc1", hc1);
-			ar& cereal::make_nvp("hc2", hc2);
-			ar& cereal::make_nvp("addr", addr);
-			ar& cereal::make_nvp("cmd1", cmd1);
-			ar& cereal::make_nvp("cmd2", cmd2);
-			ar& cereal::make_nvp("filler_rssi", filler_rssi);
+			ar &cereal::make_nvp("hc1", hc1);
+			ar &cereal::make_nvp("hc2", hc2);
+			ar &cereal::make_nvp("addr", addr);
+			ar &cereal::make_nvp("cmd1", cmd1);
+			ar &cereal::make_nvp("cmd2", cmd2);
+			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 	/*
@@ -1240,11 +1240,11 @@ namespace domoticztypes {
 	} _tR_pulse[124];
 	template <class Archive>
 	void serialize (Archive &ar) {
-	ar & cereal::make_nvp("repeat", repeat);
+	ar &cereal::make_nvp("repeat", repeat);
 	template <class Archive>
 	void serialize (Archive &ar){
-	ar & cereal::make_nvp("uint_msb", uint_msb);
-	ar & cereal::make_nvp("uint_lsb", uint_lsb);
+	ar &cereal::make_nvp("uint_msb", uint_msb);
+	ar &cereal::make_nvp("uint_lsb", uint_lsb);
 	};
 	};
 	};

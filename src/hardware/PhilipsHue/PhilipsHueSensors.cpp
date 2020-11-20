@@ -132,7 +132,7 @@ CPHSensor::CPHSensor(const Json::Value& sensor) : m_state(sensor["state"], senso
 	m_name = sensor["name"].asString();
 	m_type = sensor["type"].asString();
 	m_model_id = sensor["modelid"].asString();
-	m_manufacturer_name = sensor["manufacturername"].asString();	
+	m_manufacturer_name = sensor["manufacturername"].asString();
 	m_sw_version = sensor["swversion"].asString();
 	m_uniqueid = (sensor["uniqueid"] != Json::Value::null) ? sensor["uniqueid"].asString() : "";
 }

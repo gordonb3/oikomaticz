@@ -97,16 +97,16 @@ void CTellstick::deviceEvent(int deviceId, int method, const char *data)
     {
     case TELLSTICK_TURNON:
         gswitch.cmnd = gswitch_sOn;
-        sDecodeRXMessage(this, (const unsigned char *)&gswitch, NULL, 255);
+        sDecodeRXMessage(this, (const unsigned char *)&gswitch, nullptr, 255);
         break;
     case TELLSTICK_TURNOFF:
         gswitch.cmnd = gswitch_sOff;
-        sDecodeRXMessage(this, (const unsigned char *)&gswitch, NULL, 255);
+        sDecodeRXMessage(this, (const unsigned char *)&gswitch, nullptr, 255);
         break;
     case TELLSTICK_DIM:
         gswitch.cmnd = gswitch_sSetLevel;
         gswitch.level = atoi(data)*99/255;
-        sDecodeRXMessage(this, (const unsigned char *)&gswitch, NULL, 255);
+        sDecodeRXMessage(this, (const unsigned char *)&gswitch, nullptr, 255);
         break;
     default:
         _log.Log(LOG_NORM, "Unknown event from device %i\n", deviceId);
@@ -334,7 +334,7 @@ namespace http {
                              repeats, repeatInterval, hwID);
 
             CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(hwID);
-            if (pBaseHardware == NULL)
+            if (pBaseHardware == nullptr)
                 return;
             if (pBaseHardware->HwdType != hardware::type::Tellstick)
                 return;

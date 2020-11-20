@@ -60,7 +60,7 @@ std::string CNotificationKodi::GetCustomIcon(std::string &szCustom)
 			return sBase;
 		}
 	}
-	
+
 //	_log.Log(LOG_NORM, "Custom Icon look up for %s returned: '%s'", szCustom.c_str(), szRetVal.c_str());
 	return szRetVal;
 }
@@ -295,7 +295,7 @@ bool CNotificationKodi::SendMessageImplementation(
 		else {
 			_Sock = socket(AF_INET, SOCK_DGRAM, 0);
 		}
-		
+
 		if (_Sock < 0)
 		{
 			logline << "Error creating socket: " << results[i] << ":" << _Port;

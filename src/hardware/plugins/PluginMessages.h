@@ -89,7 +89,7 @@ namespace Plugins {
 		virtual void ProcessLocked()
 		{
 			m_pPlugin->Start();
-			Callback(NULL);
+			Callback(nullptr);
 		};
 	};
 
@@ -100,7 +100,7 @@ namespace Plugins {
 	protected:
 		virtual void ProcessLocked()
 		{
-			Callback(NULL);
+			Callback(nullptr);
 		};
 	};
 
@@ -269,13 +269,13 @@ static std::string get_utf8_from_ansi(const std::string &utf8, int codepage)
 	class onMessageCallback : public CCallbackBase, public CHasConnection
 	{
 	public:
-		onMessageCallback(CPlugin* pPlugin, PyObject* Connection, const std::string& Buffer) : CCallbackBase(pPlugin, "onMessage"), CHasConnection(Connection), m_Data(NULL)
+		onMessageCallback(CPlugin* pPlugin, PyObject* Connection, const std::string& Buffer) : CCallbackBase(pPlugin, "onMessage"), CHasConnection(Connection), m_Data(nullptr)
 		{
 			m_Name = __func__;
 			m_Buffer.reserve(Buffer.length());
 			m_Buffer.assign((const byte*)Buffer.c_str(), (const byte*)Buffer.c_str()+Buffer.length());
 		};
-		onMessageCallback(CPlugin* pPlugin, PyObject* Connection, const std::vector<byte>& Buffer) : CCallbackBase(pPlugin, "onMessage"), CHasConnection(Connection), m_Data(NULL)
+		onMessageCallback(CPlugin* pPlugin, PyObject* Connection, const std::vector<byte>& Buffer) : CCallbackBase(pPlugin, "onMessage"), CHasConnection(Connection), m_Data(nullptr)
 		{
 			m_Name = __func__;
 			m_Buffer = Buffer;
@@ -291,7 +291,7 @@ static std::string get_utf8_from_ansi(const std::string &utf8, int codepage)
 	protected:
 		virtual void ProcessLocked()
 		{
-			PyObject*	pParams = NULL;
+			PyObject*	pParams = nullptr;
 
 			// Data is stored in a single vector of bytes
 			if (m_Buffer.size())
@@ -355,7 +355,7 @@ static std::string get_utf8_from_ansi(const std::string &utf8, int codepage)
 	protected:
 		virtual void ProcessLocked()
 		{
-			Callback(NULL);
+			Callback(nullptr);
 			m_pPlugin->Stop();
 		};
 	};

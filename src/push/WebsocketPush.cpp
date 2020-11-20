@@ -31,7 +31,7 @@ void CWebSocketPush::Start()
 
 void CWebSocketPush::Stop()
 {
-	if (!isStarted) 
+	if (!isStarted)
 		return;
 
 	std::unique_lock<std::mutex> lock(handlerMutex);

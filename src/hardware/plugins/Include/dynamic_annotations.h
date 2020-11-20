@@ -109,7 +109,7 @@
   /* Report that wait on the condition variable at "cv" has succeeded.  Variant
      w/o lock. */
 #define _Py_ANNOTATE_CONDVAR_WAIT(cv) \
-    AnnotateCondVarWait(__FILE__, __LINE__, cv, NULL)
+    AnnotateCondVarWait(__FILE__, __LINE__, cv, nullptr)
 
   /* Report that we are about to signal on the condition variable at address
      "cv". */

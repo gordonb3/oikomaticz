@@ -28,7 +28,7 @@ namespace type {
 			{ COUNTER,		"Counter" },
 			{ ENERGY_GENERATED,	"Energy Generated" },
 			{ TIME,			"Time" },
-			{ 0, NULL, NULL }
+			{ 0, nullptr }
 		};
 		return findTableIDSingle1(Table, mType);
 	}

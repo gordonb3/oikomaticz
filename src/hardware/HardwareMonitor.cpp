@@ -66,9 +66,9 @@ CHardwareMonitor::CHardwareMonitor(const int ID)
 	m_totcpu = 0;
 	m_lastloadcpu = 0;
 #ifdef WIN32
-	m_pLocator = NULL;
-	m_pServicesOHM = NULL;
-	m_pServicesSystem = NULL;
+	m_pLocator = nullptr;
+	m_pServicesOHM = nullptr;
+	m_pServicesSystem = nullptr;
 #endif
 }
 
@@ -149,7 +149,7 @@ void CHardwareMonitor::Do_Work()
 			msec_counter = 0;
 			sec_counter++;
 			if (sec_counter % 12 == 0)
-				m_LastHeartbeat = mytime(NULL);
+				m_LastHeartbeat = mytime(nullptr);
 
 			if (sec_counter % POLL_INTERVAL_TEMP == 0)
 			{
@@ -247,7 +247,7 @@ void CHardwareMonitor::GetInternalARMClockSpeed()
 	int returncode = 0;
 	std::vector<std::string> ret = ExecuteCommandAndReturn(szInternalARMSpeedCommand, returncode);
 	if (ret.empty())
-	{ 
+	{
 		Debug(DEBUG_NORM,"String empty");
 		return;
 	}
@@ -278,7 +278,7 @@ void CHardwareMonitor::GetInternalV3DClockSpeed()
 	int returncode = 0;
 	std::vector<std::string> ret = ExecuteCommandAndReturn(szInternalV3DSpeedCommand, returncode);
 	if (ret.empty())
-	{ 
+	{
 		Debug(DEBUG_NORM,"String empty");
 		return;
 	}
@@ -309,7 +309,7 @@ void CHardwareMonitor::GetInternalCoreClockSpeed()
 	int returncode = 0;
 	std::vector<std::string> ret = ExecuteCommandAndReturn(szInternalCoreSpeedCommand, returncode);
 	if (ret.empty())
-	{ 
+	{
 		Debug(DEBUG_NORM,"String empty");
 		return;
 	}
@@ -561,16 +561,16 @@ bool CHardwareMonitor::InitWMI()
 	HRESULT hr;
 	if (m_pLocator)
 		return true; //already initialized
-	hr = CoCreateInstance(CLSID_WbemAdministrativeLocator, NULL, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&m_pLocator);
+	hr = CoCreateInstance(CLSID_WbemAdministrativeLocator, nullptr, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&m_pLocator);
 	if (FAILED(hr))
 		return false;
-	hr = m_pLocator->ConnectServer(L"root\\OpenHardwareMonitor",NULL, NULL, NULL, 0, NULL, NULL, &m_pServicesOHM);
+	hr = m_pLocator->ConnectServer(L"root\\OpenHardwareMonitor",nullptr , nullptr, nullptr, 0, nullptr, nullptr, &m_pServicesOHM);
 	if (FAILED(hr))
 	{
 		Log(LOG_STATUS, "Hardware Monitor: Warning, OpenHardware Monitor is not installed on this system. (http://openhardwaremonitor.org)");
 		return false;
 	}
-	hr = m_pLocator->ConnectServer(L"root\\CIMV2", NULL, NULL, NULL, 0, NULL, NULL, &m_pServicesSystem);
+	hr = m_pLocator->ConnectServer(L"root\\CIMV2", nullptr, nullptr, nullptr, 0, nullptr, nullptr, &m_pServicesSystem);
 	if (FAILED(hr))
 		return false;
 /*
@@ -579,10 +579,10 @@ bool CHardwareMonitor::InitWMI()
 		m_pServicesSystem,                        // Indicates the proxy to set
 		RPC_C_AUTHN_WINNT,           // RPC_C_AUTHN_xxx
 		RPC_C_AUTHZ_NONE,            // RPC_C_AUTHZ_xxx
-		NULL,                        // Server principal name
+		nullptr,                        // Server principal name
 		RPC_C_AUTHN_LEVEL_CALL,      // RPC_C_AUTHN_LEVEL_xxx
 		RPC_C_IMP_LEVEL_IMPERSONATE, // RPC_C_IMP_LEVEL_xxx
-		NULL,                        // client identity
+		nullptr,                        // client identity
 		EOAC_NONE                    // proxy capabilities
 		);
 */
@@ -596,28 +596,28 @@ bool CHardwareMonitor::InitWMI()
 
 void CHardwareMonitor::ExitWMI()
 {
-	if (m_pServicesSystem != NULL)
+	if (m_pServicesSystem != nullptr)
 		m_pServicesSystem->Release();
-	m_pServicesSystem = NULL;
-	if (m_pServicesOHM!=NULL)
+	m_pServicesSystem = nullptr;
+	if (m_pServicesOHM != nullptr)
 		m_pServicesOHM->Release();
-	m_pServicesOHM = NULL;
-	if (m_pLocator!=NULL)
+	m_pServicesOHM = nullptr;
+	if (m_pLocator != nullptr)
 		m_pLocator->Release();
-	m_pLocator = NULL;
+	m_pLocator = nullptr;
 }
 
 bool CHardwareMonitor::IsOHMRunning()
 {
-	if ((m_pServicesOHM == NULL) || (m_pServicesSystem == NULL))
+	if ((m_pServicesOHM == nullptr) || (m_pServicesSystem == nullptr))
 		return false;
 	bool bOHMRunning = false;
-	IEnumWbemClassObject* pEnumerator = NULL;
+	IEnumWbemClassObject* pEnumerator = nullptr;
 	HRESULT hr;
-	hr = m_pServicesSystem->ExecQuery(L"WQL", L"Select * from win32_Process WHERE Name='OpenHardwareMonitor.exe'" , WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnumerator);
+	hr = m_pServicesSystem->ExecQuery(L"WQL", L"Select * from win32_Process WHERE Name='OpenHardwareMonitor.exe'" , WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &pEnumerator);
 	if (SUCCEEDED(hr))
 	{
-		IWbemClassObject *pclsObj=NULL;
+		IWbemClassObject *pclsObj = nullptr;
 		ULONG uReturn = 0;
 		hr = pEnumerator->Next(WBEM_INFINITE, 1,  &pclsObj, &uReturn);
 		if ((FAILED(hr)) || (0 == uReturn))
@@ -640,7 +640,7 @@ bool CHardwareMonitor::IsOHMRunning()
 
 void CHardwareMonitor::RunWMIQuery(const char* qTable, const std::string &qType)
 {
-	if ((m_pServicesOHM == NULL) || (m_pServicesSystem == NULL))
+	if ((m_pServicesOHM == nullptr) || (m_pServicesSystem == nullptr))
 		return;
 	HRESULT hr;
 	std::string query = "SELECT * FROM ";
@@ -648,14 +648,14 @@ void CHardwareMonitor::RunWMIQuery(const char* qTable, const std::string &qType)
 	query.append(" WHERE SensorType = '");
 	query.append(qType);
 	query.append("'");
-	IEnumWbemClassObject* pEnumerator = NULL;
-	hr = m_pServicesOHM->ExecQuery(L"WQL", bstr_t(query.c_str()), WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnumerator);
+	IEnumWbemClassObject* pEnumerator = nullptr;
+	hr = m_pServicesOHM->ExecQuery(L"WQL", bstr_t(query.c_str()), WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &pEnumerator);
 	if (!FAILED(hr))
 	{
 		int dindex = 0;
 
 		// Get the data from the query
-		IWbemClassObject *pclsObj = NULL;
+		IWbemClassObject *pclsObj = nullptr;
 		while (pEnumerator)
 		{
 			ULONG uReturn = 0;
@@ -799,17 +799,17 @@ void CHardwareMonitor::RunWMIQuery(const char* qTable, const std::string &qType)
 		float percent;
 		struct vmtotal memStats;
 		if (sysctl(mibTotalMem, 2, &totalMemBytes,
-			   &len, NULL, 0) == -1){
+			   &len, nullptr, 0) == -1){
 			return -1;
 		}
 		len = sizeof(pageSize);
 		if (sysctl(mibPageSize, 2, &pageSize,
-			   &len, NULL, 0) == -1){
+			   &len, nullptr, 0) == -1){
 			return -1;
 		}
 		len = sizeof(memStats);
 		if (sysctl(mibMemStats, 2, &memStats,
-			   &len, NULL, 0) == -1){
+			   &len, nullptr, 0) == -1){
 			return -1;
 		}
 		usedMem = memStats.t_arm * pageSize;//active real memory
@@ -865,7 +865,7 @@ void CHardwareMonitor::FetchUnixCPU()
 		int totcpu = -1;
 		size_t size = sizeof(totcpu);
 		long loads[CPUSTATES];
-		if (sysctl(mib, 2, &totcpu, &size, NULL, 0) <0){
+		if (sysctl(mib, 2, &totcpu, &size, nullptr, 0) <0){
 			Log(LOG_ERROR, "sysctl NCPU failed.");
 			return;
 		}
@@ -875,7 +875,7 @@ void CHardwareMonitor::FetchUnixCPU()
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CPTIME;
 		size = sizeof(loads);
-		if (sysctl(mib, 2, loads, &size, NULL, 0) < 0){
+		if (sysctl(mib, 2, loads, &size, nullptr, 0) < 0){
 			Log(LOG_ERROR, "sysctl CPTIME failed.");
 			return;
 		}
@@ -892,10 +892,10 @@ void CHardwareMonitor::FetchUnixCPU()
 #else	// Linux
 		FILE *fIn = fopen("/proc/stat", "r");
 #endif
-		if (fIn!=NULL)
+		if (fIn != nullptr)
 		{
 			bool bFirstLine=true;
-			while( fgets(szTmp, sizeof(szTmp), fIn) != NULL )
+			while( fgets(szTmp, sizeof(szTmp), fIn) != nullptr )
 			{
 				int ret=sscanf(szTmp, "%s\t%d\t%d\t%d\n", cname, &actload1, &actload2, &actload3);
 				if ((bFirstLine)&&(ret==4)) {
@@ -903,7 +903,7 @@ void CHardwareMonitor::FetchUnixCPU()
 					m_lastloadcpu=actload1+actload2+actload3;
 				}
 				char *cPos=strstr(cname,"cpu");
-				if (cPos==NULL)
+				if (cPos == nullptr)
 					break;
 				totcpu++;
 			}
@@ -922,7 +922,7 @@ void CHardwareMonitor::FetchUnixCPU()
 		int mib[] = {CTL_KERN, KERN_CPTIME};
 		long loads[CPUSTATES];
 		size_t size = sizeof(loads);
-		if (sysctl(mib, 2, loads, &size, NULL, 0) < 0){
+		if (sysctl(mib, 2, loads, &size, nullptr, 0) < 0){
 			Log(LOG_ERROR, "sysctl CPTIME failed.");
 			return;
 		}else {
@@ -942,7 +942,7 @@ void CHardwareMonitor::FetchUnixCPU()
 #else	// Linux
 		FILE *fIn = fopen("/proc/stat", "r");
 #endif
-		if (fIn!=NULL)
+		if (fIn != nullptr)
 		{
 			int ret=fscanf(fIn, "%s\t%d\t%d\t%d\n", cname, &actload1, &actload2, &actload3);
 			fclose(fIn);
@@ -990,9 +990,9 @@ void CHardwareMonitor::FetchUnixDisk()
 					}
 				}
 #if defined(__linux__) || defined(__FreeBSD__) || defined (__OpenBSD__)
-				if (strstr(dname, "/dev") != NULL)
+				if (strstr(dname, "/dev") != nullptr)
 #elif defined(__CYGWIN32__)
-				if (strstr(smountpoint, "/cygdrive/") != NULL)
+				if (strstr(smountpoint, "/cygdrive/") != nullptr)
 #endif
 				{
 					_tDUsageStruct dusage;
@@ -1041,8 +1041,8 @@ bool CHardwareMonitor::IsWSL()
 	if (num_read > 0)
 	{
 		buf[num_read] = 0;
-		is_wsl |= (strstr(buf, "Microsoft") != NULL);
-		is_wsl |= (strstr(buf, "WSL") != NULL);
+		is_wsl |= (strstr(buf, "Microsoft") != nullptr);
+		is_wsl |= (strstr(buf, "WSL") != nullptr);
 	}
 
 	status_fd = open("/proc/version", O_RDONLY);
@@ -1054,8 +1054,8 @@ bool CHardwareMonitor::IsWSL()
 	if (num_read > 0)
 	{
 		buf[num_read] = 0;
-		is_wsl |= (strstr(buf, "Microsoft") != NULL);
-		is_wsl |= (strstr(buf, "WSL") != NULL);
+		is_wsl |= (strstr(buf, "Microsoft") != nullptr);
+		is_wsl |= (strstr(buf, "WSL") != nullptr);
 	}
 #endif
 
@@ -1125,7 +1125,7 @@ void CHardwareMonitor::CheckForOnboardSensors()
 						szInternalTemperatureCommand = VCGENCMDTEMPCOMMAND;
 						bHasInternalTemperature = true;
 
-						//PI Clock speeds	
+						//PI Clock speeds
 						szInternalARMSpeedCommand = VCGENCMDARMSPEEDCOMMAND;
 						szInternalV3DSpeedCommand = VCGENCMDV3DSPEEDCOMMAND;
 						szInternalCoreSpeedCommand = VCGENCMDCORESPEEDCOMMAND;

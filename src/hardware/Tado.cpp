@@ -98,7 +98,7 @@ bool CTado::WriteToHardware(const char * pdata, const unsigned char length)
 	int ServiceIdx = pCmd->LIGHTING2.id4;
 
 	int node_id = (HomeIdx * 1000) + (ZoneIdx * 100) + ServiceIdx;
-	
+
 	char szIdx[10];
 	sprintf(szIdx, "%X%02X%02X%02X", 0, HomeIdx, ZoneIdx, ServiceIdx);
 
@@ -188,7 +188,7 @@ bool CTado::CreateOverlay(const int idx, const float temp, const bool heatingEna
 
 void CTado::SetSetpoint(const int id2, const int id3, const int id4, const float temp)
 {
-	
+
 	int HomeIdx = id2;
 	int ZoneIdx = id3;
 	int ServiceIdx = id4;
@@ -196,8 +196,8 @@ void CTado::SetSetpoint(const int id2, const int id3, const int id4, const float
 	char szIdx[10];
 	sprintf(szIdx, "%X%02X%02X%02X", 0, HomeIdx, ZoneIdx, ServiceIdx);
 	Log(LOG_NORM, "SetSetpoint() called with idx=%s, temp=%f", szIdx, temp);
-	
-	int _idx = (HomeIdx * 1000) + (ZoneIdx * 100) + ServiceIdx; 
+
+	int _idx = (HomeIdx * 1000) + (ZoneIdx * 100) + ServiceIdx;
 	CreateOverlay(_idx, temp, true, "TADO_MODE");
 }
 
@@ -368,11 +368,11 @@ bool CTado::GetZoneState(const int HomeIndex, const int ZoneIndex, const _tTadoH
 			{
 				_bOpenWindowDetected = _jsRoot["openWindowDetected"].asBool();
 			}
-			
+
 			UpdateSwitch(ZoneIndex * 100 + 8, _bOpenWindowDetected, home.Name + " " + zone.Name + " Open Window Detected");
 
 		}
-		
+
 		return true;
 	}
 	catch (std::exception& e)
@@ -438,7 +438,7 @@ void CTado::SendSetPointSensor(const int Idx, const float Temp, const std::strin
 // Creates or updates on/off switches.
 void CTado::UpdateSwitch(const int Idx, const bool bOn, const std::string &defaultname)
 {
-	
+
 	int HomeIdx = Idx / 1000;
 	int ZoneIdx = (Idx % 1000) / 100;
 	int ServiceIdx = (Idx % 1000) % 100;
@@ -538,7 +538,7 @@ void CTado::Do_Work()
 		iSecCounter++;
 		if (iSecCounter % 12 == 0)
 		{
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (iSecCounter % TADO_POLL_INTERVAL == 0)

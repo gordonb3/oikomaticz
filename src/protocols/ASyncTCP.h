@@ -94,7 +94,7 @@ private:
 	boost::asio::ip::tcp::socket	mSocket{ mIos };
 	boost::asio::ip::tcp::endpoint	mEndPoint;
 	boost::asio::ip::tcp::resolver	mResolver{ mIos };
-	
+
 	std::string						mIp;
 	uint16_t						mPort;
 };

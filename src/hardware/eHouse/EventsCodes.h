@@ -19,21 +19,21 @@ extern "C" {
 #define EXECPROFILE             2u              //execute output program change
 #define EXECPROFILE_EV          2u              //execute output program change
 
-#define DIMMER_EVENT		4	
+#define DIMMER_EVENT		4
 #define SETLIGHT_EV             4u              //set dimmer
 #define SETLIGHT                4u              //set dimmer
 
 #define RGB_DIMMER_EVENT	 8
 
-#define SETADC_EV		12u             //set adc levels    
-#define SETADC_EVENT            12             //ustawianie progów analogowych arg1=nr wej arg2=vlow arg3=vhigh    
+#define SETADC_EV		12u             //set adc levels
+#define SETADC_EVENT            12             //ustawianie progów analogowych arg1=nr wej arg2=vlow arg3=vhigh
 #define SETADC                  12u             //set adc levels
 
 
 #define INPUT_EVENT             0x20		//change input params
 
 #define OUTPUT_EVENT                0x21		//output state
-#define CMD_SETOUTPUTI2C_EV         0x21u		//change output state        
+#define CMD_SETOUTPUTI2C_EV         0x21u		//change output state
 #define CMD_SETOUTPUTI2C            0x21u		//change output state
 
 #define IRALIAS                 39u //x27             //send ir command
@@ -82,30 +82,30 @@ extern "C" {
 #define SECU_PROGRAM_EV 	98u		//run rollers program toogether with zone
 #define SECU_PROGRAM 		98u		//run rollers program toogether with zone
 
-#define ZONE_CHANGE  		99u		//zone change	
-#define ZONE_CHANGE_EV  	99u		//zone change	
+#define ZONE_CHANGE  		99u		//zone change
+#define ZONE_CHANGE_EV  	99u		//zone change
 
-#define ROLLERSSINGLE_EV 	100u		//single rollers execution    
-#define ROLLER_EVENT		100u		//single rollers execution    
+#define ROLLERSSINGLE_EV 	100u		//single rollers execution
+#define ROLLER_EVENT		100u		//single rollers execution
 #define ROLLERSSINGLE 		100u		//single rollers execution
 
 #define ROLLERSMULTI 		101u		//rollers program execution
 #define ROLLERSMULTI_EV 	101u		//rollers program execution
 
-#define ROLLERSMULTI2_EV 	102u    
+#define ROLLERSMULTI2_EV 	102u
 #define ROLLERSMULTI2 		102u
 
 #define ROLLERSMULTI3 		103u
 #define ROLLERSMULTI3_EV 	103u
 
-#define BATCH_ROM_EV    	104u		//run multiple events from rom bank    
+#define BATCH_ROM_EV    	104u		//run multiple events from rom bank
 #define BATCH_ROM    		104u		//run multiple events from rom bank
 
 #define MODIFY_LIGHS		105u
 #define MODIFY_LIGHS_EV         105u
 
-#define SETSINGLELIGHT_EV	106u		  
-#define SETSINGLELIGHT		106u		
+#define SETSINGLELIGHT_EV	106u		
+#define SETSINGLELIGHT		106u
 
 #define SET_TIME		107u            //not supported here performed immediatelly
 #define SET_TIME_EV             107u		//not supported here performed immediatelly
@@ -138,11 +138,11 @@ extern "C" {
 #define EVENT_SUBMIT_TCP_STATUS_EV  248u		//send #arg1-arg6 to log analyzer if connected
 #define EVENT_SUBMIT_TCP_STATUS     248u            //send #arg1-arg6 to log analyzer if connected
 
-#define EVENT_SEND_TCP              249u		//send #arg1-arg6 to opened TCP Query connection    
+#define EVENT_SEND_TCP              249u		//send #arg1-arg6 to opened TCP Query connection
 #define EVENT_SEND_TCP_EV           249u		//send #arg1-arg6 to opened TCP Query connection
 
-#define EVENT_SEND_UDP_EV           250u		//broadcast #arg1-arg6 via udp 
-#define EVENT_SEND_UDP              250u		//broadcast #arg1-arg6 via udp 
+#define EVENT_SEND_UDP_EV           250u		//broadcast #arg1-arg6 via udp
+#define EVENT_SEND_UDP              250u		//broadcast #arg1-arg6 via udp
 
 #define EVENT_SEND_TO_LOG           251u		//send #arg1-arg6 to log analyzer if connected
 
@@ -218,12 +218,12 @@ extern "C" {
 
 #define VISUAL_SATEL_INPUT_IN               131
 #define VISUAL_SATEL_INPUT_ALARM_IN         132
-#define	VISUAL_SATEL_INPUT_ALARM_MEM_IN     133  
-#define VISUAL_SATEL_INPUT_NOVIOLATION_IN   134    
-#define VISUAL_SATEL_INPUT_LONGVIOLATION_IN 135    
+#define	VISUAL_SATEL_INPUT_ALARM_MEM_IN     133
+#define VISUAL_SATEL_INPUT_NOVIOLATION_IN   134
+#define VISUAL_SATEL_INPUT_LONGVIOLATION_IN 135
 
 #define VISUAL_SATEL_TAMPER_IN              136
-#define VISUAL_SATEL_TAMPER_ALARM_IN        137    
+#define VISUAL_SATEL_TAMPER_ALARM_IN        137
 #define VISUAL_SATEL_TAMPER_ALARM_MEM_IN    138
 
 #define VISUAL_SATEL_BYPAS_IN               139

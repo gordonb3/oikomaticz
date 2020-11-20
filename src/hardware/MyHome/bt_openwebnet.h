@@ -425,7 +425,7 @@ public:
   void CreateWrDimensionMsgOpen(const std::string& who, const std::string& where, const std::string& dimension, const std::vector<std::string>& value);
   void CreateWrDimensionMsgOpen2(const std::string& who, const std::string& where, const std::string& dimension, const std::vector<std::string>& value);
   void CreateWrDimensionMsgOpen(const std::string& who, const std::string& where, const std::string& lev, const std::string& strInterface, const std::string& dimension, const std::vector<std::string>& value);
-  
+
   void CreateGatewayReqMsgOpen(const std::string& dimension);
 
   void CreateDateTimeReqMsgOpen();

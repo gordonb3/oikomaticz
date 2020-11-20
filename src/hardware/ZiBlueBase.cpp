@@ -41,7 +41,7 @@ const char *szZiBlueProtocolRFLink(const unsigned char id)
 		{ 14, "reserved" },
 		{ 15, "reserved" },
 		{ 16, "KD101_433" },
-		{ 0, NULL }
+		{ 0, nullptr }
 	};
 	return findTableIDSingle1(Table, id);
 }
@@ -63,7 +63,7 @@ const char *szZiBlueProtocol(const unsigned char id)
 		{ 9, "RTS" },
 		{ 10, "KD101" },
 		{ 11, "PARROT" },
-		{ 0, NULL }
+		{ 0, nullptr }
 	};
 	return findTableIDSingle1(Table, id);
 }
@@ -290,11 +290,11 @@ bool CZiBlueBase::SendSwitchInt(const int ID, const int switchunit, const int Ba
 		if (switchcmd.compare(0, 10, "SET_LEVEL=") == 0 ){
 			cmnd=gswitch_sSetLevel;
 			std::string str2 = switchcmd.substr(10);
-			svalue=atoi(str2.c_str()); 
+			svalue=atoi(str2.c_str());
 	  		_log.Log(LOG_STATUS, "ZiBlue: %d level: %d", cmnd, svalue);
 		}
 	}
-    
+
 	if (cmnd==-1)
 	{
 		_log.Log(LOG_ERROR, "ZiBlue: Unhandled switch command: %s", switchcmd.c_str());
@@ -310,7 +310,7 @@ bool CZiBlueBase::SendSwitchInt(const int ID, const int switchunit, const int Ba
 	gswitch.battery_level = BatteryLevel;
 	gswitch.rssi = 12;
 	gswitch.seqnbr = 0;
-	sDecodeRXMessage(this, (const unsigned char *)&gswitch, NULL, BatteryLevel);
+	sDecodeRXMessage(this, (const unsigned char *)&gswitch, nullptr, BatteryLevel);
 	return true;
 }
 
@@ -406,7 +406,7 @@ void CZiBlueBase::ParseData(const char *data, size_t len)
 
 bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len)
 {
-	m_LastReceivedTime = mytime(NULL);
+	m_LastReceivedTime = mytime(nullptr);
 
 	uint8_t reserved = (SDQ & 0x80) >> 7;
 	uint8_t vtype = (SDQ & 0x70) >> 4; //0x0 = binary, 0x4 = ascii
@@ -486,7 +486,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					break;
 				}
 				const char *szProtocol = szZiBlueProtocol(pIncomming->protocol);
-				if (szProtocol != NULL)
+				if (szProtocol != nullptr)
 				{
 					SendSwitchInt(houseCode, dev, 255, std::string(szProtocol), switchCmd, 0);
 				}
@@ -526,7 +526,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 */
 				}
 				const char *szProtocol = szZiBlueProtocol(pIncomming->protocol);
-				if (szProtocol != NULL)
+				if (szProtocol != nullptr)
 				{
 					SendSwitchInt(DevID, 1, 255, std::string(szProtocol), switchCmd, 0);
 				}
@@ -536,7 +536,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 			}
 			break;
 		case INFOS_TYPE2:
-			// Used by  VISONIC /Focus/Atlantic/Meian Tech 
+			// Used by  VISONIC /Focus/Atlantic/Meian Tech
 			if (dlen == sizeof(INCOMING_RF_INFOS_TYPE2))
 			{
 				INCOMING_RF_INFOS_TYPE2 *pSen = (INCOMING_RF_INFOS_TYPE2*)(data + 8);
@@ -649,7 +649,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					pSen->apparentPower
 				);
 #endif
-				
+
 				int total1 = pSen->counter1Msb;
 				total1 = total1 << 16;
 				total1 += pSen->counter1Lsb;

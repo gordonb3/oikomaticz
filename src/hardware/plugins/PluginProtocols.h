@@ -56,7 +56,7 @@ namespace Plugins {
 		void			ExtractHeaders(std::string*	pData);
 		void			Flush(CPlugin* pPlugin, PyObject* pConnection);
 	public:
-		CPluginProtocolHTTP(bool Secure) : m_ContentLength(0), m_Headers(NULL), m_Chunked(false), m_RemainingChunk(0) { m_Secure = Secure; };
+		CPluginProtocolHTTP(bool Secure) : m_ContentLength(0), m_Headers(nullptr), m_Chunked(false), m_RemainingChunk(0) { m_Secure = Secure; };
 		virtual void				ProcessInbound(const ReadEvent* Message);
 		virtual std::vector<byte>	ProcessOutbound(const WriteDirective* WriteMessage);
 	};

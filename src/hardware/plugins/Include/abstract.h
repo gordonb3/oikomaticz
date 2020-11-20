@@ -234,7 +234,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
      PyObject *PyObject_Repr(PyObject *o);
 
      Compute the string representation of object, o.  Returns the
-     string representation on success, NULL on failure.  This is
+     string representation on success, nullptr on failure.  This is
      the equivalent of the Python expression: repr(o).
 
      Called by the repr() built-in function.
@@ -246,7 +246,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
      PyObject *PyObject_Str(PyObject *o);
 
      Compute the string representation of object, o.  Returns the
-     string representation on success, NULL on failure.  This is
+     string representation on success, nullptr on failure.  This is
      the equivalent of the Python expression: str(o).)
 
      Called by the str() and print() built-in functions.
@@ -517,8 +517,8 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
 #ifndef Py_LIMITED_API
 #define PyObject_CheckBuffer(obj) \
-    (((obj)->ob_type->tp_as_buffer != NULL) &&  \
-     ((obj)->ob_type->tp_as_buffer->bf_getbuffer != NULL))
+    (((obj)->ob_type->tp_as_buffer != nullptr) &&  \
+     ((obj)->ob_type->tp_as_buffer->bf_getbuffer != nullptr))
 
     /* Return 1 if the getbuffer function is available, otherwise
        return 0 */
@@ -621,7 +621,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
     is an iterator, this returns itself. */
 
 #define PyIter_Check(obj) \
-    ((obj)->ob_type->tp_iternext != NULL && \
+    ((obj)->ob_type->tp_iternext != nullptr && \
      (obj)->ob_type->tp_iternext != &_PyObject_NextNotImplemented)
 
      PyAPI_FUNC(PyObject *) PyIter_Next(PyObject *);
@@ -782,8 +782,8 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
        */
 
 #define PyIndex_Check(obj) \
-   ((obj)->ob_type->tp_as_number != NULL && \
-    (obj)->ob_type->tp_as_number->nb_index != NULL)
+   ((obj)->ob_type->tp_as_number != nullptr && \
+    (obj)->ob_type->tp_as_number->nb_index != nullptr)
 
      PyAPI_FUNC(PyObject *) PyNumber_Index(PyObject *o);
 

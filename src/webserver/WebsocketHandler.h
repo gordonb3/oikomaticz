@@ -14,7 +14,7 @@ namespace http {
 
 		class cWebem;
 
-		class CWebsocketHandler : public StoppableTask 
+		class CWebsocketHandler : public StoppableTask
 		{
 		public:
 			CWebsocketHandler(cWebem *pWebem, boost::function<void(const std::string &packet_data)> _MyWrite);

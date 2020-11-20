@@ -206,7 +206,7 @@ void CEcoDevices::GetMeterDetails()
 	std::string::size_type len, pos;
 	std::stringstream sstr;
 	TiXmlDocument XMLdoc("Teleinfo.xml");
-	time_t atime = mytime(NULL);
+	time_t atime = mytime(nullptr);
 	int   major, minor, release;
 	int min_major = MAJOR, min_minor = MINOR, min_release = RELEASE;
 
@@ -364,7 +364,7 @@ void CEcoDevices::GetMeterRT2Details()
 	std::stringstream sstr;
 	std::map<std::string, std::string> XMLmap;
 	TiXmlDocument XMLdoc("Teleinfo.xml");
-	//time_t atime = mytime(NULL);
+	//time_t atime = mytime(nullptr);
 	int   i, major, minor, release;
 	int min_major = MAJOR_RT2, min_minor = MINOR_RT2, min_release = RELEASE_RT2;
 

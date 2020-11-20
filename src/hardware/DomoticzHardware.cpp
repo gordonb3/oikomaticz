@@ -1047,9 +1047,9 @@ void CDomoticzHardwareBase::SendSecurity1Sensor(const int NodeID, const int Devi
 }
 /**
  * SendSelectorSwitch
- * 
+ *
  * Helper function to create/update selector switch, validates sValue exist in the list of actions
- *  
+ *
  * @param  {int} NodeID               : As normal
  * @param  {uint8_t} ChildID          : As normal
  * @param  {int} sValue               : Int with the value of the action to take/show, must be present in LevelActions
@@ -1063,8 +1063,8 @@ void CDomoticzHardwareBase::SendSecurity1Sensor(const int NodeID, const int Devi
 void CDomoticzHardwareBase::SendSelectorSwitch(const int NodeID, const uint8_t ChildID, const std::string sValue, const std::string& defaultname, const int customImage , const bool bDropdown, const std::string& LevelNames,const std::string& LevelActions, const bool bHideOff )
 {
  	if (std::size_t index = LevelActions.find(sValue.c_str()) == std::string::npos)
-	{ 
-	   Log(LOG_ERROR,"Value %s not supported by Selector Switch %s, it needs %s ",sValue.c_str() , defaultname.c_str(), LevelActions.c_str() ); 
+	{
+	   Log(LOG_ERROR,"Value %s not supported by Selector Switch %s, it needs %s ",sValue.c_str() , defaultname.c_str(), LevelActions.c_str() );
 	   return; // did not find sValue in LevelAction string so exit with warning
 	}
 	_tGeneralSwitch xcmd;
@@ -1081,7 +1081,7 @@ void CDomoticzHardwareBase::SendSelectorSwitch(const int NodeID, const uint8_t C
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query("SELECT ID, sValue, Options FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%08X') AND (Unit == '%d')", m_HwdID, NodeID, xcmd.unitcode);
 	bool bDoesExists = !result.empty();
-    
+
 	m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&xcmd,  defaultname.c_str(), 255);  // will create the base switch if not exist
 
 	if (!bDoesExists)//Switch is new so  we need to update it with all relevant info
@@ -1103,19 +1103,19 @@ void CDomoticzHardwareBase::SendSelectorSwitch(const int NodeID, const uint8_t C
         // The Selector switch has been created
 	}
 	else
-	{ 
+	{
 		//Check Level
 		if ( xcmd.level == std::stoi(result[0][1].c_str()))
 			return; // no need to uodate
 		result = m_sql.safe_query("UPDATE DeviceStatus SET sValue=%i WHERE (HardwareID==%d) AND (DeviceID=='%08X')", xcmd.level, m_HwdID, NodeID);
 	}
 }
-                            
+
 /**
  * MigrateSelectorSwitch
  *
  * Helper function to migrate selector switch,  validates if existing LevelActions match existing in the DB, if not migrate the switch based on bMigrate setting
- *   
+ *
  * @param  {int} NodeID               : As Usual
  * @param  {uint8_t} ChildID          : As Usual
  * @param  {std::string} LevelNames   : Will be updated together with LevelNames
@@ -1128,14 +1128,14 @@ int CDomoticzHardwareBase::MigrateSelectorSwitch(const int NodeID, const uint8_t
 	std::string options;
 	std::vector<std::vector<std::string> > result;
 	bool bUpdated = false;
-		
+
 	result = m_sql.safe_query("SELECT Options FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%08X') AND (Unit == '%d')", m_HwdID, NodeID, ChildID);
 	if (result.empty())
 	    return 0;  // switch doen not exist yet
 	std::map<std::string, std::string> optionsMap;
 	optionsMap = m_sql.BuildDeviceOptions(result[0][0]);
 	int count = optionsMap.size();
-	if (count > 0) 
+	if (count > 0)
 	{
 		int i = 0;
 		std::stringstream ssoptions;
@@ -1148,12 +1148,12 @@ int CDomoticzHardwareBase::MigrateSelectorSwitch(const int NodeID, const uint8_t
 				if(strcmp(itt.second.c_str(), LevelActions.c_str()) !=  0 )
 				{
 					bUpdated = true;  // the list of actions is not what we expected. flag  that Migration is required
-					optionValue = LevelActions.c_str();			
+					optionValue = LevelActions.c_str();
 				}
 			}
 			else if(strcmp(itt.first.c_str(),"LevelNames") == 0)
 			{
-					optionValue = LevelNames.c_str();	
+					optionValue = LevelNames.c_str();
 			}
 			ssoptions << optionName << ":" << optionValue;
 			if (i < count) {
@@ -1162,7 +1162,7 @@ int CDomoticzHardwareBase::MigrateSelectorSwitch(const int NodeID, const uint8_t
 			options.assign(ssoptions.str());
 		}
 	}
-    if( bUpdated ) // the options map has been  migrated  do we migratre to warn? 
+    if( bUpdated ) // the options map has been  migrated  do we migratre to warn?
 	{
 		if(!bMigrate)
 			return -1;  // Signnal  selector switch is not latest version

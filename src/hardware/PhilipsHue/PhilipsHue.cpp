@@ -131,7 +131,7 @@ void CPhilipsHue::Do_Work()
 			sec_counter++;
 			if (sec_counter % m_poll_interval == 0)
 			{
-				m_LastHeartbeat = mytime(NULL);
+				m_LastHeartbeat = mytime(nullptr);
 				GetStates();
 			}
 		}
@@ -336,7 +336,7 @@ bool CPhilipsHue::SwitchLight(const int nodeID, const std::string &LCmd, const i
 	}
 
 	// Update cached state
-	_tHueLightState *pState = NULL;
+	_tHueLightState *pState = nullptr;
 
 	if (nodeID < 1000)
 	{
@@ -1205,9 +1205,9 @@ void CPhilipsHue::InsertUpdateSwitch(const int NodeID, const uint8_t Unitcode, c
 	xcmd.battery_level = BatteryLevel;
 	xcmd.rssi = 12;
 
-	if (bIsOn) 
+	if (bIsOn)
 		xcmd.cmnd = gswitch_sOn;
-	else 
+	else
 		xcmd.cmnd = gswitch_sOff;
 
 	std::vector<std::vector<std::string> > result;

@@ -551,18 +551,18 @@ extern "C" {
    The SSE control word is unaffected. */
 #define _Py_SET_53BIT_PRECISION_START                                   \
     do {                                                                \
-        __control87_2(0, 0, &old_387controlword, NULL);                 \
+        __control87_2(0, 0, &old_387controlword, nullptr);                 \
         new_387controlword =                                            \
           (old_387controlword & ~(_MCW_PC | _MCW_RC)) | (_PC_53 | _RC_NEAR); \
         if (new_387controlword != old_387controlword)                   \
             __control87_2(new_387controlword, _MCW_PC | _MCW_RC,        \
-                          &out_387controlword, NULL);                   \
+                          &out_387controlword, nullptr);                   \
     } while (0)
 #define _Py_SET_53BIT_PRECISION_END                                     \
     do {                                                                \
         if (new_387controlword != old_387controlword)                   \
             __control87_2(old_387controlword, _MCW_PC | _MCW_RC,        \
-                          &out_387controlword, NULL);                   \
+                          &out_387controlword, nullptr);                   \
     } while (0)
 #endif
 
@@ -877,7 +877,7 @@ extern pid_t forkpty(int *, char *, struct termios *, struct winsize *);
 #define PY_LITTLE_ENDIAN 1
 #endif
 
-#ifdef Py_BUILD_CORE 
+#ifdef Py_BUILD_CORE
 /*
  * Macros to protect CRT calls against instant termination when passed an
  * invalid parameter (issue23524).

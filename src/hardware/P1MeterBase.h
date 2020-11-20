@@ -9,13 +9,13 @@ class P1MeterBase : public CDomoticzHardwareBase
 	friend class P1MeterTCP;
 	friend class CRFXBase;
 
-public:
-	P1MeterBase(void);
-	~P1MeterBase(void);
+      public:
+	P1MeterBase();
+	~P1MeterBase() override;
 
 	bool SetOptions(const bool disable_crc, const unsigned int ratelimit, const unsigned int gasmbuschannel);
 
-private:
+      private:
 	void Init();
 	bool MatchLine();
 	void ParseP1Data(const unsigned char *pData, const int Len, const bool disable_crc, int ratelimit);
@@ -28,15 +28,15 @@ private:
 	bool ImportKey(std::string szhexencoded);
 	void ParseP1EncryptedData(const unsigned char *pData, const int Len, const bool disable_crc);
 
-public:
+      public:
 	P1Power	m_power;
 	P1Gas	m_gas;
 
-protected:
+      protected:
 	bool m_bDisableCRC;
 	unsigned int m_ratelimit;
 
-private:
+      private:
 	typedef struct _tP1PhaseData
 	{
 		float voltage[4];

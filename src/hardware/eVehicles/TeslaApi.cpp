@@ -83,7 +83,7 @@ bool CTeslaApi::RefreshLogin()
 {
 	_log.Log(LOG_NORM, "TeslaApi: Refreshing login credentials.");
 	if (GetAuthToken("", "", true))
-	{	
+	{
 		_log.Log(LOG_NORM, "TeslaApi: Refresh successful.");
 		return true;
 	}
@@ -493,11 +493,11 @@ bool CTeslaApi::GetAuthToken(const std::string username, const std::string passw
 bool CTeslaApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, const std::string& sPostData,
 	std::string& sResponse, const std::vector<std::string>& vExtraHeaders, Json::Value& jsDecodedResponse, const bool bSendAuthHeaders, const int timeout)
 {
-	try 
+	try
 	{
 		// If there is no token stored then there is no point in doing a request. Unless we specifically
 		// decide not to do authentication.
-		if (m_authtoken.size() == 0 && bSendAuthHeaders) 
+		if (m_authtoken.size() == 0 && bSendAuthHeaders)
 		{
 			_log.Log(LOG_ERROR, "TeslaApi: No access token available.");
 			return false;
@@ -508,11 +508,11 @@ bool CTeslaApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, con
 
 		// If the supplied postdata validates as json, add an appropriate content type header
 		if (sPostData.size() > 0)
-			if (ParseJSon(sPostData, *(new Json::Value))) 
+			if (ParseJSon(sPostData, *(new Json::Value)))
 				_vExtraHeaders.push_back("Content-Type: application/json");
 
 		// Prepare the authentication headers if requested.
-		if (bSendAuthHeaders) 
+		if (bSendAuthHeaders)
 			_vExtraHeaders.push_back("Authorization: Bearer " + m_authtoken);
 
 		// Increase default timeout, tesla is slow
@@ -535,7 +535,7 @@ bool CTeslaApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, con
 		case Post:
 			if (!HTTPClient::POST(sUrl, sPostData, _vExtraHeaders, sResponse, _vResponseHeaders))
 			{
-				for (unsigned int i = 0; i < _vResponseHeaders.size(); i++) 
+				for (unsigned int i = 0; i < _vResponseHeaders.size(); i++)
 					_ssResponseHeaderString << _vResponseHeaders[i];
 				_log.Debug(DEBUG_NORM, "TeslaApi: Failed to perform POST request to Api: %s; Response headers: %s", sResponse.c_str(), _ssResponseHeaderString.str().c_str());
 				return false;
@@ -545,7 +545,7 @@ bool CTeslaApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, con
 		case Get:
 			if (!HTTPClient::GET(sUrl, _vExtraHeaders, sResponse, _vResponseHeaders))
 			{
-				for (unsigned int i = 0; i < _vResponseHeaders.size(); i++) 
+				for (unsigned int i = 0; i < _vResponseHeaders.size(); i++)
 					_ssResponseHeaderString << _vResponseHeaders[i];
 				_log.Debug(DEBUG_NORM, "TeslaApi: Failed to perform GET request to Api: %s; Response headers: %s", sResponse.c_str(), _ssResponseHeaderString.str().c_str());
 				return false;

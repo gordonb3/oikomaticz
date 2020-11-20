@@ -74,7 +74,7 @@ bool CDenkoviUSBDevices::StartHardware()
 
 	m_bIsStarted = true;
 	setReadCallback(boost::bind(&CDenkoviUSBDevices::readCallBack, this, _1, _2));
-	
+
 	sOnConnected(this);
 	return true;
 }
@@ -103,7 +103,7 @@ void CDenkoviUSBDevices::readCallBack(const char * data, size_t len)
 			}
 			for (uint8_t ii = 1; ii < 9; ii++)
 				SendSwitch(DAE_IO_TYPE_RELAY, ii + 8, 255, ((secondEight >> (8 - ii) & 0x01) != 0) ? true : false, 0, "Relay " + std::to_string(8+ii));
-		} 
+		}
 		break;
 	}
 	m_updateIo = false;
@@ -117,7 +117,7 @@ void CDenkoviUSBDevices::OnError(const std::exception e)
 
 bool CDenkoviUSBDevices::StopHardware()
 {
-	if (m_thread != NULL)
+	if (m_thread != nullptr)
 	{
 		RequestStop();
 		m_thread->join();
@@ -138,7 +138,7 @@ void CDenkoviUSBDevices::Do_Work()
 
 	while (!IsStopRequested(100))
 	{
-		m_LastHeartbeat = mytime(NULL);
+		m_LastHeartbeat = mytime(nullptr);
 		if (msec_counter++ >= 40) {
 			msec_counter = 0;
 			if (m_readingNow == false && m_updateIo == false)

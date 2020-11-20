@@ -167,7 +167,7 @@ void CRego6XXSerial::Do_Work()
 		sec_counter++;
 
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat=mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (!isOpen())
@@ -370,7 +370,7 @@ bool CRego6XXSerial::ParseData()
 			{
 				// This is a proper message
                 messageOK = true;
-		        time_t atime=mytime(NULL);
+		        time_t atime = mytime(nullptr);
                 signed short data = 0;
 				data = (m_readBuffer[(tail + 1) & Rego6XX_READ_BUFFER_MASK] << 14) |
 					   (m_readBuffer[(tail + 2) & Rego6XX_READ_BUFFER_MASK] << 7) |
@@ -386,7 +386,7 @@ bool CRego6XXSerial::ParseData()
                     {
                         g_allRegisters[m_pollcntr].lastSent = atime;
                         g_allRegisters[m_pollcntr].lastTemp = m_Rego6XXTemp.temperature;
-					    sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXTemp, NULL, 255);
+					    sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXTemp, nullptr, 255);
                     }
 				}
 				else if(g_allRegisters[m_pollcntr].type == REGO_TYPE_STATUS)
@@ -399,7 +399,7 @@ bool CRego6XXSerial::ParseData()
                     {
                         g_allRegisters[m_pollcntr].lastSent = atime;
                         g_allRegisters[m_pollcntr].lastValue = m_Rego6XXValue.value;
-    					sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXValue, NULL, 255);
+    					sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXValue, nullptr, 255);
                     }
 				}
 				else if(g_allRegisters[m_pollcntr].type == REGO_TYPE_COUNTER)
@@ -412,7 +412,7 @@ bool CRego6XXSerial::ParseData()
                     {
                         g_allRegisters[m_pollcntr].lastSent = atime;
                         g_allRegisters[m_pollcntr].lastValue = m_Rego6XXValue.value;
-    					sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXValue, NULL, 255);
+    					sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXValue, nullptr, 255);
                     }
 				}
 

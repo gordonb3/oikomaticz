@@ -90,7 +90,7 @@ CEvohomeWeb::CEvohomeWeb(const int ID, const std::string &Username, const std::s
 }
 
 
-CEvohomeWeb::~CEvohomeWeb(void)
+CEvohomeWeb::~CEvohomeWeb()
 {
 	m_bIsStarted = false;
 }
@@ -176,7 +176,7 @@ bool CEvohomeWeb::StartSession()
 		return false;
 	}
 
-	evohome::WebAPI::tcs2 = NULL;
+	evohome::WebAPI::tcs2 = nullptr;
 	size_t numLocations = evohome::WebAPI::v2->m_vLocations.size();
 	if (
 		(numLocations > (size_t)m_locationIdx) &&
@@ -209,7 +209,7 @@ bool CEvohomeWeb::StartSession()
 			std::vector<std::string> splitresults;
 			StringSplit(result[0][0], ";", splitresults);
 			if (splitresults.size()>0)
-				m_awaysetpoint = strtod(splitresults[0].c_str(), NULL);
+				m_awaysetpoint = strtod(splitresults[0].c_str(), nullptr);
 			if (splitresults.size()>1)
 				m_wdayoff = atoi(splitresults[1].c_str()) % 7;
 		}
@@ -262,7 +262,7 @@ void CEvohomeWeb::Do_Work()
 		refreshTimer++;
 		m_lastAccessTimer++;
 		if (refreshTimer % 10 == 0)
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 
 		if ((refreshTimer % m_refreshRate == 0) && (pollcounter++ > m_logonfailures) && (m_lastAccessTimer >= MINPOLINTERVAL))
 		{
@@ -411,7 +411,7 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 		{
 			evohome::device::zone* HeatingZone = &evohome::WebAPI::tcs2->zones[i];
 			std::string zonemode = "";
-			if (HeatingZone->jStatus == NULL) // don't touch invalid zone - it should already show as 'Offline'
+			if (HeatingZone->jStatus == nullptr) // don't touch invalid zone - it should already show as 'Offline'
 				continue;
 			if (HeatingZone->jStatus->isMember("heatSetpointStatus"))
 				zonemode = (*HeatingZone->jStatus)["heatSetpointStatus"]["setpointMode"].asString();
@@ -434,7 +434,7 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 				if ((!HeatingZone->jSchedule.isNull()) || evohome::WebAPI::v2->get_zone_schedule(HeatingZone->szZoneId))
 				{
 					szuntil = evohome::WebAPI::v2->get_next_switchpoint(HeatingZone, szsetpoint, RETURN_UTC_TIME);
-					setpoint = strtod(szsetpoint.c_str(), NULL);
+					setpoint = strtod(szsetpoint.c_str(), nullptr);
 				}
 
 				// Eco lowers the setpoint of all zones by 3 degrees, but resets a zone mode to Normal setting
@@ -445,7 +445,7 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 
 			if (m_showhdtemps)
 				sztemperature = evohome::WebAPI::v1->get_zone_temperature(HeatingZone->szZoneId, m_hdprecision);
-			else if (HeatingZone->jStatus != NULL)
+			else if (HeatingZone->jStatus != nullptr)
 				sztemperature = evohome::WebAPI::v2->get_zone_temperature(HeatingZone);
 
 			std::string szUpdateStat;
@@ -482,7 +482,7 @@ bool CEvohomeWeb::SetSetpoint(const char *pdata)
 	std::string zoneId(std::to_string((int)RFX_GETID3(pEvo->id1, pEvo->id2, pEvo->id3)));
 
 	evohome::device::zone* HeatingZone = evohome::WebAPI::v2->get_zone_by_ID(zoneId);
-	if (HeatingZone == NULL) // zone number not known by installation (manually added?)
+	if (HeatingZone == nullptr) // zone number not known by installation (manually added?)
 	{
 		_log.Log(LOG_ERROR, "(%s) attempt to change setpoint on unknown zone", m_Name.c_str());
 		return false;
@@ -498,7 +498,7 @@ bool CEvohomeWeb::SetSetpoint(const char *pdata)
 		if ((!HeatingZone->jSchedule.isNull()) || evohome::WebAPI::v2->get_zone_schedule(HeatingZone->szZoneId))
 		{
 			szuntil = evohome::WebAPI::v2->get_next_switchpoint(HeatingZone, szsetpoint, RETURN_UTC_TIME);
-			pEvo->temperature = (int16_t)(strtod(szsetpoint.c_str(), NULL) * 100);
+			pEvo->temperature = (int16_t)(strtod(szsetpoint.c_str(), nullptr) * 100);
 		}
 
 		if ((m_showSchedule) && (!szuntil.empty()))
@@ -565,11 +565,11 @@ bool CEvohomeWeb::SetDHWState(const char *pdata)
 
 void CEvohomeWeb::DecodeControllerMode(evohome::device::temperatureControlSystem* tcs)
 {
-	unsigned long ID = (unsigned long)(strtod(tcs->szSystemId.c_str(), NULL));
+	unsigned long ID = (unsigned long)(strtod(tcs->szSystemId.c_str(), nullptr));
 	std::string szsystemMode;
 	uint8_t sysmode = 0;
 
-	if (tcs->jStatus == NULL)
+	if (tcs->jStatus == nullptr)
 		szsystemMode = "Unknown";
 	else
 		szsystemMode = evohome::WebAPI::v2->get_system_mode(tcs);
@@ -613,7 +613,7 @@ void CEvohomeWeb::DecodeControllerMode(evohome::device::temperatureControlSystem
 		if (!result.empty() && ((result[0][2] != devname) || (!result[0][3].empty())))
 		{
 			// also change lastupdate time to allow the web frontend to pick up the change
-			time_t now = mytime(NULL);
+			time_t now = mytime(nullptr);
 			struct tm ltime;
 			localtime_r(&now, &ltime);
 			// also wipe StrParam1 - we do not also want to call the old (python) script when changing system mode
@@ -653,13 +653,13 @@ void CEvohomeWeb::DecodeZone(evohome::device::zone* HeatingZone)
 
 	unsigned long evoID = atol(HeatingZone->szZoneId.c_str());
 	std::string szsysmode;
-	if (evohome::WebAPI::tcs2->jStatus == NULL)
+	if (evohome::WebAPI::tcs2->jStatus == nullptr)
 		szsysmode = "Unknown";
 	else
 		szsysmode = evohome::WebAPI::v2->get_system_mode(evohome::WebAPI::tcs2);
 	if ((szsysmode == "Away") && (szmode == "FollowSchedule"))
 	{
-		double new_awaysetpoint = strtod(szsetpoint.c_str(), NULL);
+		double new_awaysetpoint = strtod(szsetpoint.c_str(), nullptr);
 		if (m_awaysetpoint != new_awaysetpoint)
 		{
 			m_awaysetpoint = new_awaysetpoint;
@@ -736,7 +736,7 @@ void CEvohomeWeb::DecodeZone(evohome::device::zone* HeatingZone)
 	}
 
 	// Notify MQTT and various push mechanisms
-	m_mainworker.sOnDeviceReceived(this->m_HwdID, DevRowIdx, szDeviceName, NULL);
+	m_mainworker.sOnDeviceReceived(this->m_HwdID, DevRowIdx, szDeviceName, nullptr);
 }
 
 
@@ -809,7 +809,7 @@ void CEvohomeWeb::DecodeDHWState(evohome::device::temperatureControlSystem* tcs)
 	}
 
 	// Notify MQTT and various push mechanisms
-	m_mainworker.sOnDeviceReceived(this->m_HwdID, DevRowIdx, szDeviceName, NULL);
+	m_mainworker.sOnDeviceReceived(this->m_HwdID, DevRowIdx, szDeviceName, nullptr);
 }
 
 
@@ -893,7 +893,7 @@ uint8_t CEvohomeWeb::GetUnit_by_ID(unsigned long evoID)
 
 		if (evohome::WebAPI::v2->is_single_heating_system()) // create zone in first free unit
 		{
-			unit = 1;		
+			unit = 1;
 			while ((m_vUnits[m_locationIdx][unit] != 0) && (unit <= m_nMaxZones))
 				unit++;
 

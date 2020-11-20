@@ -60,7 +60,7 @@ public:
 			if (!mg_strcasecmp(name, itt->name.c_str()))
 				return itt->value.c_str();
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	/** Find the value of a name set by a form submit action */

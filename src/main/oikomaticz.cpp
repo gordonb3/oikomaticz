@@ -42,7 +42,7 @@
 	#include <syslog.h>
 	#include <errno.h>
 	#include <fcntl.h>
-	#include <string.h> 
+	#include <string.h>
 #endif
 
 const char *szHelp =
@@ -114,7 +114,7 @@ static const _facilities facilities[] =
 	{ "local5", LOG_LOCAL5 },
 	{ "local6", LOG_LOCAL6 },
 	{ "local7", LOG_LOCAL7 }
-}; 
+};
 std::string logfacname = "user";
 #endif
 std::string szStartupFolder;
@@ -149,7 +149,7 @@ std::string szAppHash="???";
 std::string szAppDate="???";
 std::string szPyVersion="None";
 int ActYear;
-time_t m_StartTime=time(NULL);
+time_t m_StartTime=time(nullptr);
 std::string szRandomUUID = "???";
 
 MainWorker m_mainworker;
@@ -173,7 +173,7 @@ bool bStartWebBrowser = true;
 bool g_bUseWatchdog = true;
 
 #define DAEMON_NAME "oikomaticz"
-#define PID_FILE "/var/run/oikomaticz.pid" 
+#define PID_FILE "/var/run/oikomaticz.pid"
 
 std::string daemonname = DAEMON_NAME;
 std::string pidfile = PID_FILE;
@@ -201,7 +201,7 @@ void daemonize(const char *rundir, const char *pidfile)
 	sigaddset(&newSigSet, SIGTSTP);  /* ignore Tty stop signals */
 	sigaddset(&newSigSet, SIGTTOU);  /* ignore Tty background writes */
 	sigaddset(&newSigSet, SIGTTIN);  /* ignore Tty background reads */
-	sigprocmask(SIG_BLOCK, &newSigSet, NULL);   /* Block the above specified signals */
+	sigprocmask(SIG_BLOCK, &newSigSet, nullptr);   /* Block the above specified signals */
 
 	/* Set up a signal handler */
 	newSigAction.sa_sigaction = signal_handler;
@@ -209,16 +209,16 @@ void daemonize(const char *rundir, const char *pidfile)
 	newSigAction.sa_flags = SA_SIGINFO;
 
 	/* Signals to handle */
-	sigaction(SIGTERM, &newSigAction, NULL);    // catch term signal
-	sigaction(SIGINT,  &newSigAction, NULL);    // catch interrupt signal
-	sigaction(SIGSEGV, &newSigAction, NULL);    // catch segmentation fault signal
-	sigaction(SIGABRT, &newSigAction, NULL);    // catch abnormal termination signal
-	sigaction(SIGILL,  &newSigAction, NULL);    // catch invalid program image
-	sigaction(SIGUSR1, &newSigAction, NULL);    // catch SIGUSR1 (used by watchdog)
+	sigaction(SIGTERM, &newSigAction, nullptr);    // catch term signal
+	sigaction(SIGINT,  &newSigAction, nullptr);    // catch interrupt signal
+	sigaction(SIGSEGV, &newSigAction, nullptr);    // catch segmentation fault signal
+	sigaction(SIGABRT, &newSigAction, nullptr);    // catch abnormal termination signal
+	sigaction(SIGILL,  &newSigAction, nullptr);    // catch invalid program image
+	sigaction(SIGUSR1, &newSigAction, nullptr);    // catch SIGUSR1 (used by watchdog)
 #ifndef WIN32
-	sigaction(SIGHUP,  &newSigAction, NULL);    // catch HUP, for log rotation
+	sigaction(SIGHUP,  &newSigAction, nullptr);    // catch HUP, for log rotation
 #endif
-	
+
 	/* Fork*/
 	pid = fork();
 
@@ -227,7 +227,7 @@ void daemonize(const char *rundir, const char *pidfile)
 		/* Could not fork */
 		exit(EXIT_FAILURE);
 	}
-    
+
 	if (pid > 0)
 	{
 		/* Child created ok, so exit parent process */
@@ -314,7 +314,7 @@ void daemonize(const char *rundir, const char *pidfile)
 #if defined(_WIN32)
 	static size_t getExecutablePathName(char* pathName, size_t pathNameCapacity)
 	{
-		return GetModuleFileNameA(NULL, pathName, (DWORD)pathNameCapacity);
+		return GetModuleFileNameA(nullptr, pathName, (DWORD)pathNameCapacity);
 	}
 #elif defined(__linux__) || defined(__CYGWIN32__) /* elif of: #if defined(_WIN32) */
 	#include <unistd.h>
@@ -341,7 +341,7 @@ void daemonize(const char *rundir, const char *pidfile)
 		mib[3] = KERN_PROC_PATHNAME;
 #endif
 		size_t cb = pathNameCapacity-1;
-		sysctl(mib, 4, pathName, &cb, NULL, 0);
+		sysctl(mib, 4, pathName, &cb, nullptr, 0);
 		return cb;
 	}
 #elif defined(__OpenBSD__)
@@ -358,7 +358,7 @@ static size_t getExecutablePathName(char* pathName, size_t pathNameCapacity)
         mib[2] = getpid();
         mib[3] = KERN_PROC_ARGV;
         pathName[0] = '\0';
-        if (sysctl(mib, 4, NULL, &len, NULL, 0) < 0)
+        if (sysctl(mib, 4, nullptr, &len, nullptr, 0) < 0)
         {
                 return 0;
         }
@@ -368,7 +368,7 @@ static size_t getExecutablePathName(char* pathName, size_t pathNameCapacity)
                 return 0;
         }
 
-        if (sysctl(mib, 4, argv, &len, NULL, 0) < 0)
+        if (sysctl(mib, 4, argv, &len, nullptr, 0) < 0)
         {
                 len = 0;
                 goto finally;
@@ -416,7 +416,7 @@ static size_t getExecutablePathName(char* pathName, size_t pathNameCapacity)
                                 break;
                         }
                         pathName[0] = '\0';
-                        path = strtok_r(NULL, ":", &sp);
+                        path = strtok_r(nullptr, ":", &sp);
                 }
                 free(xpath);
         }
@@ -431,7 +431,7 @@ static size_t getExecutablePathName(char* pathName, size_t pathNameCapacity)
 	{
 		uint32_t pathNameSize = 0;
 
-		_NSGetExecutablePath(NULL, &pathNameSize);
+		_NSGetExecutablePath(nullptr, &pathNameSize);
 
 		if (pathNameSize > pathNameCapacity)
 			pathNameSize = pathNameCapacity;
@@ -440,7 +440,7 @@ static size_t getExecutablePathName(char* pathName, size_t pathNameCapacity)
 		{
 			char real[PATH_MAX];
 
-			if (realpath(pathName, real) != NULL)
+			if (realpath(pathName, real) != nullptr)
 			{
 				pathNameSize = strlen(real);
 				strncpy(pathName, real, pathNameSize);
@@ -632,10 +632,10 @@ int main(int argc, char**argv)
 {
 #if defined WIN32
 #ifndef _DEBUG
-	CreateMutexA(0, FALSE, "Local\\Oikomaticz"); 
-	if(GetLastError() == ERROR_ALREADY_EXISTS) { 
+	CreateMutexA(0, FALSE, "Local\\Oikomaticz");
+	if(GetLastError() == ERROR_ALREADY_EXISTS) {
 		MessageBox(HWND_DESKTOP,"Another instance of Oikomaticz is already running!","Oikomaticz",MB_OK);
-		return 1; 
+		return 1;
 	}
 #endif //_DEBUG
 	RedirectIOToConsole();
@@ -643,7 +643,7 @@ int main(int argc, char**argv)
 
 	CCmdLine cmdLine;
 
-	// parse argc,argv 
+	// parse argc,argv
 #if defined WIN32
 	cmdLine.SplitLine(__argc, __argv);
 #else
@@ -716,7 +716,7 @@ int main(int argc, char**argv)
 #ifndef _DEBUG
 		char szStartupPath[255];
 		char * p;
-		GetModuleFileName(NULL, szStartupPath, sizeof(szStartupPath));
+		GetModuleFileName(nullptr, szStartupPath, sizeof(szStartupPath));
 		p = szStartupPath + strlen(szStartupPath);
 
 		while (p >= szStartupPath && *p != '\\')
@@ -736,7 +736,7 @@ int main(int argc, char**argv)
 
 	/* call srand once for the entire app */
 	std::srand((unsigned int)std::time(nullptr));
-	szRandomUUID = GenerateUUID();    
+	szRandomUUID = GenerateUUID();
 
 	GetAppVersion();
 	DisplayAppVersion();
@@ -954,7 +954,7 @@ int main(int argc, char**argv)
 		if (!IsUserAnAdmin())
 		{
 			char szPath[MAX_PATH];
-			HRESULT hr = SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, 0, szPath);
+			HRESULT hr = SHGetFolderPath(nullptr, CSIDL_COMMON_APPDATA, nullptr, 0, szPath);
 			if (SUCCEEDED(hr))
 			{
 				std::string sPath = szPath;
@@ -964,7 +964,7 @@ int main(int argc, char**argv)
 				BOOL bDirExists = (dwAttr != 0xffffffff && (dwAttr & FILE_ATTRIBUTE_DIRECTORY));
 				if (!bDirExists)
 				{
-					BOOL bRet = CreateDirectory(sPath.c_str(), NULL);
+					BOOL bRet = CreateDirectory(sPath.c_str(), nullptr);
 					if (bRet == FALSE) {
 						MessageBox(0, "Error creating Oikomaticz directory in program data folder (%ProgramData%)!!", "Error:", MB_OK);
 					}
@@ -1030,7 +1030,7 @@ int main(int argc, char**argv)
 		}
 	}
 	CoInitializeEx(0, COINIT_MULTITHREADED);
-	CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL);
+	CoInitializeSecurity(nullptr, -1, nullptr, nullptr, RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE, nullptr);
 #endif
 
 #ifndef WIN32
@@ -1064,15 +1064,15 @@ int main(int argc, char**argv)
 	{
 		int logfacility = 0;
 
-		for ( size_t idx = 0; idx < sizeof(facilities)/sizeof(facilities[0]); idx++ ) 
+		for ( size_t idx = 0; idx < sizeof(facilities)/sizeof(facilities[0]); idx++ )
 		{
-			if (strcmp(facilities[idx].facname, logfacname.c_str()) == 0) 
+			if (strcmp(facilities[idx].facname, logfacname.c_str()) == 0)
 			{
 				logfacility = facilities[idx].facvalue;
 				break;
 			}
-		} 
-		if ( logfacility == 0 ) 
+		}
+		if ( logfacility == 0 )
 		{
 			_log.Log(LOG_ERROR, "%s is an unknown syslog facility", logfacname.c_str());
 			return 1;
@@ -1107,13 +1107,13 @@ int main(int argc, char**argv)
 		newSigAction.sa_flags = SA_SIGINFO;
 
 		/* Signals to handle */
-		sigaction(SIGTERM, &newSigAction, NULL);    // catch term signal
-		sigaction(SIGINT,  &newSigAction, NULL);    // catch interrupt signal
-		sigaction(SIGSEGV, &newSigAction, NULL);    // catch segmentation fault signal
-		sigaction(SIGABRT, &newSigAction, NULL);    // catch abnormal termination signal
-		sigaction(SIGILL,  &newSigAction, NULL);    // catch invalid program image
-		sigaction(SIGFPE,  &newSigAction, NULL);    // catch floating point error
-		sigaction(SIGUSR1, &newSigAction, NULL);    // catch SIGUSR1 (used by watchdog)
+		sigaction(SIGTERM, &newSigAction, nullptr);    // catch term signal
+		sigaction(SIGINT,  &newSigAction, nullptr);    // catch interrupt signal
+		sigaction(SIGSEGV, &newSigAction, nullptr);    // catch segmentation fault signal
+		sigaction(SIGABRT, &newSigAction, nullptr);    // catch abnormal termination signal
+		sigaction(SIGILL,  &newSigAction, nullptr);    // catch invalid program image
+		sigaction(SIGFPE,  &newSigAction, nullptr);    // catch floating point error
+		sigaction(SIGUSR1, &newSigAction, nullptr);    // catch SIGUSR1 (used by watchdog)
 #else
 		signal(SIGINT, signal_handler);
 		signal(SIGTERM, signal_handler);
@@ -1121,7 +1121,7 @@ int main(int argc, char**argv)
 	}
 
 	// start Watchdog thread after daemonization
-	m_LastHeartbeat = mytime(NULL);
+	m_LastHeartbeat = mytime(nullptr);
 	std::thread thread_watchdog(Do_Watchdog_Work);
 	SetThreadName(thread_watchdog.native_handle(), "Watchdog");
 
@@ -1129,7 +1129,7 @@ int main(int argc, char**argv)
 	{
 		return 1;
 	}
-	m_StartTime = time(NULL);
+	m_StartTime = time(nullptr);
 
 
 	/* now, lets get into an infinite loop of doing nothing. */
@@ -1141,9 +1141,9 @@ int main(int argc, char**argv)
 	MSG Msg;
 	while (!g_bStopApplication)
 	{
-		if (PeekMessage(&Msg, NULL, 0, 0, PM_NOREMOVE))
+		if (PeekMessage(&Msg, nullptr, 0, 0, PM_NOREMOVE))
 		{
-			if (GetMessage(&Msg, NULL, 0, 0) > 0)
+			if (GetMessage(&Msg, nullptr, 0, 0) > 0)
 			{
 				TranslateMessage(&Msg);
 				DispatchMessage(&Msg);
@@ -1151,14 +1151,14 @@ int main(int argc, char**argv)
 		}
 		else
 			sleep_milliseconds(100);
-		m_LastHeartbeat = mytime(NULL);
+		m_LastHeartbeat = mytime(nullptr);
 	}
-	TrayMessage(NIM_DELETE, NULL);
+	TrayMessage(NIM_DELETE, nullptr);
 #else
 	while ( !g_bStopApplication )
 	{
 		sleep_seconds(1);
-		m_LastHeartbeat = mytime(NULL);
+		m_LastHeartbeat = mytime(nullptr);
 	}
 #endif
 	_log.Log(LOG_STATUS, "Closing application!...");

@@ -46,7 +46,7 @@ protected:
 	 * cleanup function, should be called before application closes		*
 	 *									*
 	 ************************************************************************/
-	
+
 	static void Cleanup();
 
 
@@ -62,7 +62,7 @@ public:
 	 * a debug line to your class if you access any of these functions.	*
 	 *									*
 	 ************************************************************************/
-	
+
 	static void SetConnectionTimeout(const long timeout);
 	static void SetTimeout(const long timeout);
 	static void SetUserAgent(const std::string &useragent);

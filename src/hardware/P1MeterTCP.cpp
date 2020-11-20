@@ -4,17 +4,13 @@
 #include "main/Helper.h"
 #include "main/localtime_r.h"
 
-P1MeterTCP::P1MeterTCP(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const bool disable_crc, const unsigned int ratelimit, const unsigned int gasmeterchannel, const std::string& DecryptionKey):
+P1MeterTCP::P1MeterTCP(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const bool disable_crc, const int ratelimit, const int gasmeterchannel, const std::string& DecryptionKey):
 	m_szIPAddress(IPAddress),
 	m_usIPPort(usIPPort)
 {
 	m_HwdID = ID;
 	SetOptions(disable_crc, ratelimit, gasmeterchannel);
 	ImportKey(DecryptionKey);
-}
-
-P1MeterTCP::~P1MeterTCP(void)
-{
 }
 
 
@@ -54,7 +50,7 @@ void P1MeterTCP::Do_Work()
 		sec_counter++;
 
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 	}
 	terminate();

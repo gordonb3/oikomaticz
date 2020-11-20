@@ -15,7 +15,7 @@ namespace server {
 
 class CTCPServerIntBase;
 
-class CTCPClientBase : 
+class CTCPClientBase :
 	private domoticz::noncopyable
 {
 public:

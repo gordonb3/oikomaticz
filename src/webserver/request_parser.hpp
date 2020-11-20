@@ -40,7 +40,7 @@ public:
 	  while ( begin != end)
 	  {
 		  boost::tribool result = consume(req, begin, end);
-			
+
 		  if (result || !result) {
 			  return boost::make_tuple(result, begin);
 		  }

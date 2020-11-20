@@ -29,12 +29,12 @@ asdl_seq *_Py_asdl_seq_new(Py_ssize_t size, PyArena *arena);
 asdl_int_seq *_Py_asdl_int_seq_new(Py_ssize_t size, PyArena *arena);
 
 #define asdl_seq_GET(S, I) (S)->elements[(I)]
-#define asdl_seq_LEN(S) ((S) == NULL ? 0 : (S)->size)
+#define asdl_seq_LEN(S) ((S) == nullptr ? 0 : (S)->size)
 #ifdef Py_DEBUG
 #define asdl_seq_SET(S, I, V) \
     do { \
         Py_ssize_t _asdl_i = (I); \
-        assert((S) != NULL); \
+        assert((S) != nullptr); \
         assert(_asdl_i < (S)->size); \
         (S)->elements[_asdl_i] = (V); \
     } while (0)

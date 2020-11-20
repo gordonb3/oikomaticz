@@ -370,13 +370,13 @@ namespace Plugins {
 		if (m_Acceptor)
 		{
 			delete m_Acceptor;
-			m_Acceptor = NULL;
+			m_Acceptor = nullptr;
 		}
 
 		if (m_Socket)
 		{
 			delete m_Socket;
-			m_Socket = NULL;
+			m_Socket = nullptr;
 		}
 	};
 
@@ -502,13 +502,13 @@ namespace Plugins {
 		if (m_TLSSock)
 		{
 			delete m_TLSSock;
-			m_TLSSock = NULL;
+			m_TLSSock = nullptr;
 		}
 
 		if (m_Context)
 		{
 			delete m_Context;
-			m_Context = NULL;
+			m_Context = nullptr;
 		}
 
 	};
@@ -693,7 +693,7 @@ namespace Plugins {
 		if (m_Socket)
 		{
 			delete m_Socket;
-			m_Socket = NULL;
+			m_Socket = nullptr;
 		}
 	};
 
@@ -774,7 +774,7 @@ namespace Plugins {
 			}
 
 			CPlugin*	pPlugin = ((CConnection*)m_pConnection)->pPlugin;
-			pPlugin->MessagePlugin(new ReadEvent(pPlugin, m_pConnection, 0, NULL));
+			pPlugin->MessagePlugin(new ReadEvent(pPlugin, m_pConnection, 0, nullptr));
 			pPlugin->MessagePlugin(new DisconnectDirective(pPlugin, m_pConnection));
 		}
 		else if (ec != boost::asio::error::operation_aborted)  // Timer canceled by message arriving
@@ -935,13 +935,13 @@ namespace Plugins {
 		{
 			m_Timer->cancel();
 			delete m_Timer;
-			m_Timer = NULL;
+			m_Timer = nullptr;
 		}
 
 		if (m_Socket)
 		{
 			delete m_Socket;
-			m_Socket = NULL;
+			m_Socket = nullptr;
 		}
 	}
 

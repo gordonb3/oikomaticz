@@ -23,29 +23,29 @@
           PDevice *self;
 
           self = (PDevice *)type->tp_alloc(type, 0);
-          if (self != NULL) {
+          if (self != nullptr) {
               self->name = PyUnicode_FromString("");
-              if (self->name == NULL) {
+              if (self->name == nullptr) {
                   Py_DECREF(self);
-                  return NULL;
+                  return nullptr;
               }
 
               self->n_value_string = PyUnicode_FromString("");
-              if (self->n_value_string == NULL) {
+              if (self->n_value_string == nullptr) {
                   Py_DECREF(self);
-                  return NULL;
+                  return nullptr;
               }
 
               self->s_value = PyUnicode_FromString("");
-              if (self->s_value == NULL) {
+              if (self->s_value == nullptr) {
                   Py_DECREF(self);
-                  return NULL;
+                  return nullptr;
               }
 
               self->last_update_string = PyUnicode_FromString("");
-              if (self->last_update_string == NULL) {
+              if (self->last_update_string == nullptr) {
                   Py_DECREF(self);
-                  return NULL;
+                  return nullptr;
               }
 
               self->id = 0;
@@ -61,9 +61,9 @@
       int
       PDevice_init(PDevice *self, PyObject *args, PyObject *kwds)
       {
-          PyObject *name=NULL, *s_value=NULL, *n_value_string=NULL, *last_update_string, *tmp;
+          PyObject *name = nullptr, *s_value = nullptr, *n_value_string = nullptr, *last_update_string, *tmp;
 
-          static char *kwlist[] = {"id", "name", "type", "sub_type", "switch_type", "s_value", "n_value", "n_value_string", "last_update_string", NULL};
+          static char *kwlist[] = {"id", "name", "type", "sub_type", "switch_type", "s_value", "n_value", "n_value_string", "last_update_string", nullptr};
 
           if (! PyArg_ParseTupleAndKeywords(args, kwds, "|iOiiiOiOO", kwlist,
                                             &self->id, &name, &self->type, &self->sub_type, &self->switch_type,
@@ -115,11 +115,11 @@
           PyObject* m;
 
           if (PyType_Ready(&PDeviceType) < 0)
-              return NULL;
+              return nullptr;
 
           m = PyModule_Create(&PDevicemodule);
-          if (m == NULL)
-              return NULL;
+          if (m == nullptr)
+              return nullptr;
 
           Py_INCREF(&PDeviceType);
           PyModule_AddObject(m, "PDevice", (PyObject *)&PDeviceType);

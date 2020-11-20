@@ -76,41 +76,41 @@ void eHouseTCP::InitStructs(void)
 	int to = EHOUSE_WIFI_MAX + 1;
 	for (i = 0; i < to; i++)
 	{
-		(m_eHWIFIs[i]) = NULL;		//full wifi status
-		(m_eHWIFIPrev[i]) = NULL;		//full wifi status previous for detecting changes
-		(m_eHWIFIn[i]) = NULL;			//names of i/o for WiFi controllers
-		(m_eHWiFi[i]) = NULL;
+		(m_eHWIFIs[i]) = nullptr;		//full wifi status
+		(m_eHWIFIPrev[i]) = nullptr;		//full wifi status previous for detecting changes
+		(m_eHWIFIn[i]) = nullptr;			//names of i/o for WiFi controllers
+		(m_eHWiFi[i]) = nullptr;
 	}
-	m_ECMn = NULL;
-	m_ECM = NULL;
-	m_ECMPrv = NULL;					//Previous statuses for Update MSQL optimalization  (change data only updated)
-	m_eHouseProN = NULL;
-	m_eHouseProStatus = NULL;
-	m_eHouseProStatusPrv = NULL;
+	m_ECMn = nullptr;
+	m_ECM = nullptr;
+	m_ECMPrv = nullptr;					//Previous statuses for Update MSQL optimalization  (change data only updated)
+	m_eHouseProN = nullptr;
+	m_eHouseProStatus = nullptr;
+	m_eHouseProStatusPrv = nullptr;
 
 	to = ETHERNET_EHOUSE_RM_MAX + 1;
 	for (i = 0; i < to; i++)
 	{
-		(m_eHEn[i]) = NULL;				//names of i/o for Ethernet controllers
-		(m_eHERMs[i]) = NULL;  		//full ERM status decoded
-		(m_eHERMPrev[i]) = NULL;  	//full ERM status decoded previous for detecting changes
+		(m_eHEn[i]) = nullptr;				//names of i/o for Ethernet controllers
+		(m_eHERMs[i]) = nullptr;  		//full ERM status decoded
+		(m_eHERMPrev[i]) = nullptr;  	//full ERM status decoded previous for detecting changes
 	}
 	to = EHOUSE1_RM_MAX + 1;
 	for (i = 0; i < to; i++)
 	{
-		(m_eHRMs[i]) = NULL;  		//full RM status decoded
-		(m_eHRMPrev[i]) = NULL;  		//full RM status decoded previous for detecting changes
-		(m_eHn[i]) = NULL;
+		(m_eHRMs[i]) = nullptr;  		//full RM status decoded
+		(m_eHRMPrev[i]) = nullptr;  		//full RM status decoded previous for detecting changes
+		(m_eHn[i]) = nullptr;
 	}
 	to = EVENT_QUEUE_MAX;
 	for (i = 0; i < to; i++)
-		(m_EvQ[i]) = NULL;		//eHouse event queue for submit to the controllers (directly LAN, WiFi, PRO / indirectly via PRO other variants) - multiple events can be executed at once
+		(m_EvQ[i]) = nullptr;		//eHouse event queue for submit to the controllers (directly LAN, WiFi, PRO / indirectly via PRO other variants) - multiple events can be executed at once
 	to = MAX_AURA_DEVS;
 	for (i = 0; i < to; i++)
 	{
-		(m_AuraDev[i]) = NULL;	// Aura status thermostat
-		(m_AuraDevPrv[i]) = NULL;			// previous for detecting changes
-		(m_AuraN[i]) = NULL;
+		(m_AuraDev[i]) = nullptr;	// Aura status thermostat
+		(m_AuraDevPrv[i]) = nullptr;			// previous for detecting changes
+		(m_AuraN[i]) = nullptr;
 	}
 	//future initialzation
 #ifndef REMOVEUNUSED
@@ -250,13 +250,13 @@ int eHouseTCP::UpdateSQLState(int devh, const uint8_t devl, int devtype, const u
 	std::string devname = "";
 	std::vector<std::vector<std::string> > result;
 	//if name contains '@' - ignore i/o - do not add to DB (unused)
-	if ((strstr(Name, "@") == NULL) && (strlen(Name) > 0))
+	if ((strstr(Name, "@") == nullptr) && (strlen(Name) > 0))
 	{
 		devname.append(Name, strlen(Name));
 		devname.append(" - ");
 	}
 	if (swtype != device::tswitch::type::Selector)
-		if ((strstr(SignalName, "@") != NULL) || (strlen(SignalName) < 1))
+		if ((strstr(SignalName, "@") != nullptr) || (strlen(SignalName) < 1))
 		{
 			return -1;
 		}
@@ -274,7 +274,7 @@ int eHouseTCP::UpdateSQLState(int devh, const uint8_t devl, int devtype, const u
 			m_HwdID, IDX, devl, type, subtype, signal, battery, nValue, sValue, devname.c_str(), swtype);
 
 	result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit==%d)",m_HwdID,                IDX,           devl );
-																		   
+																		
 //add Plan for each controllers
 	if (!result.empty())
 		{
@@ -498,7 +498,7 @@ eHouseTCP::eHouseTCP(const int ID, const std::string &IPAddress, const unsigned 
 	{
 		m_EvQ[i] = (struct EventQueueT *) malloc(sizeof(struct EventQueueT));
 
-		if (m_EvQ[i] == NULL)
+		if (m_EvQ[i] == nullptr)
 		{
 			LOG(LOG_ERROR, "Can't Alloc Events Queue Memory");
 			return;
@@ -546,7 +546,7 @@ bool eHouseTCP::StartHardware()
 
 #ifdef UDP_USE_THREAD
 	//please use normal std::thread!
-	thread_create(&ThEhouseUDP, NULL, UDPListener, (void *)&ThEhouseUDPdta); //for eHouse4ethernet or eHouse1 under CommManager supervision, eHouse Pro server in main thread
+	thread_create(&ThEhouseUDP, nullptr, UDPListener, (void *)&ThEhouseUDPdta); //for eHouse4ethernet or eHouse1 under CommManager supervision, eHouse Pro server in main thread
 #else
 
 #endif
@@ -759,7 +759,7 @@ bool eHouseTCP::CheckAddress()
 	else
 	{
 		hostent *he = gethostbyname(m_IPAddress.c_str());
-		if (he == NULL)
+		if (he == nullptr)
 		{
 			LOG(LOG_ERROR, "eHouse: cannot resolve host name");
 			return false;
@@ -825,7 +825,7 @@ int  eHouseTCP::getrealERMpgm(int32_t ID, int level)
 		case VISUAL_PGM:
 			for (i = 0; i < (sizeof(m_eHEn[index]->Programs) / sizeof(m_eHEn[index]->Programs[0])); i++)
 			{
-				if ((strlen(m_eHEn[index]->Programs[i]) > 0) && (strstr(m_eHEn[index]->Programs[i], "@") == NULL))
+				if ((strlen(m_eHEn[index]->Programs[i]) > 0) && (strstr(m_eHEn[index]->Programs[i], "@") == nullptr))
 				{
 					Lev++;
 				}
@@ -842,7 +842,7 @@ int  eHouseTCP::getrealERMpgm(int32_t ID, int level)
 		case VISUAL_APGM:
 			for (i = 0; i < (sizeof(m_eHEn[index]->ADCPrograms) / sizeof(m_eHEn[index]->ADCPrograms[0])); i++)
 			{
-				if ((strlen(m_eHEn[index]->ADCPrograms[i]) > 0) && (strstr(m_eHEn[index]->ADCPrograms[i], "@") == NULL))
+				if ((strlen(m_eHEn[index]->ADCPrograms[i]) > 0) && (strstr(m_eHEn[index]->ADCPrograms[i], "@") == nullptr))
 				{
 					Lev++;
 				}
@@ -888,7 +888,7 @@ int  eHouseTCP::getrealRMpgm(int32_t ID, int level)
 		case VISUAL_PGM:
 			for (i = 0; i < (sizeof(m_eHn[index]->Programs) / sizeof(m_eHn[index]->Programs[0])); i++)
 			{
-				if ((strlen(m_eHn[index]->Programs[i]) > 0) && (strstr(m_eHn[index]->Programs[i], "@") == NULL))
+				if ((strlen(m_eHn[index]->Programs[i]) > 0) && (strstr(m_eHn[index]->Programs[i], "@") == nullptr))
 				{
 					Lev++;
 				}
@@ -907,7 +907,7 @@ int  eHouseTCP::getrealRMpgm(int32_t ID, int level)
 			/*case VISUAL_APGM:
 				for (i=0;i<(sizeof(eHEn[index].ADCPrograms)/sizeof(eHEn[index].ADCPrograms[0]));i++)
 					{
-					if ((strlen(eHEn[index].ADCPrograms[i])>0) && (strstr(eHEn[index].ADCPrograms[i],"@")==NULL))
+					if ((strlen(eHEn[index].ADCPrograms[i])>0) && (strstr(eHEn[index].ADCPrograms[i],"@") == nullptr))
 						{
 						Lev++;
 						}

@@ -198,10 +198,10 @@ void C1WireByKernel::ThreadBuildDevicesList()
 {
 	DIR *dir;
 	struct dirent *ent;
-	if ((dir = opendir (Wire1_Base_Dir)) != NULL) {
+	if ((dir = opendir (Wire1_Base_Dir)) != nullptr) {
 		for (DeviceCollection::iterator it = m_Devices.begin(); it != m_Devices.end(); ++it) { delete (*it).second; }
 		m_Devices.clear();
-		while ((ent = readdir (dir)) != NULL) {
+		while ((ent = readdir (dir)) != nullptr) {
 			std::string directoryName=ent->d_name;
 			if(directoryName.find("w1_bus_master")==0)
 			{
@@ -211,7 +211,7 @@ void C1WireByKernel::ThreadBuildDevicesList()
 				std::string sLine;
 
 				catfile+="/"+directoryName+"/w1_master_slaves";
-				
+
 				infile.open(catfile.c_str());
 				if (!infile.is_open())
 					return;
@@ -225,7 +225,7 @@ void C1WireByKernel::ThreadBuildDevicesList()
 						// Get the device from it's name
 						_t1WireDevice device;
 						GetDevice(sLine, device);
-			
+
 						switch (device.family)
 						{
 						case high_precision_digital_thermometer:
@@ -241,12 +241,12 @@ void C1WireByKernel::ThreadBuildDevicesList()
 						}
 					}
 				}
-			
+
 				infile.close();
 			}
 		}
 		closedir (dir);
-	}	
+	}
 }
 
 void C1WireByKernel::GetDevices(/*out*/std::vector<_t1WireDevice>& devices) const
@@ -263,7 +263,7 @@ const C1WireByKernel::DeviceState* C1WireByKernel::GetDevicePendingState(const s
 		if (it.GetDevice().devid == deviceId)
 			return &it;
 	}
-	return NULL;
+	return nullptr;
 }
 
 float C1WireByKernel::GetTemperature(const _t1WireDevice& device) const

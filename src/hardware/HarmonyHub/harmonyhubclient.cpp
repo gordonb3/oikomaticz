@@ -108,7 +108,7 @@ private:
 		std::string m_userAgent = "libcurl-agent/";
 		m_userAgent.append(info->version);
 
-		struct curl_slist *httpheader = NULL;
+		struct curl_slist *httpheader = nullptr;
 		httpheader = curl_slist_append(httpheader, "Content-Type: application/json");
 		httpheader = curl_slist_append(httpheader, "Accept : application/json");
 		httpheader = curl_slist_append(httpheader, "charsets: utf-8");
@@ -158,7 +158,7 @@ public:
 		if (!is_msgOK() && (m_discoveryinfo.find("417") != std::string::npos))
 		{
 			// discovery returned code 417 -> retry the call with different parameters
-		
+
 			origin = "Origin: http://sl.dhg.myharmony.com";
 			postdata = "{\"id\":1,\"cmd\":\"setup.account?getProvisionInfo\",\"params\":{}}";
 			HTTP_POST(uri, origin, postdata);
@@ -307,7 +307,7 @@ public:
 				}
 				else
 					m_message_handler(message);
-			
+
 				return std::make_error_code(std::errc::invalid_argument);
 			}
 			remote_id = HubInfo->get_id();

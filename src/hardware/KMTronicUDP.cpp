@@ -61,7 +61,7 @@ void KMTronicUDP::Do_Work()
 		sec_counter++;
 
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat=mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (sec_counter % KMTRONIC_POLL_INTERVAL == 0)
@@ -92,7 +92,7 @@ bool KMTronicUDP::WriteToHardware(const char *pdata, const unsigned char /*lengt
 			return false;
 
         	struct hostent *he;
-	        if ((he=gethostbyname(m_szIPAddress.c_str())) == NULL) {  // get the host info
+	        if ((he=gethostbyname(m_szIPAddress.c_str())) == nullptr) {  // get the host info
         	        _log.Log(LOG_ERROR,"KMTronic: Error with IP address!...");
         	        return false;
         	}
@@ -139,7 +139,7 @@ void KMTronicUDP::GetMeterDetails()
 	socklen_t serverlen;
 
         struct hostent *he;
-	if ((he=gethostbyname(m_szIPAddress.c_str())) == NULL) {  // get the host info
+	if ((he=gethostbyname(m_szIPAddress.c_str())) == nullptr) {  // get the host info
         	_log.Log(LOG_ERROR,"KMTronic: Error with IP address!...");
         	return;
         }

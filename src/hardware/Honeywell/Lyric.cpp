@@ -66,13 +66,9 @@ Lyric::Lyric(const int ID, const std::string &Username, const std::string &Passw
 	Init();
 }
 
-Lyric::~Lyric(void)
-{
-}
-
 void Lyric::Init()
 {
-	mTokenExpires = mytime(NULL);
+	mTokenExpires = mytime(nullptr);
 }
 
 bool Lyric::StartHardware()
@@ -119,7 +115,7 @@ void Lyric::Do_Work()
 	{
 		sec_counter++;
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 		if (sec_counter % HONEYWELL_POLL_INTERVAL == 0)
 		{
@@ -174,7 +170,7 @@ bool Lyric::refreshToken()
 	if (mRefreshToken.empty())
 		return false;
 
-	if (mTokenExpires > mytime(NULL))
+	if (mTokenExpires > mytime(nullptr))
 		return true;
 
 	std::string sResult;
@@ -217,7 +213,7 @@ bool Lyric::refreshToken()
 	}
 
 	int expires_in = std::stoi(ei);
-	mTokenExpires = mytime(NULL) + (expires_in > 0 ? expires_in : 600) - HWAPITIMEOUT;
+	mTokenExpires = mytime(nullptr) + (expires_in > 0 ? expires_in : 600) - HWAPITIMEOUT;
 	mAccessToken = at;
 	mRefreshToken = rt;
 	_log.Log(LOG_NORM, "Honeywell Lyric: Storing received access & refresh token. Token expires after %d seconds.",expires_in);
@@ -240,7 +236,7 @@ void Lyric::GetThermostatData()
 	std::string sResult;
 	std::string sURL = HONEYWELL_LOCATIONS_PATH;
 	stdreplace(sURL, "{apikey}", mApiKey);
-	
+
 	HTTPClient::SetConnectionTimeout(HWAPITIMEOUT);
 	HTTPClient::SetTimeout(HWAPITIMEOUT);
 	if (!HTTPClient::GET(sURL, mSessionHeaders, sResult)) {

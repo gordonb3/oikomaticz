@@ -8,7 +8,7 @@ class CLuaTable
 public:
 
 	void Publish();
-	
+
 	// constructors
 	CLuaTable(lua_State *lua_state, std::string Name, int NrCols, int NrRows);
 	CLuaTable(lua_State *lua_state, std::string Name);

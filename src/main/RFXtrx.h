@@ -8,11 +8,11 @@
 //
 
 /*
-                                                                   
+
 Copyright 2011-2020, RFXCOM
 
 ALL RIGHTS RESERVED. This code is owned by RFXCOM, and is protected under
-Netherlands Copyright Laws and Treaties and shall be subject to the 
+Netherlands Copyright Laws and Treaties and shall be subject to the
 exclusive jurisdiction of the Netherlands Courts. The information from this
 file may freely be used to create programs to exclusively interface with
 RFXCOM products only. Any other use or unauthorized reprint of this material
@@ -64,7 +64,7 @@ SDK version 9.22	Aug 18, 2018
 	Zemismart blinds added
 	Async port added
 	Firmware types added
-	Livolo 1-10 device changed 
+	Livolo 1-10 device changed
 
 SDK version 9.21	June 18, 2018
 	Fan LucciAir DC added
@@ -316,7 +316,7 @@ SDK version 5.00
 		cmdENABLEALL 0x04, cmdUNDEC 0x05
 		cmdDISX10 0x10   to    cmdDISFS20 0x1C
 	CM180i CURRENT_ENERGY - ELEC4 added
-	code for pTypeGAS and pTypeWATER changed (not yet used) 
+	code for pTypeGAS and pTypeWATER changed (not yet used)
 
 SDK version 4.36
 	security - #define sStatusIRbeam 0x8 added
@@ -1139,7 +1139,7 @@ SDK version 4.9
 #define sTypeRAIN6 0x6   //TX5
 #define sTypeRAIN7 0x7   //Alecto
 #define sTypeRAIN8 0x8   //Davis
-#define sTypeRAIN9 0x9   //TFA 30.3233.01 
+#define sTypeRAIN9 0x9   //TFA 30.3233.01
 
 //types for wind
 #define pTypeWIND 0x56
@@ -1282,8 +1282,8 @@ SDK version 4.9
 #define fs20_sProgram_timer 0x16
 #define fs20_sRequest_status 0x17
 #define fs20_sOff_for_time_period 0x18
-#define fs20_sOn_100_for_time_period 0x19 
-#define fs20_sOn_last_dim_level_period 0x1A 
+#define fs20_sOn_100_for_time_period 0x19
+#define fs20_sOn_last_dim_level_period 0x1A
 #define fs20_sReset 0x1B
 
 //WEATHER STATIONS
@@ -2134,7 +2134,7 @@ typedef union tRBUF {
 		BYTE	seqnbr;
 		BYTE	id1;
 		BYTE	id2;
-		BYTE	humidity; 
+		BYTE	humidity;
 		BYTE	humidity_status;
 #ifdef IS_BIG_ENDIAN
 		BYTE	rssi : 4;
@@ -2157,7 +2157,7 @@ typedef union tRBUF {
 		BYTE	temperatureh : 7;
 
 		BYTE	temperaturel;
-		BYTE	humidity; 
+		BYTE	humidity;
 		BYTE	humidity_status;
 
 		BYTE	rssi : 4;
@@ -2167,7 +2167,7 @@ typedef union tRBUF {
 		BYTE	tempsign : 1;
 
 		BYTE	temperaturel;
-		BYTE	humidity; 
+		BYTE	humidity;
 		BYTE	humidity_status;
 
 		BYTE	battery_level : 4;
@@ -2209,7 +2209,7 @@ typedef union tRBUF {
 		BYTE	tempsign : 1;
 #endif
 		BYTE	temperaturel;
-		BYTE	humidity; 
+		BYTE	humidity;
 		BYTE	humidity_status;
 		BYTE	baroh;
 		BYTE	barol;

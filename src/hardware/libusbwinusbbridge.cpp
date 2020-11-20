@@ -44,9 +44,9 @@
 #include <winusb.h>
 #include <Usb100.h>
 #include <Setupapi.h>
-extern "C" { 
-#include <hidsdi.h> 
-} 
+extern "C" {
+#include <hidsdi.h>
+}
 
 #pragma comment (lib , "setupapi.lib" )
 #pragma comment (lib , "winusb.lib" )
@@ -107,7 +107,7 @@ GUID WEATHER_DEVICE_GUID =
 
 #define MAX_USB_DEVICES 10
 static struct usb_device devices[MAX_USB_DEVICES];
-static struct usb_bus bus = { NULL, NULL, "bus0", devices };
+static struct usb_bus bus = { nullptr, nullptr, "bus0", devices };
 
 struct usb_dev_handle
 {
@@ -176,8 +176,8 @@ static int usb_get_device_desc(struct usb_device *dev)
       return 1;
 
    ULONG actlen = 0;
-   if (!WinUsb_GetDescriptor(hnd->fd, USB_DEVICE_DESCRIPTOR_TYPE, 0, 0, 
-                             (unsigned char*)&dev->descriptor, 
+   if (!WinUsb_GetDescriptor(hnd->fd, USB_DEVICE_DESCRIPTOR_TYPE, 0, 0,
+                             (unsigned char*)&dev->descriptor,
                              sizeof(dev->descriptor), &actlen)
        || actlen != sizeof(dev->descriptor))
    {
@@ -196,7 +196,7 @@ int usb_find_devices(void)
 	GUID hGuid=WEATHER_DEVICE_GUID ;
 	//HidD_GetHidGuid(&hGuid);
    // Get the set of device interfaces that have been matched by our INF
-   HDEVINFO deviceInfo = SetupDiGetClassDevs(&hGuid, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+   HDEVINFO deviceInfo = SetupDiGetClassDevs(&hGuid, nullptr, nullptr, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
    if (!deviceInfo)
    {
       return 0;
@@ -211,18 +211,18 @@ int usb_find_devices(void)
       SP_DEVICE_INTERFACE_DATA interfaceData;
       interfaceData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
       if (!SetupDiEnumDeviceInterfaces(
-            deviceInfo, NULL, &hGuid, devidx++, &interfaceData))
+            deviceInfo, nullptr, &hGuid, devidx++, &interfaceData))
       {
          break;
       }
 
       // Determine required size for interface detail data
       ULONG requiredLength = 0;
-	  if (!SetupDiGetDeviceInterfaceDetail(deviceInfo, &interfaceData, NULL, 0, &requiredLength, NULL))
+	  if (!SetupDiGetDeviceInterfaceDetail(deviceInfo, &interfaceData, nullptr, 0, &requiredLength, nullptr))
 		  return 0;
 
       // Allocate storage for interface detail data
-      PSP_DEVICE_INTERFACE_DETAIL_DATA detailData = 
+      PSP_DEVICE_INTERFACE_DETAIL_DATA detailData =
          (PSP_DEVICE_INTERFACE_DETAIL_DATA) malloc(requiredLength);
 	  if (!detailData)
 		  return 0;
@@ -230,8 +230,8 @@ int usb_find_devices(void)
 
       // Fetch interface detail data
       if (!SetupDiGetDeviceInterfaceDetail(
-            deviceInfo, &interfaceData, detailData, requiredLength, 
-            &requiredLength, NULL))
+            deviceInfo, &interfaceData, detailData, requiredLength,
+            &requiredLength, nullptr))
       {
          free(detailData);
          continue;
@@ -271,12 +271,12 @@ usb_dev_handle *usb_open(struct usb_device *dev)
    HANDLE hnd = CreateFile(dev->filename,
                            GENERIC_WRITE | GENERIC_READ,
                            FILE_SHARE_WRITE | FILE_SHARE_READ,
-                           NULL,
+                           nullptr,
                            OPEN_EXISTING,
                            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
-                           NULL);
-   if ((hnd == NULL)||(hnd==INVALID_HANDLE_VALUE))
-      return NULL;
+                           nullptr);
+   if ((hnd == nullptr)||(hnd==INVALID_HANDLE_VALUE))
+      return nullptr;
 
    // Initialize WinUSB for this device and get a WinUSB handle for it
    WINUSB_INTERFACE_HANDLE fd;
@@ -287,27 +287,27 @@ usb_dev_handle *usb_open(struct usb_device *dev)
 		   // Translate ErrorCode to String.
 		   LPTSTR Error = 0;
 		   if(::FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		   NULL,
+		   nullptr,
 		   lerror,
 		   0,
 		   (LPTSTR)&Error,
 		   0,
-		   NULL) == 0)
+		   nullptr) == 0)
 		   {
 		   // Failed in translating.
 		   }
-		   //MessageBox(NULL,Error,"Failed",MB_OK);
+		   //MessageBox(nullptr, Error," Failed", MB_OK);
 		   LocalFree(Error);
 	   */
       CloseHandle(hnd);
-      return NULL;
+      return nullptr;
    }
 
    // Device opened successfully. Allocate storage for handles.
-   struct usb_dev_handle *usb = 
+   struct usb_dev_handle *usb =
       (struct usb_dev_handle *)malloc(sizeof(struct usb_dev_handle));
    if (!usb)
-	   return NULL;
+	   return nullptr;
    usb->hnd = hnd;
    usb->fd = fd;
    return usb;
@@ -331,8 +331,8 @@ int usb_claim_interface(usb_dev_handle *dev, int iface)
    return 0;
 }
 
-int usb_control_msg(usb_dev_handle *dev, int requesttype, 
-                    int request, int value, int index, 
+int usb_control_msg(usb_dev_handle *dev, int requesttype,
+                    int request, int value, int index,
                     char *bytes, int size, int timeout)
 {
    // Format parameters into a ctrl setup packet
@@ -346,25 +346,25 @@ int usb_control_msg(usb_dev_handle *dev, int requesttype,
    sp.Length = size;
 
    ULONG actlen = 0;
-   if (!WinUsb_ControlTransfer(dev->fd, sp, (unsigned char*)bytes, size, &actlen, NULL))
+   if (!WinUsb_ControlTransfer(dev->fd, sp, (unsigned char*)bytes, size, &actlen, nullptr))
       return -(int)GetLastError();
 
    return actlen;
 }
 
-int usb_get_string_simple(usb_dev_handle *dev, int index, char *buf, 
+int usb_get_string_simple(usb_dev_handle *dev, int index, char *buf,
                           size_t buflen)
 {
    unsigned char temp[MAXIMUM_USB_STRING_LENGTH];
 
    ULONG actlen = 0;
-   if (!WinUsb_GetDescriptor(dev->fd, USB_STRING_DESCRIPTOR_TYPE, index, 0x0409, 
+   if (!WinUsb_GetDescriptor(dev->fd, USB_STRING_DESCRIPTOR_TYPE, index, 0x0409,
                              temp, sizeof(temp), &actlen))
    {
       return -(int)GetLastError();
    }
 
-   // Skip first two bytes of result (descriptor id and length), then take 
+   // Skip first two bytes of result (descriptor id and length), then take
    // every other byte as a cheap way to convert Unicode to ASCII
    unsigned int i, j;
    for (i = 2, j = 0; i < actlen && j < (buflen-1); i+=2, ++j)
@@ -377,7 +377,7 @@ int usb_get_string_simple(usb_dev_handle *dev, int index, char *buf,
 #define EINVAL 22
 
 #define LIBUSB_ETIMEDOUT 116
-int usb_interrupt_read(usb_dev_handle *dev, int ep, char *bytes, int size, 
+int usb_interrupt_read(usb_dev_handle *dev, int ep, char *bytes, int size,
                        int timeout)
 {
    // Set timeout on endpoint
@@ -390,7 +390,7 @@ int usb_interrupt_read(usb_dev_handle *dev, int ep, char *bytes, int size,
 
    // Perform transfer
    tmp = 0;
-   if (!WinUsb_ReadPipe(dev->fd, ep, (unsigned char*)bytes, size, &tmp, NULL))
+   if (!WinUsb_ReadPipe(dev->fd, ep, (unsigned char*)bytes, size, &tmp, nullptr))
    {
       tmp = GetLastError();
       if (tmp == ERROR_SEM_TIMEOUT)

@@ -70,7 +70,7 @@ public:
 	};
 
 	struct tCustomData {
-		Json::Value customdata;	
+		Json::Value customdata;
 	};
 
 	struct tConfigData {
@@ -97,7 +97,7 @@ public:
 	virtual bool GetClimateData(tClimateData& data) = 0;
 	virtual bool GetVehicleData(tVehicleData& data) = 0;
 	virtual bool GetCustomData(tCustomData& data) = 0;
-	
+
 	tCapabilities m_capabilities;
 	tConfigData m_config;
 

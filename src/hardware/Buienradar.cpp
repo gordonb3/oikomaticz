@@ -536,7 +536,7 @@ void CBuienRadar::GetRainPrediction()
 #endif
 #endif
 
-	time_t now = mytime(NULL);
+	time_t now = mytime(nullptr);
 	struct tm ltime;
 	localtime_r(&now, &ltime);
 

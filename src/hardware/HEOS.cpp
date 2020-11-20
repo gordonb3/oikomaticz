@@ -513,7 +513,7 @@ void CHEOS::Do_Work()
 		m_lastUpdate++;
 
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (isConnected())
@@ -812,7 +812,7 @@ void CHEOS::ReloadNodes()
 			pnode.Name = sd[2];
 			pnode.nStatus = (device::tmedia::status::value)atoi(sd[3].c_str());
 			pnode.sStatus = sd[4];
-			pnode.LastOK = mytime(NULL);
+			pnode.LastOK = mytime(nullptr);
 
 			m_nodes.push_back(pnode);
 		}
@@ -845,7 +845,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if (pBaseHardware->HwdType != hardware::type::HEOS)
 				return;
@@ -887,7 +887,7 @@ namespace http {
 					switch (hType) {
 					case hardware::type::HEOS:
 						CDomoticzHardwareBase * pBaseHardware = m_mainworker.GetHardwareByIDType(result[0][3].c_str(), hardware::type::HEOS);
-						if (pBaseHardware == NULL)
+						if (pBaseHardware == nullptr)
 							return;
 						CHEOS *pHEOS = reinterpret_cast<CHEOS*>(pBaseHardware);
 

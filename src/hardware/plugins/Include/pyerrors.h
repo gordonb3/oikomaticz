@@ -312,7 +312,7 @@ PyAPI_FUNC(void) PyErr_WriteUnraisable(PyObject *);
  * it isn't safe to perform the replacement, it will leave the original
  * unmodified exception in place.
  *
- * Returns a borrowed reference to the new exception (if any), NULL if the
+ * Returns a borrowed reference to the new exception (if any), nullptr if the
  * existing exception was left in place.
  */
 PyAPI_FUNC(PyObject *) _PyErr_TrySetFromCause(

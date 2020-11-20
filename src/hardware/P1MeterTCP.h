@@ -5,20 +5,20 @@
 
 class P1MeterTCP : public P1MeterBase, ASyncTCP
 {
-public:
-	P1MeterTCP(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const bool disable_crc, const unsigned int ratelimit, const unsigned int gasmeterchannel, const std::string& DecryptionKey);
-	~P1MeterTCP(void);
-	bool WriteToHardware(const char *pdata, const unsigned char length) override;
-public:
+      public:
+	P1MeterTCP(int ID, const std::string &IPAddress, unsigned short usIPPort, bool disable_crc, int ratelimit, int gasmeterchannel, const std::string& DecryptionKey);
+	~P1MeterTCP() override = default;
+	bool WriteToHardware(const char *pdata, unsigned char length) override;
+      public:
 	// signals
-	boost::signals2::signal<void()>	sDisconnected;
+	boost::signals2::signal<void()> sDisconnected;
 
-private:
+      private:
 	bool StartHardware() override;
 	bool StopHardware() override;
 
 
-protected:
+      protected:
 	std::string m_szIPAddress;
 	unsigned short m_usIPPort;
 
@@ -27,8 +27,7 @@ protected:
 	void OnConnect() override;
 	void OnDisconnect() override;
 	void OnData(const unsigned char *pData, size_t length) override;
-	void OnError(const boost::system::error_code& error) override;
+	void OnError(const boost::system::error_code &error) override;
 
 	std::shared_ptr<std::thread> m_thread;
 };
-

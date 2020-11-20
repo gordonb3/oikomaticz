@@ -14,14 +14,14 @@ namespace Json
 class Lyric : public CDomoticzHardwareBase
 {
 public:
-	Lyric(const int ID, const std::string &Username, const std::string &Password, const std::string &Extra);
-	~Lyric(void);
-	bool WriteToHardware(const char *pdata, const unsigned char length) override;
+	Lyric(int ID, const std::string &Username, const std::string &Password, const std::string &Extra);
+	~Lyric() override = default;;
+	bool WriteToHardware(const char *pdata, unsigned char length) override;
 private:
-	void SetSetpoint(const int idx, const float temp, const int nodeid);
-	void SetPauseStatus(const int idx, bool bHeating, const int nodeid);
-	void SendOnOffSensor(const int NodeID, const device::tswitch::type::value switchtype, const bool SwitchState, const std::string &defaultname);
-	void SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname);
+	void SetSetpoint(int idx, float temp, int nodeid);
+	void SetPauseStatus(int idx, bool bHeating, int nodeid);
+	void SendOnOffSensor(int NodeID, device::tswitch::type::value switchtype, bool SwitchState, const std::string &defaultname);
+	void SendSetPointSensor(unsigned char Idx, float Temp, const std::string &defaultname);
 	bool refreshToken();
 	void Init();
 	bool StartHardware() override;

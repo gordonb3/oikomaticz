@@ -159,8 +159,8 @@ typedef enum {
 	RORG_SM_LRN_ANS = 0xC7,
 	RORG_SM_ACK_SGNL = 0xD0, //Smart Acknowledge Signal telegram
 	RORG_MSC = 0xD1, // Manufacturer Specific Communicatio
-	RORG_VLD = 0xD2, // Variable length data telegram 
-	RORG_UTI = 0xD4, //Universal Teach-In EEP based 
+	RORG_VLD = 0xD2, // Variable length data telegram
+	RORG_UTI = 0xD4, //Universal Teach-In EEP based
 	RORG_1BS = 0xD5,
 	RORG_RPS = 0xF6,
 	RORG_SYS_EX = 0xC5,
@@ -506,7 +506,7 @@ void CEnOceanESP3::Do_Work()
 			sec_counter++;
 			if (sec_counter % 12 == 0)
 			{
-				m_LastHeartbeat = mytime(NULL);
+				m_LastHeartbeat = mytime(nullptr);
 			}
 		}
 
@@ -597,11 +597,11 @@ bool CEnOceanESP3::OpenSerialDevice()
 	//Request BASE_ID
 	m_bBaseIDRequested=true;
 	buf[0] = CO_RD_IDBASE;
-	sendFrameQueue(PACKET_COMMON_COMMAND,buf,1,NULL,0);
+	sendFrameQueue(PACKET_COMMON_COMMAND,buf,1,nullptr ,0);
 
 	//Request Version
 	buf[0] = CO_RD_VERSION;
-	sendFrameQueue(PACKET_COMMON_COMMAND,buf,1,NULL,0);
+	sendFrameQueue(PACKET_COMMON_COMMAND,buf,1,nullptr ,0);
 
 	return true;
 }
@@ -794,7 +794,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 		//sprintf(buff,"%02X %02X %02X %02X %02X %02X %02X",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5],buf[6]);
 		//_log.Log(LOG_ERROR,buff);
 
-		sendFrameQueue(PACKET_RADIO,buf,7,NULL,0);
+		sendFrameQueue(PACKET_RADIO,buf,7,nullptr ,0);
 
 		//Next command is send a bit later (button release)
 		buf[1] = 0;				// no button press
@@ -802,7 +802,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 		//sprintf(buff,"%02X %02X %02X %02X %02X %02X %02X",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5],buf[6]);
 		//_log.Log(LOG_ERROR,buff);
 
-		sendFrameQueue(PACKET_RADIO,buf,7,NULL,0);
+		sendFrameQueue(PACKET_RADIO,buf,7,nullptr ,0);
 	}
 	else
 	{
@@ -830,7 +830,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 			buf[1] = (RockerID<<DB3_RPS_NU_RID_SHIFT) | (UpDown<<DB3_RPS_NU_UD_SHIFT) | (Pressed<<DB3_RPS_NU_PR_SHIFT);//0x30;
 			buf[9] = 0x30;
 
-			sendFrameQueue(PACKET_RADIO,buf,10,NULL,0);
+			sendFrameQueue(PACKET_RADIO,buf,10,nullptr ,0);
 
 			//char buff[512];
 			//sprintf(buff,"%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5],buf[6],buf[7],buf[8],buf[9]);
@@ -841,7 +841,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 			buf[9] = 0x20;
 			//sprintf(buff,"%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5],buf[6],buf[7],buf[8],buf[9]);
 			//_log.Log(LOG_ERROR,buff);
-			sendFrameQueue(PACKET_RADIO,buf,10,NULL,0);
+			sendFrameQueue(PACKET_RADIO,buf,10,nullptr ,0);
 		}
 		else
 		{
@@ -859,7 +859,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 			else
 				buf[4]=0x09;//Dim On
 
-			sendFrameQueue(PACKET_RADIO,buf,10,NULL,0);
+			sendFrameQueue(PACKET_RADIO,buf,10,nullptr ,0);
 		}
 	}
 
@@ -906,7 +906,7 @@ void CEnOceanESP3::SendDimmerTeachIn(const char *pdata, const unsigned char /*le
 		{
 			return;//double not supported yet!
 		}
-		sendFrame(PACKET_RADIO,buf,10,NULL,0);
+		sendFrame(PACKET_RADIO,buf,10,nullptr ,0);
 	}
 }
 
@@ -1111,7 +1111,7 @@ bool CEnOceanESP3::ParseData()
 					tsen.LIGHTING2.unitcode=SecondRockerID+10;
 					tsen.LIGHTING2.cmnd=(SecondUpDown==1)?light2_sOn:light2_sOff;
 				}
-				sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+				sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255);
 			}
 		}
 		break;
@@ -1181,7 +1181,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 				tsen.LIGHTING2.rssi=12;
 				tsen.LIGHTING2.unitcode=1;
 				tsen.LIGHTING2.cmnd=(UpDown==1)?light2_sOn:light2_sOff;
-				sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+				sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255);
 			}
 			break;
 		case RORG_4BS: // 4 byte communication
@@ -1288,7 +1288,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						tsen.RFXMETER.count2 = (BYTE)((cvalue & 0x00FF0000) >> 16);
 						tsen.RFXMETER.count3 = (BYTE)((cvalue & 0x0000FF00) >> 8);
 						tsen.RFXMETER.count4 = (BYTE)(cvalue & 0x000000FF);
-						sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXMETER, NULL, 255);
+						sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXMETER, nullptr, 255);
 					}
 					else if (szST=="AMR.Electricity")
 					{
@@ -1301,7 +1301,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						umeter.id4=(BYTE)ID_BYTE0;
 						umeter.dunit=1;
 						umeter.fusage=(float)cvalue;
-						sDecodeRXMessage(this, (const unsigned char *)&umeter, NULL, 255);
+						sDecodeRXMessage(this, (const unsigned char *)&umeter, nullptr, 255);
 					}
 					else if (szST=="AMR.Gas")
 					{
@@ -1319,7 +1319,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						tsen.RFXMETER.count2 = (BYTE)((cvalue & 0x00FF0000) >> 16);
 						tsen.RFXMETER.count3 = (BYTE)((cvalue & 0x0000FF00) >> 8);
 						tsen.RFXMETER.count4 = (BYTE)(cvalue & 0x000000FF);
-						sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXMETER, NULL, 255);
+						sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXMETER, nullptr, 255);
 					}
 					else if (szST=="AMR.Water")
 					{
@@ -1337,7 +1337,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						tsen.RFXMETER.count2 = (BYTE)((cvalue & 0x00FF0000) >> 16);
 						tsen.RFXMETER.count3 = (BYTE)((cvalue & 0x0000FF00) >> 8);
 						tsen.RFXMETER.count4 = (BYTE)(cvalue & 0x000000FF);
-						sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXMETER, NULL, 255);
+						sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXMETER, nullptr, 255);
 					}
 					else if (szST.find("RoomOperatingPanel") == 0)
 					{
@@ -1395,7 +1395,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							tsen.TEMP.temperatureh=(BYTE)(at10/256);
 							at10-=(tsen.TEMP.temperatureh*256);
 							tsen.TEMP.temperaturel=(BYTE)(at10);
-							sDecodeRXMessage(this, (const unsigned char *)&tsen.TEMP, NULL, -1);
+							sDecodeRXMessage(this, (const unsigned char *)&tsen.TEMP, nullptr, -1);
 						}
 					}
 					else if (szST == "LightSensor.01")
@@ -1433,7 +1433,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							tsen.RFXSENSOR.rssi=(ID_BYTE0&0xF0)>>4;
 							tsen.RFXSENSOR.msg1 = (BYTE)(voltage/256);
 							tsen.RFXSENSOR.msg2 = (BYTE)(voltage-(tsen.RFXSENSOR.msg1*256));
-							sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, NULL, 255);
+							sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255);
 						}
 						_tLightMeter lmeter;
 						lmeter.id1=(BYTE)ID_BYTE3;
@@ -1442,7 +1442,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						lmeter.id4=(BYTE)ID_BYTE0;
 						lmeter.dunit=1;
 						lmeter.fLux=lux;
-						sDecodeRXMessage(this, (const unsigned char *)&lmeter, NULL, 255);
+						sDecodeRXMessage(this, (const unsigned char *)&lmeter, nullptr, 255);
 					}
 					else if (szST.find("Temperature")==0)
 					{
@@ -1495,7 +1495,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						tsen.TEMP.temperatureh=(BYTE)(at10/256);
 						at10-=(tsen.TEMP.temperatureh*256);
 						tsen.TEMP.temperaturel=(BYTE)(at10);
-						sDecodeRXMessage(this, (const unsigned char *)&tsen.TEMP, NULL, -1);
+						sDecodeRXMessage(this, (const unsigned char *)&tsen.TEMP, nullptr, -1);
 					}
 					else if (szST.find("TempHum")==0)
 					{
@@ -1524,7 +1524,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						tsen.TEMP_HUM.temperaturel=(BYTE)(at10);
 						tsen.TEMP_HUM.humidity=(BYTE)hum;
 						tsen.TEMP_HUM.humidity_status=Get_Humidity_Level(tsen.TEMP_HUM.humidity);
-						sDecodeRXMessage(this, (const unsigned char *)&tsen.TEMP_HUM, NULL, -1);
+						sDecodeRXMessage(this, (const unsigned char *)&tsen.TEMP_HUM, nullptr, -1);
 					}
 					else if (szST == "OccupancySensor.01")
 					{
@@ -1546,7 +1546,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 								tsen.RFXSENSOR.rssi = (ID_BYTE0 & 0xF0) >> 4;
 								tsen.RFXSENSOR.msg1 = (BYTE)(voltage / 256);
 								tsen.RFXSENSOR.msg2 = (BYTE)(voltage - (tsen.RFXSENSOR.msg1 * 256));
-								sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, NULL, 255);
+								sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255);
 							}
 
 							bool bPIROn = (DATA_BYTE1 > 127);
@@ -1564,7 +1564,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							tsen.LIGHTING2.rssi = 12;
 							tsen.LIGHTING2.unitcode = 1;
 							tsen.LIGHTING2.cmnd = (bPIROn) ? light2_sOn : light2_sOff;
-							sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+							sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255);
 						}
 						else {
 							//Error code
@@ -1587,7 +1587,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							tsen.RFXSENSOR.rssi = (ID_BYTE0 & 0xF0) >> 4;
 							tsen.RFXSENSOR.msg1 = (BYTE)(voltage / 256);
 							tsen.RFXSENSOR.msg2 = (BYTE)(voltage - (tsen.RFXSENSOR.msg1 * 256));
-							sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, NULL, 255);
+							sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255);
 
 							bool bPIROn = (DATA_BYTE0 & 0x80)!=0;
 							memset(&tsen, 0, sizeof(RBUF));
@@ -1604,7 +1604,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							tsen.LIGHTING2.rssi = 12;
 							tsen.LIGHTING2.unitcode = 1;
 							tsen.LIGHTING2.cmnd = (bPIROn) ? light2_sOn : light2_sOff;
-							sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+							sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255);
 						}
 						else {
 							//Error code
@@ -1627,7 +1627,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							tsen.RFXSENSOR.rssi = (ID_BYTE0 & 0xF0) >> 4;
 							tsen.RFXSENSOR.msg1 = (BYTE)(voltage / 256);
 							tsen.RFXSENSOR.msg2 = (BYTE)(voltage - (tsen.RFXSENSOR.msg1 * 256));
-							sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, NULL, 255);
+							sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255);
 
 							int lux = (DATA_BYTE2 << 2) | (DATA_BYTE1>>6);
 							if (lux > 1000)
@@ -1639,7 +1639,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							lmeter.id4 = (BYTE)ID_BYTE0;
 							lmeter.dunit = 1;
 							lmeter.fLux = (float)lux;
-							sDecodeRXMessage(this, (const unsigned char *)&lmeter, NULL, 255);
+							sDecodeRXMessage(this, (const unsigned char *)&lmeter, nullptr, 255);
 
 							bool bPIROn = (DATA_BYTE0 & 0x80)!=0;
 							memset(&tsen, 0, sizeof(RBUF));
@@ -1656,7 +1656,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							tsen.LIGHTING2.rssi = 12;
 							tsen.LIGHTING2.unitcode = 1;
 							tsen.LIGHTING2.cmnd = (bPIROn) ? light2_sOn : light2_sOff;
-							sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+							sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255);
 						}
 						else {
 							//Error code
@@ -1826,7 +1826,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							);
 #endif //ENOCEAN_BUTTON_DEBUG
 
-						sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+						sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255);
 					}
 				}
 				else
@@ -1884,7 +1884,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 #endif // ENOCEAN_BUTTON_DEBUG
 
-						sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+						sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255);
 					}
 				}
 			}
@@ -1966,7 +1966,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 #endif //ENOCEAN_BUTTON_DEBUG
 
 								_log.Log(LOG_NORM, "EnOcean: channel = %d", nbc+1);
-								sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+								sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255);
 							}
 							return;
 						}
@@ -2072,7 +2072,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 #endif //ENOCEAN_BUTTON_DEBUG
 
 						// Never learn device from D2-01-0C because subtype may be incorrect
-						sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+						sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255);
 
 						// Note: if a device uses simultaneously RPS and VLD (ex: nodon inwall module), it can be partially initialized.
 						//			Domoticz will show device status but some functions may not work because EnoceanSensors table has no info on this device (until teach-in is performed)

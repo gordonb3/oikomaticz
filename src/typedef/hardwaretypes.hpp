@@ -263,7 +263,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ Meteorologisk,		"Meteorologisk institutt Norway (Weather Lookup)",		"Meteorologisk"		},
 	{ Mercedes,			"Mercedes ME Connect",						"Mercedes"		},
 	{ AirconWithMe,			"AirconWithMe Wifi Airco module",				"AirconWithMe"		},
-	{ 0, NULL, NULL }
+	{ 0, nullptr, nullptr }
 };
 
 

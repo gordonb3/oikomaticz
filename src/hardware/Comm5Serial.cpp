@@ -126,8 +126,8 @@ void Comm5Serial::Do_Work()
 
 	while (!IsStopRequested(100))
 	{
-		m_LastHeartbeat = mytime(NULL);
-		if (msec_counter++ >= 40) 
+		m_LastHeartbeat = mytime(nullptr);
+		if (msec_counter++ >= 40)
 		{
 			//every 4 seconds ?
 			msec_counter = 0;
@@ -266,7 +266,7 @@ void Comm5Serial::ParseData(const unsigned char* data, const size_t len)
 			if (frameCRC == readCRC)
 				parseFrame(frame);
 			else
-				Log(LOG_ERROR, "Frame CRC error");			
+				Log(LOG_ERROR, "Frame CRC error");
 			currentState = STSTART_OCTET1;
 			frame.clear();
 			break;

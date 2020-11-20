@@ -50,7 +50,7 @@ extern "C" const char* strptime(const char* s, const char* f, struct tm* tm)
 	}
 	catch (...) {
 	}
-	return NULL;
+	return nullptr;
 }
 #endif
 
@@ -62,7 +62,7 @@ request_handler::request_handler(const std::string& doc_root, cWebem* webem)
   : doc_root_(doc_root), myWebem(webem)
 {
 #ifndef WEBSERVER_DONT_USE_ZIP
-	m_uf=NULL;
+	m_uf = nullptr;
 	m_bIsZIP=(doc_root.find(".zip")!=std::string::npos)||(doc_root.find(".dat")!=std::string::npos);
 	if (m_bIsZIP)
 	{
@@ -78,14 +78,14 @@ request_handler::request_handler(const std::string& doc_root, cWebem* webem)
 request_handler::~request_handler()
 {
 #ifndef WEBSERVER_DONT_USE_ZIP
-	if (m_uf!=NULL)
+	if (m_uf != nullptr)
 	{
 		unzClose(m_uf);
-		m_uf=NULL;
+		m_uf = nullptr;
 	}
 	if (m_pUnzipBuffer)
 		free(m_pUnzipBuffer);
-	m_pUnzipBuffer=NULL;
+	m_pUnzipBuffer = nullptr;
 #endif
 }
 
@@ -168,7 +168,7 @@ bool request_handler::not_modified(const std::string &full_path, const request &
 	// propagate timestamp to browser
 	reply::add_header(&rep, "Last-Modified", convert_to_http_date(mInfo.last_written));
 	const char *if_modified = request::get_req_header(&req, "If-Modified-Since");
-	if (NULL == if_modified) {
+	if (nullptr == if_modified) {
 		// we have no if-modified header, continue to serve content
 		mInfo.is_modified = true;
 		//_log.Log(LOG_STATUS, "%s: No If-Modified-Since header", full_path.c_str());
@@ -239,10 +239,10 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 	  )
 	{
 		const char *encoding_header;
-		if ((encoding_header = request::get_req_header(&req, "Accept-Encoding")) != NULL)
+		if ((encoding_header = request::get_req_header(&req, "Accept-Encoding")) != nullptr)
 		{
 			//see if we support gzip
-			bHaveGZipSupport=(strstr(encoding_header,"gzip")!=NULL);
+			bHaveGZipSupport=(strstr(encoding_header,"gzip") != nullptr);
 		}
 	}
   }
@@ -337,7 +337,7 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 			return;
 		}
 
-		if (request_path.find("styles/") != std::string::npos) 
+		if (request_path.find("styles/") != std::string::npos)
 		{
 			mInfo.mtime_support = false; // ignore caching on theme files
 		}
@@ -370,7 +370,7 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 #ifndef WEBSERVER_DONT_USE_ZIP
   else
   {
-	  if (m_uf==NULL)
+	  if (m_uf == nullptr)
 	  {
 		  rep = reply::stock_reply(reply::not_found);
 #ifdef _DEBUG

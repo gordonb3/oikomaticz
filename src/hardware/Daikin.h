@@ -42,9 +42,9 @@ private:
 	std::string m_shum;
 	std::string m_led;
 	std::shared_ptr<std::thread> m_thread;
-	int m_sec_counter;            
-	std::string m_dt[8];     // Memorized Temp target for each mode. 
-        std::string m_dh[8];     // Memorized Humidity target for each mode. 
+	int m_sec_counter;
+	std::string m_dt[8];     // Memorized Temp target for each mode.
+        std::string m_dh[8];     // Memorized Humidity target for each mode.
 	std::string m_sci_Temp;
 	std::string m_sci_OnOFF;
 	std::string m_sci_ModeLevel;

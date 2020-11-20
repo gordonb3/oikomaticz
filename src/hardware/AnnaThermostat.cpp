@@ -133,7 +133,7 @@ void CAnnaThermostat::Do_Work()
 		sec_counter++;
 		if (sec_counter % 12 == 0)
 		{
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if ((sec_counter % ANNA_POLL_INTERVAL == 0) || (bFirstTime))
@@ -466,7 +466,7 @@ void CAnnaThermostat::GetMeterDetails()
 		TiXmlHandle hAppliance = TiXmlHandle(pAppliance);
 
 		pElem = pAppliance->FirstChildElement("name");
-		if (pElem == NULL)
+		if (pElem == nullptr)
 		{
 			Log(LOG_ERROR, "AnnaTherm: Cannot find appliance attributes");
 			return;
@@ -476,7 +476,7 @@ void CAnnaThermostat::GetMeterDetails()
 		if ((m_ThermostatID.empty()) && ((ApplianceName == "Anna") || (ApplianceName == "Adam")))
 		{
 			pAttribute = pAppliance->FirstAttribute();
-			if (pAttribute != NULL)
+			if (pAttribute != nullptr)
 			{
 				std::string aName = pAttribute->Name();
 				if (aName == "id")
@@ -606,7 +606,7 @@ void CAnnaThermostat::GetMeterDetails()
 				if (m_ProximityID.empty())
 				{
 					pAttribute = pAppliance->FirstAttribute();
-					if (pAttribute != NULL)
+					if (pAttribute != nullptr)
 					{
 						std::string aName = pAttribute->Name();
 						if (aName == "id")
@@ -747,7 +747,7 @@ bool CAnnaThermostat::AnnaGetLocation()
 	if (m_AnnaLocation.m_ALocationID.empty())
 	{
 		pAttribute = pLocation->FirstAttribute();
-		if (pAttribute != NULL)
+		if (pAttribute != nullptr)
 		{
 			std::string aName = pAttribute->Name();
 			if (aName == "id")
@@ -762,14 +762,14 @@ bool CAnnaThermostat::AnnaGetLocation()
 		}
 	}
 	pElem = pLocation->FirstChildElement("name");
-	if (pElem == NULL)
+	if (pElem == nullptr)
 	{
 		Log(LOG_ERROR, "AnnaTherm: Cannot find Location name");
 		return false;
 	}
 	m_AnnaLocation.m_ALocationName = pElem->GetText();
 	pElem = pLocation->FirstChildElement("type");
-	if (pElem == NULL)
+	if (pElem == nullptr)
 	{
 		Log(LOG_ERROR, "AnnaTherm: Cannot find Location type");
 		return false;
@@ -806,7 +806,7 @@ void CAnnaThermostat::FixUnit()
 	result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (Unit == '%d')", m_HwdID,  0);
 	if (result.empty())
 		return;  // switch doen not exist yet
-	
+
 	for (const auto &it : result)
 	{
 		m_sql.safe_query("UPDATE DeviceStatus SET unit = 1 WHERE (ID==%s)", it.at(0).c_str());

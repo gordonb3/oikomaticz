@@ -41,7 +41,7 @@
 #include <time.h>
 #endif
 
-#if defined(__FreeBSD__) 
+#if defined(__FreeBSD__)
 // Check if OpenBSD or DragonFly need that at well?
 #include <pthread_np.h>
 #ifndef PTHREAD_MAX_MAMELEN_NP
@@ -337,11 +337,11 @@ std::vector<std::string> GetSerialPorts(bool &bUseDirectPath)
 		}
 	}
 
-	DIR *d=NULL;
+	DIR *d = nullptr;
 	d=opendir("/dev");
-	if (d != NULL)
+	if (d != nullptr)
 	{
-		struct dirent *de=NULL;
+		struct dirent *de = nullptr;
 		// Loop while not NULL
 		while ((de = readdir(d)))
 		{
@@ -420,9 +420,9 @@ std::vector<std::string> GetSerialPorts(bool &bUseDirectPath)
 	}
 	//also scan in /dev/usb
 	d=opendir("/dev/usb");
-	if (d != NULL)
+	if (d != nullptr)
 	{
-		struct dirent *de=NULL;
+		struct dirent *de = nullptr;
 		// Loop while not NULL
 		while ((de = readdir(d)))
 		{
@@ -438,9 +438,9 @@ std::vector<std::string> GetSerialPorts(bool &bUseDirectPath)
 
 #if defined(__linux__) || defined(__linux) || defined(linux)
 	d=opendir("/dev/serial/by-id");
-	if (d != NULL)
+	if (d != nullptr)
 	{
-		struct dirent *de=NULL;
+		struct dirent *de = nullptr;
 		// Loop while not NULL
 		while ((de = readdir(d)))
 		{
@@ -685,7 +685,7 @@ int RemoveDir(const std::string &dirnames, std::string &errorPath)
 				strcpy_s(deletePath, splitresults[i].c_str());
 				deletePath[s_szLen + 1] = '\0'; // SHFILEOPSTRUCT needs an additional null char
 
-				SHFILEOPSTRUCT shfo = { NULL, FO_DELETE, deletePath, NULL, FOF_SILENT | FOF_NOERRORUI | FOF_NOCONFIRMATION, FALSE, NULL, NULL };
+				SHFILEOPSTRUCT shfo = { NULL, FO_DELETE, deletePath, nullptr, FOF_SILENT | FOF_NOERRORUI | FOF_NOCONFIRMATION, FALSE, nullptr, nullptr };
 				if (returncode = SHFileOperation(&shfo))
 				{
 					errorPath = splitresults[i];
@@ -748,11 +748,11 @@ std::vector<std::string> ExecuteCommandAndReturn(const std::string &szCommand, i
 #else
 		fp = popen(szCommand.c_str(), "r");
 #endif
-		if (fp != NULL)
+		if (fp != nullptr)
 		{
 			char path[1035];
 			/* Read the output a line at a time - output it. */
-			while (fgets(path, sizeof(path) - 1, fp) != NULL)
+			while (fgets(path, sizeof(path) - 1, fp) != nullptr)
 			{
 				ret.push_back(path);
 			}
@@ -776,7 +776,7 @@ std::string TimeToString(const time_t *ltime, const _eTimeFormat format)
 	struct tm timeinfo;
 	struct timeval tv;
 	std::stringstream sstr;
-	if (ltime == NULL) // current time
+	if (ltime == nullptr) // current time
 	{
 #ifdef CLOCK_REALTIME
 		struct timespec ts;
@@ -787,7 +787,7 @@ std::string TimeToString(const time_t *ltime, const _eTimeFormat format)
 		}
 		else
 #endif
-			gettimeofday(&tv, NULL);
+			gettimeofday(&tv, nullptr);
 #ifdef WIN32
 		time_t tv_sec = tv.tv_sec;
 		localtime_r(&tv_sec, &timeinfo);
@@ -817,7 +817,7 @@ std::string TimeToString(const time_t *ltime, const _eTimeFormat format)
 		<< std::setw(2) << std::setfill('0') << timeinfo.tm_sec;
 	}
 
-	if (format > TF_DateTime && ltime == NULL)
+	if (format > TF_DateTime && ltime == nullptr)
 		sstr << "." << std::setw(3) << std::setfill('0') << ((int)tv.tv_usec / 1000);
 
 	return sstr.str();
@@ -894,7 +894,7 @@ void hsb2rgb(const float hue, const float saturation, const float vlue, int &out
 void rgb2hsb(const int r, const int g, const int b, float hsbvals[3])
 {
 	float hue, saturation, brightness;
-	if (hsbvals == NULL)
+	if (hsbvals == nullptr)
 		return;
 	int cmax = (r > g) ? r : g;
 	if (b > cmax) cmax = b;
@@ -1056,11 +1056,11 @@ bool dirent_is_file(const std::string &dir, struct dirent *ent)
  */
 void DirectoryListing(std::vector<std::string>& entries, const std::string &dir, bool bInclDirs, bool bInclFiles)
 {
-	DIR *d = NULL;
+	DIR *d = nullptr;
 	struct dirent *ent;
-	if ((d = opendir(dir.c_str())) != NULL)
+	if ((d = opendir(dir.c_str())) != nullptr)
 	{
-		while ((ent = readdir(d)) != NULL) {
+		while ((ent = readdir(d)) != nullptr) {
 			std::string name = ent->d_name;
 			if (bInclDirs && dirent_is_directory(dir, ent) && name != "." && name != "..") {
 				entries.push_back(name);
@@ -1139,7 +1139,7 @@ int getclock(struct timeval *tv) {
 			return 0;
 		}
 #endif
-	return gettimeofday(tv, NULL);
+	return gettimeofday(tv, nullptr);
 }
 int timeval_subtract (struct timeval *result, struct timeval *x, struct timeval *y) {
 	/* Perform the carry for the later subtraction by updating y. */
@@ -1177,7 +1177,7 @@ const char *szInsecureArgumentOptions[] = {
 	"`",
 	"\n",
 	"\r",
-	NULL
+	nullptr
 };
 
 bool IsArgumentSecure(const std::string &arg)
@@ -1186,7 +1186,7 @@ bool IsArgumentSecure(const std::string &arg)
 	std::transform(larg.begin(), larg.end(), larg.begin(), ::tolower);
 
 	int ii = 0;
-	while (szInsecureArgumentOptions[ii] != NULL)
+	while (szInsecureArgumentOptions[ii] != nullptr)
 	{
 		if (larg.find(szInsecureArgumentOptions[ii]) != std::string::npos)
 			return false;
@@ -1208,9 +1208,9 @@ uint32_t SystemUptime()
 	struct timeval boottime;
 	std::size_t len = sizeof(boottime);
 	int mib[2] = { CTL_KERN, KERN_BOOTTIME };
-	if (sysctl(mib, 2, &boottime, &len, NULL, 0) < 0)
+	if (sysctl(mib, 2, &boottime, &len, nullptr, 0) < 0)
 		return -1;
-	return time(NULL) - boottime.tv_sec;
+	return time(nullptr) - boottime.tv_sec;
 #elif (defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)) && defined(CLOCK_UPTIME)
 	struct timespec ts;
 	if (clock_gettime(CLOCK_UPTIME, &ts) != 0)
@@ -1240,7 +1240,7 @@ int GenerateRandomNumber(const int range)
 		switch (entropy.which)
 		{
 			case 0:
-				entropy.t += time (NULL);
+				entropy.t += time (nullptr);
 				accSeed ^= entropy.t;
 				break;
 			case 1:
@@ -1262,10 +1262,10 @@ int GenerateRandomNumber(const int range)
 int GetDirFilesRecursive(const std::string &DirPath, std::map<std::string, int> &_Files)
 {
 	DIR* dir;
-	if ((dir = opendir(DirPath.c_str())) != NULL)
+	if ((dir = opendir(DirPath.c_str())) != nullptr)
 	{
 		struct dirent *ent;
-		while ((ent = readdir(dir)) != NULL)
+		while ((ent = readdir(dir)) != nullptr)
 		{
 			if (dirent_is_directory(DirPath, ent))
 			{

@@ -6,28 +6,28 @@
 #include "harmonyhubclient.hpp"
 
 namespace harmonyhubpp {
-namespace connection {
-namespace status {
+  namespace connection {
+    namespace status {
 	enum value {
 		connecting,
 		connected,
 		closing,
 		closed
 	};
-}; // namespace status
-}; // namespace connection
+    }; // namespace status
+  }; // namespace connection
 }; // namespace harmonyhub
 
 namespace hardware {
-namespace handler {
+  namespace handler {
 
-class HarmonyHubWS : public CDomoticzHardwareBase
-{
-public:
-	HarmonyHubWS(const int ID, const std::string &IPAddress);
-	~HarmonyHubWS(void);
+    class HarmonyHubWS : public CDomoticzHardwareBase
+    {
+      public:
+	HarmonyHubWS(int ID, const std::string &IPAddress);
+	~HarmonyHubWS();
 	bool WriteToHardware(const char *pdata, const unsigned char length) override;
-private:
+      private:
 	bool StartHardware() override;
 	bool StopHardware() override;
 	void Do_Work();
@@ -52,7 +52,7 @@ private:
 	int SendPing();
 
 
-private:
+      private:
 	// hardware parameters
 	std::string m_szHarmonyAddress;
 	unsigned short m_usHarmonyPort;
@@ -73,7 +73,7 @@ private:
 	std::string m_szHubSwVersion;
 	std::string m_szCurActivityID;
 	std::map<std::string, std::string> m_mapActivities;
-};
+    };
 
-}; //namespace handler
+  }; //namespace handler
 }; //namespace hardware

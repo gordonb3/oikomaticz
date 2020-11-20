@@ -2,8 +2,8 @@
 /* File:   usb_frame_api.h
  * Author: JP GAUTHIER
  * Company : ZiBLUE SAS
- * The information contained in this file is the property of the ZiBLUE company. 
- *  Unauthorized publication, use, dissemination, forwarding, printing or copying   
+ * The information contained in this file is the property of the ZiBLUE company.
+ *  Unauthorized publication, use, dissemination, forwarding, printing or copying
  * of this file and its associated compiled or linked forms is strictly prohibited.
  */
 /* ****************************************************************************/
@@ -28,7 +28,7 @@ struct  MESSAGE_CONTAINER_HEADER {
     unsigned char Sync1 ;
     unsigned char Sync2 ;
     unsigned char SourceDestQualifier ;
-    unsigned char QualifierOrLen_lsb ; 
+    unsigned char QualifierOrLen_lsb ;
     unsigned char QualifierOrLen_msb ;
 } sMESSAGE_CONTAINER_HEADER;
 
@@ -45,7 +45,7 @@ struct REGULAR_INCOMING_BINARY_USB_FRAME { // public binary API USB to RF frame 
 } sREGULAR_INCOMING_BINARY_USB_FRAME;
 
 /*
- * 
+ *
 Binary Data[]	Size	Type	Remark
 FrameType	1	unsigned char	Value = 0
 DataFlag	1	unsigned char	0: 433Mhz, 1: 868Mhz
@@ -64,7 +64,7 @@ FrameType	1	unsigned char	Value = 0
 DataFlag	1	unsigned char	0: 433Mhz, 1: 868Mhz
 RFLevel	1	signed char	Unit : dB  (high signal :-40dB to low : -110dB)
 FloorNoise	1	signed char	Unit : dB  (high signal :-40dB to low : -110dB)
-RFQuality	1	unsigned char	
+RFQuality	1	unsigned char
 Protocol	1	unsigned char	See below
 InfosType	1	unsigned char	See below
 Infos[0?9]	20	Signed or unsigned short
@@ -82,7 +82,7 @@ upon context	LSB first. Define provided data by the device
 #define   SEND_ACTION_ASSOC_OFF          8
 #define   SEND_ACTION_DISSOC_OFF         9
 
-/* ***************************************** */ 
+/* ***************************************** */
 #define   SEND_UNDEFINED_PROTOCOL        0
 #define   SEND_VISONIC_PROTOCOL_433      1
 #define   SEND_VISONIC_PROTOCOL_868      2
@@ -154,7 +154,7 @@ struct  INCOMING_RF_INFOS_TYPE1 { // Used by X10 (32 bits ID) and CHACON
     unsigned short idLsb ;
     unsigned short idMsb ;
 };
-struct  INCOMING_RF_INFOS_TYPE2 { // Used by  VISONIC /Focus/Atlantic/Meian Tech 
+struct  INCOMING_RF_INFOS_TYPE2 { // Used by  VISONIC /Focus/Atlantic/Meian Tech
     unsigned short subtype ;
     unsigned short idLsb ;
     unsigned short idMsb ;
@@ -174,7 +174,7 @@ struct  INCOMING_RF_INFOS_TYPE4 { // Used by  Scientific Oregon  protocol ( ther
     unsigned short idChannel ;
     unsigned short qualifier ;
     signed short   temp ; // UNIT:  1/10 of degree Celsius
-    unsigned short hygro ; // 0...100  UNIT: % 
+    unsigned short hygro ; // 0...100  UNIT: %
 };
 struct  INCOMING_RF_INFOS_TYPE5 { // Used by  Scientific Oregon  protocol  ( Atmospheric  pressure  sensors)
     unsigned short subtype ;
@@ -182,9 +182,9 @@ struct  INCOMING_RF_INFOS_TYPE5 { // Used by  Scientific Oregon  protocol  ( Atm
     unsigned short idChannel ;
     unsigned short qualifier ;
     signed short   temp ; // UNIT:  1/10 of degree Celsius
-    unsigned short hygro ; // 0...100  UNIT: % 
-    unsigned short pressure ; //  UNIT: hPa 
-}; 
+    unsigned short hygro ; // 0...100  UNIT: %
+    unsigned short pressure ; //  UNIT: hPa
+};
 
 struct  INCOMING_RF_INFOS_TYPE6 { // Used by  Scientific Oregon  protocol  (Wind sensors)
     unsigned short subtype ;
@@ -220,7 +220,7 @@ struct  INCOMING_RF_INFOS_TYPE9 { // Used by  OREGON  ( Rain sensors)
     unsigned short idChannel ;
     unsigned short qualifier ;
     unsigned short totalRainLsb ; // LSB: rain measured since the RESET of the device  (32 bits value). Unit : 0.1 mm
-    unsigned short totalRainMsb ; // MSB: rain measured since the RESET of the device   
+    unsigned short totalRainMsb ; // MSB: rain measured since the RESET of the device
     unsigned short rain ;     // Instantaneous measured rain. Unit : 0.01 mm/h
 };
 
@@ -230,7 +230,7 @@ struct  INCOMING_RF_INFOS_TYPE10 { // Used by Thermostats  X2D protocol
     unsigned short idMsb ;
     unsigned short qualifier ; // D0 : Tamper Flag, D1: Alarm Flag, D2: Low Batt Flag, D3: Supervisor Frame, D4: Test  D6:7 : X2D variant
     unsigned short function ;
-    unsigned short mode ; //     
+    unsigned short mode ; //
     unsigned short data[4] ;   // provision
 };
 struct  INCOMING_RF_INFOS_TYPE11 { // Used by Alarm/remote control devices  X2D protocol
@@ -304,8 +304,8 @@ struct REGULAR_INCOMING_RF_TO_BINARY_USB_FRAME_HEADER { // public binary API   R
     unsigned char protocol; // protocol under scope
     unsigned char infoType; // type of payload
 };
-    
-    
+
+
 struct REGULAR_INCOMING_RF_TO_BINARY_USB_FRAME { // public binary API
     struct REGULAR_INCOMING_RF_TO_BINARY_USB_FRAME_HEADER header ;
     union

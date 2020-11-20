@@ -319,7 +319,7 @@ void COpenWeatherMap::Do_Work()
 	{
 		sec_counter++;
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 		if (sec_counter % OpenWeatherMap_Poll_Interval == 0)
 		{
@@ -365,7 +365,7 @@ std::string COpenWeatherMap::GetHourFromUTCtimestamp(const uint8_t hournr, std::
 {
 	std::string sHour = "Unknown";
 
-	time_t t = (time_t) strtol(UTCtimestamp.c_str(),NULL,10);
+	time_t t = (time_t) strtol(UTCtimestamp.c_str(),nullptr ,10);
 	std::string sDate = ctime(&t);
 
 	std::vector<std::string> strarray;
@@ -397,7 +397,7 @@ std::string COpenWeatherMap::GetDayFromUTCtimestamp(const uint8_t daynr, std::st
 {
 	std::string sDay = "Unknown";
 
-	time_t t = (time_t) strtol(UTCtimestamp.c_str(),NULL,10);
+	time_t t = (time_t) strtol(UTCtimestamp.c_str(),nullptr ,10);
 	std::string sDate = ctime(&t);
 
 	std::vector<std::string> strarray;
@@ -408,7 +408,7 @@ std::string COpenWeatherMap::GetDayFromUTCtimestamp(const uint8_t daynr, std::st
 		Debug(DEBUG_NORM, "Unable to determine day for day %d from timestamp %s (got string %s)", daynr, UTCtimestamp.c_str(), sDate.c_str());
 		return sDay;
 	}
-	
+
 	switch (daynr) {
 		case 0:
 			sDay = "Today";
@@ -742,7 +742,7 @@ void COpenWeatherMap::GetMeterDetails()
 		{
 			wind_degrees = current["wind_deg"].asInt();
 
-			//we need to assume temp and chill temperatures are availabe to define subtype of wind device. 
+			//we need to assume temp and chill temperatures are availabe to define subtype of wind device.
 			//It is possible that sometimes in the API a temperature is missing, but it should not change a device type.
 			//Therefor set that temp to 0
 			float wind_temp = (temp != -999.9f ? temp : 0);

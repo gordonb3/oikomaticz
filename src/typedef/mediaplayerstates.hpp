@@ -38,7 +38,7 @@ const char *Description(const device::tmedia::status::value Status)
 		{ DISCONNECTED,	"Disconnected" },
 		{ SLEEPING,	"Sleeping" },
 		{ UNKNOWN,	"Unknown" },
-		{ 0, NULL, NULL }
+		{ 0, nullptr }
 	};
 	return findTableIDSingle1(Table, Status);
 }

@@ -38,7 +38,7 @@ typedef struct {
 	unsigned char SysVer;                   // program version system controller
 	unsigned char BarVer;                   // program version barometer
 	unsigned char UvVer;                    // program version UV sensor and ext. channels
-	unsigned char RccVer;                   // program version remote controlled clock and sunset 
+	unsigned char RccVer;                   // program version remote controlled clock and sunset
 	unsigned char WindVer;                  // program version wind- rain sensor
 	bool battery[5];						// battery in sensor 1 till 5
 	bool batteryUV;							// battery in UV sensor
@@ -62,7 +62,7 @@ public:
 	struct usb_device *find_te923();
 	struct usb_dev_handle *te923_handle();
 	void te923_close( usb_dev_handle *devh );
-	struct usb_dev_handle *m_device_handle; 
+	struct usb_dev_handle *m_device_handle;
 private:
 	int get_te923_lifedata( Te923DataSet_t *data );
 	int get_te923_devstate( Te923DevSet_t *dev );

@@ -232,7 +232,7 @@ bool CRtl433::ParseData(std::map<std::string, std::string>& data)
 		depth = (float)atof(data["depth_cm"].c_str());
 		haveDepth = true;
 	}
-	if (FindField(data, "wind_avg_km_h")) // wind speed average (converting into m/s note that internal storage if 10.0f*m/s) 
+	if (FindField(data, "wind_avg_km_h")) // wind speed average (converting into m/s note that internal storage if 10.0f*m/s)
 	{
 		wind_speed = ((float)atof(data["wind_avg_km_h"].c_str())) / 3.6f;
 		haveWind_Speed = true;
@@ -296,7 +296,7 @@ bool CRtl433::ParseData(std::map<std::string, std::string>& data)
 	}
 	if (FindField(data, "code"))
 	{
-		code = strtoul(data["code"].c_str(), NULL, 16);
+		code = strtoul(data["code"].c_str(), nullptr, 16);
 	}
 
 	std::string model = data["model"]; // new model format normalized from the 201 different devices presently supported by rtl_433
@@ -520,7 +520,7 @@ bool CRtl433::ParseData(std::map<std::string, std::string>& data)
 			bHandled = false;
 			break;
 		}
-		if (bHandled) SendSecurity1Sensor(strtoul(data["id"].c_str(), NULL, 16), x10_device, batterylevel, x10_status, model, snr);
+		if (bHandled) SendSecurity1Sensor(strtoul(data["id"].c_str(), nullptr, 16), x10_device, batterylevel, x10_status, model, snr);
 	} // End of X10-Security section
 
 	return bHandled; //not handled (Yet!)

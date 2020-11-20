@@ -60,7 +60,7 @@ private:
 	std::string m_GatewayMusicId;
 	std::string m_GatewayVolume;
 	std::mutex m_mutex;
-	
+
 	XiaomiGateway * GatewayByIp( std::string ip );
 	void AddGatewayToList();
 	void RemoveFromGatewayList();
@@ -70,7 +70,7 @@ private:
 	std::string DetermineChannel(int32_t unitcode);
 	std::string DetermineDevice(int32_t unitcode);
 	std::string DetermineCommand(uint8_t commandcode);
-	
+
 	class xiaomi_udp_server
 	{
 	public:

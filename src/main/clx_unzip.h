@@ -68,118 +68,118 @@ namespace clx {
 		typedef std::basic_string<CharT, Traits> string_type;
 		typedef basic_unzip_stream<CharT, Traits> stream_type;
 		typedef basic_unzip_iterator<CharT, Traits> iterator;
-		
+
 		basic_unzip() :
 			p_(), pass_() {}
-		
+
 		basic_unzip(const basic_unzip& cp) :
 			p_(cp.p_), pass_(cp.pass_) {}
-		
+
 		basic_unzip& operator=(const basic_unzip& cp) {
 			if (cp.p_) p_ = cp.p_;
 			return *this;
 		}
-		
+
 		explicit basic_unzip(const string_type& path) :
 			p_(), pass_() {
 			this->open(path);
 		}
-		
+
 		basic_unzip(const string_type& path, const string_type& password) :
 			p_(), pass_(password) {
 			this->open(path);
 		}
-		
+
 		explicit basic_unzip(const char_type* path) :
 			p_(), pass_() {
 			this->open(path);
 		}
-		
+
 		basic_unzip(const char_type* path, const char_type* password) :
 			p_(), pass_() {
 			this->open(path, password);
 		}
-		
+
 		virtual ~basic_unzip() throw() { this->close(); }
-		
+
 		bool open(const char_type* path) {
 			handler_type h = unzOpen(path);
-			if (h == NULL) return false;
+			if (h == nullptr) return false;
 			p_ = boost::shared_ptr<storage_impl>(new storage_impl(h));
 			return true;
 		}
-		
+
 		bool open(const char_type* path, const char_type* password) {
 			if (password) pass_ = password;
 			return this->open(path);
 		}
-		
+
 		bool open(const string_type& path) {
 			return this->open(path.c_str());
 		}
-		
+
 		bool open(const string_type& path, const string_type& password) {
 			pass_ = password;
 			return this->open(path);
 		}
-		
+
 		void close() { if (p_) p_->close(); }
-		
+
 		bool is_open() const { return (p_) ? p_->is_open() : false; }
-		
+
 		bool exist(const char_type* path) const {
 			return (p_ && unzLocateFile(p_->handler(), path, 0) == UNZ_OK);
 		}
-		
+
 		bool exist(const string_type& path) const {
 			return this->exist(path.c_str());
 		}
-		
+
 		iterator begin() {
 			if (!this->is_open() || unzGoToFirstFile(p_->handler()) != UNZ_OK) {
 				return iterator();
 			}
 			return iterator(*this);
 		}
-		
+
 		iterator end() { return iterator(); }
-		
+
 		iterator find(const char_type* path) {
 			if (!this->is_open() || !this->exist(path)) return iterator();
 			return iterator(*this);
 		}
-		
+
 		iterator find(const string_type& path) {
 			return this->find(path.c_str());
 		}
-		
+
 		handler_type handler() const { return (p_) ? p_->handler() : NULL; }
 		const string_type& password() const { return pass_; }
-		
+
 	private:
 		class storage_impl {
 		public:
 			explicit storage_impl(handler_type in) : in_(in) {}
 			~storage_impl() { this->close(); }
-			
+
 			void close() {
-				if (in_ != NULL) {
+				if (in_ != nullptr) {
 					unzClose(in_);
-					in_ = NULL;
+					in_ = nullptr;
 				}
 			}
-			
+
 			handler_type handler() { return in_; }
-			bool is_open() const { return (in_ != NULL); }
-			
+			bool is_open() const { return (in_ != nullptr); }
+
 		private:
 			handler_type in_;
 		};
-		
+
 		boost::shared_ptr<storage_impl> p_;
 		string_type pass_;
 	};
-	
+
 	typedef basic_unzip<char> unzip;
 }
 

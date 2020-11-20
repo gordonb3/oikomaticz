@@ -16,7 +16,7 @@ namespace http {
 	namespace server {
 
 uint16_t fastcgi_parser::request_id_ = 1;
-		
+
 //http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html
 struct _tFCGI_Header {
 	uint8_t version;
@@ -134,13 +134,13 @@ std::vector<char> ExecuteCommandAndReturnRaw(const std::string &szCommand)
 #else
 		fp = popen(szCommand.c_str(), "r");
 #endif
-		if (fp != NULL)
+		if (fp != nullptr)
 		{
 			for (;;) {
 				const int BufferSize = 1024;
 
 				const size_t oldSize = myData.size();
-				myData.resize(myData.size() + BufferSize);        
+				myData.resize(myData.size() + BufferSize);
 
 				const unsigned bytesRead = fread(&myData[oldSize], 1, BufferSize,fp);
 				myData.resize(oldSize + bytesRead);
@@ -223,10 +223,10 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 		const char *pContent_Type = request::get_req_header(&req, "Content-Type");
 		if (pContent_Type)
 		{
-			if (strstr(pContent_Type, "multipart") != NULL)
+			if (strstr(pContent_Type, "multipart") != nullptr)
 			{
 				const char *pBoundary = strstr(pContent_Type, "boundary=");
-				if (pBoundary != NULL)
+				if (pBoundary != nullptr)
 				{
 					std::string szBoundary = std::string("--") + (pBoundary + 9);
 					//Find boundary in content
@@ -288,7 +288,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	}
 
 	//
-	
+
 	_tFCGI_Header gfci;
 	gfci.version = 1;
 	gfci.type = 1;
@@ -341,7 +341,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	fullexecmd += " SERVER_ADDR='" + settings.listening_address + "'";
 	fullexecmd += " SERVER_PORT=" + settings.listening_port;
 	fullexecmd += " REMOTE_ADDR=" + req.host_address;
-	fullexecmd += " QUERY_STRING='" + szQueryString + "'"; 
+	fullexecmd += " QUERY_STRING='" + szQueryString + "'";
 
 	std::vector<header>::const_iterator ittHeader;
 	for (ittHeader = req.headers.begin(); ittHeader != req.headers.end(); ++ittHeader)
@@ -373,7 +373,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	while (!bDoneWithHeaders)
 	{
 		if (pret[0] == '\r') pret=pret.substr(1);	//Skip CR symbol if present
-		
+
 		size_t tpos = pret.find('\n');
 		if (tpos == std::string::npos)
 		{

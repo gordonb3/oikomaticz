@@ -17,12 +17,12 @@
 
 class CEvohomeWeb : public CEvohomeBase
 {
-public:
+      public:
 	CEvohomeWeb(const int ID, const std::string &Username, const std::string &Password, const unsigned int refreshrate, const int UseFlags, const unsigned int installation);
-	~CEvohomeWeb(void);
+	~CEvohomeWeb() override;
 	bool WriteToHardware(const char *pdata, const unsigned char length) override;
 
-private:
+      private:
 	// base functions
 	void Init();
 	bool StartHardware() override;
@@ -48,7 +48,7 @@ private:
 	int GetLastV2ResponseCode();
 
 
-private:
+      private:
 	std::shared_ptr<std::thread> m_thread;
 
 	// settings

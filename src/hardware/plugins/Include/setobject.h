@@ -10,8 +10,8 @@ extern "C" {
 
 /* There are three kinds of entries in the table:
 
-1. Unused:  key == NULL
-2. Active:  key != NULL and key != dummy
+1. Unused:  key == nullptr
+2. Active:  key != nullptr and key != dummy
 3. Dummy:   key == dummy
 
 The hash field of Unused slots have no meaning.

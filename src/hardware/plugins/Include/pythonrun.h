@@ -114,7 +114,7 @@ PyAPI_FUNC(PyObject *) PyRun_FileExFlags(
 #ifdef Py_LIMITED_API
 PyAPI_FUNC(PyObject *) Py_CompileString(const char *, const char *, int);
 #else
-#define Py_CompileString(str, p, s) Py_CompileStringExFlags(str, p, s, NULL, -1)
+#define Py_CompileString(str, p, s) Py_CompileStringExFlags(str, p, s, nullptr, -1)
 #define Py_CompileStringFlags(str, p, s, f) Py_CompileStringExFlags(str, p, s, f, -1)
 PyAPI_FUNC(PyObject *) Py_CompileStringExFlags(
     const char *str,
@@ -145,21 +145,21 @@ PyAPI_FUNC(void) PyErr_Display(PyObject *, PyObject *, PyObject *);
 
 #ifndef Py_LIMITED_API
 /* Use macros for a bunch of old variants */
-#define PyRun_String(str, s, g, l) PyRun_StringFlags(str, s, g, l, NULL)
-#define PyRun_AnyFile(fp, name) PyRun_AnyFileExFlags(fp, name, 0, NULL)
+#define PyRun_String(str, s, g, l) PyRun_StringFlags(str, s, g, l, nullptr)
+#define PyRun_AnyFile(fp, name) PyRun_AnyFileExFlags(fp, name, 0, nullptr)
 #define PyRun_AnyFileEx(fp, name, closeit) \
-    PyRun_AnyFileExFlags(fp, name, closeit, NULL)
+    PyRun_AnyFileExFlags(fp, name, closeit, nullptr)
 #define PyRun_AnyFileFlags(fp, name, flags) \
     PyRun_AnyFileExFlags(fp, name, 0, flags)
-#define PyRun_SimpleString(s) PyRun_SimpleStringFlags(s, NULL)
-#define PyRun_SimpleFile(f, p) PyRun_SimpleFileExFlags(f, p, 0, NULL)
-#define PyRun_SimpleFileEx(f, p, c) PyRun_SimpleFileExFlags(f, p, c, NULL)
-#define PyRun_InteractiveOne(f, p) PyRun_InteractiveOneFlags(f, p, NULL)
-#define PyRun_InteractiveLoop(f, p) PyRun_InteractiveLoopFlags(f, p, NULL)
+#define PyRun_SimpleString(s) PyRun_SimpleStringFlags(s, nullptr)
+#define PyRun_SimpleFile(f, p) PyRun_SimpleFileExFlags(f, p, 0, nullptr)
+#define PyRun_SimpleFileEx(f, p, c) PyRun_SimpleFileExFlags(f, p, c, nullptr)
+#define PyRun_InteractiveOne(f, p) PyRun_InteractiveOneFlags(f, p, nullptr)
+#define PyRun_InteractiveLoop(f, p) PyRun_InteractiveLoopFlags(f, p, nullptr)
 #define PyRun_File(fp, p, s, g, l) \
-    PyRun_FileExFlags(fp, p, s, g, l, 0, NULL)
+    PyRun_FileExFlags(fp, p, s, g, l, 0, nullptr)
 #define PyRun_FileEx(fp, p, s, g, l, c) \
-    PyRun_FileExFlags(fp, p, s, g, l, c, NULL)
+    PyRun_FileExFlags(fp, p, s, g, l, c, nullptr)
 #define PyRun_FileFlags(fp, p, s, g, l, flags) \
     PyRun_FileExFlags(fp, p, s, g, l, 0, flags)
 #endif

@@ -41,12 +41,12 @@ class CayenneLPP {
     public:
         CayenneLPP(uint8_t size);
         ~CayenneLPP();
-        
+
         void reset(void);
         uint8_t getSize(void);
         uint8_t* getBuffer(void);
         uint8_t copy(uint8_t* buffer);
-        
+
         uint8_t addDigitalInput(uint8_t channel, uint8_t value);
         uint8_t addDigitalOutput(uint8_t channel, uint8_t value);
 
@@ -61,13 +61,13 @@ class CayenneLPP {
         uint8_t addBarometricPressure(uint8_t channel, float hpa);
         uint8_t addGyrometer(uint8_t channel, float x, float y, float z);
         uint8_t addGPS(uint8_t channel, float latitude, float longitude, float meters);
-    
+
     private:
         uint8_t *buffer;
         uint8_t maxsize;
         uint8_t cursor;
-        
-        
+
+
 };
 
 

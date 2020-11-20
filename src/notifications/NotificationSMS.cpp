@@ -61,7 +61,7 @@ bool CNotificationSMS::SendMessageImplementation(
 	else {
 		thisTo = "\"" + thisTo + "\"";
 	}
-	
+
 	std::string sResult;
 	std::stringstream sJsonPostData;
 

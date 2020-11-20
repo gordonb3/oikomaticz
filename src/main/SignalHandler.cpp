@@ -16,7 +16,7 @@
 	#include <syslog.h>
 //	#include <errno.h>
 	#include <fcntl.h>
-	#include <string.h> 
+	#include <string.h>
 #if defined(__linux__)
 	#include <sys/prctl.h>
 	#include <sys/syscall.h>
@@ -55,12 +55,12 @@ static void printRegInfo(siginfo_t * info, ucontext_t * ucontext)
 /*
 static void printSingleThreadInfo(FILE* f, const char* pattern, bool& foundThread, bool& gdbSuccess)
 {
-	char * line = NULL;
+	char * line = nullptr;
 	size_t len = 0;
 	ssize_t read;
 	rewind(f);
 	while (!foundThread && (read = getline(&line, &len, f)) != -1) {
-		if (strstr(line, pattern) != NULL)
+		if (strstr(line, pattern) != nullptr)
 		{
 			foundThread = true;
 			if (line[strlen(line) - 1] == '\n') line[strlen(line) - 1] = '\0';
@@ -78,13 +78,13 @@ static void printSingleThreadInfo(FILE* f, const char* pattern, bool& foundThrea
 			_log.Log(LOG_ERROR, "gdb failed to get stacktrace:\n > %s", line);
 		}
 		free(line);
-		line = NULL;
+		line = nullptr;
 	}
 }
 */
 static void printSingleCallStack(FILE* f, const char* pattern, bool& foundThread, bool& gdbSuccess)
 {
-	char * line = NULL;
+	char * line = nullptr;
 	size_t len = 0;
 	ssize_t read;
 	rewind(f);
@@ -97,7 +97,7 @@ static void printSingleCallStack(FILE* f, const char* pattern, bool& foundThread
 		}
 		else
 		{
-			if (strstr(line, pattern) != NULL)
+			if (strstr(line, pattern) != nullptr)
 			{
 				foundThread = true;
 				if (line[strlen(line) - 1] == '\n') line[strlen(line) - 1] = '\0';
@@ -111,7 +111,7 @@ static void printSingleCallStack(FILE* f, const char* pattern, bool& foundThread
 			}
 		}
 		free(line);
-		line = NULL;
+		line = nullptr;
 	}
 }
 
@@ -151,7 +151,7 @@ static bool dumpstack_gdb(bool printAllThreads) {
 	sigaddset(&signal_set, SIGHUP);
 
 	// Block signals to child processes
-	sigprocmask(SIG_BLOCK, &signal_set, NULL);
+	sigprocmask(SIG_BLOCK, &signal_set, nullptr);
 
 	// Spawn helper process which will keep running when gdb is attached to main Oikomaticz process
 	pid_t intermediate_pid = fork();
@@ -200,7 +200,7 @@ static bool dumpstack_gdb(bool printAllThreads) {
 			if (fd == -1) _Exit(1);
 			if (dup2(fd, STDOUT_FILENO) == -1) _Exit(1);
 			if (dup2(fd, STDERR_FILENO) == -1) _Exit(1);
-			execlp("gdb", "gdb", "--batch", "-n", "-ex", "info threads", "-ex", "thread apply all bt", "-ex", "echo \nMain thread:\n", "-ex", "bt", "-ex", "detach", name_buf, pid_buf, NULL);
+			execlp("gdb", "gdb", "--batch", "-n", "-ex", "info threads", "-ex", "thread apply all bt", "-ex", "echo \nMain thread:\n", "-ex", "bt", "-ex", "detach", name_buf, pid_buf, nullptr);
 
 			// If gdb failed to start, signal back
 			close(fd);
@@ -252,13 +252,13 @@ static bool dumpstack_gdb(bool printAllThreads) {
 		}
 		_Exit(result); // Or some more informative status
 	} else {
-		char * line = NULL;
+		char * line = nullptr;
 		size_t len = 0;
 		ssize_t read;
 		int status;
 
 		// Unblock signals to main process
-		sigprocmask(SIG_UNBLOCK, &signal_set, NULL);
+		sigprocmask(SIG_UNBLOCK, &signal_set, nullptr);
 		pid_t res = 0;
 		res = waitpid(intermediate_pid, &status, 0);
 
@@ -284,7 +284,7 @@ static bool dumpstack_gdb(bool printAllThreads) {
 						if (line[strlen(line) - 1] == '\n') line[strlen(line) - 1] = '\0';
 						_log.Log(LOG_ERROR, "> %s", line);
 						free(line);
-						line = NULL;
+						line = nullptr;
 					}
 				}
 				fclose(f);
@@ -318,7 +318,7 @@ static void dumpstack_backtrace(void *info, void *ucontext) {
 	char** symbols = backtrace_symbols(addrs, count);
 
 	// skip first stack frame (points here)
-	for (int i = 0; i < count && symbols != NULL; ++i)
+	for (int i = 0; i < count && symbols != nullptr; ++i)
 	{
 		char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
 
@@ -395,8 +395,8 @@ void signal_handler(int sig_num
 )
 {
 #ifdef WIN32
-	void *info = NULL;
-	void *ucontext = NULL;
+	void *info = nullptr;
+	void *ucontext = nullptr;
 #endif
 	long tid = 0;
 	char thread_name[16] = {'-', '\0'};

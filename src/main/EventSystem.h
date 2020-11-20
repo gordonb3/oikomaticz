@@ -200,13 +200,13 @@ private:
 	void ProcessMinute();
 	void GetCurrentMeasurementStates();
 	std::string UpdateSingleState(
-		const uint64_t ulDevID, 
-		const std::string &devname, 
-		const int nValue, const std::string &sValue, 
-		const unsigned char devType, const unsigned char subType, 
-		const device::tswitch::type::value switchType, 
-		const std::string &lastUpdate, 
-		const unsigned char lastLevel, 
+		const uint64_t ulDevID,
+		const std::string &devname,
+		const int nValue, const std::string &sValue,
+		const unsigned char devType, const unsigned char subType,
+		const device::tswitch::type::value switchType,
+		const std::string &lastUpdate,
+		const unsigned char lastLevel,
 		const unsigned char batteryLevel,
 		const std::map<std::string, std::string> & options
 	);

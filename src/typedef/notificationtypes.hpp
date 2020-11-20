@@ -72,7 +72,7 @@ const char *Description(const int nType, const unsigned char field)
 		{ PLAYING,		"Play Stream",	"a" },
 		{ VALUE,		"Value",	"F" },
 		{ LASTUPDATE,		"Last Update",	"J" },
-		{ 0, NULL, NULL }
+		{ 0, nullptr, nullptr }
 	};
 	if (field == 0)
 		return findTableIDSingle1(Table, nType);
@@ -82,7 +82,7 @@ const char *Description(const int nType, const unsigned char field)
 
 const char *Label(const int nType)
 {
-	static const STR_TABLE_SINGLE	Table[] =
+	static const STR_TABLE_SINGLE Table[] =
 	{
 		{ TEMPERATURE,		"degrees" },
 		{ HUMIDITY,		"%" },
@@ -112,7 +112,7 @@ const char *Label(const int nType)
 		{ PLAYING,		"" },
 		{ VALUE,		"" },
 		{ LASTUPDATE,		"minutes" },
-		{ 0,NULL,NULL }
+		{ 0, nullptr }
 	};
 	return findTableIDSingle1(Table, nType);
 }

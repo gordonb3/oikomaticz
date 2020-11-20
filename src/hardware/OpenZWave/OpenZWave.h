@@ -24,12 +24,12 @@ namespace Json
 class COpenZWave : public ZWaveBase
 {
 public:
-	typedef struct  
+	typedef struct
 	{
 		std::list<OpenZWave::ValueID>	Values;
 		time_t							m_LastSeen;
 	}NodeCommandClass;
-	
+
 	typedef enum
 	{
 		NTSATE_UNKNOWN=0,

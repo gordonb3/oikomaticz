@@ -18,8 +18,8 @@
 #define STATUS_ADC_ETH			72u								//ADCs in 16 * 2B
 #define STATUS_ADC_ETH_END		STATUS_ADC_ETH + 32u			//84	//104
 #define STATUS_OUT_I2C			STATUS_ADC_ETH_END				//
-#define STATUS_DMX_DIMMERS2		STATUS_OUT_I2C + 5				//ERM ONLY 15 bytes/dimmers 
-#define STATUS_INPUTS_I2C		STATUS_OUT_I2C + 20u			//2 razy i2c razy 6 rej po 8	//max 96 
+#define STATUS_DMX_DIMMERS2		STATUS_OUT_I2C + 5				//ERM ONLY 15 bytes/dimmers
+#define STATUS_INPUTS_I2C		STATUS_OUT_I2C + 20u			//2 razy i2c razy 6 rej po 8	//max 96
 #define STATUS_DALI			STATUS_INPUTS_I2C + 2				//ERM ONLY 10 inptus+12 ALARMs+12 Warning+12monitoring
 #define STATUS_ALARM_I2C		STATUS_INPUTS_I2C + 12u			//CM only --|---
 #define STATUS_WARNING_I2C		STATUS_ALARM_I2C + 12u			//CM only --|---
@@ -48,8 +48,8 @@
 #define    RM_STATUS_INPUTEXT_B_ACTIVE   32 + STATUS_OFFSET    //em input extenders B status active inputs
 #define    RM_STATUS_INPUTEXT_C_ACTIVE   36 + STATUS_OFFSET    //em input extenders C status active inputs
 #define    RM_STATUS_INPUTEXT_A          40 + STATUS_OFFSET    //em --||-
-#define    RM_STATUS_INPUTEXT_B          50 + STATUS_OFFSET    //em 
-#define    RM_STATUS_INPUTEXT_C          60 + STATUS_OFFSET    //em 
+#define    RM_STATUS_INPUTEXT_B          50 + STATUS_OFFSET    //em
+#define    RM_STATUS_INPUTEXT_C          60 + STATUS_OFFSET    //em
 #define    HM_STATUS_PROGRAM             36 + STATUS_OFFSET    //hm current program
 #define    HM_STATUS_KOMINEK             46 + STATUS_OFFSET    //hm status bonfire
 #define    HM_STATUS_RECU                48 + STATUS_OFFSET    //hm status recu
@@ -67,10 +67,10 @@
 #define     OUT_PROGRAM_OFFSET_WIFI 14+WIFI_STATUS_OFFSET      //5b
 #define     MODE_OFFSET_WIFI        15+WIFI_STATUS_OFFSET   //3b
 #define     ADCPRG_OFFSET_WIFI      15+WIFI_STATUS_OFFSET   //:5;
-#define     ModeB_OFFSET_WIFI       16+WIFI_STATUS_OFFSET 
-#define     RSSI_WIFI               17+WIFI_STATUS_OFFSET 
-#define     SINCE_WIFI              18+WIFI_STATUS_OFFSET 
-#define     STATUS_ADC_LEVELS_WIFI  19+WIFI_STATUS_OFFSET 
+#define     ModeB_OFFSET_WIFI       16+WIFI_STATUS_OFFSET
+#define     RSSI_WIFI               17+WIFI_STATUS_OFFSET
+#define     SINCE_WIFI              18+WIFI_STATUS_OFFSET
+#define     STATUS_ADC_LEVELS_WIFI  19+WIFI_STATUS_OFFSET
 #define     next_wifi               19+(2*4)+WIFI_STATUS_OFFSET
 
 
@@ -174,7 +174,7 @@
 #define	EHGLOBALS_H
 
 #define TCP_CLIENT_THREAD 1
-//#define UDP_USE_THREAD 1              //Use UDP Thread 
+//#define UDP_USE_THREAD 1              //Use UDP Thread
 #define EHOUSE_TCP_CLIENT_THREAD 1      //Use Multi-Thread for TCP Clients
 #endif
 
@@ -186,7 +186,7 @@ extern "C" {
 	//#define D_HOST      "localhost"
 	//#define D_QUEUE     32
 	//#define D_SOCKETS   16
-	//#define D_INFO      25616 
+	//#define D_INFO      25616
 
 
 
@@ -224,11 +224,11 @@ extern "C" {
 #define EV_ETHERNET_EVENT               1       //Ethernet Event
 #define EV_RS485_EVENT                  2       //RS-485 eHouse1 Event
 #define EV_CAN_EVENT                    3       //CAN Event locally
-#define EV_VIA_CM                       4       //Via CommManager 
+#define EV_VIA_CM                       4       //Via CommManager
 #define EV_VIA_EHOUSE_PRO               5       //PIC32 Ehouse Pro Controller Server
 #define EV_RF_EVENT                     6
 #define EV_ZIGBEE_EVENT                 7
-///function prototypes 
+///function prototypes
 #ifdef UDP_USE_THREAD
 extern void *UDPListener(void *ptr);  //for eHouse4Ethernet devices and eHouse1 via CommManager
 #else
@@ -244,15 +244,15 @@ extern void UDPListener(void);  //for eHouse4Ethernet devices and eHouse1 via Co
 #define EV_ETHERNET_EVENT               1       //Ethernet Event
 #define EV_RS485_EVENT                  2       //RS-485 eHouse1 Event
 #define EV_CAN_EVENT                    3       //CAN Event locally via UART<-> can gateway
-#define EV_VIA_CM                       4       //Via CommManager 
+#define EV_VIA_CM                       4       //Via CommManager
 #define EV_VIA_EHOUSE_PRO               5       //PIC32 Ehouse Pro Controller Server
 #define EV_CAN_EVENT_PRO                6       //Can event via eHouse Pro controller
 
 
 #define    AURA_STAT_BATERY_LOW     0x1ul
-#define    AURA_STAT_RSI_LOW        0x2ul    
+#define    AURA_STAT_RSI_LOW        0x2ul
 #define    AURA_STAT_LOCK           0x4ul
-#define    AURA_STAT_RAIN           0x8ul    
+#define    AURA_STAT_RAIN           0x8ul
 #define    AURA_STAT_WINDOW_CLOSE   0x10ul
 #define    AURA_STAT_WINDOW_SMALL   0x20ul
 #define    AURA_STAT_WINDOW_OPEN    0x40ul
@@ -269,8 +269,8 @@ extern void UDPListener(void);  //for eHouse4Ethernet devices and eHouse1 via Co
 #define    AURA_STAT_ALARM_SOFT          0x10000ul
 #define    AURA_STAT_ALARM_FLOOD         0x20000ul
 #define    AURA_STAT_ALARM_HARD          0x40000ul
-#define    AURA_STAT_ALARM_SMOKE         0x80000ul    
-#define    AURA_STAT_ALARM_HUMIDITY_H    0x100000ul 
+#define    AURA_STAT_ALARM_SMOKE         0x80000ul
+#define    AURA_STAT_ALARM_HUMIDITY_H    0x100000ul
 #define    AURA_STAT_ALARM_HUMIDITY_L    0x200000ul
 #define    AURA_STAT_ALARM_TEMP_H        0x400000ul
 #define    AURA_STAT_ALARM_TEMP_L        0x800000ul
@@ -278,7 +278,7 @@ extern void UDPListener(void);  //for eHouse4Ethernet devices and eHouse1 via Co
 #define    AURA_STAT_ALARM_MEMORY        0x2000000ul
 #define    AURA_STAT_ALARM_FREEZE        0x4000000ul
 
-#define    AURA_STAT_ALARM_FIRE          0x8000000ul    
+#define    AURA_STAT_ALARM_FIRE          0x8000000ul
 #define    AURA_STAT_ALARM_CO            0x10000000ul
 #define    AURA_STAT_ALARM_CO2           0x20000000ul
 #define    AURA_STAT_ALARM_GAS           0x40000000ul

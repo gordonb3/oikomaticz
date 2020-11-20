@@ -155,7 +155,7 @@ void bt_openwebnet::Set_who_where_dimension()
 {
   //DIMENSION REQUEST : *#WHO*WHERE*DIMENSION##
 	std::string sup;
-   
+
   // WHO
   sup = m_frameOpen.substr(2);
   if (sup.at(0) != '*') {
@@ -196,8 +196,8 @@ void bt_openwebnet::Set_who_where_dimension()
     }
   }
 
-  Set_whereParameters(); 
-  
+  Set_whereParameters();
+
   return;
 }
 
@@ -223,8 +223,8 @@ void bt_openwebnet::Set_who_where()
 	  }
   }
 
-  Set_whereParameters(); 
-  
+  Set_whereParameters();
+
   return;
 }
 
@@ -699,19 +699,19 @@ void bt_openwebnet::CreateSetDateTimeMsgOpen(const std::string& tzString)
 {
 	//call CreateNullMsgOpen function
 	CreateNullMsgOpen();
-  	
+
 	char frame_dt[50];
-	time_t now = mytime(NULL);
+	time_t now = mytime(nullptr);
 	struct tm ltime;
 	localtime_r(&now, &ltime);
-	//strftime(frame_dt, sizeof(frame_dt)-1, "*#13**#22*%H*%M*%S*001*%u*%d*%m*%Y##", &ltime); //set date time 
-	
+	//strftime(frame_dt, sizeof(frame_dt)-1, "*#13**#22*%H*%M*%S*001*%u*%d*%m*%Y##", &ltime); //set date time
+
 	std::stringstream frame;
 	frame << "*#13**#22*";
-	strftime(frame_dt, sizeof(frame_dt) - 1, "%H*%M*%S*", &ltime); //set date time 
+	strftime(frame_dt, sizeof(frame_dt) - 1, "%H*%M*%S*", &ltime); //set date time
 	frame << frame_dt;
 	frame << tzString;
-	strftime(frame_dt, sizeof(frame_dt) - 1, "*%u*%d*%m*%Y##", &ltime); //set date time 
+	strftime(frame_dt, sizeof(frame_dt) - 1, "*%u*%d*%m*%Y##", &ltime); //set date time
 	frame << frame_dt;
 	m_frameOpen = DeleteControlCharacters(frame.str());
 	m_lengthFrameOpen = m_frameOpen.length();
@@ -981,7 +981,7 @@ std::string bt_openwebnet::Extract_value(unsigned int i) const
 
 std::vector<std::string>  bt_openwebnet::Extract_addresses() const
 {
-	return m_addresses; 
+	return m_addresses;
 }
 
 std::vector<std::string> bt_openwebnet::Extract_whatParameters() const
@@ -1332,7 +1332,7 @@ std::string bt_openwebnet::getWhatDescription(const std::string& who, const std:
 	}
 	else if (who == "4") {
 		// "Temperature control";
-		
+
 		if (what == "0") {
 			return "conditioning Mode";
 		}
@@ -1945,20 +1945,20 @@ std::string bt_openwebnet::getWhatDescription(const std::string& who, const std:
 	else if (who == "25") {
 		// "Dry contact";
 		std::stringstream sstr;
-		
+
 		if (what == "21") {
 			sstr << "Short pressure";
 		}
 		else if (what == "22") {
 			sstr << "Start of extended pressure";
-			
+
 		}else if (what == "23") {
 			sstr << "Extended pressure";
-			
+
 		}else if (what == "24") {
 			sstr << "End Extended pressure";
 		}
-	
+
 		if (what == "31") {
 			sstr << "contact ON or IR detection";
 		}
@@ -2079,17 +2079,17 @@ std::string bt_openwebnet::getWhereDescription(const std::string& who, const std
 		//3#<where actuators> with actuators = Z#N belonging to [0 - 99]#[1 - 9] : Split Control actuator Z/N
 	}
 	else if (who == "5") {
-        
+
         if (atoi(what.c_str()) == 11 ){
             return "zone " + whereParameters[0];
         }
         else if (atoi(what.c_str()) >= 0 && atoi(what.c_str()) <= 10  ) {
             return "";
-            
+
         }else if (atoi(what.c_str()) == 18 ) {
             return "zone " + whereParameters[0];
         }
-        
+
 		// "Burglar alarm" : TODO
 		//1 : CONTROL PANEL
 		//#0 ... #8 : ZONE xx CENTRAL
@@ -2104,7 +2104,7 @@ std::string bt_openwebnet::getWhereDescription(const std::string& who, const std
     }
 	else if (who == "7") {
 		// "Video door entry system" : TODO
-		//4000			Camera 00.. 
+		//4000			Camera 00..
 		//4099			Camera 99
 	}
 	else if (who == "9") {
@@ -2148,11 +2148,11 @@ std::string bt_openwebnet::getWhereDescription(const std::string& who, const std
 	}
 	else if (who == "22") {
 		// "Sound Diffusion" : TODO
-		//2#sourceID : Source 
+		//2#sourceID : Source
 		//3#area#point : Speaker area/point
 		//4#area : Speaker Area
 		//5#sender_address : general
-		//6 : All Source 
+		//6 : All Source
 	}
 	else if (who == "24") {
 		// "Lighting management" : TODO
@@ -2180,12 +2180,12 @@ std::string bt_openwebnet::getWhereDescription(const std::string& who, const std
 	}
 	else if (who == "1004") {
 		// "Thermoregulation diagnostic" : TODO
-		//1 Zone 1 master probe 
-		//2 Zone 2 master probe ... 
+		//1 Zone 1 master probe
+		//2 Zone 2 master probe ...
 		//99 Zone 99 master probe
-		//#0 Central unit 
-		//#1 Zone 1 via central unit 
-		//#2 Zone 2 via central unit ... 
+		//#0 Central unit
+		//#1 Zone 1 via central unit
+		//#2 Zone 2 via central unit ...
 		//#99 Zone 99 via central unit
 	}
 
@@ -2197,7 +2197,7 @@ std::string bt_openwebnet::getWhereDescription(const std::string& who, const std
 				return "Group " + whereParameters[0];
 			}
 			return "General";
-		}		
+		}
 
 		std::string room;
 		std::string pointOfLight;
@@ -2210,7 +2210,7 @@ std::string bt_openwebnet::getWhereDescription(const std::string& who, const std
 				room = "area " + where;
 			pointOfLight = "-";
 		}
-		else if (wlen == 2) 
+		else if (wlen == 2)
 		{
 			if (where == "00")
 			{
@@ -2229,7 +2229,7 @@ std::string bt_openwebnet::getWhereDescription(const std::string& who, const std
 		{
 			if (where == "100")
 			{
-				//A=10 
+				//A=10
 				room = "area 10";
 				pointOfLight = "-";
 			}
@@ -2332,7 +2332,7 @@ std::string bt_openwebnet::getDimensionsDescription(const std::string& who, cons
 		//	 8 = ON Vel 3
 		//	 9 = ON Fan Coil
 		//22 Split Control : MOD*SP*VEL*SWING
-		//30 End date Holiday 
+		//30 End date Holiday
 		//	parameter = Day*Month*Year
 		//	Day = [01 - 31]
 		//	Month = [01 - 12]

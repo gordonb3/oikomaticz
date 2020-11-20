@@ -14,14 +14,13 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
-#include <boost/bind.hpp>
 
 #include <ctime>
 
 //
 //Class P1MeterSerial
 //
-P1MeterSerial::P1MeterSerial(const int ID, const std::string& devname, const unsigned int baud_rate, const bool disable_crc, const unsigned int ratelimit, const unsigned int gasmeterchannel, const std::string& DecryptionKey):
+P1MeterSerial::P1MeterSerial(const int ID, const std::string& devname, const unsigned int baud_rate, const bool disable_crc, const int ratelimit, const int gasmeterchannel, const std::string& DecryptionKey):
 m_szSerialPort(devname)
 {
 	m_HwdID=ID;
@@ -39,11 +38,6 @@ P1MeterSerial::P1MeterSerial(const std::string& devname,
         :AsyncSerial(devname,baud_rate,opt_parity,opt_csize,opt_flow,opt_stop),
 		m_iBaudRate(baud_rate)
 {
-}
-
-P1MeterSerial::~P1MeterSerial()
-{
-
 }
 
 #ifdef _DEBUG
@@ -114,7 +108,7 @@ bool P1MeterSerial::StartHardware()
 	m_thread = std::make_shared<std::thread>(&P1MeterSerial::Do_Work, this);
 	SetThreadNameInt(m_thread->native_handle());
 
-	setReadCallback(boost::bind(&P1MeterSerial::readCallback, this, _1, _2));
+	setReadCallback([this](const char *d, size_t l) { readCallback(d, l); });
 	sOnConnected(this);
 
 #ifdef DEBUG_P1_R
@@ -163,7 +157,7 @@ void P1MeterSerial::Do_Work()
 
 			sec_counter++;
 			if (sec_counter % 12 == 0) {
-				m_LastHeartbeat=mytime(NULL);
+				m_LastHeartbeat = mytime(nullptr);
 			}
 		}
 	}

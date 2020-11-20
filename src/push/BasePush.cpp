@@ -364,7 +364,7 @@ const char *RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 		{ pTypeGeneralSwitch, sSwitchTypeNice, "Status" },
 		{ pTypeGeneralSwitch, sSwitchTypeForest, "Status" },
 
-		{ 0,0,NULL }
+		{ 0, 0, nullptr }
 	};
 	return findTableID1ID2(Table, dType, sType);
 }
@@ -494,7 +494,7 @@ std::string CBasePush::ProcessSendValue(const std::string &rawsendValue, const i
 		std::string vType = DropdownOptionsValue(m_DeviceRowIdx, delpos);
 		unsigned char tempsign = m_sql.m_tempsign[0];
 		device::tmeter::type::value metertype = (device::tmeter::type::value)metertypein;
-		
+
 		if ((vType == "Temperature") || (vType == "Temperature 1") || (vType == "Temperature 2") || (vType == "Set point"))
 		{
 			sprintf(szData, "%g", ConvertTemperature(std::stod(rawsendValue), tempsign));

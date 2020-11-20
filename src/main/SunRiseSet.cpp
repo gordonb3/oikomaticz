@@ -93,7 +93,7 @@
 		__sunriset__( year, month, day, lon, lat, -18.0, 0, start, end )
 
 double get_utc_offset() {
-	time_t gmt, rawtime = time(NULL);
+	time_t gmt, rawtime = time(nullptr);
 	struct tm* ptm;
 
 #if !defined(WIN32)
@@ -142,7 +142,7 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
 	result.year = year;
 	result.month = month;
 	result.day = day;
-	
+
 	double timezone = get_utc_offset();
 	// Assuming we now got the diff in hours and minutes here. Do we?
 

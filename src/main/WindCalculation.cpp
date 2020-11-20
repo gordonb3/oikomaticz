@@ -22,7 +22,7 @@ void _tWindCalculator::Init()
 {
 	//clear buffer
 	memset(&m_minute_counter,0,sizeof(m_minute_counter));
-	m_FirstMeasureTime=mytime(NULL);
+	m_FirstMeasureTime = mytime(nullptr);
 	m_history_fifo.clear();
 	m_bHaveLastDirection=false;
 	m_last_direction = 0;
@@ -53,7 +53,7 @@ double _tWindCalculator::AddValueAndReturnAvarage(const double degree)
 		dirresult+=360;
 	return dirresult;
 /*
-	time_t atime=mytime(NULL);
+	time_t atime = mytime(nullptr);
 	long tot_minutes=(long)((atime-m_FirstMeasureTime)/60);
 	if (tot_minutes<0)
 	{

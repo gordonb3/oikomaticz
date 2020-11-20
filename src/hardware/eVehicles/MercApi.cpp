@@ -96,7 +96,7 @@ CMercApi::~CMercApi()
 bool CMercApi::Login()
 {
 	bool bSuccess = false;
-	std::string szLastUpdate = TimeToString(NULL, TF_DateTime);
+	std::string szLastUpdate = TimeToString(nullptr, TF_DateTime);
 
 	if (m_refreshtoken == "" || m_refreshtoken == MERC_REFRESHTOKEN_CLEARED)
 	{
@@ -129,13 +129,13 @@ bool CMercApi::Login()
 bool CMercApi::RefreshLogin()
 {
 	bool bSuccess = false;
-	std::string szLastUpdate = TimeToString(NULL, TF_DateTime);
+	std::string szLastUpdate = TimeToString(nullptr, TF_DateTime);
 
 	_log.Debug(DEBUG_NORM, "MercApi: Refreshing login credentials.");
 	m_authenticating = true;
 
 	if (GetAuthToken("", "", true))
-	{	
+	{
 		_log.Log(LOG_NORM, "MercApi: Login credentials Refresh successful.");
 		bSuccess = true;
 	}
@@ -732,7 +732,7 @@ bool CMercApi::GetAuthToken(const std::string username, const std::string passwo
 		return false;
 	}
 
-	if(!_jsRoot["error"].empty()) 
+	if(!_jsRoot["error"].empty())
 	{
 		_log.Log(LOG_ERROR, "MercApi: Received error response (%s).", _jsRoot["error"].asString().c_str());
 		return false;
@@ -780,11 +780,11 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 
 		// If the supplied postdata validates as json, add an appropriate content type header
 		if (sPostData.size() > 0)
-			if (ParseJSon(sPostData, *(new Json::Value))) 
+			if (ParseJSon(sPostData, *(new Json::Value)))
 				_vExtraHeaders.push_back("Content-Type: application/json");
 
 		// Prepare the authentication headers if requested.
-		if (bSendAuthHeaders) 
+		if (bSendAuthHeaders)
 			_vExtraHeaders.push_back("Authorization: Bearer " + m_accesstoken);
 
 		// Increase default timeout
@@ -833,7 +833,7 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 		_iHttpCode = (!_vResponseHeaders[0].empty() ? (uint16_t) std::stoi(_vResponseHeaders[0].substr(9,3).c_str()) : 0);
 
 		// Debug response
-		for (unsigned int i = 0; i < _vResponseHeaders.size(); i++) 
+		for (unsigned int i = 0; i < _vResponseHeaders.size(); i++)
 			_ssResponseHeaderString << _vResponseHeaders[i];
 		_log.Debug(DEBUG_RECEIVED, "MercApi: Performed request to Api: (%d)\n%s\nResponse headers: %s", _iHttpCode, sResponse.c_str(), _ssResponseHeaderString.str().c_str());
 
@@ -847,7 +847,7 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 			break;
 		case 400:
 		case 401:
-			if(!m_authenticating) 
+			if(!m_authenticating)
 			{
 				_log.Log(LOG_STATUS, "Received 400/401.. Let's try to (re)authorize again!");
 				RefreshLogin();
@@ -855,7 +855,7 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 			else
 			{
 				_log.Log(LOG_STATUS, "Received 400/401.. During authorisation proces. Aborting!");
-			}			
+			}
 			return false;
 			break;
 		case 429:

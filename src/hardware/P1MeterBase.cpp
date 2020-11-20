@@ -19,7 +19,7 @@
 
 #define OBIS_MAX_VALUE_LENGTH 20	// the maximum number of characters that a value can have
 
-P1MeterBase::P1MeterBase(void)
+P1MeterBase::P1MeterBase()
 {
 	m_bDisableCRC = true;
 	m_ratelimit = 0;
@@ -27,7 +27,7 @@ P1MeterBase::P1MeterBase(void)
 }
 
 
-P1MeterBase::~P1MeterBase(void)
+P1MeterBase::~P1MeterBase()
 {
 }
 
@@ -218,7 +218,7 @@ bool P1MeterBase::MatchLine()
 
 			if (strncmp("24.2.",(const char*)&m_lbuffer + 4,5) == 0)
 			{
-				if ((m_lbuffer[2] & 0xFD) != '1') 
+				if ((m_lbuffer[2] & 0xFD) != '1')
 					return true;
 				matchtype = device::tmeter::COSEM::OBIS::gasUsageDSMR4;
 			}
@@ -504,7 +504,7 @@ bool P1MeterBase::MatchLine()
 			m_phasedata.instpwruse[0] = 1;
 			float temp_power = static_cast<float>(strtod(value, &validate)*1000.0f);
 			if (temp_power < 10000)
-				m_phasedata.instpwruse[phase] = temp_power; 
+				m_phasedata.instpwruse[phase] = temp_power;
 		}
 		else
 		{
@@ -628,7 +628,7 @@ bool P1MeterBase::CheckCRC()
 	char crc_str[5];
 	strncpy(crc_str, (const char*)&m_lbuffer + 1, 4);
 	crc_str[4] = 0;
-	uint16_t m_crc16 = (uint16_t)strtoul(crc_str, NULL, 16);
+	uint16_t m_crc16 = (uint16_t)strtoul(crc_str, nullptr, 16);
 
 	// calculate CRC
 	const unsigned char* c_buffer = m_buffer;
@@ -678,7 +678,7 @@ void P1MeterBase::ParseP1Data(const unsigned char *pData, const int Len, const b
 	// re enable reading pData when a new datagram starts, empty buffers
 	if (!m_isencrypteddata && ((pData[ii] == 0x2f) || (pData[ii] == 0xdb)))
 	{
-		m_receivetime = mytime(NULL);
+		m_receivetime = mytime(nullptr);
 		if (difftime(m_receivetime, m_lastUpdateTime) < m_ratelimit)
 			return; // ignore this datagram
 
@@ -804,7 +804,10 @@ void P1MeterBase::ParseP1EncryptedData(const unsigned char *pData, const int Len
 		{
 			// if system title size is not 8 then discard this telegram
 			if (pData[ii] != 0x08)
+			{
 				m_linecount = 0;
+				m_isencrypteddata = false;
+			}
 			continue;
 		}
 		if (m_p1gcmdata.pos < 11)
@@ -817,7 +820,10 @@ void P1MeterBase::ParseP1EncryptedData(const unsigned char *pData, const int Len
 		{
 			// if separator value is not 0x82 then discard this telegram
 			if (pData[ii] != 0x82)
+			{
 				m_linecount = 0;
+				m_isencrypteddata = false;
+			}
 			continue;
 		}
 		if (m_p1gcmdata.pos == 12)
@@ -836,7 +842,10 @@ void P1MeterBase::ParseP1EncryptedData(const unsigned char *pData, const int Len
 		{
 			// if separator value is not 0x30 then discard this telegram
 			if (pData[ii] != 0x30)
+			{
 				m_linecount = 0;
+				m_isencrypteddata = false;
+			}
 			continue;
 		}
 		if (m_p1gcmdata.pos < 18)
@@ -873,13 +882,13 @@ void P1MeterBase::ParseP1EncryptedData(const unsigned char *pData, const int Len
 			EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 			if (ctx == nullptr)
 					return;
-			EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), NULL, NULL, NULL);
-			EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, m_p1gcmdata.iv.size(), NULL);
+			EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
+			EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, m_p1gcmdata.iv.size(), nullptr);
 
-			EVP_DecryptInit_ex(ctx, NULL, NULL, (const unsigned uint8_t*)m_decryptkey.c_str(), (const unsigned uint8_t*)m_p1gcmdata.iv.c_str());
+			EVP_DecryptInit_ex(ctx, nullptr, nullptr, (const unsigned uint8_t*)m_decryptkey.c_str(), (const unsigned uint8_t*)m_p1gcmdata.iv.c_str());
 
 			uint8_t AddAuthData[] = {0x30, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
-			EVP_DecryptUpdate(ctx, NULL, &decryptedsize, (const unsigned uint8_t*) AddAuthData, 17);
+			EVP_DecryptUpdate(ctx, nullptr, &decryptedsize, (const unsigned uint8_t*) AddAuthData, 17);
 
 			EVP_DecryptUpdate(ctx, (uint8_t*)decryptedData, &decryptedsize, (uint8_t*)m_p1gcmdata.payload.c_str(), m_p1gcmdata.payload.size());
 			EVP_CIPHER_CTX_free(ctx);
@@ -1029,7 +1038,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if ((pBaseHardware->HwdType != hardware::type::P1SmartMeter) && (pBaseHardware->HwdType != hardware::type::P1SmartMeterLAN))
 				return;

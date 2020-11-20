@@ -22,7 +22,7 @@ ASyncTCP::ASyncTCP(const bool secure)
 {
 #ifdef WWW_ENABLE_SSL
 	mContext.set_verify_mode(boost::asio::ssl::verify_none);
-	if (mSecure) 
+	if (mSecure)
 	{
 		mSslSocket.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(mIos, mContext));
 	}
@@ -118,7 +118,7 @@ void ASyncTCP::cb_connect_done(const boost::system::error_code& error, boost::as
 	if (STATUS_OK(error))
 	{
 #ifdef WWW_ENABLE_SSL
-		if (mSecure) 
+		if (mSecure)
 		{
 			timeout_start_timer();
 			mSslSocket->async_handshake(boost::asio::ssl::stream_base::client,
@@ -131,9 +131,9 @@ void ASyncTCP::cb_connect_done(const boost::system::error_code& error, boost::as
 			process_connection();
 		}
 	}
-	else 
+	else
 	{
-		if (endpoint_iterator != boost::asio::ip::tcp::resolver::iterator()) 
+		if (endpoint_iterator != boost::asio::ip::tcp::resolver::iterator())
 		{
 			// The connection failed. Try the next endpoint in the list.
 			connect_start(endpoint_iterator);
@@ -318,7 +318,7 @@ void ASyncTCP::do_write_start()
 
 	timeout_start_timer();
 #ifdef WWW_ENABLE_SSL
-	if (mSecure) 
+	if (mSecure)
 	{
 		boost::asio::async_write(*mSslSocket,
 			boost::asio::buffer(mWriteQ.front()),

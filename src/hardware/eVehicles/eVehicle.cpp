@@ -466,7 +466,7 @@ void CeVehicle::Do_Work()
 			;
 		}
 	}
-	
+
 	Log(LOG_STATUS, "Worker stopped...");
 }
 

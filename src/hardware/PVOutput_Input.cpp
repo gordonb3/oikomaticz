@@ -64,7 +64,7 @@ void CPVOutputInput::Do_Work()
 	_log.Log(LOG_STATUS, "PVOutput (Input): Worker started...");
 	while (!IsStopRequested(1000))
 	{
-		time_t atime = mytime(NULL);
+		time_t atime = mytime(nullptr);
 		m_LastHeartbeat = atime;
 		struct tm ltime;
 		localtime_r(&atime, &ltime);
@@ -207,7 +207,7 @@ void CPVOutputInput::GetMeterDetails()
 			{
 				kWhCounterConsumed = atof(splitresult[11].c_str());
 			}
-			
+
 			if (kWhCounterConsumed != 0)
 			{
 				SendKwhMeter(0, 2, 255, Consumption, kWhCounterConsumed / 1000.0, "SolarConsumed");

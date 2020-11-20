@@ -61,7 +61,7 @@ typedef enum {
 // Xiaomi Cube
 #define MODEL_SELECTOR_CUBE_V1 "cube"
 #define NAME_SELECTOR_CUBE_V1 "Xiaomi Cube"
-#define MODEL_SELECTOR_CUBE_AQARA "sensor_cube.aqgl01" 
+#define MODEL_SELECTOR_CUBE_AQARA "sensor_cube.aqgl01"
 #define NAME_SELECTOR_CUBE_AQARA "Aqara Cube"
 
 /****************************************************************************
@@ -110,7 +110,7 @@ typedef enum {
  ****************************************************************************/
 
 // Xiaomi Smart Plug (plug.v1) | ZNCZ02LM
-#define MODEL_ACT_ONOFF_PLUG "plug" 
+#define MODEL_ACT_ONOFF_PLUG "plug"
 #define NAME_ACT_ONOFF_PLUG "Xiaomi Smart Plug"
 
 // Xiaomi Smart Wall Plug
@@ -137,8 +137,8 @@ typedef enum {
 
  // Xiaomi Gateway
 #define MODEL_GATEWAY_1 "gateway"
-#define MODEL_GATEWAY_2 "gateway.v3" // Mi Control Hub Gateway 
-#define MODEL_GATEWAY_3 "acpartner.v3" 
+#define MODEL_GATEWAY_2 "gateway.v3" // Mi Control Hub Gateway
+#define MODEL_GATEWAY_3 "acpartner.v3"
 #define NAME_GATEWAY "Xiaomi RGB Gateway"
 #define NAME_GATEWAY_LUX "Xiaomi Gateway Lux"
 #define NAME_GATEWAY_SOUND_MP3 "Xiaomi Gateway MP3"

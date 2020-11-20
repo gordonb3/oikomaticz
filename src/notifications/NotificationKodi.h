@@ -21,7 +21,7 @@ private:
 	std::string _IPAddress;
 	int			_Port;
 	int			_TTL;
-		
+
 	std::string	 GetCustomIcon(std::string &szCustom);
 
 };

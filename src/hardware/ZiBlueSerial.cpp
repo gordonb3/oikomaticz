@@ -61,14 +61,14 @@ void CZiBlueSerial::Do_Work()
 			sec_counter++;
 
 			if (sec_counter % 12 == 0) {
-				m_LastHeartbeat = mytime(NULL);
+				m_LastHeartbeat = mytime(nullptr);
 			}
 			if (isOpen())
 			{
 /*
 				if (sec_counter % 50 == 0)
 				{
-					time_t atime = mytime(NULL);
+					time_t atime = mytime(nullptr);
 					//Send ping (keep alive)
 					//_log.Log(LOG_STATUS, "ZiBlue: t1=%d t3=%d", atime, m_LastReceivedTime);
 					if (atime - m_LastReceivedTime > 50) {
@@ -136,7 +136,7 @@ bool CZiBlueSerial::OpenSerialDevice()
 	}
 	m_bIsStarted=true;
 	m_rfbufferpos = 0;
-	m_LastReceivedTime = mytime(NULL);
+	m_LastReceivedTime = mytime(nullptr);
 
 	setReadCallback(boost::bind(&CZiBlueSerial::readCallback, this, _1, _2));
 

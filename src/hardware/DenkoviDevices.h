@@ -50,7 +50,7 @@ private:
 	unsigned short m_usIPPort;
 	std::string m_Password;
 	int m_pollInterval;
-	int m_iModel; 
-	std::shared_ptr<std::thread> m_thread;  
+	int m_iModel;
+	std::shared_ptr<std::thread> m_thread;
 
 };

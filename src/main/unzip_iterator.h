@@ -56,26 +56,26 @@ namespace clx {
 		typedef std::shared_ptr<stream_type> stream_ptr;
 		typedef unzFile handler_type;
 		typedef std::basic_string<CharT, Traits> string_type;
-		
+
 		basic_unzip_iterator() :
-			cur_(), handler_(NULL), pass_() {}
-		
+			cur_(), handler_(nullptr), pass_() {}
+
 		basic_unzip_iterator(const basic_unzip_iterator& cp) :
 			cur_(cp.cur_), handler_(cp.handler_), pass_(cp.pass_) {}
-		
+
 		basic_unzip_iterator& operator=(const basic_unzip_iterator& cp) {
 			handler_ = cp.handler_;
 			cur_ = cp.cur_;
 			pass_ = cp.pass_;
 			return *this;
 		}
-		
+
 		template <class Unzip>
 		basic_unzip_iterator(const Unzip& cp) :
 			cur_(), handler_(cp.handler()), pass_(cp.password()) {
 			this->create();
 		}
-		
+
 		stream_type& operator*() { return *cur_; }
 		stream_ptr& operator->() { return cur_; }
 
@@ -87,17 +87,17 @@ namespace clx {
 			if (err != UNZ_OK)
 			{
 				//printf("error %d with zipfile in unzOpenCurrentFilePassword\n",err);
-				return NULL;
+				return nullptr;
 			}
 			unz_file_info64 info;
-			err = unzGetCurrentFileInfo64((unzFile)handler_, &info, NULL, 0, NULL, 0, NULL, 0);
+			err = unzGetCurrentFileInfo64((unzFile)handler_, &info, nullptr, 0, nullptr, 0, nullptr, 0);
 			if (err != UNZ_OK)
-				return NULL;
+				return nullptr;
 
 			file_size = (uLong) info.uncompressed_size;
 			unsigned char *buf = (unsigned char*)malloc(file_size + ExtraAllocBytes);
-			if (buf == NULL)
-				return NULL;
+			if (buf == nullptr)
+				return nullptr;
 			//Extract into our buffer
 			int offset = 0;
 			int tot_read = 0;
@@ -117,10 +117,10 @@ namespace clx {
 				free(buf);
 				file_size = 0;
 			}
-			
+
 			return buf;
 		}
-		
+
 		basic_unzip_iterator& operator++() {
 			if (cur_ && !cur_->path().empty()) {
 				if (unzLocateFile(handler_, cur_->path().c_str(), 0) != UNZ_OK) {
@@ -128,33 +128,33 @@ namespace clx {
 					return *this;
 				}
 			}
-			
+
 			if (unzGoToNextFile(handler_) == UNZ_OK) return this->create();
 			else cur_ = stream_ptr();
 			return *this;
 		}
-		
+
 		basic_unzip_iterator operator++(int) {
 			return ++(*this);
 		}
-		
+
 		friend bool operator==(const basic_unzip_iterator& lhs, const basic_unzip_iterator& rhs) {
 			return lhs.cur_ == rhs.cur_;
 		}
-		
+
 		friend bool operator!=(const basic_unzip_iterator& lhs, const basic_unzip_iterator& rhs) {
 			return !(lhs == rhs);
 		}
-		
+
 	private:
 		stream_ptr cur_;
 		handler_type handler_;
 		string_type pass_;
-		
+
 		basic_unzip_iterator& create() {
 			if (handler_) {
 				if (cur_) cur_ = stream_ptr();
-				
+
 				int status = UNZ_OK;
 				if (!pass_.empty()) status = unzOpenCurrentFilePassword(handler_, pass_.c_str());
 				else status = unzOpenCurrentFile(handler_);

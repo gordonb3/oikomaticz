@@ -40,11 +40,11 @@ void CurrentCostMeterBase::Init()
 //    <ch3>
 //       <watts>00000</watts>
 //    </ch3>
-//    <type>2</type> 
+//    <type>2</type>
 //    <imp>0000089466</imp>	    Meter Impulse Count
 //    <ipu>1000</ipu>		    Meter Impulses Per Unit : nbr impulse to have 1kWH
 // </msg>                           end of message
-// there are also periodic messages with history 
+// there are also periodic messages with history
 // these all have the <hist> tag in them.
 void CurrentCostMeterBase::ExtractReadings()
 {
@@ -53,25 +53,25 @@ void CurrentCostMeterBase::ExtractReadings()
 	{
 		return;
 	}
-	
+
 	// for now we are not interested in history data
 	if(m_buffer.find("<hist>") != std::string::npos)
 	{
 		return;
 	}
-	
+
 	float temp;
 	float sensor(0.0);
 	float type;
 	float reading;
-	
+
 	// if we have the sensor tag then read it
 	// earlier versions don't have this
 	if(m_buffer.find("<sensor>") != std::string::npos)
 	{
 		if(!ExtractNumberBetweenStrings("<sensor>", "</sensor>", &sensor) || sensor > 9.0)
 		{
-			// no sensor end tag found or too high a sensor number 
+			// no sensor end tag found or too high a sensor number
 			// indicating data must be corrupt
 			return;
 		}
@@ -128,11 +128,11 @@ void CurrentCostMeterBase::ExtractReadings()
 		float ipu(1000.0);
 		if (ExtractNumberBetweenStrings("<imp>", "</imp>", &reading))
 		{
-			consumption = reading;	
+			consumption = reading;
 		}
 		if (ExtractNumberBetweenStrings("<ipu>", "</ipu>", &reading) && (reading != 0.0))
 		{
-			ipu = reading;	
+			ipu = reading;
 		}
 		if (consumption != 0.0)
 		{
@@ -150,14 +150,14 @@ bool CurrentCostMeterBase::ExtractNumberBetweenStrings(const char *startString, 
 	size_t startOfStart = m_buffer.find(startString);
 	size_t startOfEnd = m_buffer.find(endString);
 	size_t startLen = strlen(startString);
-	
+
 	// check that we can continue
 	if(startOfStart == std::string::npos || startOfEnd ==std::string::npos || startOfEnd < startOfStart)
 	{
 		*pResult = -1.0;
 		return false;
 	}
-	
+
 	// extract the bit between the strings
 	std::string substring(m_buffer.substr(startOfStart + startLen, startOfEnd - (startOfStart + startLen)));
 
@@ -192,7 +192,7 @@ void CurrentCostMeterBase::ParseData(const char *pData, int Len)
 		if(c == 0x0a)
 		{
 			// discard newline, close string, parse line and clear it.
-			if (!m_buffer.empty()) 
+			if (!m_buffer.empty())
 			{
 				ExtractReadings();
 			}

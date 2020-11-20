@@ -60,7 +60,7 @@ const char *Description(const int sType)
 		{ device::tswitch::type::DoorLock,			"Door Lock" },
 		{ device::tswitch::type::DoorLockInverted,		"Door Lock Inverted" },
 		{ device::tswitch::type::Proximity,			"Proximity Sensor" },
-		{ 0, NULL, NULL }
+		{ 0, nullptr }
 	};
 	return findTableIDSingle1(Table, sType);
 }

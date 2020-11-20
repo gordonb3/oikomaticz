@@ -12,7 +12,7 @@
  // Windows features go here
  #include <Winsock2.h>
  #include <stdio.h>
- 
+
  #if !defined( NEED_GETLASTERROR )
   #define NEED_GETLASTERROR 1
  #endif
@@ -30,7 +30,7 @@
  #define SIN_ADDR_UINT(x) \
    ((uint&)(x).S_un.S_addr)
  #define BAD_SOCKET_FD 0xffffffffU
- 
+
 #else
 
  // Linux features go here
@@ -47,7 +47,7 @@
  #endif
 
  extern int h_errno;
- // hack -- I don't make it non-blocking; instead, I pass 
+ // hack -- I don't make it non-blocking; instead, I pass
  // NONBLOCK_MSG_SEND for each call to sendto()
  #define MAKE_SOCKET_NONBLOCKING(x,r) do { (r) = 0; } while(0)
  #define NONBLOCK_MSG_SEND MSG_DONTWAIT

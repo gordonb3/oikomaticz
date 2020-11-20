@@ -42,7 +42,7 @@ struct ADCs
 	unsigned char LSB;
 	//test inverted	unsigned char LSB;
 };
-//////////////////////////////////////////////////////////        
+//////////////////////////////////////////////////////////
 struct thdata//passing arguments to threads
 {
 	int No;
@@ -71,9 +71,9 @@ for normal address via rs232 offset is 1
 struct RMStatus //struct offset =0;
 {
 	unsigned char AddrH;		//address high byte of current controller
-	unsigned char AddrL;		//address low  byte 
-//	unsigned char DataType;		//must be 's' for status	
-	ADCs ADC[8];				//offset 3B size 8*2B		
+	unsigned char AddrL;		//address low  byte
+//	unsigned char DataType;		//must be 's' for status
+	ADCs ADC[8];				//offset 3B size 8*2B
 	struct _tOUT			//18		//1 bit fields	3B size 1-24 outputs
 								//offset in struct 19
 	{				        //in some operating systems bit locations may be inverted in BYTES as  explained below
@@ -178,7 +178,7 @@ struct RMStatus //struct offset =0;
 typedef struct  	//status hm status[0]='s'			//struct offset =0;
 {       //ofset +1 comparing to controller status
 	unsigned char AddrH;	//0	//address high byte of current controller
-	unsigned char AddrL;	//1	//address low  byte 
+	unsigned char AddrL;	//1	//address low  byte
 //	unsigned char DataType;		//must be 's' for status
 							//offset 3B size 8*2B
 	ADCs ADC[16];		//2		//offset 3B size 16*2B
@@ -211,7 +211,7 @@ typedef struct  	//status hm status[0]='s'			//struct offset =0;
 		unsigned char o23 : 1;
 		unsigned char o24 : 1;		//digital output 17 [0|1]
 	} OUT;
-	unsigned char CURRENT_PROGRAM;		//34+3 [36] //HeatManager Program Nr. offset 40                
+	unsigned char CURRENT_PROGRAM;		//34+3 [36] //HeatManager Program Nr. offset 40
 	struct _tINPUTS 			//		[37,38]	//INPUTS 1-16: offset 38 - size 2 bytes
 								//1 bit fields
 	{//in some operating systems bit locations may be inverted in BYTES as explained below
@@ -275,7 +275,7 @@ typedef struct  	//status hm status[0]='s'			//struct offset =0;
 
 	//unsigned char WENT_MODE; //51 index [49] ???
 	unsigned char WENT_RECU_SPEED : 2;
-	unsigned char WENT_COOLING : 1;           //Cooling On/ off / 
+	unsigned char WENT_COOLING : 1;           //Cooling On/ off /
 	unsigned char WENT_UNCONDITIONAL_WENT : 1;           //Unconditional Ventilation / Bezwarnunkowe wlaczenie wentylacji
 	unsigned char WENT_DGP : 1;           //DGP Fan on/off  / Wlaczenie wentylatora DGP
 	unsigned char CENTRAL_HEATING_PUMP : 1;/////WENT_VENTYLATOR_GWC:1;		//auxiliary ground heat exchanger for gwc / Wlaczenie wentylatora wspomagajacego GWC
@@ -293,7 +293,7 @@ typedef struct  	//status hm status[0]='s'			//struct offset =0;
 typedef struct ECMStatusT 				//struct offset =72-2;
 {
 	unsigned char AddrH;		//address high byte of current controller
-	unsigned char AddrL;		//address low  byte 
+	unsigned char AddrL;		//address low  byte
 	ADCs ADC[16];				//offset in status 72
 
 	struct 		//1 bit fields	20B size 1-160 outputs offset in status 72+32
@@ -384,14 +384,14 @@ typedef struct ECMStatusT 				//struct offset =72-2;
 	unsigned char CURRENT_PROGRAM;		//Current Program Nr.
 	unsigned char CURRENT_ZONE;			//Current Security Zone Nr.
 	unsigned char CURRENT_ADC_PROGRAM;	//Current ADC program
-	unsigned char DIMM[3];				//Dimmers status 1-3 size 1B per channel, offset in struct 
+	unsigned char DIMM[3];				//Dimmers status 1-3 size 1B per channel, offset in struct
 	unsigned char iface;
 } ECMStatus;
 ////////////////////////////////////////////////////////////////////////
 typedef struct  ECMStatusBT				//struct offset =72-2;
 {
 	unsigned char AddrH;				//address high byte of current controller
-	unsigned char AddrL;				//address low  byte 
+	unsigned char AddrL;				//address low  byte
 	ADCs ADC[16];						//offset in status 72
 	unsigned char outs[20];         //1 bit fields	20B size 1-160 outputs offset in status 72+32
 	unsigned char inputs[12];       //	 INPUTSExt;
@@ -401,7 +401,7 @@ typedef struct  ECMStatusBT				//struct offset =72-2;
 	unsigned char CURRENT_PROGRAM;		//Current Program Nr.
 	unsigned char CURRENT_ZONE;			//Current Security Zone Nr.
 	unsigned char CURRENT_ADC_PROGRAM;	//Current ADC program
-	unsigned char DIMM[3];				//Dimmers status 1-3 size 1B per channel, offset in struct 
+	unsigned char DIMM[3];				//Dimmers status 1-3 size 1B per channel, offset in struct
 	unsigned char iface;
 } ECMStatusB;
 
@@ -411,7 +411,7 @@ typedef struct ERMFullStatusT  				//struct offset =72-2;
 {
 	unsigned char Size;
 	unsigned char AddrH;		//address high byte of current controller
-	unsigned char AddrL;		//address low  byte 
+	unsigned char AddrL;		//address low  byte
 	unsigned char Code;     //status code = 's'
 	unsigned char Dimmers[3];
 	unsigned char DMXDimmers[17 + 15];
@@ -444,7 +444,7 @@ typedef struct WIFIFullStatusT 				//struct offset =72-2;
 {
 	unsigned char Size;
 	unsigned char AddrH;		//address high byte of current controller
-	unsigned char AddrL;		//address low  byte 
+	unsigned char AddrL;		//address low  byte
 	unsigned char Code;             //status code = 's'
 	unsigned char Dimmers[4];
 	int ADC[4];
@@ -515,7 +515,7 @@ typedef struct CANStatT
 {
 	unsigned char AddrH;					//from SID + EID address
 	unsigned char AddrL;
-	tCANAdcValue ADC[4];	//8 bytes       //8 bytes - 2 status CAN package 
+	tCANAdcValue ADC[4];	//8 bytes       //8 bytes - 2 status CAN package
 	unsigned char DIMM[4];           //8 bytes - 3 status CAN package
 		//in some operating systems bites locations may be swapped in Bytes as explain in comments
 	struct
@@ -539,7 +539,7 @@ typedef struct CANStatT
 		unsigned char i5 : 1;			//		_
 		unsigned char i6 : 1;			//		_
 		unsigned char i7 : 1;			//		|
-		unsigned char i8 : 1;			//digital input 1  [0|1]	
+		unsigned char i8 : 1;			//digital input 1  [0|1]
 	} INPUTS;
 	unsigned char OUT_PROGRAM : 5;
 	unsigned char Mode : 3;
@@ -569,7 +569,7 @@ typedef struct WiFiStatT				/// 22B
 	unsigned char AddrH;					//from SID + EID address
 	unsigned char AddrL;
 	unsigned char cmd;
-	tCANAdcValue AdcVal[4];	//8 bytes       //8 bytes - 2 status CAN package 
+	tCANAdcValue AdcVal[4];	//8 bytes       //8 bytes - 2 status CAN package
 	unsigned char Dimmer[4];           //8 bytes - 3 status CAN package
 	//in some operating systems bites locations may be swapped in Bytes as explain in comments
 	struct
@@ -593,7 +593,7 @@ typedef struct WiFiStatT				/// 22B
 		unsigned char i5 : 1;			//		_
 		unsigned char i6 : 1;			//		_
 		unsigned char i7 : 1;			//		|
-		unsigned char i8 : 1;			//digital input 1  [0|1]	
+		unsigned char i8 : 1;			//digital input 1  [0|1]
 	} INPUTS;
 	unsigned char OUT_PROGRAM : 5;
 	unsigned char Mode : 3;
@@ -619,8 +619,8 @@ typedef union WiFiStatusT
 
 
 
-////////////////////////////////////////////////////////////////////////////////        
-//Event Queue structure for processing of events        
+////////////////////////////////////////////////////////////////////////////////
+//Event Queue structure for processing of events
 typedef struct EventQueueT
 {
 	unsigned char LocalEventsToRun[EVENT_SIZE];     //direct event command
@@ -1097,13 +1097,13 @@ typedef struct SatelStatusT
 	unsigned char AarmedPartitionsSuppressed[4];    //0x9
 	unsigned char AarmedPartitionsReally[4];        //0xa
 	unsigned char PartitionsArmedInMode2[4];        //0xb
-	unsigned char PartitionsArmedInMode3[4];//        0x0C	
-	unsigned char PartitionsWith1stCodeEntered[4];//  0x0D	
+	unsigned char PartitionsArmedInMode3[4];//        0x0C
+	unsigned char PartitionsWith1stCodeEntered[4];//  0x0D
 	unsigned char PartitionsEntryTime[4];//           0x0E
 	unsigned char PartitionsExitTimeMore10s[4];//     0x0F
-	unsigned char PartitionsExitTimeLess10s[4];//     0x10	
+	unsigned char PartitionsExitTimeLess10s[4];//     0x10
 	unsigned char PartitionsTemporaryBlocked[4];//    0x11
-	unsigned char PartitionsBlockedForGuardRound[4];    //0x12	
+	unsigned char PartitionsBlockedForGuardRound[4];    //0x12
 	unsigned char PartitionsAlarm[4];//               0x13
 	unsigned char PartitionsFireAlarm[4];//           0x14
 	unsigned char PartitionsAlarmMemory[4];//         0x15
@@ -1131,7 +1131,7 @@ typedef struct SatelStatusT
 	unsigned char TroublesMemoryPart7[48];//           0x2F
 	unsigned char ModuleVersion[12];//                 0x7C
 	unsigned char Temperature[3];//                    0x7D
-	unsigned char IntegraVersion[3];//                 0x7E    
+	unsigned char IntegraVersion[3];//                 0x7E
 
 	unsigned char ArmInMode0[SIZEOFCTRL];//                    0x80
 	unsigned char ArmInMode1[SIZEOFCTRL];//                    0x81
@@ -1147,7 +1147,7 @@ typedef struct SatelStatusT
 	unsigned char ClearTroubleMem[SIZEOFCTRL];//               0x8b
 	unsigned char ReadEvent[SIZEOFCTRL];//                     0x8c
 	unsigned char Enter1stCode[SIZEOFCTRL];//                  0x8d
-	unsigned char SetRTCClock[SIZEOFCTRL];//                   0x8e    
+	unsigned char SetRTCClock[SIZEOFCTRL];//                   0x8e
 	unsigned char GetEventText[SIZEOFCTRL];//                  0x8f
 	unsigned char ZoneIsolate[SIZEOFCTRL];//                   0x90
 	unsigned char OutputSwitch[SIZEOFCTRL];//                  0x91
@@ -1175,14 +1175,14 @@ typedef union eHouseProStatusUT
 
 
 
-//#endif        
+//#endif
 
 #ifdef GU_INTERFACE
 #include <time.h>
 #ifndef WIN32
-#include <sys/time.h>        
+#include <sys/time.h>
 #endif
-#ifndef EH_REMOVE_NAMES 
+#ifndef EH_REMOVE_NAMES
 typedef char StringN[SIZEOFTEXT];
 #else
 typedef char StringN[2];

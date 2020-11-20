@@ -133,7 +133,7 @@ public:
 	bool m_bHasNodeFailedDone;
 	std::string m_sHasNodeFailedResult;
 	uint8_t m_HasNodeFailedIdx;
-	
+
 	int m_LastIncludedNode;
 	std::string m_LastIncludedNodeType;
 	bool m_bHaveLastIncludedNodeInfo;

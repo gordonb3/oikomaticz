@@ -1392,7 +1392,7 @@ void CEvohomeRadio::RXRelay(uint8_t nDevNo, uint8_t nDemand, int nID)
 	tsen.devno = nDevNo;
 	tsen.demand = nDemand;
 	tsen.updatetype = CEvohomeRadio::updDemand;
-	sDecodeRXMessage(this, (const unsigned char*)&tsen, NULL, -1);
+	sDecodeRXMessage(this, (const unsigned char*)&tsen, nullptr, -1);
 }
 
 bool CEvohomeRadio::DecodeHeatDemand(CEvohomeMsg& msg)
@@ -1544,7 +1544,7 @@ bool CEvohomeRadio::DecodeActuatorState(CEvohomeMsg& msg)
 		Log(true, LOG_STATUS, "evohome: %s: OT Bridge full payload %02X%02X%02X%02X%02X%02X, packet size: %d", tag, msg.payload[0], msg.payload[1], msg.payload[2], msg.payload[3], msg.payload[4], msg.payload[5], msg.payloadsize);
 		return true;
 	}
-	// All other relays should have a payload size of 3	
+	// All other relays should have a payload size of 3
 	if (msg.payloadsize != 3) {
 		Log(false, LOG_ERROR, "evohome: %s: Error decoding command, unknown packet size: %d", tag, msg.payloadsize);
 		return false;
@@ -1555,7 +1555,7 @@ bool CEvohomeRadio::DecodeActuatorState(CEvohomeMsg& msg)
 
 	Log(true, LOG_STATUS, "evohome: %s: ID:0x%06x (%s) DevNo 0x%02x: %d", tag, msg.GetID(0), msg.GetStrID(0).c_str(), nDevNo, nDemand);
 	RXRelay(static_cast<uint8_t>(0xFF), static_cast<uint8_t>(nDemand));//devno is always 0 and therefore not valid
-	
+
 	//Log all received relay activity (green led) to a device, note this is different from Heat Demand
         bool bRelayOn( false );
         if (nDemand == 0xc8) {
@@ -1572,11 +1572,11 @@ bool CEvohomeRadio::DecodeOpenThermBridge(CEvohomeMsg& msg)
 {
 	char tag[] = "OPENTHERM_BRIDGE";
 
-	// Only look for responses from the OT Bridge and Filter out messages from other controllers 
+	// Only look for responses from the OT Bridge and Filter out messages from other controllers
 	if (msg.GetID(1) != GetControllerID())
 		return true;
 
-	// All OT messages should have a payload size of 5	
+	// All OT messages should have a payload size of 5
 	if (msg.payloadsize != 5) {
 		Log(false, LOG_ERROR, "evohome: %s: Error decoding command, unknown packet size: %d", tag, msg.payloadsize);
 		return false;
@@ -1742,7 +1742,7 @@ bool CEvohomeRadio::DecodeDeviceInfo(CEvohomeMsg& msg)
 		sprintf(sFaultType, "RESTORE");
 		nAlertType = 0;
 	}
-	else { 
+	else {
 		sprintf(sFaultType, "UNKNOWN(%02x)", nFaultType);
 		nAlertType = 2;
 	}
@@ -1812,14 +1812,14 @@ bool CEvohomeRadio::DecodeBatteryInfo(CEvohomeMsg& msg)
 			tsen.type = pTypeEvohomeZone;
 			tsen.subtype = sTypeEvohomeZone;
 			tsen.zone = nDevNo;
-			sDecodeRXMessage(this, (const unsigned char*)&tsen, NULL, nBattery);
+			sDecodeRXMessage(this, (const unsigned char*)&tsen, nullptr, nBattery);
 
 			if (AllSensors)
 			{
 				tsen.type = pTypeEvohomeZone;
 				tsen.subtype = sTypeEvohomeZone;
 				tsen.zone += 12;
-				sDecodeRXMessage(this, (const unsigned char*)&tsen, NULL, nBattery); // Update Zone device battery level
+				sDecodeRXMessage(this, (const unsigned char*)&tsen, nullptr, nBattery); // Update Zone device battery level
 			}
 
 			_tEVOHOME3 tsen2;
@@ -1832,7 +1832,7 @@ bool CEvohomeRadio::DecodeBatteryInfo(CEvohomeMsg& msg)
 			tsen2.demand = 0;
 			tsen2.updatetype = CEvohomeRadio::updBattery;
 			tsen2.battery_level = nBattery;
-			sDecodeRXMessage(this, (const unsigned char*)&tsen2, NULL, nBattery);
+			sDecodeRXMessage(this, (const unsigned char*)&tsen2, nullptr, nBattery);
 		}
 		else
 		{
@@ -1840,7 +1840,7 @@ bool CEvohomeRadio::DecodeBatteryInfo(CEvohomeMsg& msg)
 			tsen.type = pTypeEvohomeZone;
 			tsen.subtype = sTypeEvohomeZone;
 			tsen.zone = nDevNo;
-			sDecodeRXMessage(this, (const unsigned char*)&tsen, NULL, nBattery);  // Update Relay device battery level
+			sDecodeRXMessage(this, (const unsigned char*)&tsen, nullptr, nBattery);  // Update Relay device battery level
 		}
 	}
 	else if (msg.id[0].GetIDType() == CEvohomeID::devSensor)
@@ -2021,7 +2021,7 @@ namespace http {
 			std::string type = request::findValue(&req, "devtype");
 			int HwdID = atoi(idx.c_str());
 			CDomoticzHardwareBase* pHardware = m_mainworker.GetHardware(HwdID);
-			if (pHardware == NULL)
+			if (pHardware == nullptr)
 				return;
 			if (pHardware->HwdType != hardware::type::EVOHOME_SERIAL && pHardware->HwdType != hardware::type::EVOHOME_TCP)
 				return;

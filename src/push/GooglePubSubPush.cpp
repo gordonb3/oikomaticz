@@ -78,7 +78,7 @@ PyDomoticz_log(PyObject *self, PyObject *args)
 	char* msg;
 	int type;
 	if (!PyArg_ParseTuple(args, "is", &type, &msg))
-		return NULL;
+		return nullptr;
 	_log.Log((_eLogLevel)type, msg);
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -87,7 +87,7 @@ PyDomoticz_log(PyObject *self, PyObject *args)
 
 static PyMethodDef DomoticzMethods[] = {
 	{ "log", PyDomoticz_log, METH_VARARGS,  "log to Oikomaticz." },
-	{ NULL, NULL, 0, NULL }
+	{ NULL, nullptr, 0, nullptr }
 };
 
 

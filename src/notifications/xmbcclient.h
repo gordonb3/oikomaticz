@@ -102,11 +102,11 @@ public:
   CAddress(const char *Address, int Port = STD_PORT)
   {
     m_Addr.sin_port = htons(Port);
-    
+
     struct hostent *h;
-    if (Address == NULL || (h=gethostbyname(Address)) == NULL)
+    if (Address == nullptr || (h=gethostbyname(Address)) == nullptr)
     {
-        if (Address != NULL)
+        if (Address != nullptr)
 			printf("Error: Get host by name\n");
 
         m_Addr.sin_addr.s_addr  = INADDR_ANY;
@@ -143,7 +143,7 @@ public:
   ~XBMCClientUtils() {}
   static unsigned int GetUniqueIdentifier()
   {
-    static time_t id = time(NULL);
+    static time_t id = time(nullptr);
 	return (unsigned int)id;
   }
 
@@ -322,19 +322,19 @@ public:
       m_Payload.push_back(m_IconData[ico]);
   }
 
-  CPacketHELO(const char *DevName, unsigned short IconType, const char *IconFile = NULL) : CPacket()
+  CPacketHELO(const char *DevName, unsigned short IconType, const char *IconFile = nullptr) : CPacket()
   {
     m_PacketType = PT_HELO;
 
     unsigned int len = strlen(DevName);
     for (unsigned int i = 0; i < len; i++)
-      m_DeviceName.push_back(DevName[i]);    
+      m_DeviceName.push_back(DevName[i]);
 
     m_IconType = IconType;
 
-    if (IconType == ICON_NONE || IconFile == NULL)
+    if (IconType == ICON_NONE || IconFile == nullptr)
     {
-      m_IconData = NULL;
+      m_IconData = nullptr;
       m_IconSize = 0;
       return;
     }
@@ -405,20 +405,20 @@ public:
       m_Payload.push_back(m_IconData[ico]);
   }
 
-  CPacketNOTIFICATION(const char *Title, const char *Message, unsigned short IconType, const char *IconFile = NULL) : CPacket()
+  CPacketNOTIFICATION(const char *Title, const char *Message, unsigned short IconType, const char *IconFile = nullptr) : CPacket()
   {
     m_PacketType = PT_NOTIFICATION;
-    m_IconData = NULL;
+    m_IconData = nullptr;
     m_IconSize = 0;
     unsigned int len = 0;
-    if (Title != NULL)
+    if (Title != nullptr)
     {
       len = strlen(Title);
       for (unsigned int i = 0; i < len; i++)
         m_Title.push_back(Title[i]);
     }
 
-    if (Message != NULL)
+    if (Message != nullptr)
     {
       len = strlen(Message);
       for (unsigned int i = 0; i < len; i++)
@@ -426,7 +426,7 @@ public:
     }
     m_IconType = IconType;
 
-    if (IconType == ICON_NONE || IconFile == NULL)
+    if (IconType == ICON_NONE || IconFile == nullptr)
       return;
 
     std::ifstream::pos_type size;
@@ -646,7 +646,7 @@ public:
     m_Payload.push_back(((m_Y & 0xff00) >> 8));
     m_Payload.push_back( (m_Y & 0x00ff));
   }
-  
+
   virtual ~CPacketMOUSE()
   { }
 };
@@ -691,7 +691,7 @@ public:
 
     m_Payload.push_back('\0');
   }
-  
+
   virtual ~CPacketLOG()
   { }
 };
@@ -727,7 +727,7 @@ public:
 
     m_Payload.push_back('\0');
   }
-  
+
   virtual ~CPacketACTION()
   { }
 };
@@ -753,7 +753,7 @@ public:
       m_UID = XBMCClientUtils::GetUniqueIdentifier();
   }
 
-  void SendNOTIFICATION(const char *Title, const char *Message, unsigned short IconType, const char *IconFile = NULL)
+  void SendNOTIFICATION(const char *Title, const char *Message, unsigned short IconType, const char *IconFile = nullptr)
   {
     if (m_Socket < 0)
       return;
@@ -762,7 +762,7 @@ public:
     notification.Send(m_Socket, m_Addr, m_UID);
   }
 
-  void SendHELO(const char *DevName, unsigned short IconType, const char *IconFile = NULL)
+  void SendHELO(const char *DevName, unsigned short IconType, const char *IconFile = nullptr)
   {
     if (m_Socket < 0)
       return;

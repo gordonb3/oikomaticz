@@ -81,7 +81,7 @@ const char *Description(const int tType)
 		{ AFTERASTTWSTART,	"After Astronomical Twilight Start" },
 		{ BEFOREASTTWEND,	"Before Astronomical Twilight End" },
 		{ AFTERASTTWEND,	"After Astronomical Twilight End" },
-		{ 0, NULL, NULL }
+		{ 0, nullptr }
 	};
 	return findTableIDSingle1(Table, tType);
 }

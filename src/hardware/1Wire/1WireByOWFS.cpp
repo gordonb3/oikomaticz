@@ -35,9 +35,9 @@ bool C1WireByOWFS::FindDevice(const std::string &inDir, const std::string &sID, 
 {
     bool found = false;
     DIR *d=opendir(inDir.c_str());
-    if (d != NULL)
+    if (d != nullptr)
     {
-        struct dirent *de=NULL;
+        struct dirent *de = nullptr;
         // Loop while not NULL or not found
         while((de=readdir(d)) && !found)
         {
@@ -78,9 +78,9 @@ void C1WireByOWFS::GetDevices(/*out*/std::vector<_t1WireDevice>& devices) const
 void C1WireByOWFS::GetDevices(const std::string &inDir, /*out*/std::vector<_t1WireDevice>& devices) const
 {
     DIR *d=opendir(inDir.c_str());
-    if (d != NULL)
+    if (d != nullptr)
     {
-        struct dirent *de=NULL;
+        struct dirent *de = nullptr;
         // Loop while not NULL
         while((de=readdir(d)))
         {
@@ -435,12 +435,12 @@ void C1WireByOWFS::GetDevice(const std::string &inDir, const std::string &dirnam
 
 std::string C1WireByOWFS::nameHelper(const std::string& dirname, const _e1WireFamilyType family) const {
 	std::string name;
-	DIR *d=NULL;
+	DIR *d = nullptr;
 
 	d=opendir(std::string(std::string(m_path) + "/" + dirname.c_str()).c_str());
-	if (d != NULL)
+	if (d != nullptr)
 	{
-		struct dirent *de = NULL;
+		struct dirent *de = nullptr;
 		while ((de = readdir(d)))
 		{
 			name = de->d_name;

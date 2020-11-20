@@ -56,16 +56,16 @@ const RFSwitchXref rfswitches[] =
 	{ sSwitchTypeEnergenie,		pTypeLighting1,		sTypeEnergenie,		"Energenie"	},
 	{ sSwitchTypeEnergenie5,	pTypeLighting1,		sTypeEnergenie5,	"Energenie5"	},
 	{ sSwitchTypeGDR2,		pTypeLighting1,		sTypeGDR2,		"GDR2"		},
-    
+
 	{ sSwitchTypeAC,		pTypeLighting2,		sTypeAC,		"NewKaku"	},
 	{ sSwitchTypeHEU,		pTypeLighting2,		sTypeHEU,		"HomeEasy"	},
 	{ sSwitchTypeANSLUT,		pTypeLighting2,		sTypeANSLUT,		"Anslut"	},
 	{ sSwitchTypeKambrook,		pTypeLighting2,		sTypeKambrook,		"Kambrook"	},
-    
+
 	{ sSwitchTypeKoppla,		pTypeLighting3,		sTypeKoppla,		"Ikea Koppla"	},
-    
+
 	{ sSwitchTypePT2262,		pTypeLighting4,		sTypePT2262,		"PT2262"	},
-    
+
 	{ sSwitchTypeLightwaveRF,	pTypeLighting5,		sTypeLightwaveRF,	"Lightwave"	},
 	{ sSwitchTypeEMW100,		pTypeLighting5,		sTypeEMW100,		"EMW100"	},
 	{ sSwitchTypeBBSB,		pTypeLighting5,		sTypeBBSB,		"BSB"	`	},
@@ -77,9 +77,9 @@ const RFSwitchXref rfswitches[] =
 	{ sSwitchTypeTRC02_2,		pTypeLighting5,		sTypeTRC02_2,		"TRC022RGB"	},
 	{ sSwitchTypeEurodomest,	pTypeLighting5,		sTypeEurodomest,	"Eurodomest"	},
 	{ sSwitchTypeLivoloAppliance,	pTypeLighting5,		sTypeLivoloAppliance,	"Livolo App"	},
-    
+
 	{ sSwitchTypeBlyss,		pTypeLighting6,		sTypeBlyss,		"Blyss"		},
-    
+
 	{ sSwitchTypeByronSX,		pTypeChime,		sTypeByronSX,		"Byron"		},
 	{ sSwitchTypeByronMP001,	pTypeChime,		sTypeByronMP001,	"Byron MP"	},
 	{ sSwitchTypeSelectPlus,	pTypeChime,		sTypeSelectPlus,	"SelectPlus"	},

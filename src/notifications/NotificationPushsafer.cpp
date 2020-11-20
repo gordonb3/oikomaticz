@@ -27,7 +27,7 @@ bool CNotificationPushsafer::SendMessageImplementation(
 	const int Priority,
 	const std::string &Sound,
 	const bool bFromNotification)
-	
+
 {
 	//send message to Pushsafer
 	std::string cSubject = (Subject == Text) ? "Oikomaticz" : Subject;
@@ -66,7 +66,7 @@ bool CNotificationPushsafer::SendMessageImplementation(
 		{
 			PS_m = Text;
 		}
-		
+
 		if (PS_t.empty())
 		{
 			PS_t = cSubject;
@@ -113,7 +113,7 @@ bool CNotificationPushsafer::SendMessageImplementation(
 
 	//Add the required Content Type
 	ExtraHeaders.push_back("Content-Type: application/x-www-form-urlencoded");
-	
+
 	bRet = HTTPClient::POST("https://www.pushsafer.com/api",sPostData.str(),ExtraHeaders,sResult);
 	bool bSuccess = (sResult.find("\"success\":") != std::string::npos);
 	if (!bSuccess)

@@ -104,7 +104,7 @@ private:
 	void AddCommand(eApiCommandType command_type, std::string command_parameter = "");
 	bool DoNextCommand();
 	std::string GetCommandString(const eApiCommandType command);
-	
+
 	void SendAlert();
 	void SendAlert(int alertType, int value, std::string title);
 	void SendSwitch(int switchType, bool value);

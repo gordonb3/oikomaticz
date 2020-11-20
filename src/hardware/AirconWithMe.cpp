@@ -21,7 +21,7 @@ CAirconWithMe::CAirconWithMe(const int id, const std::string& ipaddress, const u
     , mPollInterval(AIRCONWITHME_POLL_INTERVAL)
 {
 	m_HwdID = id;
-    
+
     _UIDMap =
     {
         {1,   {1,   "Airco On/Off", NDT_SWITCH, true}},
@@ -36,7 +36,7 @@ CAirconWithMe::CAirconWithMe(const int id, const std::string& ipaddress, const u
         {15,  {15,  "Error Code", NDT_NUMBER, false}},
         {37,  {37 , "Outdoor temperature", NDT_THERMOMETER, false}},
     };
-    
+
     _DeviceInfo =
     {
         {0xFF0001, "lastError", "LastError", NDT_NUMBER},
@@ -90,11 +90,11 @@ void CAirconWithMe::Do_Work()
 	while (!IsStopRequested(1000))
 	{
 		countdown--;
-		if (countdown % 12 == 0) 
+		if (countdown % 12 == 0)
 		{
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
-		if (countdown == 0) 
+		if (countdown == 0)
 		{
 			GetValues();
 			countdown = mPollInterval;
@@ -151,8 +151,8 @@ bool CAirconWithMe::DoWebRequest(const std::string& postdata, Json::Value& root,
 
 bool CAirconWithMe::Login()
 {
-	mSessionId = ""; 
-	
+	mSessionId = "";
+
 	Json::Value root;
 	std::string errorMessage;
 	std::string postdata = "{\"command\":\"login\",\"data\":{\"username\":\"" + mUsername + "\",\"password\":\"" + mPassword + "\"}}";
@@ -198,7 +198,7 @@ bool CAirconWithMe::GetAvailableDataPoints()
 
 		int32_t type = it["type"].asInt();
 		mDeviceInfo[uid].mType = type;
-		
+
 		std::string RW = it["rw"].asString();
 		if (RW.find('w') != std::string::npos)
 			mDeviceInfo[uid].mWritable = true;
@@ -419,7 +419,7 @@ void CAirconWithMe::UpdateSelectorSwitch(const int32_t uid, const int32_t value,
 
 
 bool CAirconWithMe::WriteToHardware(const char* pdata, const unsigned char length)
-{ 
+{
 	const tRBUF* pSen = reinterpret_cast<const tRBUF*>(pdata);
 	unsigned char packettype = pSen->ICMND.packettype;
 	if (packettype == pTypeGeneralSwitch)
@@ -455,7 +455,7 @@ bool CAirconWithMe::WriteToHardware(const char* pdata, const unsigned char lengt
 	}
 
 
-	return true; 
+	return true;
 };
 
 void CAirconWithMe::SendValueToAirco(const int32_t uid, const int32_t value)

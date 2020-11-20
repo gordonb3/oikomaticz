@@ -760,7 +760,7 @@ PyAPI_FUNC(Py_UCS4*) PyUnicode_AsUCS4(
     int copy_null);
 
 /* Copy the string into a UCS4 buffer. A new buffer is allocated using
- * PyMem_Malloc; if this fails, NULL is returned with a memory error
+ * PyMem_Malloc; if this fails, nullptr is returned with a memory error
    exception set. */
 PyAPI_FUNC(Py_UCS4*) PyUnicode_AsUCS4Copy(PyObject *unicode);
 
@@ -872,7 +872,7 @@ PyAPI_FUNC(PyObject*) PyUnicode_FromEncodedObject(
 
    Unicode objects are passed back as-is (subclasses are converted to
    true Unicode objects), all other objects are delegated to
-   PyUnicode_FromEncodedObject(obj, NULL, "strict") which results in
+   PyUnicode_FromEncodedObject(obj, nullptr, "strict") which results in
    using UTF-8 encoding as basis for decoding the object.
 
    The API returns NULL in case of an error. The caller is responsible
@@ -1729,7 +1729,7 @@ PyAPI_FUNC(int) PyUnicode_EncodeDecimal(
 /* Transforms code points that have decimal digit property to the
    corresponding ASCII digit code points.
 
-   Returns a new Unicode string on success, NULL on failure.
+   Returns a new Unicode string on success, nullptr on failure.
 */
 
 #ifndef Py_LIMITED_API

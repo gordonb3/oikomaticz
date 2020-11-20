@@ -253,7 +253,7 @@ void OTGWBase::GetGatewayDetails()
 
 void OTGWBase::SendTime()
 {
-	time_t atime = mytime(NULL);
+	time_t atime = mytime(nullptr);
 	struct tm ltime;
 	localtime_r(&atime, &ltime);
 
@@ -402,12 +402,12 @@ void OTGWBase::ParseLine()
 		_status.Return_water_temperature = static_cast<float>(atof(results[idx++].c_str()));				SendTempSensor(idx - 1, 255, _status.Return_water_temperature, "Return Water Temperature");
 		_status.DHW_setpoint_boundaries=results[idx++];
 		_status.Max_CH_setpoint_boundaries=results[idx++];
-		_status.DHW_setpoint = static_cast<float>(atof(results[idx++].c_str())); 
+		_status.DHW_setpoint = static_cast<float>(atof(results[idx++].c_str()));
 		if (_status.DHW_setpoint != 0.0f)
 		{
 			UpdateSetPointSensor((uint8_t)idx - 1, _status.DHW_setpoint, "DHW Setpoint");
 		}
-		_status.Max_CH_water_setpoint = static_cast<float>(atof(results[idx++].c_str()));		
+		_status.Max_CH_water_setpoint = static_cast<float>(atof(results[idx++].c_str()));
 		if (_status.Max_CH_water_setpoint != 0.0f)
 		{
 			UpdateSetPointSensor((uint8_t)idx - 1, _status.Max_CH_water_setpoint, "Max_CH Water Setpoint");
@@ -555,7 +555,7 @@ namespace http {
 			cmnd = rcmnd + rdata;
 
 			OTGWBase *pOTGW = reinterpret_cast<OTGWBase*>(m_mainworker.GetHardware(atoi(idx.c_str())));
-			if (pOTGW == NULL)
+			if (pOTGW == nullptr)
 				return;
 
 			_log.Log(LOG_STATUS, "User: %s initiated a manual command: %s", session.username.c_str(), cmnd.c_str());

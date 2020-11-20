@@ -67,7 +67,7 @@ m_szHarmonyAddress(IPAddress)
 }
 
 
-HarmonyHubWS::~HarmonyHubWS(void)
+HarmonyHubWS::~HarmonyHubWS()
 {
 	StopHardware();
 }
@@ -345,7 +345,7 @@ void HarmonyHubWS::Do_Work()
 		{
 			// update heartbeat
 			hcounter = HEARTBEAT_SECONDS;
-			m_LastHeartbeat=mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 	}
 	Disconnect();
@@ -471,7 +471,7 @@ void HarmonyHubWS::Disconnect()
 int HarmonyHubWS::SendPing()
 {
 	m_bRequireEcho = true;
-	
+
 	int retval = m_HarmonyClient.ping().value();
 	if (retval > 0)
 		_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Ping returned error %d", retval);
@@ -510,7 +510,7 @@ void HarmonyHubWS::ProcessHarmonyResponse(const Json::Value &j_data)
 			_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Error %d returned in response to %s", returncode, j_data["cmd"].asString().c_str());
 		return;
 	}
-	
+
 	std::string cmd, shortcmd;
 	if (j_data.isMember("cmd"))
 		cmd = j_data["cmd"].asString();

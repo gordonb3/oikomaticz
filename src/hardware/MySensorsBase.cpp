@@ -405,14 +405,14 @@ MySensorsBase::_tMySensorChild* MySensorsBase::FindSensorWithPresentationType(co
 	std::map<int, _tMySensorNode>::iterator ittNode;
 	ittNode = m_nodes.find(nodeID);
 	if (ittNode == m_nodes.end())
-		return NULL;
+		return nullptr;
 	_tMySensorNode *pNode = &ittNode->second;
 	for (auto & itt : pNode->m_childs)
 	{
 		if (itt.presType == presType)
 			return &itt;
 	}
-	return NULL;
+	return nullptr;
 }
 
 //Find any sensor with value type
@@ -421,7 +421,7 @@ MySensorsBase::_tMySensorChild* MySensorsBase::FindChildWithValueType(const int 
 	std::map<int, _tMySensorNode>::iterator ittNode;
 	ittNode = m_nodes.find(nodeID);
 	if (ittNode == m_nodes.end())
-		return NULL;
+		return nullptr;
 	_tMySensorNode *pNode = &ittNode->second;
 	for (auto & itt : pNode->m_childs)
 	{
@@ -432,13 +432,13 @@ MySensorsBase::_tMySensorChild* MySensorsBase::FindChildWithValueType(const int 
 				if (itt2.first == valType)
 				{
 					if (!itt2.second.bValidValue)
-						return NULL;
+						return nullptr;
 					return &itt;
 				}
 			}
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 void MySensorsBase::UpdateNodeBatteryLevel(const int nodeID, const int Level)
@@ -1490,7 +1490,7 @@ bool MySensorsBase::WriteToHardware(const char *pdata, const unsigned char /*len
 				return false;
 			}
 
-			bool bIsRGBW = (pNode->FindChildWithPresentationType(child_sensor_id, S_RGBW_LIGHT) != NULL);
+			bool bIsRGBW = (pNode->FindChildWithPresentationType(child_sensor_id, S_RGBW_LIGHT) != nullptr);
 			if (pLed->command == Color_SetColor)
 			{
 				std::stringstream sstr;
@@ -1868,16 +1868,16 @@ void MySensorsBase::ParseLine(const std::string &sLine)
 		_eSetType vType = (_eSetType)sub_type;
 
 		_tMySensorNode *pNode = FindNode(node_id);
-		if (pNode == NULL)
+		if (pNode == nullptr)
 		{
 			pNode = InsertNode(node_id);
-			if (pNode == NULL)
+			if (pNode == nullptr)
 				return;
 		}
-		pNode->lastreceived = mytime(NULL);
+		pNode->lastreceived = mytime(nullptr);
 
 		_tMySensorChild *pChild = pNode->FindChild(child_sensor_id);
-		if (pChild == NULL)
+		if (pChild == nullptr)
 		{
 			//Unknown sensor, add it to the system
 			_tMySensorChild mSensor;
@@ -1890,7 +1890,7 @@ void MySensorsBase::ParseLine(const std::string &sLine)
 			}
 			pNode->m_childs.push_back(mSensor);
 			pChild = pNode->FindChild(child_sensor_id);
-			if (pChild == NULL)
+			if (pChild == nullptr)
 				return;
 		}
 		pChild->lastreceived = pNode->lastreceived;
@@ -2198,15 +2198,15 @@ void MySensorsBase::ParseLine(const std::string &sLine)
 			break;
 		}
 		_tMySensorNode *pNode = FindNode(node_id);
-		if (pNode == NULL)
+		if (pNode == nullptr)
 		{
 			pNode = InsertNode(node_id);
-			if (pNode == NULL)
+			if (pNode == nullptr)
 				return;
 		}
-		pNode->lastreceived = mytime(NULL);
+		pNode->lastreceived = mytime(nullptr);
 		_tMySensorChild *pSensor = pNode->FindChild(child_sensor_id);
-		if (pSensor == NULL)
+		if (pSensor == nullptr)
 		{
 			//Unknown sensor, add it to the system
 			_tMySensorChild mSensor;
@@ -2214,14 +2214,14 @@ void MySensorsBase::ParseLine(const std::string &sLine)
 			mSensor.childID = child_sensor_id;
 			pNode->m_childs.push_back(mSensor);
 			pSensor = pNode->FindChild(child_sensor_id);
-			if (pSensor == NULL)
+			if (pSensor == nullptr)
 				return;
 		}
 		bool bDiffPresentation = (
 			(pSensor->presType != pType) ||
 			(pSensor->childName != payload)
 			);
-		pSensor->lastreceived = mytime(NULL);
+		pSensor->lastreceived = mytime(nullptr);
 		pSensor->presType = pType;
 		pSensor->childName = payload;
 
@@ -2341,7 +2341,7 @@ bool MySensorsBase::StartSendQueue()
 	//Start worker thread
 	m_thread = std::make_shared<std::thread>(&MySensorsBase::Do_Work, this);
 	SetThreadName(m_thread->native_handle(), "MySensorsBase");
-	return (m_thread != NULL);
+	return (m_thread != nullptr);
 }
 
 void MySensorsBase::StopSendQueue()
@@ -2392,7 +2392,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pHardware == NULL)
+			if (pHardware == nullptr)
 				return;
 			if (
 				(pHardware->HwdType != hardware::type::MySensorsUSB) &&
@@ -2425,7 +2425,7 @@ namespace http {
 
 					MySensorsBase::_tMySensorNode* pNode = pMySensorsHardware->FindNode(NodeID);
 
-					if (pNode != NULL)
+					if (pNode != nullptr)
 					{
 						if (pNode->lastreceived != 0)
 						{
@@ -2470,7 +2470,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pHardware == NULL)
+			if (pHardware == nullptr)
 				return;
 			if (
 				(pHardware->HwdType != hardware::type::MySensorsUSB) &&
@@ -2498,10 +2498,10 @@ namespace http {
 				root["result"][ii]["ack_timeout"] = atoi(sd2[4].c_str());
 				std::string szDate = "-";
 				std::string szValues = "";
-				if (pNode != NULL)
+				if (pNode != nullptr)
 				{
 					MySensorsBase::_tMySensorChild*  pChild = pNode->FindChild(ChildID);
-					if (pChild != NULL)
+					if (pChild != nullptr)
 					{
 						std::vector<MySensorsBase::_eSetType> ctypes = pChild->GetChildValueTypes();
 						std::vector<std::string> cvalues = pChild->GetChildValues();
@@ -2553,7 +2553,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if (
 				(pBaseHardware->HwdType != hardware::type::MySensorsUSB) &&
@@ -2584,7 +2584,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if (
 				(pBaseHardware->HwdType != hardware::type::MySensorsUSB) &&
@@ -2617,7 +2617,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if (
 				(pBaseHardware->HwdType != hardware::type::MySensorsUSB) &&
@@ -2655,7 +2655,7 @@ namespace http {
 				return;
 			int iHardwareID = atoi(hwid.c_str());
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(iHardwareID);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			if (
 				(pBaseHardware->HwdType != hardware::type::MySensorsUSB) &&

@@ -68,7 +68,7 @@ void eHouseTCP::ExecQueuedEvents(void)
 				if (m_EvQ[i]->LocalEventsDrop > RE_SEND_RETRIES)	//to much retries (no controller or no communication)
 				{
 					if (m_DEBUG_TCPCLIENT) _log.Log(LOG_STATUS, "[Exec Event] Q[%d] Drop Event", i);
-					memset(m_EvQ[i], 0, sizeof(EventQueueT));		//delete event permanently and immediatelly                
+					memset(m_EvQ[i], 0, sizeof(EventQueueT));		//delete event permanently and immediatelly
 				}
 				else
 				{
@@ -115,7 +115,7 @@ void eHouseTCP::ExecEvent(unsigned int i)
 			if ((IndexOfEthDev(devh, devl) == 0) && (m_EvQ[m]->LocalEventsTimeOuts == RUN_NOW))	//group all events in the queue for the same controller scheduled for sending
 			{
 				m_EvQ[m]->LocalEventsTimeOuts = RE_TIME_REPLAY;      //Retry timer interval - next time if failed
-				memcpy(&EventBuff[EventBuffSize], m_EvQ[m]->LocalEventsToRun, EVENT_SIZE);   //Add to send buffer                
+				memcpy(&EventBuff[EventBuffSize], m_EvQ[m]->LocalEventsToRun, EVENT_SIZE);   //Add to send buffer
 		//        printf("[ via PRO ] %02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x\r\n",EvQ[m].LocalEventsToRun[0],EvQ[m].LocalEventsToRun[1],EvQ[m].LocalEventsToRun[2],EvQ[m].LocalEventsToRun[3],EvQ[m].LocalEventsToRun[4],EvQ[m].LocalEventsToRun[5],EvQ[m].LocalEventsToRun[6],EvQ[m].LocalEventsToRun[7],EvQ[m].LocalEventsToRun[8],EvQ[m].LocalEventsToRun[9]);
 				EventBuffSize += EVENT_SIZE;
 				EventsToRun[EventSize] = m;

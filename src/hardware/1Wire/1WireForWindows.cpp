@@ -28,8 +28,8 @@ SOCKET ConnectToService()
 {
    // Connection
    SOCKET theSocket = INVALID_SOCKET;
-   struct addrinfo *result = NULL,
-      *ptr = NULL,
+   struct addrinfo *result = nullptr,
+      *ptr = nullptr,
       hints;
 
    ZeroMemory(&hints,sizeof(hints));
@@ -46,7 +46,7 @@ SOCKET ConnectToService()
    }
 
    // Attempt to connect to an address until one succeeds
-   for(ptr=result;ptr!=NULL;ptr=ptr->ai_next)
+   for(ptr=result;ptr != nullptr;ptr=ptr->ai_next)
    {
       // Create a SOCKET for connecting to server
       theSocket = socket(ptr->ai_family,ptr->ai_socktype,ptr->ai_protocol);

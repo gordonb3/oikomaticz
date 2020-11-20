@@ -11,8 +11,8 @@
         PyMODINIT_FUNC PyInit_DomoticzEvents(void);
         static PyObject*    PyDomoticz_EventsLog(PyObject *self, PyObject *args);
         static PyObject*	PyDomoticz_EventsCommand(PyObject *self, PyObject *args);
-        
-        
+
+
         PyObject* PythonEventsGetModule (void);
         bool PythonEventsInitialize(const std::string &szUserDataFolder);
         bool PythonEventsStop();

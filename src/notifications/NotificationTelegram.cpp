@@ -45,7 +45,7 @@ bool CNotificationTelegram::SendMessageImplementation(
 	//prepare Text
 	std::string sPreparedText(Text);
 	stdreplace(sPreparedText,"_","\\_");
-	
+
 	//Build the message in JSON
 	json["chat_id"] = _chatid;
 	json["text"] = CURLEncode::URLDecode(sPreparedText);

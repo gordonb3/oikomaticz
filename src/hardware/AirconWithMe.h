@@ -18,7 +18,7 @@ private:
         int32_t mMinValue = INT_MIN;
         int32_t mMaxValue = INT_MAX;
     };
-    
+
     enum nDomoticzType
     {
         NDT_SWITCH = 1,
@@ -29,13 +29,13 @@ private:
         NDT_HOUR,
         NDT_STRING
     };
-    
+
     struct nStateDescription
     {
         std::string mOptionName;
         int32_t mStateId;
     };
-    
+
     struct UIDinfo
     {
         int32_t mUID;
@@ -44,7 +44,7 @@ private:
         bool mDomoticzCanChange;
         std::vector<nStateDescription> mAllStates;
     };
-    
+
     struct DeviceInfo
     {
         int32_t mUID;
@@ -52,7 +52,7 @@ private:
         std::string mDescription;
         nDomoticzType mDomoticzType;
     };
-    
+
 
 public:
 	CAirconWithMe(const int id, const std::string& ipaddress, const unsigned short ipport, const std::string& users, const std::string& password);
@@ -77,7 +77,7 @@ protected:
 	void SendValueToAirco(const int32_t uid, const int32_t value);
 
 private:
-    
+
     std::string mIpAddress;
 	uint16_t mIpPort;
 	std::string mUsername;
@@ -88,9 +88,9 @@ private:
 	std::string mSessionId;
 
 	std::map<int32_t, UIDDeviceInfo> mDeviceInfo;
-    
+
     std::map<int32_t, UIDinfo> _UIDMap;
     std::vector<DeviceInfo> _DeviceInfo;
-    
+
 
 };

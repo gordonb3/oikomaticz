@@ -57,23 +57,23 @@ namespace clx {
 		typedef std::vector<CharT> container;
 		typedef typename container::size_type size_type;
 		typedef typename Traits::int_type int_type;
-		
+
 		enum { npback = 8 };
-		
+
 		explicit basic_unzip_streambuf(handler_type h, size_type n) :
 			super(), handler_(h), buffer_(n, 0) {
 			this->setg(&buffer_.at(0), &buffer_.at(npback), &buffer_.at(npback));
 		}
-		
+
 		virtual ~basic_unzip_streambuf() throw() {}
-		
+
 	protected:
 		virtual int_type underflow() {
 			if (this->gptr() == this->egptr()) {
 				int_type n = static_cast<int_type>(this->gptr() - this->eback());
 				if (n > npback) n = npback;
 				std::memcpy(&buffer_.at(npback - n), this->gptr() - n, n);
-				
+
 				int_type byte = static_cast<int_type>((buffer_.size() - npback) * sizeof(char_type));
 				int l = unzReadCurrentFile(handler_, reinterpret_cast<char*>(&buffer_.at(npback)), byte - 1);
 				if (l <= 0) return traits::eof();
@@ -82,20 +82,20 @@ namespace clx {
 			}
 			else return traits::eof();
 		}
-		
+
 		virtual int_type uflow() {
 			int_type c = this->underflow();
 			if (!traits::eq_int_type(c, traits::eof())) this->gbump(1);
 			return c;
 		}
-		
+
 	private:
 		typedef std::basic_streambuf<CharT, Traits> super;
-		
+
 		handler_type handler_;
 		container buffer_;
 	};
-	
+
 	/* --------------------------------------------------------------------- */
 	//  basic_unzip_stream
 	/* --------------------------------------------------------------------- */
@@ -110,41 +110,41 @@ namespace clx {
 		typedef std::basic_string<CharT, Traits> string_type;
 		typedef basic_unzip_streambuf<CharT, Traits> streambuf_type;
 		typedef typename streambuf_type::size_type size_type;
-		
+
 		enum { nbuf = 65536 };
-		
+
 		explicit basic_unzip_stream(handler_type h, size_type n = nbuf) :
-			super(0), sbuf_(h, n), handler_(NULL), path_() {
+			super(0), sbuf_(h, n), handler_(nullptr), path_() {
 			this->rdbuf(&sbuf_);
 			this->open(h);
 		}
-		
+
 		virtual ~basic_unzip_stream() throw() {
 			this->close();
 		}
-		
+
 		const string_type& path() const { return path_; }
-		
+
 	private:
 		typedef std::basic_istream<CharT, Traits> super;
-		
+
 		streambuf_type sbuf_;
 		handler_type handler_;
 		string_type path_;
-		
+
 		basic_unzip_stream& open(handler_type h) {
 			handler_ = h;
 			if (handler_) {
 				char path[65536];
 				unz_file_info info;
-				unzGetCurrentFileInfo(handler_, &info, path, sizeof(path), NULL, 0, NULL, 0);
+				unzGetCurrentFileInfo(handler_, &info, path, sizeof(path), nullptr, 0, nullptr, 0);
 				path_ = path;
 			}
 			return *this;
 		}
-		
+
 		void close() {
-			this->rdbuf(0); 
+			this->rdbuf(0);
 			path_.clear();
 		}
 	};

@@ -175,7 +175,7 @@ void CTTNMQTT::on_connect(int rc)
 			m_IsConnected = true;
 			sOnConnected(this);
 		}
-		subscribe(NULL, m_TopicIn.c_str());
+		subscribe(nullptr, m_TopicIn.c_str());
 	}
 	else {
 		Log(LOG_ERROR, "Connection failed!, restarting (rc=%d)", rc);
@@ -228,7 +228,7 @@ bool CTTNMQTT::ConnectIntEx()
 			Log(LOG_STATUS, "Enabled TLS mode");
 		}
 	}
-	rc = username_pw_set((!m_UserName.empty()) ? m_UserName.c_str() : NULL, (!m_Password.empty()) ? m_Password.c_str() : NULL);
+	rc = username_pw_set((!m_UserName.empty()) ? m_UserName.c_str() : nullptr, (!m_Password.empty()) ? m_Password.c_str() : nullptr);
 
 	rc = connect(m_szIPAddress.c_str(), m_usIPPort, keepalive);
 	if (rc != MOSQ_ERR_SUCCESS)
@@ -273,7 +273,7 @@ void CTTNMQTT::Do_Work()
 			sec_counter++;
 
 			if (sec_counter % 12 == 0) {
-				m_LastHeartbeat = mytime(NULL);
+				m_LastHeartbeat = mytime(nullptr);
 			}
 
 			if (bFirstTime)
@@ -316,7 +316,7 @@ void CTTNMQTT::SendMessage(const std::string &Topic, const std::string &Message)
 			Log(LOG_STATUS, "Not Connected, failed to send message: %s", Message.c_str());
 			return;
 		}
-		publish(NULL, Topic.c_str(), Message.size(), Message.c_str());
+		publish(nullptr, Topic.c_str(), Message.size(), Message.c_str());
 	}
 	catch (...)
 	{
@@ -363,7 +363,7 @@ void CTTNMQTT::FlagSensorWithChannelUsed(Json::Value &root, const std::string &s
 
 void CTTNMQTT::UpdateUserVariable(const std::string &varName, const std::string &varValue)
 {
-	std::string szLastUpdate = TimeToString(NULL, TF_DateTime);
+	std::string szLastUpdate = TimeToString(nullptr, TF_DateTime);
 
 	int ID;
 
@@ -390,7 +390,7 @@ void CTTNMQTT::UpdateUserVariable(const std::string &varName, const std::string 
 int CTTNMQTT::GetAddDeviceAndSensor(const int m_HwdID, const std::string &DeviceName, const std::string &MacAddress)
 {
 	int DeviceID = 0;
-	
+
 	//Debug(DEBUG_NORM, "Looking for Device and Sensor (%d): .%s. , .%s.", m_HwdID, DeviceName.c_str(), MacAddress.c_str());
 
 	//Get our internal device_id, if not found, add it
@@ -543,7 +543,7 @@ int CTTNMQTT::CalcDomoticsRssiFromLora(const int gwrssi, const float gwsnr)
 	// rssi between -150 and 0 dBm
 	// snr between -20 and +10 dB
 	// Oikomaticz expects something between 0 and 11 of what?
-	// But 0 feels weird as how could we measure 'no signal' 
+	// But 0 feels weird as how could we measure 'no signal'
 	if (iCalc >= -30 || rint(gwsnr) > 7)
 		iCalc = 9;
 	else if (iCalc > -40)
@@ -991,7 +991,7 @@ void CTTNMQTT::on_message(const struct mosquitto_message *message)
 
 		// Now we have processed all readings for all channels
 		// If we have not seen any GPS data on any channel in this payload
-		// and the metadata contains Location coordinates, let's process these 
+		// and the metadata contains Location coordinates, let's process these
 		if(iGps == 0 && !(devlat == 0 || devlon == 0))
 		{
 			std::stringstream sstr;
@@ -1023,7 +1023,7 @@ void CTTNMQTT::on_message(const struct mosquitto_message *message)
 			// We have Geo Location data of the sensor AND of the gateway, so we can calculate the distance
 			if (iGps > 1)
 			{
-				Log(LOG_STATUS, "More than 1 GPS measurements found! Unable to determine which one to pick for distance calculations!"); 
+				Log(LOG_STATUS, "More than 1 GPS measurements found! Unable to determine which one to pick for distance calculations!");
 			}
 			else if (!(ssrlat == 0 && ssrlon == 0))
 			{

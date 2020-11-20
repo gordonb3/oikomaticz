@@ -101,7 +101,7 @@ Py_ssize_t _PyDict_KeysSize(PyDictKeysObject *keys);
 PyObject *_PyDict_SizeOf(PyDictObject *);
 PyObject *_PyDict_Pop(PyDictObject *, PyObject *, PyObject *);
 PyObject *_PyDict_FromKeys(PyObject *, PyObject *, PyObject *);
-#define _PyDict_HasSplitTable(d) ((d)->ma_values != NULL)
+#define _PyDict_HasSplitTable(d) ((d)->ma_values != nullptr)
 
 PyAPI_FUNC(int) PyDict_ClearFreeList(void);
 #endif

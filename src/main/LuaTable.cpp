@@ -240,7 +240,7 @@ void CLuaTable::Publish()
 		m_luatable.clear();
 	}
 	else
-		_log.Log(LOG_ERROR, "Lua table %s is not published. Not all sub tables are closed!", m_name.c_str());	
+		_log.Log(LOG_ERROR, "Lua table %s is not published. Not all sub tables are closed!", m_name.c_str());
 }
 
 

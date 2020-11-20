@@ -46,7 +46,7 @@ const char* RFX_Humidity_Status_Desc(const unsigned char status)
 		{ humstat_comfort, "Comfortable" },
 		{ humstat_dry, "Dry" },
 		{ humstat_wet, "Wet" },
-		{ 0,NULL,NULL }
+		{ 0, nullptr, nullptr }
 	};
 	return findTableIDSingle1(Table, status);
 }
@@ -93,7 +93,7 @@ const char* Security_Status_Desc(const unsigned char status)
 	{ sStatusAlarmDelayedTamper, "Alarm Delayed + Tamper" },
 	{ sStatusMotionTamper, "Motion + Tamper" },
 	{ sStatusNoMotionTamper, "No Motion + Tamper" },
-	{ 0, NULL }
+	{ 0, nullptr }
 	};
 	return findTableIDSingle1(Table, status);
 }
@@ -108,7 +108,7 @@ const char* RFX_Forecast_Desc(const unsigned char Forecast)
 	{ baroForecastPartlyCloudy, "Partly Cloudy" },
 	{ baroForecastCloudy, "Cloudy" },
 	{ baroForecastRain, "Rain" },
-	{ 0,NULL,NULL }
+	{ 0, nullptr, nullptr }
 	};
 	return findTableIDSingle1(Table, Forecast);
 }
@@ -127,7 +127,7 @@ const char* RFX_WSForecast_Desc(const unsigned char Forecast)
 	{ wsbaroforecast_unknown, "Unknown" },
 	{ wsbaroforecast_unstable, "Unstable" },
 	{ wsbaroforecast_stable, "Stable" },
-	{ 0, NULL, NULL }
+	{ 0, nullptr, nullptr }
 	};
 	return findTableIDSingle1(Table, Forecast);
 }
@@ -143,7 +143,7 @@ const char* BMP_Forecast_Desc(const unsigned char Forecast)
 	{ bmpbaroforecast_thunderstorm, "Thunderstorm" },
 	{ bmpbaroforecast_unknown, "Unknown" },
 	{ bmpbaroforecast_rain, "Cloudy/Rain" },
-	{ 0, NULL, NULL }
+	{ 0, nullptr, nullptr }
 	};
 	return findTableIDSingle1(Table, Forecast);
 }
@@ -218,7 +218,7 @@ const char* RFX_Type_Desc(const unsigned char i, const unsigned char snum)
 	{ pTypeWEATHER, "Weather" , "weather" },
 	{ pTypeSOLAR, "Solar" , "solar" },
 	{ pTypeHunter, "Hunter" , "Hunter" },
-	{ 0, NULL, NULL }
+	{ 0, nullptr, nullptr }
 	};
 	if (snum == 1)
 		return findTableIDSingle1(Table, i);
@@ -644,7 +644,7 @@ const char* RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 	{ pTypeGeneralSwitch, sSwitchTypeDrayton, "Drayton" },
 	{ pTypeGeneralSwitch, sSwitchTypeV2Phoenix, "V2Phoenix" },
 	{ pTypeGeneralSwitch, sSwitchGeneralContact, "Contact" },
-	{ 0,0,NULL }
+	{ 0, 0, nullptr }
 	};
 	return findTableID1ID2(Table, dType, sType);
 }
@@ -660,7 +660,7 @@ const char* ZWave_Clock_Days(const unsigned char Day)
 	{ 4, "Friday" },
 	{ 5, "Saturday" },
 	{ 6, "Sunday" },
-	{ 0, NULL, NULL }
+	{ 0, nullptr, nullptr }
 	};
 	return findTableIDSingle1(Table, Day);
 }
@@ -682,7 +682,7 @@ const char *ZWave_Thermostat_Modes[] =
 "Cool Econ",
 "Away",
 "Unknown",
-NULL
+nullptr
 };
 */
 const char* ZWave_Thermostat_Fan_Modes[] =
@@ -695,7 +695,7 @@ const char* ZWave_Thermostat_Fan_Modes[] =
 	"Unknown 5",
 	"Circulate",
 	"Unknown",
-	NULL
+	nullptr
 };
 
 int Lookup_ZWave_Thermostat_Modes(const std::vector<std::string>& Modes, const std::string& sMode)
@@ -713,7 +713,7 @@ int Lookup_ZWave_Thermostat_Modes(const std::vector<std::string>& Modes, const s
 int Lookup_ZWave_Thermostat_Fan_Modes(const std::string& sMode)
 {
 	int ii = 0;
-	while (ZWave_Thermostat_Fan_Modes[ii] != NULL)
+	while (ZWave_Thermostat_Fan_Modes[ii] != nullptr)
 	{
 		if (ZWave_Thermostat_Fan_Modes[ii] == sMode)
 		{
@@ -3720,7 +3720,7 @@ void ConvertToGeneralSwitchType(std::string& devid, int& dtype, int& subtype)
 		else if (subtype == sTypeBlindsT9) subtype = sSwitchTypeBrel;
 		else if (subtype == sTypeBlindsT10) subtype = sSwitchTypeDooya;
 		std::stringstream s_strid;
-		s_strid << std::hex << strtoul(devid.c_str(), NULL, 16);
+		s_strid << std::hex << strtoul(devid.c_str(), nullptr, 16);
 		unsigned long deviceid = 0;
 		s_strid >> deviceid;
 		deviceid = (unsigned long)((deviceid & 0xffffff00) >> 8);
