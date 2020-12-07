@@ -17724,7 +17724,7 @@ namespace http {
 		/**
 		 * Retrieve user session from store, without remote host.
 		 */
-		const WebEmStoredSession CWebServer::GetSession(const std::string & sessionId) {
+		WebEmStoredSession CWebServer::GetSession(const std::string & sessionId) {
 			//_log.Log(LOG_STATUS, "SessionStore : get...");
 			WebEmStoredSession session;
 

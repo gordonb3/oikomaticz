@@ -192,16 +192,16 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 		size_t q = 0;
 		size_t p = q;
 		int flag_done = 0;
-		std::string uri = params;
+		const std::string &uri = params;
 		while (!flag_done) {
-			q = uri.find("=", p);
+			q = uri.find('=', p);
 			if (q == std::string::npos)
 			{
 				break;
 			}
 			name = uri.substr(p, q - p);
 			p = q + 1;
-			q = uri.find("&", p);
+			q = uri.find('&', p);
 			if (q != std::string::npos)
 				value = uri.substr(p, q - p);
 			else {
@@ -209,8 +209,9 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 				flag_done = 1;
 			}
 			// the browser sends blanks as +
-			while (1) {
-				size_t p = value.find("+");
+			while (true)
+			{
+				size_t p = value.find('+');
 				if (p == std::string::npos)
 					break;
 				value.replace(p, 1, " ");
@@ -233,7 +234,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 					std::istringstream ss(req.content);
 					std::string csubstr;
 					int ii = 0;
-					std::string vName = "";
+					std::string vName;
 					while (!ss.eof())
 					{
 						safeGetline(ss, csubstr);
@@ -258,7 +259,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 									return false;
 								}
 								vName = csubstr.substr(npos + 6);
-								npos = vName.find("\"");
+								npos = vName.find('"');
 								if (npos == std::string::npos)
 								{
 									rep = reply::stock_reply(reply::bad_request);
@@ -270,7 +271,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 						}
 						else if (ii == 2)
 						{
-							if (csubstr.size() == 0)
+							if (csubstr.empty())
 							{
 								ii++;
 								//2 empty lines, rest is data
@@ -299,15 +300,14 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 
 
 	std::string str_params;
-	std::multimap<std::string, std::string>::const_iterator itt;
-	for (itt = parameters.begin(); itt != parameters.end(); ++itt)
+	for (const auto &p : parameters)
 	{
 		if (!str_params.empty())
 			str_params += " ";
 
-		str_params.append(itt->first);
+		str_params.append(p.first);
 		str_params.append("=");
-		str_params.append(itt->second);
+		str_params.append(p.second);
 	}
 
 	std::string fullexecmd = settings.php_cgi_path + " " + full_path;
@@ -343,15 +343,14 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	fullexecmd += " REMOTE_ADDR=" + req.host_address;
 	fullexecmd += " QUERY_STRING='" + szQueryString + "'";
 
-	std::vector<header>::const_iterator ittHeader;
-	for (ittHeader = req.headers.begin(); ittHeader != req.headers.end(); ++ittHeader)
+	for (const auto &header : req.headers)
 	{
-		std::string rName = "HTTP_" + ittHeader->name;
+		std::string rName = "HTTP_" + header.name;
 		stdreplace(rName, "-", "_");
 		stdupper(rName);
-		fullexecmd += " " + rName + "='" + ittHeader->value + "'";
+		fullexecmd += " " + rName + "='" + header.value + "'";
 
-		fcgi_params[rName] = CURLEncode::URLEncode(ittHeader->value);
+		fcgi_params[rName] = CURLEncode::URLEncode(header.value);
 	}
 #ifdef WIN32
 	fullexecmd = "SET QUERY_STRING=\""+szQueryString + "\" & " + fullexecmd;
@@ -429,6 +428,5 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	return true;
 }
 
-}
-}
-
+	} // namespace server
+} // namespace http

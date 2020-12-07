@@ -16,46 +16,52 @@ using namespace boost::placeholders;
 namespace http {
 namespace server {
 
-server_base::server_base(const server_settings & settings, request_handler & user_request_handler) :
-		io_service_(),
-		acceptor_(io_service_),
-		settings_(settings),
-		request_handler_(user_request_handler),
-		timeout_(20), // default read timeout in seconds
-		is_running(false),
-		is_stop_complete(false),
-		m_heartbeat_timer(io_service_) {
-	if (!settings.is_enabled()) {
-		throw std::invalid_argument("cannot initialize a disabled server (listening port cannot be empty or 0)");
-	}
-}
-
-void server_base::init(init_connectionhandler_func init_connection_handler, accept_handler_func accept_handler) {
-
-	init_connection_handler();
-
-	if (!new_connection_) {
-		throw std::invalid_argument("cannot initialize a server without a valid connection");
+	server_base::server_base(const server_settings &settings, request_handler &user_request_handler)
+		: io_service_()
+		, acceptor_(io_service_)
+		, request_handler_(user_request_handler)
+		, settings_(settings)
+		, timeout_(20)
+		, // default read timeout in seconds
+		is_running(false)
+		, is_stop_complete(false)
+		, m_heartbeat_timer(io_service_)
+	{
+		if (!settings.is_enabled())
+		{
+			throw std::invalid_argument("cannot initialize a disabled server (listening port cannot be empty or 0)");
+		}
 	}
 
-	// Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
-	boost::asio::ip::tcp::resolver resolver(io_service_);
-	boost::asio::ip::tcp::resolver::query query(settings_.listening_address, settings_.listening_port);
-	boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);
-	acceptor_.open(endpoint.protocol());
-	acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-	// bind to both ipv6 and ipv4 sockets for the "::" address only
-	if (settings_.listening_address == "::") {
-		acceptor_.set_option(boost::asio::ip::v6_only(false));
-	}
-	// bind to our port
-	acceptor_.bind(endpoint);
-	// listen for incoming requests
-	acceptor_.listen();
+	void server_base::init(const init_connectionhandler_func &init_connection_handler, accept_handler_func accept_handler)
+	{
 
-	// start the accept thread
-	acceptor_.async_accept(new_connection_->socket(), accept_handler);
-}
+		init_connection_handler();
+
+		if (!new_connection_)
+		{
+			throw std::invalid_argument("cannot initialize a server without a valid connection");
+		}
+
+		// Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
+		boost::asio::ip::tcp::resolver resolver(io_service_);
+		boost::asio::ip::tcp::resolver::query query(settings_.listening_address, settings_.listening_port);
+		boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);
+		acceptor_.open(endpoint.protocol());
+		acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+		// bind to both ipv6 and ipv4 sockets for the "::" address only
+		if (settings_.listening_address == "::")
+		{
+			acceptor_.set_option(boost::asio::ip::v6_only(false));
+		}
+		// bind to our port
+		acceptor_.bind(endpoint);
+		// listen for incoming requests
+		acceptor_.listen();
+
+		// start the accept thread
+		acceptor_.async_accept(new_connection_->socket(), accept_handler);
+	}
 
 void server_base::run() {
 	// The io_service::run() call will block until all asynchronous operations
@@ -104,7 +110,8 @@ void server_base::stop() {
 		if (!is_running && is_stop_complete) {
 			break;
 		}
-		if ((mytime(nullptr) - start) > timeout) {
+		if ((mytime(nullptr) - start) > timeout)
+		{
 			// timeout occurred
 			break;
 		}

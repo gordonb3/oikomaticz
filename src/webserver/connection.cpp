@@ -25,20 +25,18 @@ namespace http {
 		extern time_t last_write_time(const std::string& path);
 
 		// this is the constructor for plain connections
-		connection::connection(boost::asio::io_service& io_service,
-			connection_manager& manager,
-			request_handler& handler,
-			int read_timeout) :
-			connection_manager_(manager),
-			request_handler_(handler),
-			read_timeout_(read_timeout),
-			read_timer_(io_service, boost::posix_time::seconds(read_timeout)),
-			websocket_parser(boost::bind(&connection::MyWrite, this, _1), handler.Get_myWebem(), boost::bind(&connection::WS_Write, this, _1)),
-			status_(INITIALIZING),
-			default_abandoned_timeout_(20 * 60), // 20mn before stopping abandoned connection
-			abandoned_timer_(io_service, boost::posix_time::seconds(default_abandoned_timeout_)),
-			default_max_requests_(20),
-			send_buffer_(nullptr)
+		connection::connection(boost::asio::io_service &io_service, connection_manager &manager, request_handler &handler, int read_timeout)
+			: send_buffer_(nullptr)
+			, read_timeout_(read_timeout)
+			, read_timer_(io_service, boost::posix_time::seconds(read_timeout))
+			, default_abandoned_timeout_(20 * 60)
+			// 20mn before stopping abandoned connection
+			, abandoned_timer_(io_service, boost::posix_time::seconds(default_abandoned_timeout_))
+			, connection_manager_(manager)
+			, request_handler_(handler)
+			, status_(INITIALIZING)
+			, default_max_requests_(20)
+			, websocket_parser(boost::bind(&connection::MyWrite, this, _1), handler.Get_myWebem(), boost::bind(&connection::WS_Write, this, _1))
 		{
 			secure_ = false;
 			keepalive_ = false;
@@ -52,18 +50,18 @@ namespace http {
 
 #ifdef WWW_ENABLE_SSL
 		// this is the constructor for secure connections
-		connection::connection(boost::asio::io_service& io_service,
-			connection_manager& manager, request_handler& handler, int read_timeout, boost::asio::ssl::context& context) :
-			connection_manager_(manager),
-			request_handler_(handler),
-			read_timeout_(read_timeout),
-			read_timer_(io_service, boost::posix_time::seconds(read_timeout)),
-			websocket_parser(boost::bind(&connection::MyWrite, this, _1), handler.Get_myWebem(), boost::bind(&connection::WS_Write, this, _1)),
-			status_(INITIALIZING),
-			default_abandoned_timeout_(20 * 60), // 20mn before stopping abandoned connection
-			abandoned_timer_(io_service, boost::posix_time::seconds(default_abandoned_timeout_)),
-			default_max_requests_(20),
-			send_buffer_(nullptr)
+		connection::connection(boost::asio::io_service &io_service, connection_manager &manager, request_handler &handler, int read_timeout, boost::asio::ssl::context &context)
+			: send_buffer_(nullptr)
+			, read_timeout_(read_timeout)
+			, read_timer_(io_service, boost::posix_time::seconds(read_timeout))
+			, default_abandoned_timeout_(20 * 60)
+			// 20mn before stopping abandoned connection
+			, abandoned_timer_(io_service, boost::posix_time::seconds(default_abandoned_timeout_))
+			, connection_manager_(manager)
+			, request_handler_(handler)
+			, status_(INITIALIZING)
+			, default_max_requests_(20)
+			, websocket_parser(boost::bind(&connection::MyWrite, this, _1), handler.Get_myWebem(), boost::bind(&connection::WS_Write, this, _1))
 		{
 			secure_ = true;
 			keepalive_ = false;
@@ -81,9 +79,7 @@ namespace http {
 			if (secure_) {
 				return sslsocket_->lowest_layer();
 			}
-			else {
-				return socket_->lowest_layer();
-			}
+			return socket_->lowest_layer();
 		}
 #else
 		// alternative: get the attached client socket of this connection if ssl is not compiled in
@@ -301,11 +297,10 @@ namespace http {
 
 			if (sendfile_.is_open())
 				sendfile_.close();
-			if (send_buffer_)
-				delete[] send_buffer_;
+
+			delete[] send_buffer_;
 			send_buffer_ = nullptr;
 			connection_manager_.stop(shared_from_this());
-			return;
 		}
 
 		bool connection::send_file(const std::string& filename, std::string& attachment_name, reply& rep)
@@ -333,7 +328,7 @@ namespace http {
 			reply::add_header(&rep, "Last-Modified", convert_to_http_date(ftime));
 			reply::add_header(&rep, "Server", "Apache/2.2.22");
 
-			std::size_t last_dot_pos = filename.find_last_of(".");
+			std::size_t last_dot_pos = filename.find_last_of('.');
 			if (last_dot_pos != std::string::npos) {
 				std::string file_extension = filename.substr(last_dot_pos + 1);
 				std::string mime_type = mime_types::extension_to_type(file_extension);
@@ -561,11 +556,11 @@ This does not seem to print the correct request
 		connection::~connection()
 		{
 			// free up resources, delete the socket pointers
-			if (socket_) delete socket_;
+			delete socket_;
 #ifdef WWW_ENABLE_SSL
-			if (sslsocket_) delete sslsocket_;
+			delete sslsocket_;
 #endif
-			if (send_buffer_) delete[] send_buffer_;
+			delete[] send_buffer_;
 		}
 
 		// schedule read timeout timer

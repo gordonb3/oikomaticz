@@ -20,7 +20,7 @@ namespace http {
 class CWebServer : public session_store, public std::enable_shared_from_this<CWebServer>
 {
 	typedef boost::function< void(WebEmSession & session, const request& req, Json::Value &root) > webserver_response_function;
-public:
+      public:
 	struct _tCustomIcon
 	{
 		int idx;
@@ -30,7 +30,7 @@ public:
 	};
 	CWebServer(void);
 	~CWebServer(void);
-	bool StartServer(server_settings & settings, const std::string &serverpath, const bool bIgnoreUsernamePassword);
+	bool StartServer(server_settings & settings, const std::string &serverpath, bool bIgnoreUsernamePassword);
 	void StopServer();
 	void RegisterCommandCode(const char* idname, webserver_response_function ResponseFunction, bool bypassAuthentication=false);
 	void RegisterRType(const char* idname, webserver_response_function ResponseFunction);
@@ -71,7 +71,7 @@ public:
 	void ReloadCustomSwitchIcons();
 
 	void LoadUsers();
-	void AddUser(const unsigned long ID, const std::string &username, const std::string &password, const int userrights, const int activetabs);
+	void AddUser(const unsigned long ID, const std::string &username, const std::string &password, int userrights, const int activetabs);
 	void ClearUserPasswords();
 	bool FindAdminUser();
 	int FindUser(const char* szUserName);
@@ -89,26 +89,26 @@ public:
 		const std::string &rowid,
 		const std::string &planID,
 		const std::string &floorID,
-		const bool bDisplayHidden,
-		const bool bDisplayDisabled,
-		const bool bFetchFavorites,
+		bool bDisplayHidden,
+		bool bDisplayDisabled,
+		bool bFetchFavorites,
 		const time_t LastUpdate,
 		const std::string &username,
 		const std::string &hardwareid = ""); // OTO
 
 	// SessionStore interface
-	const WebEmStoredSession GetSession(const std::string & sessionId) override;
+	WebEmStoredSession GetSession(const std::string & sessionId) override;
 	void StoreSession(const WebEmStoredSession & session) override;
 	void RemoveSession(const std::string & sessionId) override;
 	void CleanSessions() override;
 	void RemoveUsersSessions(const std::string& username, const WebEmSession & exceptSession);
 	std::string PluginHardwareDesc(int HwdID);
 
-private:
+      private:
 	void HandleCommand(const std::string &cparam, WebEmSession & session, const request& req, Json::Value &root);
 	void HandleRType(const std::string &rtype, WebEmSession & session, const request& req, Json::Value &root);
 
-	bool IsIdxForUser(const WebEmSession *pSession, const int Idx);
+	bool IsIdxForUser(const WebEmSession *pSession, int Idx);
 
 	//Commands
 	void Cmd_RFXComGetFirmwarePercentage(WebEmSession & session, const request& req, Json::Value &root);

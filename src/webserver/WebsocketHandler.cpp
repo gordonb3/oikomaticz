@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "WebsocketHandler.h"
+
+#include <utility>
 #include "main/localtime_r.h"
 #include "main/mainworker.h"
 #include "main/Helper.h"
@@ -12,13 +14,11 @@
 namespace http {
 	namespace server {
 
-		CWebsocketHandler::CWebsocketHandler(cWebem *pWebem, boost::function<void(const std::string &packet_data)> _MyWrite) :
-			m_Push(this),
-			sessionid(""),
-			MyWrite(_MyWrite),
-			myWebem(pWebem)
+		CWebsocketHandler::CWebsocketHandler(cWebem *pWebem, boost::function<void(const std::string &packet_data)> _MyWrite)
+			: MyWrite(std::move(_MyWrite))
+			, myWebem(pWebem)
+			, m_Push(this)
 		{
-
 		}
 
 		CWebsocketHandler::~CWebsocketHandler()
@@ -43,13 +43,13 @@ namespace http {
 					// todo: Add the username and rights from the original connection
 					if (outbound)
 					{
-							time_t	nowAnd1Day = ((time_t)mytime(nullptr)) + WEBSOCKET_SESSION_TIMEOUT;
-							session.timeout = nowAnd1Day;
-							session.expires = nowAnd1Day;
-							session.isnew = false;
-							session.forcelogin = false;
-							session.rememberme = false;
-							session.reply_status = 200;
+						time_t nowAnd1Day = ((time_t)mytime(nullptr)) + WEBSOCKET_SESSION_TIMEOUT;
+						session.timeout = nowAnd1Day;
+						session.expires = nowAnd1Day;
+						session.isnew = false;
+						session.forcelogin = false;
+						session.rememberme = false;
+						session.reply_status = 200;
 					}
 
 
@@ -151,8 +151,8 @@ namespace http {
 						scookie = scookie.substr(0, epos);
 					}
 				}
-				size_t upos = scookie.find("_", fpos);
-				size_t ppos = scookie.find(".", upos);
+				size_t upos = scookie.find('_', fpos);
+				size_t ppos = scookie.find('.', upos);
 				time_t now = mytime(nullptr);
 				if ((fpos != std::string::npos) && (upos != std::string::npos) && (ppos != std::string::npos))
 				{
@@ -252,5 +252,5 @@ namespace http {
 			}
 		}
 
-	}
-}
+	} // namespace server
+} // namespace http
