@@ -6702,6 +6702,8 @@ void MainWorker::decode_evohome2(const CDomoticzHardwareBase* pHardware, const t
 					if (pEvo->mode == pEvoHW->zmTmp)
 					{
 						std::string szISODate(CEvohomeDateTime::GetISODate(pEvo));
+						if (pHardware->HwdType == hardware::type::EVOHOME_WEB)
+							szISODate.append(1,'Z');
 						if (strarray.size() < 4) //add or set until
 							strarray.push_back(szISODate);
 						else
@@ -6713,6 +6715,7 @@ void MainWorker::decode_evohome2(const CDomoticzHardwareBase* pHardware, const t
 						if ((pEvo->year != 0) && (pEvo->year != 0xFFFF))
 						{
 							std::string szISODate(CEvohomeDateTime::GetISODate(pEvo));
+							szISODate.append(1,'Z');
 							if (strarray.size() < 4) //add or set until
 								strarray.push_back(szISODate);
 							else

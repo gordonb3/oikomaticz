@@ -498,8 +498,11 @@ bool CEvohomeWeb::SetSetpoint(const char *pdata)
 		if ((!HeatingZone->jSchedule.isNull()) || evohome::WebAPI::v2->get_zone_schedule(HeatingZone->szZoneId))
 		{
 			szuntil = evohome::WebAPI::v2->get_next_switchpoint(HeatingZone, szsetpoint, RETURN_UTC_TIME);
+			_log.Debug(DEBUG_HARDWARE, "(%s) using schedule to restore zone %s to %s degrees until %s", m_Name.c_str(), zoneId.c_str(), szsetpoint.c_str(), szuntil.c_str());
 			pEvo->temperature = (int16_t)(strtod(szsetpoint.c_str(), nullptr) * 100);
 		}
+		else
+			_log.Log(LOG_ERROR, "(%s) failed to retrieve schedule information for zone %s", m_Name.c_str(), zoneId.c_str());
 
 		if ((m_showSchedule) && (!szuntil.empty()))
 		{
