@@ -813,8 +813,8 @@ std::string EvohomeClient2::get_next_switchpoint(evohome::device::zone *zone, st
 			time_t ntime = mktime(&ltime);
 			if (ntime > now)
 				found = true;
-			else if ((*jSwitchpoint).isMember("temperature"))
-				szCurrentSetpoint = (*jSwitchpoint)["temperature"].asString();
+			else if ((*jSwitchpoint).isMember("heatSetpoint"))
+				szCurrentSetpoint = (*jSwitchpoint)["heatSetpoint"].asString();
 			else
 				szCurrentSetpoint = (*jSwitchpoint)["dhwState"].asString();
 		}
