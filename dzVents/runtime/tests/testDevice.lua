@@ -1653,6 +1653,25 @@ describe('device', function()
 			assert.is_same({ { ["myHue"] = "Off" } }, commandArray)
 		end)
 
+		it('should detect a Thermostat operating state device', function()
+			local device = getDevice(domoticz, {
+				['idx'] = 1,
+				['type'] = 'General',
+				['name'] = 'myThermostat operating state device',
+				['subType'] = 'Thermostat Operating State',
+				['nValue'] = 0,
+			})
+
+			assert.is_same('Idle', device.modeString)
+			assert.is_same('Idle, Cooling, Heating', device.modes)
+			assert.is_same(0, device.mode)
+
+			commandArray = {}
+			device.updateMode('Cooling')
+			assert.is_same({ { ['UpdateDevice'] = { ['_trigger'] = true, ['idx'] = 1, ['nValue'] = 1, ['sValue'] = 'cooling' } }  }, commandArray)
+
+		end)
+
 		it('should detect a youless device', function()
 			local device = getDevice(domoticz, {
 				['name'] = 'myYouless',
@@ -1705,6 +1724,42 @@ describe('device', function()
 				device.quietOff()
 				assert.is_same({ 'http://127.0.0.1:8080/json.htm?type=command&param=udevice&nvalue=0&svalue=0&idx=1' }, commandArray)
 			end)
+		end)
+
+		describe('Quiet device ( updateQuiet', function()
+
+			local commandArray = {}
+			domoticz.openURL = function(url)
+				return table.insert(commandArray, url)
+			end
+
+			local device = getDevice(domoticz, {
+				['name'] = 'quietDevice',
+				['state'] = 'On',
+					['type'] = 'Light/Switch',
+				['subType'] = 'RGBWW',
+				['type'] = 'Color Switch'
+			})
+
+			it('should handle the updateQuiet method correctly )', function()
+				commandArray = {}
+				device.updateQuiet() -- fail (no parms)
+				assert.is_same({  }, commandArray) -- empty
+
+				commandArray = {}
+				device.updateQuiet('string only') -- only svalue
+				assert.is_same({ 'http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=1&svalue=string+only'  }, commandArray)
+
+				commandArray = {}
+				device.updateQuiet(7) -- only nvalue
+				assert.is_same({ 'http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=1&nvalue=7'  }, commandArray)
+
+				commandArray = {}
+				device.updateQuiet(7, '(string plus)') -- nvalue, svalue
+				assert.is_same({ 'http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=1&svalue=%28string+plus%29&nvalue=7'   }, commandArray)
+
+			end)
+
 		end)
 
 		describe('RGBW device #RGB', function()

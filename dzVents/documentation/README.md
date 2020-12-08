@@ -861,23 +861,24 @@ The domoticz object has these constants available for use in your code e.g. `dom
 
 **IMPORTANT:  you have to prefix these constants with the name of your domoticz object. Example: `domoticz.ALERTLEVEL_RED`**:
 
- - **ALERTLEVEL_GREY**, **ALERTLEVEL_GREEN**, **ALERTLEVEL_ORANGE**, **ALERTLEVEL_RED**, **ALERTLEVEL_YELLOW**: for updating text sensors.
- - **BASETYPE_CUSTOM_EVENT** <sup>3.0.0</sup>,**BASETYPE_DEVICE**, **BASETYPE_SCENE**, **BASETYPE_GROUP**, **BASETYPE_HARDWARE** <sup>3.0.7</sup>, **BASETYPE_VARIABLE**, **BASETYPE_SECURITY**, **BASETYPE_TIMER**, **BASETYPE_HTTP_RESPONSE**, **BASETYPE_SYSTEM**<sup>3.0.0</sup>: indicators for the various object types that are passed as the second parameter to the execute function. E.g. you can check if an object is a device object:
+ - **ALERTLEVEL_GREY, ALERTLEVEL_GREEN, ALERTLEVEL_ORANGE, ALERTLEVEL_RED, ALERTLEVEL_YELLOW**: for updating text sensors.
+ - **BASETYPE_CUSTOM_EVENT <sup>3.0.0</sup>,BASETYPE_DEVICE, BASETYPE_SCENE, BASETYPE_GROUP, BASETYPE_HARDWARE** <sup>3.0.7</sup>, **BASETYPE_VARIABLE, BASETYPE_SECURITY, BASETYPE_TIMER, BASETYPE_HTTP_RESPONSE, BASETYPE_SYSTEM**<sup>3.0.0</sup>: indicators for the various object types that are passed as the second parameter to the execute function. E.g. you can check if an object is a device object:
 	```Lua
 	if (item.baseType == domoticz.BASETYPE_DEVICE) then ... end
 	```
 
  - **BARO_CLOUDY, BARO_CLOUDY_RAIN, BARO_STABLE, BARO_SUNNY, BARO_THUNDERSTORM, BARO_NOINFO, BARO_UNSTABLE, BARO_COMPUTE** : for updating barometric values.
- - **EVENT_TYPE_DEVICE, EVENT_TYPE_VARIABLE, EVENT_TYPE_CUSTOM<sup>3.0.0</sup>EVENT_TYPE_SECURITY,  EVENT_TYPE_HTTPRESPONSE, EVENT_TYPE_SYSTEM<sup>3.0.0</sup> EVENT_TYPE_TIMER**: triggerInfo types passed to the execute function in your scripts.
+ - **EVENT_TYPE_DEVICE, EVENT_TYPE_VARIABLE, EVENT_TYPE_CUSTOM**, <sup>3.0.0</sup> **EVENT_TYPE_SECURITY,  EVENT_TYPE_HTTPRESPONSE, EVENT_TYPE_SYSTEM,** <sup>3.0.0</sup> **EVENT_TYPE_TIMER**: triggerInfo types passed to the execute function in your scripts.
  - **EVOHOME_MODE_AUTO, EVOHOME_MODE_TEMPORARY_OVERRIDE, EVOHOME_MODE_PERMANENT_OVERRIDE, EVOHOME_MODE_FOLLOW_SCHEDULE**: mode for EvoHome system.
  - **EVOHOME_MODE_AUTO, EVOHOME_MODE_AUTOWITHRESET, EVOHOME_MODE_AUTOWITHECO, EVOHOME_MODE_AWAY, EVOHOME_MODE_DAYOFF, EVOHOME_MODE_CUSTOM, EVOHOME_MODE_HEATINGOFF** : mode for EvoHome controller
  - **HUM_COMFORTABLE, HUM_DRY, HUM_NORMAL, HUM_WET, HUM_COMPUTE** <sup>3.0.15</sup>: constant for humidity status.
- - **INTEGER**, **FLOAT**, **STRING**, **DATE**, **TIME**: variable types.
- - **LOG_DEBUG**, **LOG_ERROR**, **LOG_INFO**, **LOG_FORCE**: for logging messages. LOG_FORCE is at the same level as LOG_ERROR.
- - **NSS_FIREBASE, NSS_FIREBASE_CLOUD_MESSAGING, NSS_GOOGLE_DEVICES <sup>3.0.10</sup> <sup>Only with installed casting plugin</sup>, NSS_HTTP, NSS_KODI, NSS_LOGITECH_MEDIASERVER, NSS_NMA,NSS_PROWL, NSS_PUSHALOT, NSS_PUSHBULLET, NSS_PUSHOVER, NSS_PUSHSAFER, NSS_TELEGRAM, NSS_GOOGLE_CLOUD_MESSAGING** <sup>deprecated by Google and replaced by firebase</sup>: for notification subsystem
- - **PRIORITY_LOW**, **PRIORITY_MODERATE**, **PRIORITY_NORMAL**, **PRIORITY_HIGH**, **PRIORITY_EMERGENCY**: for notification priority.
- - **SECURITY_ARMEDAWAY**, **SECURITY_ARMEDHOME**, **SECURITY_DISARMED**: for security state.
- - **SOUND_ALIEN** , **SOUND_BIKE**, **SOUND_BUGLE**, **SOUND_CASH_REGISTER**, **SOUND_CLASSICAL**, **SOUND_CLIMB** , **SOUND_COSMIC**, **SOUND_DEFAULT** , **SOUND_ECHO**, **SOUND_FALLING**  , **SOUND_GAMELAN**, **SOUND_INCOMING**, **SOUND_INTERMISSION**, **SOUND_MAGIC** , **SOUND_MECHANICAL**, **SOUND_NONE**, **SOUND_PERSISTENT**, **SOUND_PIANOBAR** , **SOUND_SIREN** , **SOUND_SPACEALARM**, **SOUND_TUGBOAT**  , **SOUND_UPDOWN**: for notification sounds.
+ - **INTEGER, FLOAT, STRING, DATE, TIME**: variable types.
+ - **LOG_DEBUG, LOG_ERROR, LOG_INFO, LOG_FORCE: for logging messages. LOG_FORCE is at the same level as LOG_ERROR.
+ - **NSS_FIREBASE, NSS_FIREBASE_CLOUD_MESSAGING, NSS_GOOGLE_DEVICES,** <sup>3.0.10</sup> <sup>Only with installed casting plugin</sup>, **NSS_HTTP, NSS_KODI, NSS_LOGITECH_MEDIASERVER, NSS_NMA,NSS_PROWL, NSS_PUSHALOT, NSS_PUSHBULLET, NSS_PUSHOVER, NSS_PUSHSAFER, NSS_TELEGRAM, NSS_GOOGLE_CLOUD_MESSAGING** <sup>deprecated by Google and replaced by firebase</sup>: for notification subsystem
+ - **PRIORITY_LOW, PRIORITY_MODERATE, PRIORITY_NORMAL, PRIORITY_HIGH, PRIORITY_EMERGENCY**: for notification priority.
+ - **SECURITY_ARMEDAWAY, SECURITY_ARMEDHOME, SECURITY_DISARMED**: for security state.
+ - **STATE_IDLE, STATE_COOLING, STATE_HEATING**: for thermostat operating state.
+ - **SOUND_ALIEN , SOUND_BIKE, SOUND_BUGLE, SOUND_CASH_REGISTER, SOUND_CLASSICAL, SOUND_CLIMB , SOUND_COSMIC, SOUND_DEFAULT, SOUND_ECHO, SOUND_FALLING, SOUND_GAMELAN, SOUND_INCOMING, SOUND_INTERMISSION, SOUND_MAGIC, SOUND_MECHANICAL, SOUND_NONE, SOUND_PERSISTENT, SOUND_PIANOBAR , SOUND_SIREN, SOUND_SPACEALARM, SOUND_TUGBOAT, SOUND_UPDOWN**: for notification sounds.
 
 ## Custom event API
 If you have a dzVents script that is triggered by a customEvent in Domoticz then the second parameter passed to the execute function will be a *notification* object. The object.type = customEvent (isCustomEvent: true) and object.data contains the passed data to this script. object.trigger is the name of the customEvent that triggered the script.
@@ -927,6 +928,7 @@ If for some reason you miss a specific attribute or data for a device, then like
  - **timedOut**: *Boolean*. Is true when the device couldn't be reached.
  - **unit**: *Number*. Device unit. See device list in Domoticz' settings for the unit.
  - **update(< params >)**: *Function*. Generic update method. Accepts any number of parameters that will be sent back to Domoticz. There is no need to pass the device.id here. It will be passed for you. Example to update a temperature: `device.update(0,12)`. This will eventually result in a commandArray entry `['UpdateDevice']='<idx>|0|12'`. Supports [command options](#Command_options_.28delay.2C_duration.2C_event_triggering.29).
+- **updateQuiet(nValue, sValue)**: *Function*. <sup>3.0.18</sup> Uses the JSON/API to send nValue and/or sValue to domoticz (at least one should be supplied). Will update the device status in the GUI and trigger events but will not execute the action on the device. Only useful when the status in the GUI is not in line with the actual status. Supports [command options](#Command_options_.28delay.2C_duration.2C_event_triggering.29).
 
 ### Device attributes and methods for specific devices
 Note that if you do not find your specific device type here you can always inspect what is in the `rawData` attribute. Please let us know that it is missing so we can write an adapter for it (or you can write your own and submit it). Calling `myDevice.dump()` will dump all attributes and values for myDevice to the Domoticz log.
@@ -978,21 +980,26 @@ Note that if you do not find your specific device type here you can always inspe
  - **WhActual**: *Number*. Current Watt usage. (please use actualWatt)
  - **updateEnergy(energy)**: *Function*. In Watt. Supports [command options](#Command_options_.28delay.2C_duration.2C_event_triggering.29).
 
+#### Evohome (controller)
+ - **mode**: *string* <sup>3.0.0</sup>.
+ - **setMode(mode, dparm, action, ooc )**: *Function*. set mode for controller. Mode can be domoticz.EVOHOME_MODE_AUTO, domoticz.EVOHOME_MODE_AUTOWITHRESET, domoticz.EVOHOME_MODE_AUTOWITHECO, domoticz.EVOHOME_MODE_AWAY, domoticz.EVOHOME_MODE_DAYOFF, domoticz.EVOHOME_MODE_CUSTOM or domoticz.EVOHOME_MODE_HEATINGOFF. dParm <optional> can be a future time string (in ISO 8601 format e.g.: `os.date("!%Y-%m-%dT%TZ")`), a future time object, a future time as number of seconds since epoch or a number representing a positive offset in minutes (max 1 year). action <optional> (1 = run on action script, 0 = disable), ooc <optional> (1 = only trigger the event & log on change, 0 = always trigger & log)
+
+#### Evohome (hotWater)
+ - **state**: *string*  ('On' or 'Off')
+ - **mode**: *string*
+ - **untilDate**: *string in ISO 8601 format* or n/a.
+ - **setHotWater(state, mode, until)**: *Function*. set HotWater Mode can be domoticz.EVOHOME_MODE_AUTO, domoticz.EVOHOME_MODE_TEMPORARY_OVERRIDE, domoticz.EVOHOME_MODE_FOLLOW_SCHEDULE or domoticz.EVOHOME_MODE_PERMANENT_OVERRIDE You can provide an until date (in ISO 8601 format for domoticz.EVOHOME_MODE_TEMPORARY_OVERRIDE e.g.: `os.date("!%Y-%m-%dT%TZ")`).
+
+#### Evohome (relay)
+ - **state**: *string*  ('On' or 'Off')
+ - **level**: *number*  (level percentage)
+ - **active**: *boolean* (true when state is not equal to 'Off', false otherwise)
+
 #### Evohome (zones)
  - **setPoint**: *Number*.
  - **mode**: *string* .
  - **untilDate**: *string in ISO 8601 format* or n/a .
  - **updateSetPoint(setPoint, mode, until)**: *Function*. Update set point. Mode can be domoticz.EVOHOME_MODE_AUTO, domoticz.EVOHOME_MODE_TEMPORARY_OVERRIDE, domoticz.EVOHOME_MODE_FOLLOW_SCHEDULE or domoticz.EVOHOME_MODE_PERMANENT_OVERRIDE. You can provide an until date (in ISO 8601 format e.g.: `os.date("!%Y-%m-%dT%TZ")`). Supports [command options](#Command_options_.28delay.2C_duration.2C_event_triggering.29).
-
-#### Evohome (controller)
- - **mode**: *string* <sup>3.0.0</sup>.
- - **setMode(mode, dparm, action, ooc )**: *Function*. set mode for controller. Mode can be domoticz.EVOHOME_MODE_AUTO, domoticz.EVOHOME_MODE_AUTOWITHRESET, domoticz.EVOHOME_MODE_AUTOWITHECO, domoticz.EVOHOME_MODE_AWAY, domoticz.EVOHOME_MODE_DAYOFF, domoticz.EVOHOME_MODE_CUSTOM or domoticz.EVOHOME_MODE_HEATINGOFF. dParm <optional> can be a future time string (in ISO 8601 format e.g.: `os.date("!%Y-%m-%dT%TZ")`), a future time object, a future time as number of seconds since epoch or a number representing a positive offset in minutes (max 1 year). action <optional> (1 = run on action script, 0 = disable), ooc <optional> (1 = only trigger the event & log on change, 0 = always trigger & log)
-
-#### Evohome (hotWater) .
- - **state**: *string*  ('On' or 'Off')
- - **mode**: *string*
- - **untilDate**: *string in ISO 8601 format* or n/a.
- - **setHotWater(state, mode, until)**: *Function*. set HotWater Mode can be domoticz.EVOHOME_MODE_AUTO, domoticz.EVOHOME_MODE_TEMPORARY_OVERRIDE, domoticz.EVOHOME_MODE_FOLLOW_SCHEDULE or domoticz.EVOHOME_MODE_PERMANENT_OVERRIDE You can provide an until date (in ISO 8601 format for domoticz.EVOHOME_MODE_TEMPORARY_OVERRIDE e.g.: `os.date("!%Y-%m-%dT%TZ")`).
 
 #### Gas
  - **counter**: *Number*. Value in m<sup>3</sup>
@@ -1206,6 +1213,12 @@ There are many switch-like devices. Not all methods are applicable for all switc
 #### Thermostat set point
  - **setPoint**: *Number*.
  - **updateSetPoint(setPoint)**:*Function*. Supports [command options](#Command_options_.28delay.2C_duration.2C_event_triggering.29).
+
+#### Thermostat Operating state <sup>3.0.19</sup>
+ - **mode**: *Number*. Current mode
+ - **modes**: *String*. List of all modes
+ - **modeString**: *String*. Current mode
+ - **updateMode(mode)**:*Function*. Supports [command options](#Command_options_.28delay.2C_duration.2C_event_triggering.29).
 
 #### Thermostat type 3 (Mertik) <sup>3.0.15</sup>
  - **mode**: *Number*. Current mode
@@ -1567,7 +1580,8 @@ local someTime = domoticz.time.makeTime() -- someTime = new domoticz time object
  - **getISO**: *Function*. Returns the ISO 8601 formatted date.
  - **hour**: *Number*
  - **hoursAgo**: *Number*. Number of hours since the last update.
- - **isToday**: *Boolean*. Indicates if the device was updated today
+ - **isdst**: *Boolean*. <sup>3.0.18</sup> Indicates if time is in the daylight saving period
+ - **isToday**: *Boolean*. Indicates if time is today
  - **isUTC**: *Boolean*.
  - **makeTime(string | table,[isUTC])**: *domoticz time object*. returns domoticz time object based on first parameter (time as table or string) string format must be 'yyyy-mm-dd hh:mm:ss'. isUTC defaults to false.
  - **matchesRule(rule) **: *Function*. Returns true if the rule matches with the time. See [time trigger rules](#timer_trigger_rules) for rule examples.
@@ -2422,5 +2436,97 @@ Check out the documentation [here](https://htmlpreview.github.io/?https://github
 
 # History [link to changes in previous versions](https://www.domoticz.com/wiki/DzVents_version_History).
 
+## [3.0.19]
+- Add thermostat Operating State device adapter
+
+## [3.0.18]
+- Add isdst as (boolean) attribute to time object
+- Add updateQuiet() method to generic device
+- Fixed bug in dumpTable that caused infinite loop for table with self-reference
+
 ## [3.0.17]
 - Add timestampTodate, dateToTimestamp and date2date functions in Time
+
+## [3.0.16]
+- Add except as keyword in timeRules
+
+## [3.0.15]
+- Fixed bug in domoticz.time.matchesRule (daterange was ignored when "on mon, tue" was also part of the rule)
+- Add device adapter for Thermostat type 3 devices (Mertik)
+- Add utils.humidityStatus
+- Add option to have dzVents compute humidity status
+
+## [3.0.14]
+- Add utils.fuzzyLookup
+- Made eventHelpers more resilient to coding errors in the on = section
+
+## [3.0.13]
+- Add utils.osCommand (caption)
+- Improved utils.stringSplit (implicit conversion to number on request)
+- Made log function more resilient when logitem is table with embedded function(s)
+- Improved domoticz.snapshot() to enable snapshot of multiple cameras (in one Email)
+
+## [3.0.12]
+- Add option to use device, camera, group, scene and variable objects as parm to deviceExists(), groupExists(), sceneExists(), variableExists(), cameraExists() methods.
+
+## [3.0.11]
+- Add sensorValue attribute to custom sensor
+- Add solarnoon as moment in time (like sunrise / sunset )
+
+## [3.0.10]
+- Add NSS_GOOGLE_DEVICES for notification casting to Google home / Google chromecast
+- Add optional parm delay to domoticz.sendCommand, domoticz.email, domoticz.sms and domoticz.notify
+
+## [3.0.9]
+- Add dump() as function to object types: camera-, customEvent, hardware, systemEvent, HTTPResponse, security and time.
+- Add function toUTC to time object.
+- Allow table as parm to function makeTime
+
+## [3.0.8]
+- Allow IPv6 ::1 as localhost in domoticz settings
+- Fixed bug that occurred when using a decimal number in afterSec (openURL and emitEvent)
+- Implement optional use of parsetrigger parm in setValues to trigger any subsequent eventscripts
+- Updated round.utils to correctly handle negative numbers and round to zero decimals
+
+## [3.0.7]
+- Add domoticz.hardware() as separate object class
+
+## [3.0.6]
+- Add hardwareInfo() function
+
+## [3.0.5]
+- Add dumpSelection() method
+- Fixed settings.url
+
+## [3.0.4]
+- Convert HTTPResponse data to JSON / XML even when HTTPResponse does not fully comply with RFC
+- add isJSON, isXML functions to Utils
+
+## [3.0.3]
+- add isJSON, isXML, json, xml and customEvent attributes to customEvent object (consistent with response object)
+
+## [3.0.2]
+- Add `PUT` and `DELETE` support to `openURL`
+- Ensure sending integer in nValue in update function
+- Fix sValue for custom sensor
+
+## [3.0.1]
+- Add option `at()` to the various commands/methods
+- Add stringToSeconds() function
+
+## [3.0.0]
+ - Add system-events triggers as option to the on = { ... } section. Scripts can now be triggered based on these system-events:
+	 - start
+	 - stop
+	 - manualBackupFinished,
+	 - dailyBackupFinished
+	 - hourlyBackupFinished
+	 - monthlyBackupFinished
+
+ - Add custom-events triggers as option to the on = { ... } section. You can now send an event trigger to start subscribed dzVents scripts. customEvents can be triggered by:
+	 - dzVents domoticz.emitEvent(name, data )  --  command  (data = optional)
+	 - JSON: json.htm?type=command&param=customevent&event=MyEvent&data=myData ( data = optional )
+	 - MQTT: {"command" : "customevent", "event" :    "MyEvent" , "data" : "myData" } ( data = opt ional )
+ - Add method  domoticz.emitEvent()
+ - Add attribute `mode` to Evohome controller
+ - Add option to dumpTable() and ([device][uservariable][scene][group].dump() to os file
