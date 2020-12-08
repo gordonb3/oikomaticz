@@ -18,9 +18,9 @@
 class CEvohomeWeb : public CEvohomeBase
 {
       public:
-	CEvohomeWeb(int ID, const std::string &Username, const std::string &Password, const unsigned int refreshrate, const int UseFlags, const unsigned int installation);
+	CEvohomeWeb(int ID, const std::string &Username, const std::string &Password, unsigned int refreshrate, int UseFlags, unsigned int installation);
 	~CEvohomeWeb() override;
-	bool WriteToHardware(const char *pdata, const unsigned char length) override;
+	bool WriteToHardware(const char *pdata, unsigned char length) override;
 
       private:
 	// base functions
@@ -84,4 +84,3 @@ class CEvohomeWeb : public CEvohomeBase
 	std::vector<evohome::device::location> m_locations;
 	std::vector<std::vector<unsigned long>> m_vUnits;
 };
-

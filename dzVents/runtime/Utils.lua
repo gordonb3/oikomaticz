@@ -8,7 +8,7 @@ local self = {
 	LOG_INFO = 3,
 	LOG_WARNING = 3,
 	LOG_DEBUG = 4,
-	DZVERSION = '3.0.16',
+	DZVERSION = '3.0.17',
 }
 
 function jsonParser:unsupportedTypeEncoder(value_of_unsupported_type)
@@ -119,12 +119,15 @@ function self.fileExists(name)
 	return code ~= 2
 end
 
-function self.stringSplit(text, sep, convert)
+function self.stringSplit(text, sep, convertNumber, convertNil)
 	if not(text) then return {} end
 	local sep = sep or '%s'
+	local include = '+'
+	if convertNil then include = '*' end
 	local t = {}
-	for str in string.gmatch(text, "([^"..sep.."]+)") do
-		table.insert(t, ( convert and tonumber(str) ) or str)
+	for str in string.gmatch(text, "([^" ..sep.. "]" .. include .. ")" ) do
+		if convertNil and str == '' then str = convertNil end
+		table.insert(t, ( convertNumber and tonumber(str) ) or str)
 	end
 	return t
 end

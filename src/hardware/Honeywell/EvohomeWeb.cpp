@@ -208,7 +208,7 @@ bool CEvohomeWeb::StartSession()
 		{
 			std::vector<std::string> splitresults;
 			StringSplit(result[0][0], ";", splitresults);
-			if (splitresults.size()>0)
+			if (!splitresults.empty())
 				m_awaysetpoint = strtod(splitresults[0].c_str(), nullptr);
 			if (splitresults.size()>1)
 				m_wdayoff = atoi(splitresults[1].c_str()) % 7;
@@ -596,7 +596,7 @@ void CEvohomeWeb::DecodeControllerMode(evohome::device::temperatureControlSystem
 		CEvohomeDateTime::DecodeISODate(tsen, szsystemModeUntil.c_str());
 	}
 	tsen.status = sysmode;
-	sDecodeRXMessage(this, (const unsigned char *)&tsen, "Controller mode", -1);
+	sDecodeRXMessage(this, (const unsigned char *)&tsen, "Controller mode", -1, nullptr);
 
 	if (GetControllerName().empty() || m_updatedev)
 	{

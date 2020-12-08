@@ -243,7 +243,7 @@ void CDaikin::UpdateSwitchNew(const unsigned char Idx, const int /*SubUnit*/, co
 		gswitch.cmnd = gswitch_sOn;
 	gswitch.level = static_cast<uint8_t>(Level);
 	gswitch.rssi = 12;
-	sDecodeRXMessage(this, (const unsigned char*)&gswitch, defaultname.c_str(), 255);
+	sDecodeRXMessage(this, (const unsigned char *)&gswitch, defaultname.c_str(), 255, m_Name.c_str());
 }
 
 void CDaikin::GetMeterDetails()
@@ -251,6 +251,7 @@ void CDaikin::GetMeterDetails()
 	GetBasicInfo();
 	GetControlInfo();
 	GetSensorInfo();
+	GetYearPower();
 }
 
 void CDaikin::GetBasicInfo()
@@ -567,6 +568,80 @@ void CDaikin::GetSensorInfo()
 	}
 }
 
+void CDaikin::GetYearPower()
+{
+	std::string sResult;
+#ifdef DEBUG_DaikinR
+	sResult = ReadFile("E:\\Daikin_get_year_power.txt");
+#else
+	std::stringstream szURL;
+
+	if (m_Password.empty())
+	{
+		szURL << "http://" << m_szIPAddress << ":" << m_usIPPort;
+	}
+	else
+	{
+		szURL << "http://" << m_Username << ":" << m_Password << "@" << m_szIPAddress << ":" << m_usIPPort;
+	}
+
+	szURL << "/aircon/get_year_power_ex";
+
+	if (!HTTPClient::GET(szURL.str(), sResult))
+	{
+		Log(LOG_ERROR, "Error connecting to: %s", m_szIPAddress.c_str());
+		return;
+	}
+#endif
+#ifdef DEBUG_DaikinW
+	SaveString2Disk(sResult, "E:\\daikin_get_year_power.txt");
+#endif
+	// ret=OK,htemp=21.0,hhum=-,otemp=9.0,err=0,cmpfreq=35
+	// grp.update('compressorfreq', tonumber(data.cmpfreq))
+
+	if (sResult.find("ret=OK") == std::string::npos)
+	{
+		Log(LOG_ERROR, "Error getting data (check IP/Port)");
+		return;
+	}
+	std::vector<std::string> results;
+	StringSplit(sResult, ",", results);
+	if (results.size() < 4)
+	{
+		Log(LOG_ERROR, "Invalid data received");
+		return;
+	}
+
+	float cooltotalkWh = 0;
+	float heattotalkWh = 0;
+	for (const auto &sVar : results)
+	{
+		std::vector<std::string> results2;
+		StringSplit(sVar, "=", results2);
+		if (results2.size() != 2)
+			continue;
+		if (results2[0] == "curr_year_cool")
+		{
+            std::vector<std::string> months;
+            StringSplit(results2[1], "/", months);
+            for (std::string month : months) {
+                cooltotalkWh += static_cast<float>(atoi(month.c_str())) / 10; //energy saved as 0.1 kWh units
+            }
+			SendKwhMeter(30, 30, 255, 0, cooltotalkWh, "Cool kWh");
+		}
+		else if (results2[0] == "curr_year_heat")
+		{
+            std::vector<std::string> months;
+            StringSplit(results2[1], "/", months);
+            for (std::string month : months) {
+                heattotalkWh += static_cast<float>(atoi(month.c_str())) / 10; //energy saved as 0.1 kWh units
+            }
+			SendKwhMeter(31, 31, 255, 0, heattotalkWh, "Heat kWh");
+		}
+	}
+
+}
+
 bool CDaikin::SetLedOnOFF(const bool OnOFF)
 {
 	std::string sResult;
@@ -658,7 +733,7 @@ void CDaikin::InsertUpdateSwitchSelector(const unsigned char Idx, const bool bIs
 	}
 
 	result = m_sql.safe_query("SELECT nValue, BatteryLevel FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='0000000%d') AND (Type==%d) AND (Unit == '%d')", m_HwdID, sID, xcmd.type, xcmd.unitcode);
-	m_mainworker.PushAndWaitRxMessage(this, (const unsigned char*)&xcmd, defaultname.c_str(), 255);
+	m_mainworker.PushAndWaitRxMessage(this, (const unsigned char*)&xcmd, defaultname.c_str(), 255, m_Name.c_str());
 	if (result.empty())
 	{
 		// New Hardware -> Create the corresponding devices Selector

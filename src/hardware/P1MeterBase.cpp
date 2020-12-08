@@ -271,7 +271,7 @@ bool P1MeterBase::MatchLine()
 			m_phasecount = 0;	// disable further processing of individual phase instantaneous power entries
 
 		m_lastUpdateTime = m_receivetime;
-		sDecodeRXMessage(this, (const unsigned char *)&m_power, "Power", 255);
+		sDecodeRXMessage(this, (const unsigned char *)&m_power, "Power", 255, nullptr);
 
 		if ((m_currentTariff != m_lastTariff) && (m_power.powerusage2 > 0))
 		{
@@ -324,7 +324,7 @@ bool P1MeterBase::MatchLine()
 				// just accept it - we cannot sync to our clock
 				m_lastSharedSendGas = m_receivetime;
 				m_lastgasusage = m_gas.gasusage;
-				sDecodeRXMessage(this, (const unsigned char *)&m_gas, "Gas", 255);
+				sDecodeRXMessage(this, (const unsigned char *)&m_gas, "Gas", 255, nullptr);
 			}
 			else if (m_receivetime >= m_gasoktime)
 			{
@@ -339,7 +339,7 @@ bool P1MeterBase::MatchLine()
 					m_lastSharedSendGas = m_receivetime;
 					m_lastgasusage = m_gas.gasusage;
 					m_gasoktime += 300;
-					sDecodeRXMessage(this, (const unsigned char *)&m_gas, "Gas", 255);
+					sDecodeRXMessage(this, (const unsigned char *)&m_gas, "Gas", 255, nullptr);
 				}
 				else // gas clock is ahead
 				{
@@ -929,7 +929,7 @@ void P1MeterBase::UpsertSwitch(const int NodeID, const device::tswitch::type::va
 	pSwitch.unitcode = unit;
 	pSwitch.cmnd = switchstate;
 	pSwitch.seqnbr = 0;
-	m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&pSwitch, defaultname, 255);
+	m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&pSwitch, defaultname, 255, m_Name.c_str());
 
 	if (result.empty())
 	{

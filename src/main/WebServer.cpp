@@ -2939,6 +2939,10 @@ namespace http {
 
 		void CWebServer::Cmd_UpdateDevice(WebEmSession & session, const request& req, Json::Value &root)
 		{
+			std::string Username = "Admin";
+			if (!session.username.empty())
+				Username = session.username;
+
 			if (session.rights < 1)
 			{
 				session.reply_status = reply::forbidden;
@@ -3021,7 +3025,8 @@ namespace http {
 			{
 				batterylevel = atoi(sBatteryLevel.c_str());
 			}
-			if (m_mainworker.UpdateDevice(HardwareID, DeviceID, unit, devType, subType, invalue, svalue, signallevel, batterylevel, parseTrigger))
+			std::string szUpdateUser = Username + " (IP: " + session.remote_host + ")";
+			if (m_mainworker.UpdateDevice(HardwareID, DeviceID, unit, devType, subType, invalue, svalue, szUpdateUser, signallevel, batterylevel, parseTrigger))
 			{
 				root["status"] = "OK";
 				root["title"] = "Update Device";
@@ -4845,6 +4850,7 @@ namespace http {
 					if (switchtype == device::tswitch::type::Dimmer)
 						level = 5;
 				}
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
 				m_mainworker.SwitchLightInt(sd, switchcmd, level, NoColor, true, Username);
 			}
 			else if (cparam == "addswitch")
@@ -6776,7 +6782,7 @@ namespace http {
 					}
 				}
 
-				if (m_mainworker.SwitchModal(idx, switchcmd, action, onlyonchange, until) == true)//FIXME we need to return a status of already set / no update if ooc=="1" and no status update was performed
+				if (m_mainworker.SwitchEvoModal(idx, switchcmd, action, onlyonchange, until) == true)//FIXME we need to return a status of already set / no update if ooc=="1" and no status update was performed
 				{
 					root["status"] = "OK";
 					root["title"] = "Modal";
@@ -6825,6 +6831,8 @@ namespace http {
 					}
 				}
 
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+
 				if (bIsProtected)
 				{
 					if (passcode.empty())
@@ -6842,7 +6850,7 @@ namespace http {
 					m_sql.GetPreferencesVar("ProtectionPassword", nValue, rpassword);
 					if (passcode != rpassword)
 					{
-						_log.Log(LOG_ERROR, "User: %s initiated a switch command (Wrong code!)", Username.c_str());
+						_log.Log(LOG_ERROR, "User: %s initiated a switch command (Wrong code!)", szSwitchUser.c_str());
 						root["title"] = "SwitchLight";
 						root["status"] = "ERROR";
 						root["message"] = "WRONG CODE";
@@ -6850,10 +6858,10 @@ namespace http {
 					}
 				}
 
-				_log.Log(LOG_STATUS, "User: %s initiated a switch command (%s/%s/%s)", Username.c_str(), idx.c_str(), sSwitchName.c_str(), switchcmd.c_str());
+				_log.Log(LOG_STATUS, "User: %s initiated a switch command (%s/%s/%s)", szSwitchUser.c_str(), idx.c_str(), sSwitchName.c_str(), switchcmd.c_str());
 
 				root["title"] = "SwitchLight";
-				if (m_mainworker.SwitchLight(idx, switchcmd, level, "-1", onlyonchange, 0, Username) == true)
+				if (m_mainworker.SwitchLight(idx, switchcmd, level, "-1", onlyonchange, 0, szSwitchUser) == true)
 				{
 					root["status"] = "OK";
 				}
@@ -6874,6 +6882,8 @@ namespace http {
 				if (!session.username.empty())
 					Username = session.username;
 
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+
 				std::string idx = request::findValue(&req, "idx");
 				std::string switchcmd = request::findValue(&req, "switchcmd");
 				std::string passcode = request::findValue(&req, "passcode");
@@ -6885,7 +6895,7 @@ namespace http {
 				if (result.empty())
 				{
 					//Scene/Group not found!
-					_log.Log(LOG_ERROR, "User: %s, scene not found (idx=%s)!", Username.c_str(), idx.c_str());
+					_log.Log(LOG_ERROR, "User: %s, scene not found (idx=%s)!", szSwitchUser.c_str(), idx.c_str());
 					return;
 				}
 				bool bIsProtected = atoi(result[0][0].c_str()) != 0;
@@ -6908,13 +6918,13 @@ namespace http {
 						root["title"] = "SwitchScene";
 						root["status"] = "ERROR";
 						root["message"] = "WRONG CODE";
-						_log.Log(LOG_ERROR, "User: %s initiated a scene/group command (Wrong code!)", Username.c_str());
+						_log.Log(LOG_ERROR, "User: %s initiated a scene/group command (Wrong code!)", szSwitchUser.c_str());
 						return;
 					}
 				}
-				_log.Log(LOG_STATUS, "User: %s initiated a scene/group command", Username.c_str());
+				_log.Log(LOG_STATUS, "User: %s initiated a scene/group command", szSwitchUser.c_str());
 
-				if (m_mainworker.SwitchScene(idx, switchcmd, Username) == true)
+				if (m_mainworker.SwitchScene(idx, switchcmd, szSwitchUser) == true)
 				{
 					root["status"] = "OK";
 					root["title"] = "SwitchScene";
@@ -7122,7 +7132,8 @@ namespace http {
 				ival = std::min(ival, 100);
 
 				_log.Log(LOG_STATUS, "setcolbrightnessvalue: ID: %" PRIx64 ", bri: %d, color: '%s'", ID, ival, color.toString().c_str());
-				m_mainworker.SwitchLight(ID, "Set Color", (unsigned char)ival, color, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Set Color", (unsigned char)ival, color, false, 0, szSwitchUser);
 
 				root["status"] = "OK";
 				root["title"] = "SetColBrightnessValue";
@@ -7158,7 +7169,8 @@ namespace http {
 				_tColor color = _tColor(round(ival*255.0f/100.0f), ColorModeTemp);
 				_log.Log(LOG_STATUS, "setkelvinlevel: t: %f, color: '%s'", ival, color.toString().c_str());
 
-				m_mainworker.SwitchLight(ID, "Set Color", -1, color, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Set Color", -1, color, false, 0, szSwitchUser);
 			}
 			else if (cparam == "brightnessup")
 			{
@@ -7183,7 +7195,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Bright Up", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Bright Up", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "brightnessdown")
 			{
@@ -7208,7 +7221,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Bright Down", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Bright Down", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "discomode")
 			{
@@ -7233,7 +7247,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Disco Mode", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Disco Mode", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam.find("discomodenum") == 0 && cparam != "discomode" && cparam.size() == 13)
 			{
@@ -7260,7 +7275,8 @@ namespace http {
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
 				char szTmp[40];
 				sprintf(szTmp, "Disco Mode %s", cparam.substr(12).c_str());
-				m_mainworker.SwitchLight(ID, szTmp, 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, szTmp, 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "discoup")
 			{
@@ -7285,7 +7301,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Disco Up", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Disco Up", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "discodown")
 			{
@@ -7310,7 +7327,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Disco Down", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Disco Down", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "speedup")
 			{
@@ -7335,7 +7353,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Speed Up", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Speed Up", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "speeduplong")
 			{
@@ -7360,7 +7379,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Speed Up Long", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Speed Up Long", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "speeddown")
 			{
@@ -7385,7 +7405,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Speed Down", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Speed Down", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "speedmin")
 			{
@@ -7410,7 +7431,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Speed Minimal", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Speed Minimal", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "speedmax")
 			{
@@ -7435,7 +7457,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Speed Maximal", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Speed Maximal", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "warmer")
 			{
@@ -7460,7 +7483,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Warmer", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Warmer", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "cooler")
 			{
@@ -7485,7 +7509,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Cooler", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Cooler", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "fulllight")
 			{
@@ -7510,7 +7535,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Set Full", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Set Full", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "nightlight")
 			{
@@ -7535,7 +7561,8 @@ namespace http {
 				}
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
-				m_mainworker.SwitchLight(ID, "Set Night", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Set Night", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "whitelight")
 			{
@@ -7561,7 +7588,8 @@ namespace http {
 
 				uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
 				//TODO: Change to color with mode=ColorModeWhite and level=100?
-				m_mainworker.SwitchLight(ID, "Set White", 0, NoColor, false, 0, Username);
+				std::string szSwitchUser = Username + " (IP: " + session.remote_host + ")";
+				m_mainworker.SwitchLight(ID, "Set White", 0, NoColor, false, 0, szSwitchUser);
 			}
 			else if (cparam == "getfloorplanimages")
 			{
@@ -8890,11 +8918,13 @@ namespace http {
 					}
 					int hardwareID = atoi(sd[14].c_str());
 					auto hItt = _hardwareNames.find(hardwareID);
+					bool bIsHardwareDisabled = true;
 					if (hItt != _hardwareNames.end())
 					{
 						//ignore sensors where the hardware is disabled
 						if ((!bDisplayDisabled) && (!(*hItt).second.Enabled))
 							continue;
+						bIsHardwareDisabled = !(*hItt).second.Enabled;
 					}
 
 					unsigned int dType = atoi(sd[5].c_str());
@@ -9121,6 +9151,8 @@ namespace http {
 						root["result"][ii]["HardwareTypeVal"] = _hardwareNames[hardwareID].HardwareTypeVal;
 						root["result"][ii]["HardwareType"] = _hardwareNames[hardwareID].HardwareType;
 					}
+					root["result"][ii]["HardwareDisabled"] = bIsHardwareDisabled;
+
 					root["result"][ii]["idx"] = sd[0];
 					root["result"][ii]["Protected"] = (iProtected != 0);
 

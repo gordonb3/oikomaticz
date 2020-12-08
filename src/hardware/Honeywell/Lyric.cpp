@@ -323,7 +323,7 @@ void Lyric::GetThermostatData()
 			bool bHeating = (mode == "Heat");
 			desc = kHeatingDesc;
 			stdreplace(desc, "{devicename}", deviceName);
-			SendSwitch(10 * devNr + 3, 1, 255, bHeating, 0, desc);
+			SendSwitch(10 * devNr + 3, 1, 255, bHeating, 0, desc, nullptr);
 
 			temperature = (float)(*currentDevice)["changeableValues"]["heatSetpoint"].asFloat();
 			desc = kHeatSetPointDesc;
@@ -385,7 +385,7 @@ void Lyric::SendOnOffSensor(const int NodeID, const device::tswitch::type::value
 		gSwitch.unitcode = unit;
 		gSwitch.cmnd = SwitchState? 1:0;
 		gSwitch.level = 0;
-		sDecodeRXMessage(this, (const unsigned char *)&gSwitch, defaultname.c_str(), 255);
+		sDecodeRXMessage(this, (const unsigned char *)&gSwitch, defaultname.c_str(), 255, nullptr);
 	}
 
 	if (result.empty())
@@ -427,7 +427,7 @@ void Lyric::SendSetPointSensor(const unsigned char Idx, const float Temp, const 
 
 	thermos.temp = Temp;
 
-	sDecodeRXMessage(this, (const unsigned char *)&thermos, defaultname.c_str(), 255);
+	sDecodeRXMessage(this, (const unsigned char *)&thermos, defaultname.c_str(), 255, nullptr);
 }
 
 //
@@ -467,7 +467,7 @@ void Lyric::SetPauseStatus(const int idx, bool bHeating, const int /*nodeid*/)
 
 	std::string desc = kHeatingDesc;
 	stdreplace(desc, "{devicename}", m_lyricDevices[idx].deviceName);
-	SendSwitch(10 * idx + 3, 1, 255, bHeating, 0, desc);
+	SendSwitch(10 * idx + 3, 1, 255, bHeating, 0, desc, nullptr);
 }
 
 //
@@ -516,5 +516,5 @@ void Lyric::SetSetpoint(const int idx, const float temp, const int /*nodeid*/)
 	// this also turns on the heating, so let the corresponding switch reflect that
 	desc = kHeatingDesc;
 	stdreplace(desc, "{devicename}", m_lyricDevices[idx].deviceName);
-	SendSwitch(10 * idx + 3, 1, 255, true, 0, desc);
+	SendSwitch(10 * idx + 3, 1, 255, true, 0, desc, nullptr);
 }

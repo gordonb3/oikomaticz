@@ -134,7 +134,7 @@ public:
 
 	/*
 	 * Start an activity.
-	 *
+	 * 
 	 * Args:
 	 *  activity_id (str): Activity ID from Harmony Hub configuration to control
 	*/
@@ -143,7 +143,7 @@ public:
 
 	/*
 	 * Send an action to the Harmony Hub.
-	 *
+	 * 
 	 * Args:
 	 *  action (str): Action from Harmony Hub configuration to control
 	 *  delay_ms (int): Delay in milliseconds between sending the press command and the release command.
@@ -152,7 +152,7 @@ public:
 
 	/*
 	 * Send a simple command to the Harmony Hub.
-	 *
+	 * 
 	 * Args:
 	 *  device_id (str): Device ID from Harmony Hub configuration to control
 	 *  cmd (str): Command from Harmony Hub configuration to control
@@ -162,7 +162,7 @@ public:
 
 	/*
 	 * Change a channel
-	 *
+	 * 
 	 * Args:
 	 *  channel (int): Activity ID from Harmony Hub configuration to control
 	*/

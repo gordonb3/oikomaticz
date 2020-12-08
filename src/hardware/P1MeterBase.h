@@ -13,20 +13,20 @@ class P1MeterBase : public CDomoticzHardwareBase
 	P1MeterBase();
 	~P1MeterBase() override;
 
-	bool SetOptions(bool disable_crc, const unsigned int ratelimit, const unsigned int gasmbuschannel);
+	bool SetOptions(bool disable_crc, unsigned int ratelimit, unsigned int gasmbuschannel);
 
       private:
 	void Init();
 	bool MatchLine();
-	void ParseP1Data(const unsigned char *pData, int Len, bool disable_crc, int ratelimit);
-	void ParseP1PlaintextData(const unsigned char *pData, int Len, bool disable_crc);
+	void ParseP1Data(const uint8_t *pData, int Len, bool disable_crc, int ratelimit);
+	void ParseP1PlaintextData(const uint8_t *pData, int Len, bool disable_crc);
 
 	bool CheckCRC();
-	void UpsertSwitch(int NodeID, const device::tswitch::type::value switchtype, const int switchstate, const char* defaultname);
+	void UpsertSwitch(int NodeID, const device::tswitch::type::value switchtype, int switchstate, const char* defaultname);
 
 	// Luxembourgian Smarty encrypted telegram support
 	bool ImportKey(std::string szhexencoded);
-	void ParseP1EncryptedData(const unsigned char *pData, int Len, bool disable_crc);
+	void ParseP1EncryptedData(const uint8_t *pData, int Len, bool disable_crc);
 
       public:
 	P1Power	m_power;
@@ -34,7 +34,7 @@ class P1MeterBase : public CDomoticzHardwareBase
 
       protected:
 	bool m_bDisableCRC;
-	unsigned int m_ratelimit;
+	int m_ratelimit;
 
       private:
 	typedef struct _tP1PhaseData

@@ -153,9 +153,7 @@ void CLuaTable::CloseSubTableEntry()
 void CLuaTable::PushRow(std::vector<_tEntry>::iterator itt)
 {
 	if (itt->label_type == TYPE_VALUE_INDEX)
-	{
 		lua_pushinteger(m_lua_state, (lua_Integer)itt->index);
-	}
 	else
 		lua_pushstring(m_lua_state, itt->label.c_str());
 

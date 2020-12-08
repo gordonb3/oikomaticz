@@ -25,7 +25,7 @@ extern http::server::CWebServerHelper m_webservers;
 CdzVents CdzVents::m_dzvents;
 
 CdzVents::CdzVents()
-	: m_version("3.0.16")
+	: m_version("3.0.17")
 {
 	m_bdzVentsExist = false;
 }
@@ -384,7 +384,7 @@ bool CdzVents::TriggerCustomEvent(lua_State* lua_state, const std::vector<_tLuaT
 
 	return true;
 }
-bool CdzVents::UpdateDevice(lua_State *lua_state, const std::vector<_tLuaTableValues> &vLuaTable)
+bool CdzVents::UpdateDevice(lua_State *lua_state, const std::vector<_tLuaTableValues> &vLuaTable, const std::string &eventName)
 {
 	bool bEventTrigger = false;
 	int nValue = -1, Protected = -1;
@@ -416,7 +416,7 @@ bool CdzVents::UpdateDevice(lua_State *lua_state, const std::vector<_tLuaTableVa
 	if (idx == -1)
 		return false;
 
-	m_sql.AddTaskItem(_tTaskItem::UpdateDevice(delayTime, idx, nValue, sValue, Protected, bEventTrigger), false);
+	m_sql.AddTaskItem(_tTaskItem::UpdateDevice(delayTime, idx, nValue, sValue, Protected, bEventTrigger, "dzVents/" + eventName), false);
 	return true;
 }
 
@@ -501,7 +501,7 @@ bool CdzVents::UpdateVariable(lua_State *lua_state, const std::vector<_tLuaTable
 	return true;
 }
 
-bool CdzVents::CancelItem(lua_State *lua_state, const std::vector<_tLuaTableValues> &vLuaTable)
+bool CdzVents::CancelItem(lua_State *lua_state, const std::vector<_tLuaTableValues> &vLuaTable, const std::string &eventName)
 {
 	int idx = 0;
 	std::string type;
@@ -520,6 +520,7 @@ bool CdzVents::CancelItem(lua_State *lua_state, const std::vector<_tLuaTableValu
 	_tTaskItem tItem;
 	tItem._idx = idx;
 	tItem._DelayTime = 0;
+	tItem._sUser = "dzVents/" + eventName;
 	if (type == "device")
 	{
 		tItem._ItemType = TITEM_SWITCHCMD_EVENT;
@@ -547,11 +548,11 @@ bool CdzVents::processLuaCommand(lua_State *lua_state, const std::string &filena
 		if (lCommand == "OpenURL")
 			scriptTrue = OpenURL(lua_state, vLuaTable);
 		else if (lCommand == "UpdateDevice")
-			scriptTrue = UpdateDevice(lua_state, vLuaTable);
+			scriptTrue = UpdateDevice(lua_state, vLuaTable, filename);
 		else if (lCommand == "Variable")
 			scriptTrue = UpdateVariable(lua_state, vLuaTable);
 		else if (lCommand == "Cancel")
-			scriptTrue = CancelItem(lua_state, vLuaTable);
+			scriptTrue = CancelItem(lua_state, vLuaTable, filename);
 		else if (lCommand == "TriggerIFTTT")
 			scriptTrue = TriggerIFTTT(lua_state, vLuaTable);
 		else if (lCommand == "CustomEvent")
@@ -822,16 +823,6 @@ void CdzVents::ExportDomoticzDataToLua(lua_State *lua_state, const std::vector<C
 			luaTable.AddString("_state", sitem.nValueWording);
 			luaTable.AddInteger("_nValue", sitem.nValue);
 			luaTable.AddInteger("hardwareID", sitem.hardwareID);
-
-			// Lux does not have it's own field yet.
-			if (sitem.devType == pTypeLux && sitem.subType == sTypeLux)
-			{
-				int lux = 0;
-				if (!strarray.empty())
-					lux = atoi(strarray[0].c_str());
-				luaTable.AddNumber("lux", lux);
-			}
-
 			if (sitem.devType == pTypeGeneral && sitem.subType == sTypeKwh)
 			{
 				long double value = 0.0f;

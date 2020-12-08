@@ -176,7 +176,7 @@ void CDenkoviSmartdenLan::UpdateSwitch(const unsigned char Idx, const int SubUni
 	lcmd.LIGHTING2.level = (uint8_t)level;
 	lcmd.LIGHTING2.filler = 0;
 	lcmd.LIGHTING2.rssi = 12;
-	sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255);
+	sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255, nullptr);
 }
 
 void CDenkoviSmartdenLan::GetMeterDetails()

@@ -32,7 +32,7 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 2
-#define DOMOTICZ_DB_VERSION 145
+#define DOMOTICZ_DB_VERSION 146
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
@@ -2775,6 +2775,16 @@ bool CSQLHelper::OpenDatabase()
 				}
 			}
 		}
+		if (dbversion < 146)
+		{
+			// Set Max. Power Usage to 6000
+			int nValue = 4000;
+			if (GetPreferencesVar("MaxElectricPower", nValue))
+			{
+				if (nValue == 4000)
+					UpdatePreferencesVar("MaxElectricPower", 6000);
+			}
+		}
 	}
 
 	if ((!bNewInstall) && (ozdbversion < OIKOMATICZ_DB_VERSION))
@@ -2857,6 +2867,18 @@ bool CSQLHelper::OpenDatabase()
 		m_sql.safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Domoticz Internal',1, %d,'',1,'','',0,0,0,0,0,0)", hardware::type::DomoticzInternal);
 	}
 	UpdatePreferencesVar("DB_Version", DB_VERSION);
+
+	//Check preferences table for extreme sized sValues
+	result = safe_query("SELECT Key FROM Preferences WHERE LENGTH(sValue) > 1000");
+	if (!result.empty())
+	{
+		for (const auto &sd : result)
+		{
+			_log.Log(LOG_ERROR, "Preferences: sValue of Key %s has an extreme size. Please report on the forum", sd[0].c_str() );
+		}
+		_log.Log(LOG_STATUS, "Empty extreme sized sValue(s) in Preferences table to prevent future issues" );
+		safe_query("UPDATE Preferences SET sValue ='' WHERE LENGTH(sValue) > 1000");
+	}
 
 	//Make sure we have some default preferences
 	int nValue = 10;
@@ -3311,13 +3333,13 @@ bool CSQLHelper::OpenDatabase()
 	{
 		UpdatePreferencesVar("EmailEnabled", 1);
 	}
-	nValue = 4000;
+	nValue = 6000;
 	if (!GetPreferencesVar("MaxElectricPower", nValue))
 	{
 		UpdatePreferencesVar("MaxElectricPower", nValue);
 	}
 	if (nValue < 1)
-		nValue = 4000;
+		nValue = 6000;
 	m_max_kwh_usage = nValue;
 
 	//Start background thread
@@ -3465,17 +3487,22 @@ void CSQLHelper::Do_Work()
 							break;
 						default:
 							//just update internally
+							m_mainworker.m_szLastSwitchUser = itt->_sUser;
 							UpdateValueInt(itt->_HardwareID, itt->_ID.c_str(), itt->_unit, itt->_devType, itt->_subType, itt->_signallevel, itt->_batterylevel, itt->_nValue, itt->_sValue.c_str(), devname, true);
 							break;
 						}
 						break;
 					case pTypeLighting4:
 						//only update internally
-						UpdateValueInt(itt->_HardwareID, itt->_ID.c_str(), itt->_unit, itt->_devType, itt->_subType, itt->_signallevel, itt->_batterylevel, itt->_nValue, itt->_sValue.c_str(), devname, true);
+						m_mainworker.m_szLastSwitchUser = itt->_sUser;
+						UpdateValueInt(itt->_HardwareID, itt->_ID.c_str(), itt->_unit, itt->_devType, itt->_subType, itt->_signallevel, itt->_batterylevel, itt->_nValue,
+							       itt->_sValue.c_str(), devname, true);
 						break;
 					default:
 						//unknown hardware type, sensor will only be updated internally
-						UpdateValueInt(itt->_HardwareID, itt->_ID.c_str(), itt->_unit, itt->_devType, itt->_subType, itt->_signallevel, itt->_batterylevel, itt->_nValue, itt->_sValue.c_str(), devname, true);
+						m_mainworker.m_szLastSwitchUser = itt->_sUser;
+						UpdateValueInt(itt->_HardwareID, itt->_ID.c_str(), itt->_unit, itt->_devType, itt->_subType, itt->_signallevel, itt->_batterylevel, itt->_nValue,
+							       itt->_sValue.c_str(), devname, true);
 						break;
 					}
 				}
@@ -3485,7 +3512,9 @@ void CSQLHelper::Do_Work()
 					{
 						//only update internally
 						std::string devname;
-						UpdateValueInt(itt->_HardwareID, itt->_ID.c_str(), itt->_unit, itt->_devType, itt->_subType, itt->_signallevel, itt->_batterylevel, itt->_nValue, itt->_sValue.c_str(), devname, true);
+						m_mainworker.m_szLastSwitchUser = itt->_sUser;
+						UpdateValueInt(itt->_HardwareID, itt->_ID.c_str(), itt->_unit, itt->_devType, itt->_subType, itt->_signallevel, itt->_batterylevel, itt->_nValue,
+							       itt->_sValue.c_str(), devname, true);
 					}
 					else
 						SwitchLightFromTasker(itt->_idx, "Off", 0, NoColor, itt->_sUser);
@@ -3685,7 +3714,7 @@ void CSQLHelper::Do_Work()
 			}
 			else if (itt->_ItemType == TITEM_UPDATEDEVICE)
 			{
-				m_mainworker.UpdateDevice(static_cast<int>(itt->_idx), itt->_nValue, itt->_sValue, 12, 255, (itt->_switchtype ? true : false));
+				m_mainworker.UpdateDevice(static_cast<int>(itt->_idx), itt->_nValue, itt->_sValue, itt->_sUser, 12, 255, (itt->_switchtype ? true : false));
 			}
 			else if (itt->_ItemType == TITEM_CUSTOM_COMMAND)
 			{
@@ -3907,8 +3936,11 @@ std::vector<std::vector<std::string> > CSQLHelper::queryBlob(const std::string& 
 	return results;
 }
 
-uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, const int SensorSubType, std::string& devname, const unsigned long nid, const std::string& soptions)
+uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, const int SensorSubType, std::string &devname, const unsigned long nid, const std::string &soptions,
+				  const std::string &userName)
 {
+	m_mainworker.m_szLastSwitchUser = userName;
+
 	uint64_t DeviceRowIdx = (uint64_t)-1;
 	char ID[20];
 	sprintf(ID, "%lu", nid);
@@ -4939,7 +4971,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 					if (bAdd2DelayQueue == true)
 					{
 						std::lock_guard<std::mutex> l(m_background_task_mutex);
-						_tTaskItem tItem = _tTaskItem::SwitchLight(AddjValue, ulID, HardwareID, ID, unit, devType, subType, switchtype, signallevel, batterylevel, cmd, sValue);
+						_tTaskItem tItem = _tTaskItem::SwitchLight(AddjValue, ulID, HardwareID, ID, unit, devType, subType, switchtype, signallevel, batterylevel, cmd, sValue, m_mainworker.m_szLastSwitchUser);
 						//Remove all instances with this device from the queue first
 						//otherwise command will be send twice, and first one will be to soon as it is currently counting
 						auto itt = m_background_task_queue.begin();

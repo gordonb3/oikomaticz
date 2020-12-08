@@ -422,7 +422,7 @@ void HarmonyHubWS::UpdateSwitch(unsigned char /*idx*/, const char *realID, const
 	lcmd.LIGHTING2.level = level;
 	lcmd.LIGHTING2.filler = 0;
 	lcmd.LIGHTING2.rssi = 12;
-	sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255);
+	sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255, m_Name.c_str());
 }
 
 
@@ -471,7 +471,7 @@ void HarmonyHubWS::Disconnect()
 int HarmonyHubWS::SendPing()
 {
 	m_bRequireEcho = true;
-
+	
 	int retval = m_HarmonyClient.ping().value();
 	if (retval > 0)
 		_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Ping returned error %d", retval);
@@ -510,7 +510,7 @@ void HarmonyHubWS::ProcessHarmonyResponse(const Json::Value &j_data)
 			_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Error %d returned in response to %s", returncode, j_data["cmd"].asString().c_str());
 		return;
 	}
-
+	
 	std::string cmd, shortcmd;
 	if (j_data.isMember("cmd"))
 		cmd = j_data["cmd"].asString();
