@@ -10,7 +10,7 @@ void _tTrendCalculator::Init()
 {
 	m_state = TENDENCY_UNKNOWN;
 	m_lastValue = 0;
-	m_timeLastAvarage=time(nullptr);
+	m_timeLastAvarage = time(nullptr);
 	m_totValues=0;
 	m_calcValue=0;
 }

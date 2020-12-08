@@ -34,7 +34,7 @@ asdl_int_seq *_Py_asdl_int_seq_new(Py_ssize_t size, PyArena *arena);
 #define asdl_seq_SET(S, I, V) \
     do { \
         Py_ssize_t _asdl_i = (I); \
-        assert((S) != nullptr); \
+        assert((S) != NULL); \
         assert(_asdl_i < (S)->size); \
         (S)->elements[_asdl_i] = (V); \
     } while (0)

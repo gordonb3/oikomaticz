@@ -19,21 +19,20 @@
  * and details available at http://www.domoticaforum.eu/viewtopic.php?f=7&t=5806&start=90#p72564
  */
 
-
 #pragma once
 
 #include "EvohomeBase.h"
 
 class CEvohomeScript : public CEvohomeBase
 {
-public:
-	explicit CEvohomeScript(const int ID);
-	~CEvohomeScript(void);
-	bool WriteToHardware(const char *pdata, const unsigned char length) override;
-private:
+      public:
+	explicit CEvohomeScript(int ID);
+	~CEvohomeScript() override;
+	bool WriteToHardware(const char *pdata, unsigned char length) override;
+
+      private:
 	void Init();
 	bool StartHardware() override;
 	bool StopHardware() override;
-	void RunScript(const char *pdata, const unsigned char length);
+	void RunScript(const char *pdata, unsigned char length);
 };
-

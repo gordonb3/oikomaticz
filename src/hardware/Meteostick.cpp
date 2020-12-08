@@ -44,11 +44,6 @@ Meteostick::Meteostick(const int ID, const std::string& devname, const unsigned 
 	}
 }
 
-Meteostick::~Meteostick()
-{
-
-}
-
 bool Meteostick::StartHardware()
 {
 	RequestStart();
@@ -289,7 +284,7 @@ void Meteostick::ParseLine()
 
 	std::vector<std::string> results;
 	StringSplit(sLine, " ", results);
-	if (results.size() < 1)
+	if (results.empty())
 		return; //invalid data
 
 	switch (m_state)

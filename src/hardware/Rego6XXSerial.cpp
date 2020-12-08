@@ -370,51 +370,50 @@ bool CRego6XXSerial::ParseData()
 			{
 				// This is a proper message
                 messageOK = true;
-		        time_t atime = mytime(nullptr);
-                signed short data = 0;
-				data = (m_readBuffer[(tail + 1) & Rego6XX_READ_BUFFER_MASK] << 14) |
-					   (m_readBuffer[(tail + 2) & Rego6XX_READ_BUFFER_MASK] << 7) |
-						m_readBuffer[(tail + 3) & Rego6XX_READ_BUFFER_MASK];
+		time_t atime = mytime(nullptr);
+		signed short data = 0;
+		data = (m_readBuffer[(tail + 1) & Rego6XX_READ_BUFFER_MASK] << 14)
+		       | (m_readBuffer[(tail + 2) & Rego6XX_READ_BUFFER_MASK] << 7) | m_readBuffer[(tail + 3) & Rego6XX_READ_BUFFER_MASK];
 
-				if(g_allRegisters[m_pollcntr].type == REGO_TYPE_TEMP)
-				{
-        			strcpy(m_Rego6XXTemp.ID, g_allRegisters[m_pollcntr].name);
-					m_Rego6XXTemp.temperature =  (float)(data * 0.1);
-                    if((m_Rego6XXTemp.temperature >= -48.2) && // -48.3 means no sensor.
-                        ((std::fabs(m_Rego6XXTemp.temperature - g_allRegisters[m_pollcntr].lastTemp) > 0.09) || // Only send changes.
-			 (difftime(atime,g_allRegisters[m_pollcntr].lastSent) >= 300))) // Send at least every 5 minutes
-                    {
-                        g_allRegisters[m_pollcntr].lastSent = atime;
-                        g_allRegisters[m_pollcntr].lastTemp = m_Rego6XXTemp.temperature;
-					    sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXTemp, nullptr, 255);
-                    }
-				}
-				else if(g_allRegisters[m_pollcntr].type == REGO_TYPE_STATUS)
-				{
-        			strcpy(m_Rego6XXValue.ID, g_allRegisters[m_pollcntr].name);
-					m_Rego6XXValue.value = data;
-                	m_Rego6XXValue.subtype=sTypeRego6XXStatus;
-                    if((m_Rego6XXValue.value != g_allRegisters[m_pollcntr].lastValue) || // Only send changes.
-			(difftime(atime,g_allRegisters[m_pollcntr].lastSent) >= (3600 * 23))) // Send at least every 23 hours
-                    {
-                        g_allRegisters[m_pollcntr].lastSent = atime;
-                        g_allRegisters[m_pollcntr].lastValue = m_Rego6XXValue.value;
-    					sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXValue, nullptr, 255);
-                    }
-				}
-				else if(g_allRegisters[m_pollcntr].type == REGO_TYPE_COUNTER)
-				{
-        			strcpy(m_Rego6XXValue.ID, g_allRegisters[m_pollcntr].name);
-					m_Rego6XXValue.value = data;
-                	m_Rego6XXValue.subtype=sTypeRego6XXCounter;
-                    if((m_Rego6XXValue.value != g_allRegisters[m_pollcntr].lastValue) || // Only send changes.
-			(difftime(atime,g_allRegisters[m_pollcntr].lastSent) >= 3000)) // Send at least every 50 minutes
-                    {
-                        g_allRegisters[m_pollcntr].lastSent = atime;
-                        g_allRegisters[m_pollcntr].lastValue = m_Rego6XXValue.value;
-    					sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXValue, nullptr, 255);
-                    }
-				}
+		if (g_allRegisters[m_pollcntr].type == REGO_TYPE_TEMP)
+		{
+			strcpy(m_Rego6XXTemp.ID, g_allRegisters[m_pollcntr].name);
+			m_Rego6XXTemp.temperature = (float)(data * 0.1);
+			if ((m_Rego6XXTemp.temperature >= -48.2) && // -48.3 means no sensor.
+			    ((std::fabs(m_Rego6XXTemp.temperature - g_allRegisters[m_pollcntr].lastTemp) > 0.09) || // Only send changes.
+			     (difftime(atime, g_allRegisters[m_pollcntr].lastSent) >= 300))) // Send at least every 5 minutes
+			{
+				g_allRegisters[m_pollcntr].lastSent = atime;
+				g_allRegisters[m_pollcntr].lastTemp = m_Rego6XXTemp.temperature;
+				sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXTemp, nullptr, 255);
+			}
+		}
+		else if (g_allRegisters[m_pollcntr].type == REGO_TYPE_STATUS)
+		{
+			strcpy(m_Rego6XXValue.ID, g_allRegisters[m_pollcntr].name);
+			m_Rego6XXValue.value = data;
+			m_Rego6XXValue.subtype = sTypeRego6XXStatus;
+			if ((m_Rego6XXValue.value != g_allRegisters[m_pollcntr].lastValue) ||	   // Only send changes.
+			    (difftime(atime, g_allRegisters[m_pollcntr].lastSent) >= (3600 * 23))) // Send at least every 23 hours
+			{
+				g_allRegisters[m_pollcntr].lastSent = atime;
+				g_allRegisters[m_pollcntr].lastValue = m_Rego6XXValue.value;
+				sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXValue, nullptr, 255);
+			}
+		}
+		else if (g_allRegisters[m_pollcntr].type == REGO_TYPE_COUNTER)
+		{
+			strcpy(m_Rego6XXValue.ID, g_allRegisters[m_pollcntr].name);
+			m_Rego6XXValue.value = data;
+			m_Rego6XXValue.subtype = sTypeRego6XXCounter;
+			if ((m_Rego6XXValue.value != g_allRegisters[m_pollcntr].lastValue) || // Only send changes.
+			    (difftime(atime, g_allRegisters[m_pollcntr].lastSent) >= 3000))   // Send at least every 50 minutes
+			{
+				g_allRegisters[m_pollcntr].lastSent = atime;
+				g_allRegisters[m_pollcntr].lastValue = m_Rego6XXValue.value;
+				sDecodeRXMessage(this, (const unsigned char *)&m_Rego6XXValue, nullptr, 255);
+			}
+		}
 
 				// Remove the message from the buffer
 				m_readBufferTail = (tail + 5) & Rego6XX_READ_BUFFER_MASK;
@@ -447,7 +446,8 @@ namespace http {
 			}
 
 			std::string idx = request::findValue(&req, "idx");
-			if (idx == "") {
+			if (idx.empty())
+			{
 				return;
 			}
 			std::vector<std::vector<std::string> > result;
@@ -465,5 +465,5 @@ namespace http {
 				m_sql.UpdateRFXCOMHardwareDetails(atoi(idx.c_str()), newMode1, 0, 0, 0, 0, 0);
 			}
 		}
-	}
-}
+	} // namespace server
+} // namespace http

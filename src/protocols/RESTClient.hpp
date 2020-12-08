@@ -12,9 +12,9 @@
 #include <vector>
 
 namespace connection {
-namespace HTTP {
+  namespace HTTP {
 
-namespace method {
+    namespace method {
 	enum value
 	{
 		GET		= 0x0001,
@@ -27,9 +27,9 @@ namespace method {
 		GETSINGLELINE	= 0x0100,
 		DOWNLOAD	= 0x0200
 	};
-}; // namespace method
+    }; // namespace method
 
-}; // namespace HTTP
+  }; // namespace HTTP
 }; // namespace connection
 
 
@@ -40,17 +40,17 @@ class RESTClient
 	// give MainWorker acces to the protected Cleanup() function
 	friend class HTTPClient;
 
-protected:
+      protected:
 	/************************************************************************
 	 *									*
 	 * cleanup function, should be called before application closes		*
 	 *									*
 	 ************************************************************************/
-
+	
 	static void Cleanup();
 
 
-public:
+      public:
 
 	/************************************************************************
 	 *									*
@@ -62,7 +62,7 @@ public:
 	 * a debug line to your class if you access any of these functions.	*
 	 *									*
 	 ************************************************************************/
-
+	
 	static void SetConnectionTimeout(const long timeout);
 	static void SetTimeout(const long timeout);
 	static void SetUserAgent(const std::string &useragent);
@@ -86,13 +86,13 @@ public:
 	 *									*
 	 ************************************************************************/
 
-private:
+      private:
 	static void SetGlobalOptions(void *curlobj);
 	static bool CheckIfGlobalInitDone();
 	static void LogStatus(const long responseCode);
 
 
-private:
+      private:
 	static bool m_bCurlGlobalInitialized;
 	static bool m_bVerifyHost;
 	static bool m_bVerifyPeer;

@@ -21,12 +21,6 @@ CTCPServerIntBase::CTCPServerIntBase(CTCPServer *pRoot)
 	m_pRoot=pRoot;
 }
 
-
-CTCPServerIntBase::~CTCPServerIntBase(void)
-{
-//	stopAllClients();
-}
-
 void CTCPServerInt::start()
 {
 	// The io_service::run() call will block until all asynchronous operations
@@ -60,16 +54,14 @@ bool CTCPServerInt::IsUserHereFirstTime(const std::string &ip_string)
 	//
 	time_t now = mytime(nullptr);
 
-	std::vector<_tTCPLogInfo>::iterator itt = m_incoming_domoticz_history.begin();
-	while (itt!= m_incoming_domoticz_history.end())
+	auto itt = m_incoming_domoticz_history.begin();
+	while (itt != m_incoming_domoticz_history.end())
 	{
 		if (difftime(now,itt->time) > SECONDS_PER_DAY)
-		{
 			itt = m_incoming_domoticz_history.erase(itt);
-		}
 		else
 		{
-			if (ip_string.compare(itt->string) == 0)
+			if (ip_string == itt->string)
 			{
 				//already logged this
 				return false;
@@ -122,18 +114,17 @@ void CTCPServerInt::handleAccept(const boost::system::error_code& error)
 
 _tRemoteShareUser* CTCPServerIntBase::FindUser(const std::string &username)
 {
-	std::vector<_tRemoteShareUser>::iterator itt;
 	int ii=0;
-	for (itt=m_users.begin(); itt!=m_users.end(); ++itt)
+	for (const auto &user : m_users)
 	{
-		if (itt->Username==username)
+		if (user.Username == username)
 			return &m_users[ii];
 		ii++;
 	}
 	return nullptr;
 }
 
-bool CTCPServerIntBase::HandleAuthentication(CTCPClient_ptr c, const std::string &username, const std::string &password)
+bool CTCPServerIntBase::HandleAuthentication(const CTCPClient_ptr &c, const std::string &username, const std::string &password)
 {
 	_tRemoteShareUser *pUser=FindUser(username);
 	if (pUser == nullptr)
@@ -159,10 +150,9 @@ void CTCPServerIntBase::stopAllClients()
 	std::lock_guard<std::mutex> l(connectionMutex);
 	if (connections_.empty())
 		return;
-	std::set<CTCPClient_ptr>::const_iterator itt;
-	for (itt=connections_.begin(); itt!=connections_.end(); ++itt)
+	for (const auto &c : connections_)
 	{
-		CTCPClientBase *pClient=itt->get();
+		CTCPClientBase *pClient = c.get();
 		if (pClient)
 			pClient->stop();
 	}
@@ -199,10 +189,9 @@ void CTCPServerIntBase::SendToAll(const int /*HardwareID*/, const uint64_t Devic
 		)
 		return;
 
-	std::set<CTCPClient_ptr>::const_iterator itt;
-	for (itt=connections_.begin(); itt!=connections_.end(); ++itt)
+	for (const auto &c : connections_)
 	{
-		CTCPClientBase *pClient=itt->get();
+		CTCPClientBase *pClient = c.get();
 		if (pClient==pClient2Ignore)
 			continue;
 
@@ -213,20 +202,12 @@ void CTCPServerIntBase::SendToAll(const int /*HardwareID*/, const uint64_t Devic
 			{
 				//check if we are allowed to get this device
 				bool bOk2Send=false;
-				if (pUser->Devices.size()==0)
+				if (pUser->Devices.empty())
 					bOk2Send=true;
 				else
-				{
-					int tdevices=pUser->Devices.size();
-					for (int ii=0; ii<tdevices; ii++)
-					{
-						if (pUser->Devices[ii]==DeviceRowID)
-						{
-							bOk2Send=true;
-							break;
-						}
-					}
-				}
+					bOk2Send = std::any_of(pUser->Devices.begin(), pUser->Devices.end(),
+							       [=](uint64_t d) { return d == DeviceRowID; });
+
 				if (bOk2Send)
 					pClient->write(pData,Length);
 			}
@@ -248,7 +229,7 @@ CTCPServerInt::CTCPServerInt(const std::string& address, const std::string& port
 	acceptor_.bind(endpoint);
 	acceptor_.listen();
 
-	new_connection_ = std::shared_ptr<CTCPClient>(new CTCPClient(io_service_, this));
+	new_connection_ = std::make_shared<CTCPClient>(io_service_, this);
 
 	acceptor_.async_accept(
 		*(new_connection_->socket()),
@@ -256,20 +237,11 @@ CTCPServerInt::CTCPServerInt(const std::string& address, const std::string& port
 			boost::asio::placeholders::error));
 }
 
-CTCPServerInt::~CTCPServerInt(void)
-{
-
-}
-
 #ifndef NOCLOUD
 // our proxied server
 CTCPServerProxied::CTCPServerProxied(CTCPServer *pRoot, http::server::CProxyClient *proxy) : CTCPServerIntBase(pRoot)
 {
 	m_pProxyClient = proxy;
-}
-
-CTCPServerProxied::~CTCPServerProxied(void)
-{
 }
 
 void CTCPServerProxied::start()
@@ -291,8 +263,8 @@ void CTCPServerProxied::stopClient(CTCPClient_ptr c)
 
 bool CTCPServerProxied::OnDisconnect(const std::string &token)
 {
-	std::set<CTCPClient_ptr>::const_iterator itt;
-	for (itt = connections_.begin(); itt != connections_.end(); ++itt) {
+	for (auto itt = connections_.begin(); itt != connections_.end(); ++itt)
+	{
 		CSharedClient *pClient = dynamic_cast<CSharedClient *>(itt->get());
 		if (pClient && pClient->CompareToken(token)) {
 			pClient->stop();
@@ -321,7 +293,8 @@ bool CTCPServerProxied::OnNewConnection(const std::string &token, const std::str
 bool CTCPServerProxied::OnIncomingData(const std::string &token, const unsigned char *data, size_t bytes_transferred)
 {
 	CSharedClient *client = FindClient(token);
-	if (client == nullptr) {
+	if (client == nullptr)
+	{
 		return false;
 	}
 	client->OnIncomingData(data, bytes_transferred);
@@ -330,9 +303,9 @@ bool CTCPServerProxied::OnIncomingData(const std::string &token, const unsigned 
 
 CSharedClient *CTCPServerProxied::FindClient(const std::string &token)
 {
-	std::set<CTCPClient_ptr>::const_iterator itt;
-	for (itt = connections_.begin(); itt != connections_.end(); ++itt) {
-		CSharedClient *pClient = dynamic_cast<CSharedClient *>(itt->get());
+	for (const auto &c : connections_)
+	{
+		CSharedClient *pClient = dynamic_cast<CSharedClient *>(c.get());
 		if (pClient && pClient->CompareToken(token)) {
 			return pClient;
 		}
@@ -362,7 +335,8 @@ CTCPServer::~CTCPServer()
 {
 	StopServer();
 #ifndef NOCLOUD
-	if (m_pProxyServer != nullptr) {
+	if (m_pProxyServer != nullptr)
+	{
 		m_pProxyServer->stop();
 		delete m_pProxyServer;
 		m_pProxyServer = nullptr;
@@ -381,7 +355,8 @@ bool CTCPServer::StartServer(const std::string &address, const std::string &port
 		{
 			exception = false;
 			StopServer();
-			if (m_pTCPServer != nullptr) {
+			if (m_pTCPServer != nullptr)
+			{
 				_log.Log(LOG_ERROR, "Stopping TCPServer should delete resources !");
 			}
 			m_pTCPServer = new CTCPServerInt(listen_address, port, this);
@@ -488,7 +463,8 @@ unsigned int CTCPServer::GetUserDevicesCount(const std::string &username)
 		return m_pTCPServer->GetUserDevicesCount(username);
 	}
 #ifndef NOCLOUD
-	else if (m_pProxyServer) {
+	if (m_pProxyServer)
+	{
 		return m_pProxyServer->GetUserDevicesCount(username);
 	}
 #endif
@@ -512,7 +488,7 @@ void CTCPServer::DoDecodeMessage(const CTCPClientBase *pClient, const unsigned c
 	m_Name="DomoticzFromMaster";
 	m_SeqNr=1;
 	m_pUserData=(void*)pClient;
-	sDecodeRXMessage(this, pRXCommand, nullptr, -1);
+	sDecodeRXMessage(this, pRXCommand, NULL, -1);
 }
 
 #ifndef NOCLOUD

@@ -44,7 +44,7 @@ typedef struct PyModuleDef_Base {
 } PyModuleDef_Base;
 
 #define PyModuleDef_HEAD_INIT { \
-    PyObject_HEAD_INIT(nullptr)    \
+    PyObject_HEAD_INIT(NULL)    \
     NULL, /* m_init */          \
     0,    /* m_index */         \
     NULL, /* m_copy */          \

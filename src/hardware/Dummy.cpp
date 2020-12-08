@@ -18,9 +18,9 @@ CDummy::CDummy(const int ID)
 	m_bSkipReceiveCheck = true;
 }
 
-CDummy::~CDummy(void)
+CDummy::~CDummy()
 {
-	m_bIsStarted=false;
+	m_bIsStarted = false;
 }
 
 void CDummy::Init()
@@ -127,7 +127,7 @@ namespace http {
 			std::string ssensortype = request::findValue(&req, "sensortype");
 			std::string soptions = request::findValue(&req, "sensoroptions");
 
-			if ((idx == "") || (ssensortype.empty()) || (ssensorname.empty()))
+			if ((idx.empty()) || (ssensortype.empty()) || (ssensorname.empty()))
 				return;
 
 			int sensortype = atoi(ssensortype.c_str());
@@ -135,12 +135,12 @@ namespace http {
 			unsigned int subType = 0;
 			uint64_t DeviceRowIdx = (uint64_t )-1;
 
-			for (size_t i = 0; i < sizeof(mappedsensorname) / sizeof(mappedsensorname[0]); i++)
+			for (auto i : mappedsensorname)
 			{
-				if (mappedsensorname[i].mappedvalue == sensortype)
+				if (i.mappedvalue == sensortype)
 				{
-					type = mappedsensorname[i].type;
-					subType = mappedsensorname[i].subtype;
+					type = i.type;
+					subType = i.subtype;
 
 					int HwdID = atoi(idx.c_str());
 
@@ -192,7 +192,7 @@ namespace http {
 			std::string devicetype = request::findValue(&req, "devicetype");
 			std::string devicesubtype = request::findValue(&req, "devicesubtype");
 
-			if ((idx == "") || (ssensorname.empty()))
+			if ((idx.empty()) || (ssensorname.empty()))
 				return;
 
 			unsigned int type;
@@ -247,6 +247,5 @@ namespace http {
 			}
 		}
 
-	}
-}
-
+	} // namespace server
+} // namespace http

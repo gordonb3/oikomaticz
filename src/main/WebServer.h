@@ -20,7 +20,7 @@ namespace http {
 class CWebServer : public session_store, public std::enable_shared_from_this<CWebServer>
 {
 	typedef boost::function< void(WebEmSession & session, const request& req, Json::Value &root) > webserver_response_function;
-      public:
+public:
 	struct _tCustomIcon
 	{
 		int idx;
@@ -28,12 +28,12 @@ class CWebServer : public session_store, public std::enable_shared_from_this<CWe
 		std::string Title;
 		std::string Description;
 	};
-	CWebServer(void);
-	~CWebServer(void);
-	bool StartServer(server_settings & settings, const std::string &serverpath, bool bIgnoreUsernamePassword);
+	CWebServer();
+	~CWebServer() override;
+	bool StartServer(server_settings &settings, const std::string &serverpath, bool bIgnoreUsernamePassword);
 	void StopServer();
-	void RegisterCommandCode(const char* idname, webserver_response_function ResponseFunction, bool bypassAuthentication=false);
-	void RegisterRType(const char* idname, webserver_response_function ResponseFunction);
+	void RegisterCommandCode(const char *idname, const webserver_response_function &ResponseFunction, bool bypassAuthentication = false);
+	void RegisterRType(const char *idname, const webserver_response_function &ResponseFunction);
 
 	void DisplaySwitchTypesCombo(std::string & content_part);
 	void DisplayMeterTypesCombo(std::string & content_part);
@@ -71,40 +71,29 @@ class CWebServer : public session_store, public std::enable_shared_from_this<CWe
 	void ReloadCustomSwitchIcons();
 
 	void LoadUsers();
-	void AddUser(const unsigned long ID, const std::string &username, const std::string &password, int userrights, const int activetabs);
+	void AddUser(unsigned long ID, const std::string &username, const std::string &password, int userrights, int activetabs);
 	void ClearUserPasswords();
 	bool FindAdminUser();
 	int FindUser(const char* szUserName);
-	void SetWebCompressionMode(const _eWebCompressionMode gzmode);
-	void SetAuthenticationMethod(const _eAuthenticationMethod amethod);
+	void SetWebCompressionMode(_eWebCompressionMode gzmode);
+	void SetAuthenticationMethod(_eAuthenticationMethod amethod);
 	void SetWebTheme(const std::string &themename);
 	void SetWebRoot(const std::string &webRoot);
 	std::vector<_tWebUserPassword> m_users;
 	//JSon
-	void GetJSonDevices(
-		Json::Value &root,
-		const std::string &rused,
-		const std::string &rfilter,
-		const std::string &order,
-		const std::string &rowid,
-		const std::string &planID,
-		const std::string &floorID,
-		bool bDisplayHidden,
-		bool bDisplayDisabled,
-		bool bFetchFavorites,
-		const time_t LastUpdate,
-		const std::string &username,
-		const std::string &hardwareid = ""); // OTO
+	void GetJSonDevices(Json::Value &root, const std::string &rused, const std::string &rfilter, const std::string &order, const std::string &rowid, const std::string &planID,
+			    const std::string &floorID, bool bDisplayHidden, bool bDisplayDisabled, bool bFetchFavorites, time_t LastUpdate, const std::string &username,
+			    const std::string &hardwareid = ""); // OTO
 
 	// SessionStore interface
-	WebEmStoredSession GetSession(const std::string & sessionId) override;
+	WebEmStoredSession GetSession(const std::string &sessionId) override;
 	void StoreSession(const WebEmStoredSession & session) override;
 	void RemoveSession(const std::string & sessionId) override;
 	void CleanSessions() override;
 	void RemoveUsersSessions(const std::string& username, const WebEmSession & exceptSession);
 	std::string PluginHardwareDesc(int HwdID);
 
-      private:
+private:
 	void HandleCommand(const std::string &cparam, WebEmSession & session, const request& req, Json::Value &root);
 	void HandleRType(const std::string &rtype, WebEmSession & session, const request& req, Json::Value &root);
 

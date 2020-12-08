@@ -108,11 +108,16 @@ static struct {
 	{ "ZPW", nullptr, "Zone 2 power", device::tswitch::type::OnOff, sSwitchGeneralSwitch, 5, nullptr, nullptr },
 	{ "PW3", nullptr, "Zone 3 power", device::tswitch::type::OnOff, sSwitchGeneralSwitch, 5, nullptr, nullptr },
 	{ "PW4", nullptr, "Zone 4 power", device::tswitch::type::OnOff, sSwitchGeneralSwitch, 5, nullptr, nullptr },
-	{ "SLI", nullptr, "Master selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
-	{ "SLZ", nullptr, "Zone 2 selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
-	{ "SL2", nullptr, "Zone 3 selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
-	{ "SL3", nullptr, "Zone 4 selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
-	{ "HDO", nullptr, "HDMI Output", device::tswitch::type::Selector, sSwitchTypeSelector, 5, "SelectorStyle:0;LevelNames:Off|Main|Sub|Main+Sub;LevelOffHidden:true;LevelActions:00|01|02|03" },
+	{ "SLI", nullptr, "Master selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5,
+	  "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
+	{ "SLZ", nullptr, "Zone 2 selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5,
+	  "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
+	{ "SL2", nullptr, "Zone 3 selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5,
+	  "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
+	{ "SL3", nullptr, "Zone 4 selector", device::tswitch::type::Selector, sSwitchTypeSelector, 5,
+	  "SelectorStyle:1;LevelNames:Off;LevelOffHidden:true;LevelActions:00", input_names },
+	{ "HDO", nullptr, "HDMI Output", device::tswitch::type::Selector, sSwitchTypeSelector, 5,
+	  "SelectorStyle:0;LevelNames:Off|Main|Sub|Main+Sub;LevelOffHidden:true;LevelActions:00|01|02|03" },
 };
 
 static struct {
@@ -145,7 +150,7 @@ OnkyoAVTCP::OnkyoAVTCP(const int ID, const std::string &IPAddress, const unsigne
 				 i, m_HwdID, i - 2, switch_types[i].switchType, switch_types[i].subtype);
 }
 
-OnkyoAVTCP::~OnkyoAVTCP(void)
+OnkyoAVTCP::~OnkyoAVTCP()
 {
 	free(m_pPartialPkt);
 }
@@ -243,7 +248,7 @@ bool OnkyoAVTCP::WriteToHardware(const char *pdata, const unsigned char /*length
 	}
 	const tRBUF *pCmd = reinterpret_cast<const tRBUF *>(pdata);
 	unsigned char packettype = pCmd->ICMND.packettype;
-	std::string message = "";
+	std::string message;
 
 	if (packettype == pTypeGeneralSwitch) {
 		const _tGeneralSwitch *xcmd = reinterpret_cast<const _tGeneralSwitch*>(pdata);
@@ -580,7 +585,9 @@ void OnkyoAVTCP::ReceiveMessage(const char *pData, int Len)
 	  if (!memcmp(pData, switch_types[i].iscpCmd, 3)) {
 		  ReceiveSwitchMsg(pData, Len, false, i);
 		  return;
-	  } else if (switch_types[i].iscpMute && !memcmp(pData, switch_types[i].iscpMute, 3)) {
+	  }
+	  if (switch_types[i].iscpMute && !memcmp(pData, switch_types[i].iscpMute, 3))
+	  {
 		  ReceiveSwitchMsg(pData, Len, true, i);
 		  return;
 	  }
@@ -669,7 +676,7 @@ namespace http {
 				// We allow raw EISCP commands to be sent on *any* of the logical devices
 				// associated with the hardware.
 				case hardware::type::OnkyoAVTCP:
-					CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(result[0][3].c_str(), hardware::type::OnkyoAVTCP);
+					CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(result[0][3], hardware::type::OnkyoAVTCP);
 					if (pBaseHardware == nullptr)
 						return;
 					OnkyoAVTCP *pOnkyoAVTCP = reinterpret_cast<OnkyoAVTCP*>(pBaseHardware);
@@ -682,5 +689,5 @@ namespace http {
 			}
 		}
 
-	}
-}
+	} // namespace server
+} // namespace http

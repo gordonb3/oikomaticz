@@ -39,11 +39,6 @@ CDenkoviTCPDevices::CDenkoviTCPDevices(const int ID, const std::string &IPAddres
 	Init();
 }
 
-
-CDenkoviTCPDevices::~CDenkoviTCPDevices()
-{
-}
-
 void CDenkoviTCPDevices::Init()
 {
 }
@@ -65,7 +60,7 @@ bool CDenkoviTCPDevices::StartHardware()
 	return (m_thread != nullptr);
 }
 
-void CDenkoviTCPDevices::ConvertResponse(const std::string pData, const size_t length)
+void CDenkoviTCPDevices::ConvertResponse(const std::string &pData, const size_t length)
 {
 	m_pResp.trId[0] = pData[0];
 	m_pResp.trId[1] = pData[1];
@@ -175,11 +170,11 @@ void CDenkoviTCPDevices::OnConnect() {
 }
 
 void CDenkoviTCPDevices::OnDisconnect() {
-	Log(LOG_STATUS, "%s: Disconnected.",szDenkoviHardwareNamesTCP[m_iModel]);	
+	Log(LOG_STATUS, "%s: Disconnected.",szDenkoviHardwareNamesTCP[m_iModel]);
 }
 
 void CDenkoviTCPDevices::OnError(const boost::system::error_code& /*error*/) {
-	Log(LOG_ERROR, "%s: Error occured!",szDenkoviHardwareNamesTCP[m_iModel]);	
+	Log(LOG_ERROR, "%s: Error occured!",szDenkoviHardwareNamesTCP[m_iModel]);
 }
 
 bool CDenkoviTCPDevices::StopHardware()

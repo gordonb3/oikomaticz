@@ -33,10 +33,6 @@ Arilux::Arilux(const int ID)
   m_color.ww = 0xff;
 }
 
-Arilux::~Arilux(void)
-{
-}
-
 bool Arilux::StartHardware()
 {
 	RequestStart();
@@ -80,8 +76,7 @@ void Arilux::Do_Work()
 	Log(LOG_STATUS, "Worker stopped...");
 }
 
-
-void Arilux::InsertUpdateSwitch(const std::string lightName, const int subType, const std::string location)
+void Arilux::InsertUpdateSwitch(const std::string &lightName, const int subType, const std::string &location)
 {
 	uint32_t sID;
 	try {
@@ -234,5 +229,5 @@ namespace http {
 			Arilux Arilux(HwdID);
 			Arilux.InsertUpdateSwitch(sname, (stype == "0") ? sTypeColor_RGB : sTypeColor_RGB_W_Z, sipaddress);
 		}
-	}
-}
+	} // namespace server
+} // namespace http

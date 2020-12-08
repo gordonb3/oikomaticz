@@ -16,10 +16,6 @@ CurrentCostMeterTCP::CurrentCostMeterTCP(const int ID, const std::string &IPAddr
 	m_HwdID=ID;
 }
 
-CurrentCostMeterTCP::~CurrentCostMeterTCP(void)
-{
-}
-
 bool CurrentCostMeterTCP::StartHardware()
 {
 	RequestStart();
@@ -40,14 +36,12 @@ bool CurrentCostMeterTCP::StartHardware()
 	{
 		// change Hostname in serveraddr
 		hostent *he=gethostbyname(m_szIPAddress.c_str());
-		if(he == nullptr)
+		if (he == nullptr)
 		{
 			return false;
 		}
-		else
-		{
-			memcpy(&(m_addr.sin_addr),he->h_addr_list[0],4);
-		}
+
+		memcpy(&(m_addr.sin_addr), he->h_addr_list[0], 4);
 	}
 
 	//force connect the next first time

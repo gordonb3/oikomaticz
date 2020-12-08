@@ -7,26 +7,26 @@ namespace OneWireDomoticzService.Logger
    /// <summary>
    /// author: pedroliska.com
    /// creation-date: 2009-05-01
-   /// 
-   /// This class handles writing to a log file and rolling it based on 
+   ///
+   /// This class handles writing to a log file and rolling it based on
    /// the file size. Currently you only need to send one parameter to the
    /// constructor: the logFullFilePath
-   /// 
+   ///
    /// From the logFullFilePath, this class will determine the folder location where
    /// to place all logs and the file names for the log files. Log files will be
    /// rolled when the file hits 5MB; this will be customizable in the future via
    /// constructor parameters or public properties.
-   /// 
+   ///
    /// For a logFullFilePath like this one: C:\dir1\dir2\log-file-name.log
-   /// 
+   ///
    /// All of the log files will be located in C:\dir1\dir2 , the most recent
-   /// log file will always be log-file-name.log and once log-file-name.log hits 5MB, 
-   /// it will be renamed log-file-name-01.log and a new log-file-name.log file will 
-   /// be created. Then when log-file-name.log hits 5MB again, log-file-name-01.log 
-   /// will become log-file-name-02.log, log-file-name.log will become log-file-name-01.log 
+   /// log file will always be log-file-name.log and once log-file-name.log hits 5MB,
+   /// it will be renamed log-file-name-01.log and a new log-file-name.log file will
+   /// be created. Then when log-file-name.log hits 5MB again, log-file-name-01.log
+   /// will become log-file-name-02.log, log-file-name.log will become log-file-name-01.log
    /// and a new log-file-name.log file will be created. And so on...
-   /// 
-   /// Currently you will have 15 log-file-name-NN.log files; but this will be 
+   ///
+   /// Currently you will have 15 log-file-name-NN.log files; but this will be
    /// customizeable in the future via constructor parameters or public properties.
    /// </summary>
    public class RollingTraceListener : TraceListener

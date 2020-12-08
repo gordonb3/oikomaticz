@@ -75,7 +75,7 @@ namespace OneWireDomoticzService.Service
             Logger.Logger.Log("Error starting server (_serverSocket is null)");
             return;
          }
-            
+
          try
          {
             // List all supported adapter
@@ -84,7 +84,7 @@ namespace OneWireDomoticzService.Service
             // Try to connect to adapter
             if (OneWireAdapter == null)
                Logger.Logger.Log("OneWire will not be available");
-             
+
             while (true)
             {
                // Wait for a client...
@@ -270,7 +270,7 @@ namespace OneWireDomoticzService.Service
             if (adapterNameAttribute == null)
                throw new Exception();
             var portAttribute = adapterNode.Attributes["port"];
-            
+
             return OneWireAccessProvider.getAdapter(adapterNameAttribute.Value, (portAttribute == null) ? null : portAttribute.Value);
          }
          catch (Exception exception)

@@ -93,9 +93,9 @@ typedef struct {
 static void **PyCurses_API;
 
 #define PyCursesWindow_Type (*(PyTypeObject *) PyCurses_API[0])
-#define PyCursesSetupTermCalled  {if (! ((int (*)(void))PyCurses_API[1]) () ) return nullptr;}
-#define PyCursesInitialised      {if (! ((int (*)(void))PyCurses_API[2]) () ) return nullptr;}
-#define PyCursesInitialisedColor {if (! ((int (*)(void))PyCurses_API[3]) () ) return nullptr;}
+#define PyCursesSetupTermCalled  {if (! ((int (*)(void))PyCurses_API[1]) () ) return NULL;}
+#define PyCursesInitialised      {if (! ((int (*)(void))PyCurses_API[2]) () ) return NULL;}
+#define PyCursesInitialisedColor {if (! ((int (*)(void))PyCurses_API[3]) () ) return NULL;}
 
 #define import_curses() \
     PyCurses_API = (void **)PyCapsule_Import(PyCurses_CAPSULE_NAME, 1);
@@ -129,12 +129,12 @@ static PyObject *PyCurses_ ## X (PyObject *self, PyObject *args) \
   case 0: \
     return PyCursesCheckERR(X(), # X); \
   case 1: \
-    if (!PyArg_ParseTuple(args, "i;True(1) or False(0)", &flag)) return nullptr; \
+    if (!PyArg_ParseTuple(args, "i;True(1) or False(0)", &flag)) return NULL; \
     if (flag) return PyCursesCheckERR(X(), # X); \
     else return PyCursesCheckERR(no ## X (), # X); \
   default: \
     PyErr_SetString(PyExc_TypeError, # X " requires 0 or 1 arguments"); \
-    return nullptr; } }
+    return NULL; } }
 
 #define NoArgReturnIntFunction(X) \
 static PyObject *PyCurses_ ## X (PyObject *self) \

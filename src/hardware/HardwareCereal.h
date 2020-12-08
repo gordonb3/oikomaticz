@@ -10,16 +10,18 @@ temperature = domoticztypes::Deserialize<_tTempBaro>(serialized);
 
 #endif
 
-namespace domoticztypes {
+namespace domoticztypes
+{
 	typedef unsigned char BYTE;
 
-	struct _tR_HEADER {
-		BYTE	packetlength;
-		BYTE	packettype;
-		BYTE	subtype;
-		BYTE	seqnbr;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_HEADER
+	{
+		BYTE packetlength;
+		BYTE packettype;
+		BYTE subtype;
+		BYTE seqnbr;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("packetlength", packetlength);
 			ar &cereal::make_nvp("packettype", packettype);
 			ar &cereal::make_nvp("subtype", subtype);
@@ -27,19 +29,20 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_ICMND {
-		BYTE	cmnd;
-		BYTE	freqsel;
-		BYTE	xmitpwr;
-		BYTE	msg3;
-		BYTE	msg4;
-		BYTE	msg5;
-		BYTE	msg6;
-		BYTE	msg7;
-		BYTE	msg8;
-		BYTE	msg9;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_ICMND
+	{
+		BYTE cmnd;
+		BYTE freqsel;
+		BYTE xmitpwr;
+		BYTE msg3;
+		BYTE msg4;
+		BYTE msg5;
+		BYTE msg6;
+		BYTE msg7;
+		BYTE msg8;
+		BYTE msg9;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("cmnd", cmnd);
 			ar &cereal::make_nvp("freqsel", freqsel);
 			ar &cereal::make_nvp("xmitpwr", xmitpwr);
@@ -53,30 +56,31 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_IRESPONSE {	//response on a mode command from the application
-		BYTE	cmnd;
-		BYTE	msg1;	//receiver/transceiver type
-		BYTE	msg2;	//firmware version
+	struct _tR_IRESPONSE
+	{ // response on a mode command from the application
+		BYTE cmnd;
+		BYTE msg1; // receiver/transceiver type
+		BYTE msg2; // firmware version
 
-		BYTE	msg3;
-		BYTE	msg4;
-		BYTE	msg5;
-		BYTE	msg6;
-		BYTE	msg7;
-		BYTE	msg8;
-		BYTE	msg9;
-		BYTE	msg10;
-		BYTE	msg11;
-		BYTE	msg12;
-		BYTE	msg13;
-		BYTE	msg14;
-		BYTE	msg15;
-		BYTE	msg16;
-		template <class Archive>
-		void serialize(Archive& ar) {	//response on a mode command from the application
+		BYTE msg3;
+		BYTE msg4;
+		BYTE msg5;
+		BYTE msg6;
+		BYTE msg7;
+		BYTE msg8;
+		BYTE msg9;
+		BYTE msg10;
+		BYTE msg11;
+		BYTE msg12;
+		BYTE msg13;
+		BYTE msg14;
+		BYTE msg15;
+		BYTE msg16;
+		template <class Archive> void serialize(Archive &ar)
+		{ // response on a mode command from the application
 			ar &cereal::make_nvp("cmnd", cmnd);
-			ar &cereal::make_nvp("msg1", msg1);	//receiver/transceiver type
-			ar &cereal::make_nvp("msg2", msg2);	//firmware version
+			ar &cereal::make_nvp("msg1", msg1); // receiver/transceiver type
+			ar &cereal::make_nvp("msg2", msg2); // firmware version
 			ar &cereal::make_nvp("msg3", msg3);
 			ar &cereal::make_nvp("msg4", msg4);
 			ar &cereal::make_nvp("msg5", msg5);
@@ -94,30 +98,31 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_IRESPONSE868{	//response on a mode command from the application
-		BYTE	cmnd;
-		BYTE	msg1;	//receiver/transceiver type
-		BYTE	msg2;	//firmware version
+	struct _tR_IRESPONSE868
+	{ // response on a mode command from the application
+		BYTE cmnd;
+		BYTE msg1; // receiver/transceiver type
+		BYTE msg2; // firmware version
 
-		BYTE	msg3;
-		BYTE	msg4;
-		BYTE	msg5;
-		BYTE	msg6;
-		BYTE	msg7;
-		BYTE	msg8;
-		BYTE	msg9;
-		BYTE	msg10;
-		BYTE	msg11;
-		BYTE	msg12;
-		BYTE	msg13;
-		BYTE	msg14;
-		BYTE	msg15;
-		BYTE	msg16;
-		template <class Archive>
-		void serialize(Archive& ar) {	//response on a mode command from the application
+		BYTE msg3;
+		BYTE msg4;
+		BYTE msg5;
+		BYTE msg6;
+		BYTE msg7;
+		BYTE msg8;
+		BYTE msg9;
+		BYTE msg10;
+		BYTE msg11;
+		BYTE msg12;
+		BYTE msg13;
+		BYTE msg14;
+		BYTE msg15;
+		BYTE msg16;
+		template <class Archive> void serialize(Archive &ar)
+		{ // response on a mode command from the application
 			ar &cereal::make_nvp("cmnd", cmnd);
-			ar &cereal::make_nvp("msg1", msg1);	//receiver/transceiver type
-			ar &cereal::make_nvp("msg2", msg2);	//firmware version
+			ar &cereal::make_nvp("msg1", msg1); // receiver/transceiver type
+			ar &cereal::make_nvp("msg2", msg2); // firmware version
 			ar &cereal::make_nvp("msg3", msg3);
 			ar &cereal::make_nvp("msg4", msg4);
 			ar &cereal::make_nvp("msg5", msg5);
@@ -133,45 +138,45 @@ namespace domoticztypes {
 			ar &cereal::make_nvp("msg15", msg15);
 			ar &cereal::make_nvp("msg16", msg16);
 		};
-
 	};
 
-	struct _tR_UNDECODED {
-		BYTE	msg1;
-		BYTE	msg2;
-		BYTE	msg3;
-		BYTE	msg4;
-		BYTE	msg5;
-		BYTE	msg6;
-		BYTE	msg7;
-		BYTE	msg8;
-		BYTE	msg9;
-		BYTE	msg10;
-		BYTE	msg11;
-		BYTE	msg12;
-		BYTE	msg13;
-		BYTE	msg14;
-		BYTE	msg15;
-		BYTE	msg16;
-		BYTE	msg17;
-		BYTE	msg18;
-		BYTE	msg19;
-		BYTE	msg20;
-		BYTE	msg21;
-		BYTE	msg22;
-		BYTE	msg23;
-		BYTE	msg24;
-		BYTE	msg25;
-		BYTE	msg26;
-		BYTE	msg27;
-		BYTE	msg28;
-		BYTE	msg29;
-		BYTE	msg30;
-		BYTE	msg31;
-		BYTE	msg32;
-		BYTE	msg33;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_UNDECODED
+	{
+		BYTE msg1;
+		BYTE msg2;
+		BYTE msg3;
+		BYTE msg4;
+		BYTE msg5;
+		BYTE msg6;
+		BYTE msg7;
+		BYTE msg8;
+		BYTE msg9;
+		BYTE msg10;
+		BYTE msg11;
+		BYTE msg12;
+		BYTE msg13;
+		BYTE msg14;
+		BYTE msg15;
+		BYTE msg16;
+		BYTE msg17;
+		BYTE msg18;
+		BYTE msg19;
+		BYTE msg20;
+		BYTE msg21;
+		BYTE msg22;
+		BYTE msg23;
+		BYTE msg24;
+		BYTE msg25;
+		BYTE msg26;
+		BYTE msg27;
+		BYTE msg28;
+		BYTE msg29;
+		BYTE msg30;
+		BYTE msg31;
+		BYTE msg32;
+		BYTE msg33;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("msg1", msg1);
 			ar &cereal::make_nvp("msg2", msg2);
 			ar &cereal::make_nvp("msg3", msg3);
@@ -208,21 +213,23 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_RXRESPONSE {	//receiver/transmitter messages
-		BYTE	msg;
-		template <class Archive>
-		void serialize(Archive& ar) {	//receiver/transmitter messages
+	struct _tR_RXRESPONSE
+	{ // receiver/transmitter messages
+		BYTE msg;
+		template <class Archive> void serialize(Archive &ar)
+		{ // receiver/transmitter messages
 			ar &cereal::make_nvp("msg", msg);
 		};
 	};
 
-	struct _tR_LIGHTING1 {
-		BYTE	housecode;
-		BYTE	unitcode;
-		BYTE	cmnd;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_LIGHTING1
+	{
+		BYTE housecode;
+		BYTE unitcode;
+		BYTE cmnd;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("housecode", housecode);
 			ar &cereal::make_nvp("unitcode", unitcode);
 			ar &cereal::make_nvp("cmnd", cmnd);
@@ -230,17 +237,18 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_LIGHTING2 {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	id3;
-		BYTE	id4;
-		BYTE	unitcode;
-		BYTE	cmnd;
-		BYTE	level;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_LIGHTING2
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE id3;
+		BYTE id4;
+		BYTE unitcode;
+		BYTE cmnd;
+		BYTE level;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -252,14 +260,15 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_LIGHTING3 {
-		BYTE	system;
-		BYTE	channel8_1;
-		BYTE	channel10_9;
-		BYTE	cmnd;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_LIGHTING3
+	{
+		BYTE system;
+		BYTE channel8_1;
+		BYTE channel10_9;
+		BYTE cmnd;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("system", system);
 			ar &cereal::make_nvp("channel8_1", channel8_1);
 			ar &cereal::make_nvp("channel10_9", channel10_9);
@@ -268,35 +277,36 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_LIGHTING4 {
-		BYTE	cmd1;
-		BYTE	cmd2;
-		BYTE	cmd3;
-		BYTE	pulseHigh;
-		BYTE	pulseLow;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_LIGHTING4
+	{
+		BYTE cmd1;
+		BYTE cmd2;
+		BYTE cmd3;
+		BYTE pulseHigh;
+		BYTE pulseLow;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("cmd1", cmd1);
 			ar &cereal::make_nvp("cmd2", cmd2);
 			ar &cereal::make_nvp("cmd3", cmd3);
 			ar &cereal::make_nvp("pulseHigh", pulseHigh);
 			ar &cereal::make_nvp("pulseLow", pulseLow);
 			ar &cereal::make_nvp("filler_rssi", filler_rssi);
-
 		};
 	};
 
-	struct _tR_LIGHTING5 {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	id3;
-		BYTE	unitcode;
-		BYTE	cmnd;
-		BYTE	level;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_LIGHTING5
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE id3;
+		BYTE unitcode;
+		BYTE cmnd;
+		BYTE level;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -304,21 +314,21 @@ namespace domoticztypes {
 			ar &cereal::make_nvp("cmnd", cmnd);
 			ar &cereal::make_nvp("level", level);
 			ar &cereal::make_nvp("filler_rssi", filler_rssi);
-
 		};
 	};
 
-	struct _tR_LIGHTING6 {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	groupcode;
-		BYTE	unitcode;
-		BYTE	cmnd;
-		BYTE	cmndseqnbr;
-		BYTE	seqnbr2;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_LIGHTING6
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE groupcode;
+		BYTE unitcode;
+		BYTE cmnd;
+		BYTE cmndseqnbr;
+		BYTE seqnbr2;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("groupcode", groupcode);
@@ -330,29 +340,30 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_CHIME {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	sound;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_CHIME
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE sound;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("sound", sound);
 			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
-
 	};
 
-	struct _tR_FAN {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	id3;
-		BYTE	cmnd;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_FAN
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE id3;
+		BYTE cmnd;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -361,13 +372,14 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_CURTAIN1 {
-		BYTE	housecode;
-		BYTE	unitcode;
-		BYTE	cmnd;
-		BYTE	filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_CURTAIN1
+	{
+		BYTE housecode;
+		BYTE unitcode;
+		BYTE cmnd;
+		BYTE filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("housecode", housecode);
 			ar &cereal::make_nvp("unitcode", unitcode);
 			ar &cereal::make_nvp("cmnd", cmnd);
@@ -375,15 +387,16 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_BLINDS1 {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	id3;
-		BYTE	unicode_id4;
-		BYTE	cmnd;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_BLINDS1
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE id3;
+		BYTE unicode_id4;
+		BYTE cmnd;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -393,18 +406,19 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_RFY {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	id3;
-		BYTE	unitcode;
-		BYTE	cmnd;
-		BYTE	rfu1;
-		BYTE	rfu2;
-		BYTE	rfu3;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_RFY
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE id3;
+		BYTE unitcode;
+		BYTE cmnd;
+		BYTE rfu1;
+		BYTE rfu2;
+		BYTE rfu3;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -417,7 +431,8 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_HOMECONFORT {
+	struct _tR_HOMECONFORT
+	{
 		BYTE id1;
 		BYTE id2;
 		BYTE id3;
@@ -427,8 +442,8 @@ namespace domoticztypes {
 		BYTE rfu1;
 		BYTE rfu2;
 		BYTE filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -439,20 +454,20 @@ namespace domoticztypes {
 			ar &cereal::make_nvp("rfu2", rfu2);
 			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
-
 	};
 
-	struct _tR_FUNKBUS {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	groupcode;
-		BYTE	unitcode;
-		BYTE	cmnd;
-		BYTE	cmndtime;
-		BYTE	devtype_filler;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_FUNKBUS
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE groupcode;
+		BYTE unitcode;
+		BYTE cmnd;
+		BYTE cmndtime;
+		BYTE devtype_filler;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("groupcode", groupcode);
@@ -464,14 +479,15 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_SECURITY1 {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	id3;
-		BYTE	status;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_SECURITY1
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE id3;
+		BYTE status;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -480,34 +496,35 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_SECURITY2 {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	id3;
-		BYTE	id4;
-		BYTE	id5;
-		BYTE	id6;
-		BYTE	id7;
-		BYTE	id8;
-		BYTE	id9;
-		BYTE	id10;
-		BYTE	id11;
-		BYTE	id12;
-		BYTE	id13;
-		BYTE	id14;
-		BYTE	id15;
-		BYTE	id16;
-		BYTE	id17;
-		BYTE	id18;
-		BYTE	id19;
-		BYTE	id20;
-		BYTE	id21;
-		BYTE	id22;
-		BYTE	id23;
-		BYTE	id24;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_SECURITY2
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE id3;
+		BYTE id4;
+		BYTE id5;
+		BYTE id6;
+		BYTE id7;
+		BYTE id8;
+		BYTE id9;
+		BYTE id10;
+		BYTE id11;
+		BYTE id12;
+		BYTE id13;
+		BYTE id14;
+		BYTE id15;
+		BYTE id16;
+		BYTE id17;
+		BYTE id18;
+		BYTE id19;
+		BYTE id20;
+		BYTE id21;
+		BYTE id22;
+		BYTE id23;
+		BYTE id24;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -536,39 +553,42 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_CAMERA1 {
-		BYTE	housecode;
-		BYTE	cmnd;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_CAMERA1
+	{
+		BYTE housecode;
+		BYTE cmnd;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("housecode", housecode);
 			ar &cereal::make_nvp("cmnd", cmnd);
 			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
-	struct _tR_REMOTE {
-		BYTE	id;
-		BYTE	cmnd;
-		BYTE	toggle_cmndtype_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_REMOTE
+	{
+		BYTE id;
+		BYTE cmnd;
+		BYTE toggle_cmndtype_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id", id);
 			ar &cereal::make_nvp("cmnd", cmnd);
 			ar &cereal::make_nvp("toggle_cmndtype_rssi", toggle_cmndtype_rssi);
 		};
 	};
 
-	struct _tR_THERMOSTAT1 {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	temperature;
-		BYTE	set_point;
-		BYTE	status_filler_mode;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_THERMOSTAT1
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE temperature;
+		BYTE set_point;
+		BYTE status_filler_mode;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("temperature", temperature);
@@ -578,26 +598,28 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_THERMOSTAT2 {
-		BYTE	unitcode;
-		BYTE	cmnd;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_THERMOSTAT2
+	{
+		BYTE unitcode;
+		BYTE cmnd;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("unitcode", unitcode);
 			ar &cereal::make_nvp("cmnd", cmnd);
 			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
 	};
 
-	struct _tR_THERMOSTAT3 {
-		BYTE	unitcode1;
-		BYTE	unitcode2;
-		BYTE	unitcode3;
-		BYTE	cmnd;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_THERMOSTAT3
+	{
+		BYTE unitcode1;
+		BYTE unitcode2;
+		BYTE unitcode3;
+		BYTE cmnd;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("unitcode1", unitcode1);
 			ar &cereal::make_nvp("unitcode2", unitcode2);
 			ar &cereal::make_nvp("unitcode3", unitcode3);
@@ -606,17 +628,18 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_THERMOSTAT4 {
-		BYTE	unitcode1;
-		BYTE	unitcode2;
-		BYTE	unitcode3;
-		BYTE	beep;
-		BYTE	fan1_speed;
-		BYTE	flame_power;
-		BYTE	mode;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_THERMOSTAT4
+	{
+		BYTE unitcode1;
+		BYTE unitcode2;
+		BYTE unitcode3;
+		BYTE beep;
+		BYTE fan1_speed;
+		BYTE flame_power;
+		BYTE mode;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("unitcode1", unitcode1);
 			ar &cereal::make_nvp("unitcode2", unitcode2);
 			ar &cereal::make_nvp("unitcode3", unitcode3);
@@ -626,21 +649,21 @@ namespace domoticztypes {
 			ar &cereal::make_nvp("mode", mode);
 			ar &cereal::make_nvp("filler_rssi", filler_rssi);
 		};
-
 	};
 
-	struct _tR_RADIATOR1 {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	id3;
-		BYTE	id4;
-		BYTE	unitcode;
-		BYTE	cmnd;
-		BYTE	temperature;
-		BYTE	tempPoint5;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_RADIATOR1
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE id3;
+		BYTE id4;
+		BYTE unitcode;
+		BYTE cmnd;
+		BYTE temperature;
+		BYTE tempPoint5;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -653,16 +676,17 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_BBQ {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	sensor1h;
-		BYTE	sensor1l;
-		BYTE	sensor2h;
-		BYTE	sensor2l;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_BBQ
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE sensor1h;
+		BYTE sensor1l;
+		BYTE sensor2h;
+		BYTE sensor2l;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("sensor1h", sensor1h);
@@ -673,16 +697,17 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_TEMP_RAIN {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	temperatureh_tempsignl;
-		BYTE	temperaturel;
-		BYTE	raintotal1;
-		BYTE	raintotal2;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_TEMP_RAIN
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE temperatureh_tempsignl;
+		BYTE temperaturel;
+		BYTE raintotal1;
+		BYTE raintotal2;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
@@ -693,31 +718,32 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_TEMP {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	temperatureh_tempsignl;
-		BYTE	temperaturel;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_TEMP
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE temperatureh_tempsignl;
+		BYTE temperaturel;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
 			ar &cereal::make_nvp("temperaturel", temperaturel);
 			ar &cereal::make_nvp("batterylevel_filler", batterylevel_filler);
 		};
-
 	};
 
-	struct _tR_HUM {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	humidity;
-		BYTE	humidity_status;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_HUM
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE humidity;
+		BYTE humidity_status;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("humidity", humidity);
@@ -726,16 +752,17 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_TEMP_HUM {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	temperatureh_tempsignl;
-		BYTE	temperaturel;
-		BYTE	humidity;
-		BYTE	humidity_status;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_TEMP_HUM
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE temperatureh_tempsignl;
+		BYTE temperaturel;
+		BYTE humidity;
+		BYTE humidity_status;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
@@ -746,15 +773,16 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_BARO {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	baro1;
-		BYTE	baro2;
-		BYTE	forecast;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_BARO
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE baro1;
+		BYTE baro2;
+		BYTE forecast;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("baro1", baro1);
@@ -764,19 +792,20 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_TEMP_HUM_BARO {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	temperatureh_tempsignl;
-		BYTE	temperaturel;
-		BYTE	humidity;
-		BYTE	humidity_status;
-		BYTE	baroh;
-		BYTE	barol;
-		BYTE	forecast;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_TEMP_HUM_BARO
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE temperatureh_tempsignl;
+		BYTE temperaturel;
+		BYTE humidity;
+		BYTE humidity_status;
+		BYTE baroh;
+		BYTE barol;
+		BYTE forecast;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("temperatureh_tempsignl", temperatureh_tempsignl);
@@ -790,17 +819,18 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_RAIN {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	rainrateh;
-		BYTE	rainratel;
-		BYTE	raintotal1;
-		BYTE	raintotal2;
-		BYTE	raintotal3;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_RAIN
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE rainrateh;
+		BYTE rainratel;
+		BYTE raintotal1;
+		BYTE raintotal2;
+		BYTE raintotal3;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("rainrateh", rainrateh);
@@ -812,22 +842,23 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_WIND {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	directionh;
-		BYTE	directionl;
-		BYTE	av_speedh;
-		BYTE	av_speedl;
-		BYTE	gusth;
-		BYTE	gustl;
-		BYTE	temperatureh_tempsignl;
-		BYTE	temperaturel;
-		BYTE	chillh_chillsign;
-		BYTE	chilll;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_WIND
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE directionh;
+		BYTE directionl;
+		BYTE av_speedh;
+		BYTE av_speedl;
+		BYTE gusth;
+		BYTE gustl;
+		BYTE temperatureh_tempsignl;
+		BYTE temperaturel;
+		BYTE chillh_chillsign;
+		BYTE chilll;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("directionh", directionh);
@@ -844,15 +875,16 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_UV {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	uv;
-		BYTE	temperatureh_tempsignl;
-		BYTE	temperaturel;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_UV
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE uv;
+		BYTE temperatureh_tempsignl;
+		BYTE temperaturel;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("uv", uv);
@@ -862,19 +894,20 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_DT {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	yy;
-		BYTE	mm;
-		BYTE	dd;
-		BYTE	dow;
-		BYTE	hr;
-		BYTE	min;
-		BYTE	sec;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_DT
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE yy;
+		BYTE mm;
+		BYTE dd;
+		BYTE dow;
+		BYTE hr;
+		BYTE min;
+		BYTE sec;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("yy", yy);
@@ -888,19 +921,20 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_CURRENT {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	count;
-		BYTE	ch1h;
-		BYTE	ch1l;
-		BYTE	ch2h;
-		BYTE	ch2l;
-		BYTE	ch3h;
-		BYTE	ch3l;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_CURRENT
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE count;
+		BYTE ch1h;
+		BYTE ch1l;
+		BYTE ch2h;
+		BYTE ch2l;
+		BYTE ch3h;
+		BYTE ch3l;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("count", count);
@@ -914,23 +948,24 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_ENERGY {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	count;
-		BYTE	instant1;
-		BYTE	instant2;
-		BYTE	instant3;
-		BYTE	instant4;
-		BYTE	total1;
-		BYTE	total2;
-		BYTE	total3;
-		BYTE	total4;
-		BYTE	total5;
-		BYTE	total6;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_ENERGY
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE count;
+		BYTE instant1;
+		BYTE instant2;
+		BYTE instant3;
+		BYTE instant4;
+		BYTE total1;
+		BYTE total2;
+		BYTE total3;
+		BYTE total4;
+		BYTE total5;
+		BYTE total6;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("count", count);
@@ -948,25 +983,26 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_CURRENT_ENERGY {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	count;
-		BYTE	ch1h;
-		BYTE	ch1l;
-		BYTE	ch2h;
-		BYTE	ch2l;
-		BYTE	ch3h;
-		BYTE	ch3l;
-		BYTE	total1;
-		BYTE	total2;
-		BYTE	total3;
-		BYTE	total4;
-		BYTE	total5;
-		BYTE	total6;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_CURRENT_ENERGY
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE count;
+		BYTE ch1h;
+		BYTE ch1l;
+		BYTE ch2h;
+		BYTE ch2l;
+		BYTE ch3h;
+		BYTE ch3l;
+		BYTE total1;
+		BYTE total2;
+		BYTE total3;
+		BYTE total4;
+		BYTE total5;
+		BYTE total6;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("count", count);
@@ -986,21 +1022,22 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_POWER {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	voltage;
-		BYTE	currentH;
-		BYTE	currentL;
-		BYTE	powerH;
-		BYTE	powerL;
-		BYTE	energyH;
-		BYTE	energyL;
-		BYTE	pf;
-		BYTE	freq;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_POWER
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE voltage;
+		BYTE currentH;
+		BYTE currentL;
+		BYTE powerH;
+		BYTE powerL;
+		BYTE energyH;
+		BYTE energyL;
+		BYTE pf;
+		BYTE freq;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("voltage", voltage);
@@ -1016,14 +1053,15 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_WEIGHT {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	weighthigh;
-		BYTE	weightlow;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_WEIGHT
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE weighthigh;
+		BYTE weightlow;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("weighthigh", weighthigh);
@@ -1032,27 +1070,28 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_TIC {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	id3;
-		BYTE	id4;
-		BYTE	id5;
-		BYTE	contract_type;
-		BYTE	counter1_0;
-		BYTE	counter1_1;
-		BYTE	counter1_2;
-		BYTE	counter1_3;
-		BYTE	counter2_0;
-		BYTE	counter2_1;
-		BYTE	counter2_2;
-		BYTE	counter2_3;
-		BYTE	power_H;
-		BYTE	power_L;
-		BYTE	state;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_TIC
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE id3;
+		BYTE id4;
+		BYTE id5;
+		BYTE contract_type;
+		BYTE counter1_0;
+		BYTE counter1_1;
+		BYTE counter1_2;
+		BYTE counter1_3;
+		BYTE counter2_0;
+		BYTE counter2_1;
+		BYTE counter2_2;
+		BYTE counter2_3;
+		BYTE power_H;
+		BYTE power_L;
+		BYTE state;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -1074,23 +1113,24 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_CEENCODER {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	id3;
-		BYTE	id4;
-		BYTE	counter1_0;
-		BYTE	counter1_1;
-		BYTE	counter1_2;
-		BYTE	counter1_3;
-		BYTE	counter2_0;
-		BYTE	counter2_1;
-		BYTE	counter2_2;
-		BYTE	counter2_3;
-		BYTE	state;
-		BYTE	batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_CEENCODER
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE id3;
+		BYTE id4;
+		BYTE counter1_0;
+		BYTE counter1_1;
+		BYTE counter1_2;
+		BYTE counter1_3;
+		BYTE counter2_0;
+		BYTE counter2_1;
+		BYTE counter2_2;
+		BYTE counter2_3;
+		BYTE state;
+		BYTE batterylevel_filler;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -1108,7 +1148,8 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_LINKY {
+	struct _tR_LINKY
+	{
 		BYTE id1;
 		BYTE id2;
 		BYTE id3;
@@ -1127,8 +1168,8 @@ namespace domoticztypes {
 		BYTE power_L;
 		BYTE state;
 		BYTE batterylevel_filler;
-		template <class Archive>
-		void serialize(Archive& ar) {
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("id3", id3);
@@ -1150,7 +1191,8 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_ASYNCPORT {
+	struct _tR_ASYNCPORT
+	{
 		BYTE cmnd;
 		BYTE baudrate;
 		BYTE parity;
@@ -1159,8 +1201,8 @@ namespace domoticztypes {
 		BYTE polarity;
 		BYTE filler1;
 		BYTE filler2;
-		template <class Archive>
-		void serialize(Archive& ar) {
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("cmnd", cmnd);
 			ar &cereal::make_nvp("baudrate", baudrate);
 			ar &cereal::make_nvp("parity", parity);
@@ -1172,21 +1214,23 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_ASYNCDATA{
+	struct _tR_ASYNCDATA
+	{
 		BYTE datachar[252];
-		template <class Archive>
-		void serialize(Archive& ar) {
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("datachar", datachar);
 		};
 	};
 
-	struct _tR_RFXSENSOR {
-		BYTE	id;
-		BYTE	msg1;
-		BYTE	msg2;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_RFXSENSOR
+	{
+		BYTE id;
+		BYTE msg1;
+		BYTE msg2;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id", id);
 			ar &cereal::make_nvp("msg1", msg1);
 			ar &cereal::make_nvp("msg2", msg2);
@@ -1194,16 +1238,17 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_RFXMETER {
-		BYTE	id1;
-		BYTE	id2;
-		BYTE	count1;
-		BYTE	count2;
-		BYTE	count3;
-		BYTE	count4;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_RFXMETER
+	{
+		BYTE id1;
+		BYTE id2;
+		BYTE count1;
+		BYTE count2;
+		BYTE count3;
+		BYTE count4;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("id1", id1);
 			ar &cereal::make_nvp("id2", id2);
 			ar &cereal::make_nvp("count1", count1);
@@ -1214,15 +1259,16 @@ namespace domoticztypes {
 		};
 	};
 
-	struct _tR_FS20 {
-		BYTE	hc1;
-		BYTE	hc2;
-		BYTE	addr;
-		BYTE	cmd1;
-		BYTE	cmd2;
-		BYTE	filler_rssi;
-		template <class Archive>
-		void serialize(Archive& ar) {
+	struct _tR_FS20
+	{
+		BYTE hc1;
+		BYTE hc2;
+		BYTE addr;
+		BYTE cmd1;
+		BYTE cmd2;
+		BYTE filler_rssi;
+		template <class Archive> void serialize(Archive &ar)
+		{
 			ar &cereal::make_nvp("hc1", hc1);
 			ar &cereal::make_nvp("hc2", hc2);
 			ar &cereal::make_nvp("addr", addr);
@@ -1240,17 +1286,18 @@ namespace domoticztypes {
 	} _tR_pulse[124];
 	template <class Archive>
 	void serialize (Archive &ar) {
-	ar &cereal::make_nvp("repeat", repeat);
+	ar & cereal::make_nvp("repeat", repeat);
 	template <class Archive>
 	void serialize (Archive &ar){
-	ar &cereal::make_nvp("uint_msb", uint_msb);
-	ar &cereal::make_nvp("uint_lsb", uint_lsb);
+	ar & cereal::make_nvp("uint_msb", uint_msb);
+	ar & cereal::make_nvp("uint_lsb", uint_lsb);
 	};
 	};
 	};
 	*/
 
-	struct _tRDomoticz {
+	struct _tRDomoticz
+	{
 		_tR_HEADER HEADER;
 		union {
 			_tR_ICMND ICMND;
@@ -1312,8 +1359,7 @@ namespace domoticztypes {
 	} _tRDOMOTICZRBUF;
 
 	/* serializes a struct to a std::string */
-	template <typename StructType>
-	std::string Serialize(StructType buf)
+	template <typename StructType> std::string Serialize(StructType buf)
 	{
 		std::stringstream stream;
 		{ // we start a new scope, so the archive flushes to the stream upon destruction
@@ -1324,8 +1370,7 @@ namespace domoticztypes {
 	};
 
 	/* deserializes a std::string to a struct */
-	template <typename StructType>
-	StructType Deserialize(std::string str)
+	template <typename StructType> StructType Deserialize(const std::string &str)
 	{
 		std::stringstream stream(str);
 		cereal::PortableBinaryInputArchive iarchive(stream);
@@ -1334,5 +1379,4 @@ namespace domoticztypes {
 		return result;
 	};
 
-
-}
+} // namespace domoticztypes

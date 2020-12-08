@@ -298,7 +298,7 @@ bool RESTClient::ExecuteBinary(const connection::HTTP::method::value eMethod, co
 		{
 			if (eMethod & connection::HTTP::method::GETSINGLELINE)
 				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, connection::HTTP::callback::write_curl_data_single_line);
-			else
+			else 
 				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, connection::HTTP::callback::write_curl_data);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&vResponse);
 
@@ -335,7 +335,7 @@ bool RESTClient::ExecuteBinary(const connection::HTTP::method::value eMethod, co
 			curl_slist_free_all(headers);
 
 		if (eMethod & connection::HTTP::method::DOWNLOAD)
-			outfile.close();
+			outfile.close(); 
 
 		return (res == CURLE_OK);
 	}

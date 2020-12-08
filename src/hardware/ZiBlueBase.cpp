@@ -19,29 +19,28 @@
 	#define DEBUG_ZIBLUE
 #endif
 
-extern const char *findTableIDSingle1(const STR_TABLE_SINGLE *t, const unsigned long id);
+extern const char *findTableIDSingle1(const STR_TABLE_SINGLE *t, unsigned long id);
 
 const char *szZiBlueProtocolRFLink(const unsigned char id)
 {
-	static const STR_TABLE_SINGLE	Table[] =
-	{
-		{ 1, "VISONIC_433" },
-		{ 2, "VISONIC_868" },
-		{ 3, "CHACON_433" },
-		{ 4, "DOMIA_433" },
-		{ 5, "X10_433" },
-		{ 6, "X2D_433" },
-		{ 7, "X2D_868" },
-		{ 8, "X2D_SHUTTER_868" },
-		{ 9, "X2D_HA_ELEC_868" },
-		{ 10, "X2D_HA_GAS_868" },
-		{ 11, "SOMFY_RTS_433" },
-		{ 12, "BLYSS_433" },
-		{ 13, "PARROT_433_OR_868" },
-		{ 14, "reserved" },
-		{ 15, "reserved" },
-		{ 16, "KD101_433" },
-		{ 0, nullptr }
+	static const STR_TABLE_SINGLE Table[] = {
+		{ 1, "VISONIC_433" },	     //
+		{ 2, "VISONIC_868" },	     //
+		{ 3, "CHACON_433" },	     //
+		{ 4, "DOMIA_433" },	     //
+		{ 5, "X10_433" },	     //
+		{ 6, "X2D_433" },	     //
+		{ 7, "X2D_868" },	     //
+		{ 8, "X2D_SHUTTER_868" },    //
+		{ 9, "X2D_HA_ELEC_868" },    //
+		{ 10, "X2D_HA_GAS_868" },    //
+		{ 11, "SOMFY_RTS_433" },     //
+		{ 12, "BLYSS_433" },	     //
+		{ 13, "PARROT_433_OR_868" }, //
+		{ 14, "reserved" },	     //
+		{ 15, "reserved" },	     //
+		{ 16, "KD101_433" },	     //
+		{ 0, nullptr },		     //
 	};
 	return findTableIDSingle1(Table, id);
 }
@@ -50,20 +49,19 @@ const char *szZiBlueProtocolRFLink(const unsigned char id)
 
 const char *szZiBlueProtocol(const unsigned char id)
 {
-	static const STR_TABLE_SINGLE	Table[] =
-	{
-		{ 1, "X10" },
-		{ 2, "VISONIC" },
-		{ 3, "BLYSS" },
-		{ 4, "CHACON" },
-		{ 5, "OREGON" },
-		{ 6, "DOMIA" },
-		{ 7, "OWL" },
-		{ 8, "X2D" },
-		{ 9, "RTS" },
-		{ 10, "KD101" },
-		{ 11, "PARROT" },
-		{ 0, nullptr }
+	static const STR_TABLE_SINGLE Table[] = {
+		{ 1, "X10" },	  //
+		{ 2, "VISONIC" }, //
+		{ 3, "BLYSS" },	  //
+		{ 4, "CHACON" },  //
+		{ 5, "OREGON" },  //
+		{ 6, "DOMIA" },	  //
+		{ 7, "OWL" },	  //
+		{ 8, "X2D" },	  //
+		{ 9, "RTS" },	  //
+		{ 10, "KD101" },  //
+		{ 11, "PARROT" }, //
+		{ 0, nullptr },	  //
 	};
 	return findTableIDSingle1(Table, id);
 }
@@ -122,10 +120,6 @@ std::string GetGeneralZiBlueFromInt(const _tZiBlueStringIntHelper *pTable, const
 CZiBlueBase::CZiBlueBase()
 {
 	Init();
-}
-
-CZiBlueBase::~CZiBlueBase()
-{
 }
 
 void CZiBlueBase::Init()
@@ -400,7 +394,6 @@ void CZiBlueBase::ParseData(const char *data, size_t len)
 			break;
 		}
 		ii++;
-		continue;
 	}
 }
 
@@ -463,7 +456,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 				INCOMING_RF_INFOS_TYPE0 *pSen = (INCOMING_RF_INFOS_TYPE0*)(data + 8);
 				uint8_t houseCode = (pSen->id & 0xF0) >> 4;;
 				uint8_t dev = pSen->id & 0x0F;
-				std::string switchCmd = "";
+				std::string switchCmd;
 				switch (pSen->subtype)
 				{
 				case SEND_ACTION_OFF:
@@ -501,7 +494,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 			{
 				INCOMING_RF_INFOS_TYPE1 *pSen = (INCOMING_RF_INFOS_TYPE1*)(data + 8);
 				int DevID = (pSen->idMsb << 16) + pSen->idLsb;
-				std::string switchCmd = "";
+				std::string switchCmd;
 				switch (pSen->subtype)
 				{
 				case SEND_ACTION_OFF:

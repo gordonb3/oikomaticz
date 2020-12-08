@@ -13,7 +13,6 @@ P1MeterTCP::P1MeterTCP(const int ID, const std::string &IPAddress, const unsigne
 	ImportKey(DecryptionKey);
 }
 
-
 bool P1MeterTCP::StartHardware()
 {
 	RequestStart();

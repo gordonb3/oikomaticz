@@ -49,13 +49,6 @@ CAirconWithMe::CAirconWithMe(const int id, const std::string& ipaddress, const u
     };
 }
 
-
-CAirconWithMe::~CAirconWithMe(void)
-{
-
-}
-
-
 bool CAirconWithMe::StartHardware()
 {
 	RequestStart();
@@ -155,7 +148,7 @@ bool CAirconWithMe::Login()
 
 	Json::Value root;
 	std::string errorMessage;
-	std::string postdata = "{\"command\":\"login\",\"data\":{\"username\":\"" + mUsername + "\",\"password\":\"" + mPassword + "\"}}";
+	std::string postdata = R"({"command":"login","data":{"username":")" + mUsername + R"(","password":")" + mPassword + "\"}}";
 
 	if (!DoWebRequest(postdata, root, errorMessage, false))
 	{
@@ -178,7 +171,7 @@ bool CAirconWithMe::GetAvailableDataPoints()
 {
 	Json::Value root;
 	std::string errorMessage;
-	std::string postdata = "{\"command\":\"getavailabledatapoints\",\"data\":{\"sessionID\":\"%SESSION_ID%\"}}";
+	std::string postdata = R"({"command":"getavailabledatapoints","data":{"sessionID":"%SESSION_ID%"}})";
 	if (!DoWebRequest(postdata, root, errorMessage, true))
 	{
 		Log(LOG_ERROR, "GetAvailableDataPoints failed : " + errorMessage);
@@ -257,7 +250,7 @@ void CAirconWithMe::ComputerSwitchLevelValues()
 
 bool CAirconWithMe::GetValues()
 {
-	if (mDeviceInfo.size() == 0)
+	if (mDeviceInfo.empty())
 	{
 		if (false == GetAvailableDataPoints())
 			return false;
@@ -265,7 +258,7 @@ bool CAirconWithMe::GetValues()
 
 	Json::Value root;
 	std::string errorMessage;
-	std::string postdata = "{\"command\":\"getdatapointvalue\",\"data\":{\"sessionID\":\"%SESSION_ID%\",\"uid\":\"all\"}}";
+	std::string postdata = R"({"command":"getdatapointvalue","data":{"sessionID":"%SESSION_ID%","uid":"all"}})";
 
 	if (!DoWebRequest(postdata, root, errorMessage, true))
 	{
@@ -294,7 +287,7 @@ bool CAirconWithMe::GetInfo()
 {
 	Json::Value root;
 	std::string errorMessage;
-	std::string postdata = "{\"command\":\"getinfo\"}";
+	std::string postdata = R"({"command":"getinfo"})";
 
 	if (!DoWebRequest(postdata, root, errorMessage, false))
 	{
@@ -316,7 +309,7 @@ bool CAirconWithMe::GetInfo()
 			if (info[it.mName].isInt())
 			{
 				int32_t value = info[it.mName].asInt();
-				SendCustomSensor(it.mUID/256, it.mUID, 255, static_cast<float>(value), it.mDescription.c_str(), "");
+				SendCustomSensor(it.mUID / 256, it.mUID, 255, static_cast<float>(value), it.mDescription, "");
 			}
 		}
 		if (it.mDomoticzType == NDT_STRING)
@@ -324,7 +317,7 @@ bool CAirconWithMe::GetInfo()
 			if (info[it.mName].isString())
 			{
 				std::string value = info[it.mName].asString();
-				SendTextSensor(it.mUID/256, it.mUID%256, 255, value, it.mDescription.c_str());
+				SendTextSensor(it.mUID / 256, it.mUID % 256, 255, value, it.mDescription);
 			}
 		}
 		if (it.mDomoticzType == NDT_SWITCH)
@@ -332,7 +325,7 @@ bool CAirconWithMe::GetInfo()
 			if (info[it.mName].isInt())
 			{
 				int32_t value = info[it.mName].asInt();
-				SendGeneralSwitch(it.mUID, 1, 255, value>0 ? gswitch_sOn : gswitch_sOff, 1, it.mDescription.c_str());
+				SendGeneralSwitch(it.mUID, 1, 255, value > 0 ? gswitch_sOn : gswitch_sOff, 1, it.mDescription);
 			}
 		}
 	}
@@ -350,11 +343,11 @@ void CAirconWithMe::UpdateDomoticzWithValue(int32_t uid, int32_t value)
 	{
 	case NDT_SWITCH:
 		//SendSwitch(uid, 0, 255, value > 0, 1, valueInfo.mDefaultName.c_str());
-		SendGeneralSwitch(uid, 1, 255, value>0 ? gswitch_sOn : gswitch_sOff, 1, valueInfo.mDefaultName.c_str());
+		SendGeneralSwitch(uid, 1, 255, value > 0 ? gswitch_sOn : gswitch_sOff, 1, valueInfo.mDefaultName);
 		break;
 
 	case NDT_THERMOSTAT:
-		SendSetPointSensor(0, uid / 256, uid % 256, static_cast<float>(value) / 10.0f, valueInfo.mDefaultName.c_str());
+		SendSetPointSensor(0, uid / 256, uid % 256, static_cast<float>(value) / 10.0f, valueInfo.mDefaultName);
 		break;
 
 	case NDT_SELECTORSWITCH:
@@ -362,15 +355,15 @@ void CAirconWithMe::UpdateDomoticzWithValue(int32_t uid, int32_t value)
 		break;
 
 	case NDT_THERMOMETER:
-		SendTempSensor(uid, 255, static_cast<float>(value) / 10.0f, valueInfo.mDefaultName.c_str());
+		SendTempSensor(uid, 255, static_cast<float>(value) / 10.0f, valueInfo.mDefaultName);
 		break;
 
 	case NDT_NUMBER:
-		SendCustomSensor(0, uid, 255, static_cast<float>(value), valueInfo.mDefaultName.c_str(), "");
+		SendCustomSensor(0, uid, 255, static_cast<float>(value), valueInfo.mDefaultName, "");
 		break;
 
 	case NDT_HOUR:
-		SendCustomSensor(0, uid, 255, static_cast<float>(value), valueInfo.mDefaultName.c_str(), "Hour");
+		SendCustomSensor(0, uid, 255, static_cast<float>(value), valueInfo.mDefaultName, "Hour");
 		break;
 
 	}
@@ -462,7 +455,7 @@ void CAirconWithMe::SendValueToAirco(const int32_t uid, const int32_t value)
 {
 	Json::Value root;
 	std::string errorMessage;
-	std::string postdata = "{\"command\":\"setdatapointvalue\",\"data\":{\"sessionID\":\"%SESSION_ID%\",\"uid\":" + std::to_string(uid) + ",\"value\":" + std::to_string(value) + "}}";
+	std::string postdata = R"({"command":"setdatapointvalue","data":{"sessionID":"%SESSION_ID%","uid":)" + std::to_string(uid) + ",\"value\":" + std::to_string(value) + "}}";
 
 	if (!DoWebRequest(postdata, root, errorMessage, true))
 	{

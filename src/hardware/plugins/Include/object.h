@@ -572,9 +572,9 @@ _PyObject_GetBuiltin(const char *name);
 #endif
 
 /* PyObject_Dir(obj) acts like Python builtins.dir(obj), returning a
-   list of strings.  PyObject_Dir(nullptr) is like builtins.dir(),
+   list of strings.  PyObject_Dir(NULL) is like builtins.dir(),
    returning the names of the current locals.  In this case, if there are
-   no current locals, nullptr is returned, and PyErr_Occurred() is false.
+   no current locals, NULL is returned, and PyErr_Occurred() is false.
 */
 PyAPI_FUNC(PyObject *) PyObject_Dir(PyObject *);
 
@@ -794,7 +794,7 @@ PyAPI_FUNC(void) _Py_Dealloc(PyObject *);
  * Note that "the obvious" code can be deadly:
  *
  *     Py_XDECREF(op);
- *     op = nullptr;
+ *     op = NULL;
  *
  * Typically, `op` is something like self->containee, and `self` is done
  * using its `containee` member.  In the code sequence above, suppose
@@ -825,8 +825,8 @@ PyAPI_FUNC(void) _Py_Dealloc(PyObject *);
 #define Py_CLEAR(op)                            \
     do {                                        \
         PyObject *_py_tmp = (PyObject *)(op);   \
-        if (_py_tmp != nullptr) {                  \
-            (op) = nullptr;                        \
+        if (_py_tmp != NULL) {                  \
+            (op) = NULL;                        \
             Py_DECREF(_py_tmp);                 \
         }                                       \
     } while (0)
@@ -835,14 +835,14 @@ PyAPI_FUNC(void) _Py_Dealloc(PyObject *);
 #define Py_XINCREF(op)                                \
     do {                                              \
         PyObject *_py_xincref_tmp = (PyObject *)(op); \
-        if (_py_xincref_tmp != nullptr)                  \
+        if (_py_xincref_tmp != NULL)                  \
             Py_INCREF(_py_xincref_tmp);               \
     } while (0)
 
 #define Py_XDECREF(op)                                \
     do {                                              \
         PyObject *_py_xdecref_tmp = (PyObject *)(op); \
-        if (_py_xdecref_tmp != nullptr)                  \
+        if (_py_xdecref_tmp != NULL)                  \
             Py_DECREF(_py_xdecref_tmp);               \
     } while (0)
 

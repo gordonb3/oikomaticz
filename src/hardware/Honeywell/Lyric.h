@@ -13,11 +13,11 @@ namespace Json
 
 class Lyric : public CDomoticzHardwareBase
 {
-public:
+      public:
 	Lyric(int ID, const std::string &Username, const std::string &Password, const std::string &Extra);
 	~Lyric() override = default;;
 	bool WriteToHardware(const char *pdata, unsigned char length) override;
-private:
+      private:
 	void SetSetpoint(int idx, float temp, int nodeid);
 	void SetPauseStatus(int idx, bool bHeating, int nodeid);
 	void SendOnOffSensor(int NodeID, device::tswitch::type::value switchtype, bool SwitchState, const std::string &defaultname);
@@ -28,7 +28,7 @@ private:
 	bool StopHardware() override;
 	void Do_Work();
 	void GetThermostatData();
-private:
+      private:
 	std::string mApiKey;
 	std::string mApiSecret;
 	std::string mAccessToken;

@@ -39,10 +39,6 @@ CRtl433::CRtl433(const int ID, const std::string& cmdline) :
 	*/
 }
 
-CRtl433::~CRtl433()
-{
-}
-
 bool CRtl433::StartHardware()
 {
 	RequestStart();
@@ -520,7 +516,8 @@ bool CRtl433::ParseData(std::map<std::string, std::string>& data)
 			bHandled = false;
 			break;
 		}
-		if (bHandled) SendSecurity1Sensor(strtoul(data["id"].c_str(), nullptr, 16), x10_device, batterylevel, x10_status, model, snr);
+		if (bHandled)
+			SendSecurity1Sensor(strtoul(data["id"].c_str(), nullptr, 16), x10_device, batterylevel, x10_status, model, snr);
 	} // End of X10-Security section
 
 	return bHandled; //not handled (Yet!)

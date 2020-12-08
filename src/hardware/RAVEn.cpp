@@ -19,10 +19,6 @@ RAVEn::RAVEn(const int ID, const std::string& devname)
     m_HwdID = ID;
 }
 
-RAVEn::~RAVEn(void)
-{
-}
-
 bool RAVEn::StartHardware()
 {
 	RequestStart();
@@ -104,14 +100,11 @@ void RAVEn::readCallback(const char *indata, size_t inlen)
 #endif
         return;
     }
-    else
-    {
 #ifdef _DEBUG
-        _log.Log(LOG_NORM, "RAVEn::shifting buffer after parsing %d with %d bytes remaining: %s", endPtr - m_buffer, m_wptr - endPtr, endPtr);
+    _log.Log(LOG_NORM, "RAVEn::shifting buffer after parsing %d with %d bytes remaining: %s", endPtr - m_buffer, m_wptr - endPtr, endPtr);
 #endif
-        memmove(m_buffer, endPtr, m_wptr - endPtr);
-        m_wptr = m_buffer + (m_wptr - endPtr);
-    }
+    memmove(m_buffer, endPtr, m_wptr - endPtr);
+    m_wptr = m_buffer + (m_wptr - endPtr);
 
     TiXmlElement *pRoot;
 
@@ -119,14 +112,16 @@ void RAVEn::readCallback(const char *indata, size_t inlen)
     bool updated=false;
     if (pRoot)
     {
-        m_currUsage = 1000*double(strtoul(pRoot->FirstChildElement("Demand")->GetText(), nullptr, 16))/strtoul(pRoot->FirstChildElement("Divisor")->GetText(), nullptr, 16);
-        updated = true;
+	    m_currUsage = 1000 * double(strtoul(pRoot->FirstChildElement("Demand")->GetText(), nullptr, 16))
+			  / strtoul(pRoot->FirstChildElement("Divisor")->GetText(), nullptr, 16);
+	    updated = true;
     }
     pRoot = doc.FirstChildElement("CurrentSummationDelivered");
     if(pRoot)
     {
-        m_totalUsage = double(strtoul(pRoot->FirstChildElement("SummationDelivered")->GetText(), nullptr, 16))/strtoul(pRoot->FirstChildElement("Divisor")->GetText(), nullptr, 16);
-        updated = true;
+	    m_totalUsage = double(strtoul(pRoot->FirstChildElement("SummationDelivered")->GetText(), nullptr, 16))
+			   / strtoul(pRoot->FirstChildElement("Divisor")->GetText(), nullptr, 16);
+	    updated = true;
     }
 
     if(updated)

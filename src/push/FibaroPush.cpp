@@ -52,9 +52,9 @@ void CFibaroPush::OnDeviceReceived(const int m_HwdID, const uint64_t DeviceRowId
 
 void CFibaroPush::DoFibaroPush()
 {
-	std::string fibaroIP = "";
-	std::string fibaroUsername = "";
-	std::string fibaroPassword = "";
+	std::string fibaroIP;
+	std::string fibaroUsername;
+	std::string fibaroPassword;
 	int iIsVersion4 = 0;
 	m_sql.GetPreferencesVar("FibaroIP", fibaroIP);
 	m_sql.GetPreferencesVar("FibaroUsername", fibaroUsername);
@@ -70,11 +70,7 @@ void CFibaroPush::DoFibaroPush()
 	}
 	bool bIsV4 = (iIsVersion4 != 0);
 
-	if (
-		(fibaroIP == "") ||
-		(fibaroUsername == "") ||
-		(fibaroPassword == "")
-		)
+	if ((fibaroIP.empty()) || (fibaroUsername.empty()) || (fibaroPassword.empty()))
 		return;
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query(
@@ -85,22 +81,20 @@ void CFibaroPush::DoFibaroPush()
 	if (!result.empty())
 	{
 		std::string sendValue;
-		std::vector<std::vector<std::string> >::const_iterator itt;
-		for (itt = result.begin(); itt != result.end(); ++itt)
+		for (const auto &sd : result)
 		{
-			std::vector<std::string> sd = *itt;
 			int delpos = atoi(sd[1].c_str());
 			int dType = atoi(sd[3].c_str());
 			int dSubType = atoi(sd[4].c_str());
 			int nValue = atoi(sd[5].c_str());
-			std::string sValue = sd[6].c_str();
+			std::string sValue = sd[6];
 			int targetType = atoi(sd[7].c_str());
-			std::string targetVariable = sd[8].c_str();
+			std::string targetVariable = sd[8];
 			int targetDeviceID = atoi(sd[9].c_str());
-			std::string targetProperty = sd[10].c_str();
+			std::string targetProperty = sd[10];
 			int includeUnit = atoi(sd[11].c_str());
 			int metertype = atoi(sd[12].c_str());
-			std::string lstatus = "";
+			std::string lstatus;
 
 			if ((targetType == 0) || (targetType == 1)) {
 				if (delpos == 0) {
@@ -113,11 +107,12 @@ void CFibaroPush::DoFibaroPush()
 				}
 				else if (delpos > 0) {
 					std::vector<std::string> strarray;
-					if (sValue.find(";") != std::string::npos) {
+					if (sValue.find(';') != std::string::npos)
+					{
 						StringSplit(sValue, ";", strarray);
 						if (int(strarray.size()) >= delpos)
 						{
-							std::string rawsendValue = strarray[delpos - 1].c_str();
+							std::string rawsendValue = strarray[delpos - 1];
 							sendValue = ProcessSendValue(rawsendValue, delpos, nValue, includeUnit, dType, dSubType, metertype);
 						}
 					}
@@ -133,7 +128,8 @@ void CFibaroPush::DoFibaroPush()
 				GetLightStatus(dType, dSubType, device::tswitch::type::OnOff, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 				sendValue = lstatus;
 			}
-			if (sendValue != "") {
+			if (!sendValue.empty())
+			{
 				std::string sResult;
 				std::stringstream sPostData;
 				std::stringstream Url;
@@ -162,7 +158,7 @@ void CFibaroPush::DoFibaroPush()
 					if (bIsV4)
 						Url << "/" << targetVariable;
 
-					sPostData << "{\"name\": \"" << targetVariable << "\", \"value\": \"" << sendValue << "\"";
+					sPostData << R"({"name": ")" << targetVariable << R"(", "value": ")" << sendValue << "\"";
 
 					if (bIsV4)
 						sPostData << ", \"invokeScenes\": true";
@@ -234,21 +230,14 @@ namespace http {
 			std::string linkactive = request::findValue(&req, "linkactive");
 			std::string isversion4 = request::findValue(&req, "isversion4");
 			std::string debugenabled = request::findValue(&req, "debugenabled");
-			if (
-				(remote == "") ||
-				(username == "") ||
-				(password == "") ||
-				(linkactive == "") ||
-				(isversion4 == "") ||
-				(debugenabled == "")
-				)
+			if ((remote.empty()) || (username.empty()) || (password.empty()) || (linkactive.empty()) || (isversion4.empty()) || (debugenabled.empty()))
 				return;
 			int ilinkactive = atoi(linkactive.c_str());
 			int iisversion4 = atoi(isversion4.c_str());
 			int idebugenabled = atoi(debugenabled.c_str());
-			m_sql.UpdatePreferencesVar("FibaroIP", remote.c_str());
-			m_sql.UpdatePreferencesVar("FibaroUsername", username.c_str());
-			m_sql.UpdatePreferencesVar("FibaroPassword", password.c_str());
+			m_sql.UpdatePreferencesVar("FibaroIP", remote);
+			m_sql.UpdatePreferencesVar("FibaroUsername", username);
+			m_sql.UpdatePreferencesVar("FibaroPassword", password);
 			m_sql.UpdatePreferencesVar("FibaroActive", ilinkactive);
 			m_sql.UpdatePreferencesVar("FibaroVersion4", iisversion4);
 			m_sql.UpdatePreferencesVar("FibaroDebug", idebugenabled);
@@ -311,11 +300,9 @@ namespace http {
 			result = m_sql.safe_query("SELECT A.ID,A.DeviceRowID,A.Delimitedvalue,A.TargetType,A.TargetVariable,A.TargetDeviceID,A.TargetProperty,A.Enabled, B.Name, A.IncludeUnit FROM PushLink as A, DeviceStatus as B WHERE (A.PushType==%d AND A.DeviceRowID==B.ID)", CBasePush::PushType::PUSHTYPE_FIBARO);
 			if (!result.empty())
 			{
-				std::vector<std::vector<std::string> >::const_iterator itt;
 				int ii = 0;
-				for (itt = result.begin(); itt != result.end(); ++itt)
+				for (const auto &sd : result)
 				{
-					std::vector<std::string> sd = *itt;
 					root["result"][ii]["idx"] = sd[0];
 					root["result"][ii]["DeviceID"] = sd[1];
 					root["result"][ii]["Delimitedvalue"] = sd[2];
@@ -351,11 +338,11 @@ namespace http {
 			std::string targetproperty = request::findValue(&req, "targetproperty");
 			std::string linkactive = request::findValue(&req, "linkactive");
 			std::string includeunit = request::findValue(&req, "includeunit");
-			if ((targettypei == 0) && (targetvariable == ""))
+			if ((targettypei == 0) && (targetvariable.empty()))
 				return;
-			if ((targettypei == 1) && ((targetdeviceid == "") || (targetproperty == "")))
+			if ((targettypei == 1) && ((targetdeviceid.empty()) || (targetproperty.empty())))
 				return;
-			if ((targettypei == 2) && (targetdeviceid == ""))
+			if ((targettypei == 2) && (targetdeviceid.empty()))
 				return;
 			if (idx == "0") {
 				m_sql.safe_query(
@@ -398,11 +385,11 @@ namespace http {
 			}
 
 			std::string idx = request::findValue(&req, "idx");
-			if (idx == "")
+			if (idx.empty())
 				return;
 			m_sql.safe_query("DELETE FROM PushLink WHERE (ID=='%q')", idx.c_str());
 			root["status"] = "OK";
 			root["title"] = "DeleteFibaroLink";
 		}
-	}
-}
+	} // namespace server
+} // namespace http

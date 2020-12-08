@@ -267,10 +267,8 @@ void MainWorker::AddAllDomoticzHardware()
 		"SELECT ID, Name, Enabled, Type, Address, Port, SerialPort, Username, Password, Extra, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, DataTimeout FROM Hardware ORDER BY ID ASC");
 	if (!result.empty())
 	{
-		for (const auto& itt : result)
+		for (const auto &sd : result)
 		{
-			std::vector<std::string> sd = itt;
-
 			int ID = atoi(sd[0].c_str());
 			std::string Name = sd[1];
 			std::string sEnabled = sd[2];
@@ -298,14 +296,9 @@ void MainWorker::AddAllDomoticzHardware()
 
 void MainWorker::StartDomoticzHardware()
 {
-	std::vector<CDomoticzHardwareBase*>::iterator itt;
-	for (auto& itt : m_hardwaredevices)
-	{
-		if (!itt->IsStarted())
-		{
-			itt->Start();
-		}
-	}
+	for (const auto &device : m_hardwaredevices)
+		if (!device->IsStarted())
+			device->Start();
 }
 
 void MainWorker::StopDomoticzHardware()
@@ -315,20 +308,18 @@ void MainWorker::StopDomoticzHardware()
 	std::vector<CDomoticzHardwareBase*> OrgHardwaredevices;
 	{
 		std::lock_guard<std::mutex> l(m_devicemutex);
-		for (auto& itt : m_hardwaredevices)
-		{
-			OrgHardwaredevices.push_back(itt);
-		}
+		for (const auto &device : m_hardwaredevices)
+			OrgHardwaredevices.push_back(device);
 		m_hardwaredevices.clear();
 	}
 
-	for (auto& itt : OrgHardwaredevices)
+	for (auto &device : OrgHardwaredevices)
 	{
 #ifdef ENABLE_PYTHON
-		m_pluginsystem.DeregisterPlugin(itt->m_HwdID);
+		m_pluginsystem.DeregisterPlugin(device->m_HwdID);
 #endif
-		itt->Stop();
-		delete itt;
+		device->Stop();
+		delete device;
 	}
 }
 
@@ -342,29 +333,17 @@ void MainWorker::GetAvailableWebThemes()
 	bool bFound = false;
 	std::string sValue;
 	if (m_sql.GetPreferencesVar("WebTheme", sValue))
-	{
-		for (const auto& itt : m_webthemes)
-		{
-			if (itt == sValue)
-			{
-				bFound = true;
-				break;
-			}
-		}
-	}
+		bFound = std::any_of(m_webthemes.begin(), m_webthemes.end(), [&](const std::string &s) { return s == sValue; });
+
 	if (!bFound)
-	{
 		m_sql.UpdatePreferencesVar("WebTheme", "default");
-	}
 }
 
 void MainWorker::AddDomoticzHardware(CDomoticzHardwareBase* pHardware)
 {
 	int devidx = FindDomoticzHardware(pHardware->m_HwdID);
 	if (devidx != -1) //it is already there!, remove it
-	{
 		RemoveDomoticzHardware(m_hardwaredevices[devidx]);
-	}
 	std::lock_guard<std::mutex> l(m_devicemutex);
 	pHardware->sDecodeRXMessage.connect(boost::bind(&MainWorker::DecodeRXMessage, this, _1, _2, _3, _4));
 	pHardware->sOnConnected.connect(boost::bind(&MainWorker::OnHardwareConnected, this, _1));
@@ -375,11 +354,10 @@ void MainWorker::RemoveDomoticzHardware(CDomoticzHardwareBase* pHardware)
 {
 	// Separate the Stop() from the device removal from the vector.
 	// Some actions the hardware might take during stop (e.g updating a device) can cause deadlocks on the m_devicemutex
-	CDomoticzHardwareBase* pOrgHardware = nullptr;
+	CDomoticzHardwareBase *pOrgHardware = nullptr;
 	{
 		std::lock_guard<std::mutex> l(m_devicemutex);
-		std::vector<CDomoticzHardwareBase*>::iterator itt;
-		for (itt = m_hardwaredevices.begin(); itt != m_hardwaredevices.end(); ++itt)
+		for (auto itt = m_hardwaredevices.begin(); itt != m_hardwaredevices.end(); ++itt)
 		{
 			pOrgHardware = *itt;
 			if (pOrgHardware == pHardware) {
@@ -422,9 +400,9 @@ int MainWorker::FindDomoticzHardware(int HwdId)
 {
 	std::lock_guard<std::mutex> l(m_devicemutex);
 	int ii = 0;
-	for (const auto& itt : m_hardwaredevices)
+	for (const auto &device : m_hardwaredevices)
 	{
-		if (itt->m_HwdID == HwdId)
+		if (device->m_HwdID == HwdId)
 			return ii;
 		ii++;
 	}
@@ -435,9 +413,9 @@ int MainWorker::FindDomoticzHardwareByType(const hardware::type::value HWType)
 {
 	std::lock_guard<std::mutex> l(m_devicemutex);
 	int ii = 0;
-	for (const auto& itt : m_hardwaredevices)
+	for (const auto &device : m_hardwaredevices)
 	{
-		if (itt->HwdType == HWType)
+		if (device->HwdType == HWType)
 			return ii;
 		ii++;
 	}
@@ -447,11 +425,10 @@ int MainWorker::FindDomoticzHardwareByType(const hardware::type::value HWType)
 CDomoticzHardwareBase* MainWorker::GetHardware(int HwdId)
 {
 	std::lock_guard<std::mutex> l(m_devicemutex);
-	for (auto& itt : m_hardwaredevices)
-	{
-		if (itt->m_HwdID == HwdId)
-			return itt;
-	}
+	for (const auto &device : m_hardwaredevices)
+		if (device->m_HwdID == HwdId)
+			return device;
+
 	return nullptr;
 }
 
@@ -471,11 +448,9 @@ CDomoticzHardwareBase* MainWorker::GetHardwareByIDType(const std::string& HwdId,
 CDomoticzHardwareBase* MainWorker::GetHardwareByType(const hardware::type::value HWType)
 {
 	std::lock_guard<std::mutex> l(m_devicemutex);
-	for (auto& itt : m_hardwaredevices)
-	{
-		if (itt->HwdType == HWType)
-			return itt;
-	}
+	for (const auto &device : m_hardwaredevices)
+		if (device->HwdType == HWType)
+			return device;
 	return nullptr;
 }
 
@@ -567,9 +542,9 @@ bool MainWorker::GetSunSettings()
 		StringSplit(m_LastSunriseSet, ";", strarray);
 		m_SunRiseSetMins.clear();
 
-		for (const auto& it : strarray)
+		for (const auto &str : strarray)
 		{
-			StringSplit(it, ":", hourMinItem);
+			StringSplit(str, ":", hourMinItem);
 			int intMins = (atoi(hourMinItem[0].c_str()) * 60) + atoi(hourMinItem[1].c_str());
 			m_SunRiseSetMins.push_back(intMins);
 		}
@@ -682,7 +657,7 @@ bool MainWorker::AddHardwareFromParams(
 	if (!Enabled)
 		return true;
 
-	CDomoticzHardwareBase* pHardware = nullptr;
+	CDomoticzHardwareBase *pHardware = nullptr;
 
 	switch (Type)
 	{
@@ -802,7 +777,7 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case hardware::type::MQTT:
 		//LAN
-		pHardware = new MQTT(ID, Address, Port, Username, Password, Extra, Mode2, Mode1, (std::string("Domoticz") + szRandomUUID).c_str(), Mode3 != 0);
+		pHardware = new MQTT(ID, Address, Port, Username, Password, Extra, Mode2, Mode1, std::string("Domoticz") + szRandomUUID, Mode3 != 0);
 		break;
 	case hardware::type::eHouseTCP:
 		//eHouse LAN, WiFi,Pro and other via eHousePRO gateway
@@ -1353,10 +1328,11 @@ void MainWorker::HandleAutomaticBackups()
 				_log.Log(LOG_ERROR, "Error writing automatic hourly backup file");
 			}
 			closedir(lDir);
-			backupInfo["duration"] = difftime(mytime(nullptr),now);
+			backupInfo["duration"] = difftime(mytime(nullptr), now);
 			m_mainworker.m_notificationsystem.Notify(Notification::DZ_BACKUP_DONE, backupStatus, JSonToRawString(backupInfo));
 		}
-		else {
+		else
+		{
 			_log.Log(LOG_ERROR, "Error accessing automatic backup directories");
 		}
 	}
@@ -1380,10 +1356,11 @@ void MainWorker::HandleAutomaticBackups()
 				_log.Log(LOG_ERROR, "Error writing automatic daily backup file");
 			}
 			closedir(lDir);
-			backupInfo["duration"] = difftime(mytime(nullptr),now);
+			backupInfo["duration"] = difftime(mytime(nullptr), now);
 			m_mainworker.m_notificationsystem.Notify(Notification::DZ_BACKUP_DONE, backupStatus, JSonToRawString(backupInfo));
 		}
-		else {
+		else
+		{
 			_log.Log(LOG_ERROR, "Error accessing automatic backup directories");
 		}
 	}
@@ -1406,10 +1383,11 @@ void MainWorker::HandleAutomaticBackups()
 				_log.Log(LOG_ERROR, "Error writing automatic monthly backup file");
 			}
 			closedir(lDir);
-			backupInfo["duration"] = difftime(mytime(nullptr),now);
+			backupInfo["duration"] = difftime(mytime(nullptr), now);
 			m_mainworker.m_notificationsystem.Notify(Notification::DZ_BACKUP_DONE, backupStatus, JSonToRawString(backupInfo));
 		}
-		else {
+		else
+		{
 			_log.Log(LOG_ERROR, "Error accessing automatic backup directories");
 		}
 	}
@@ -1446,19 +1424,17 @@ void MainWorker::ParseRFXLogFile()
 	//m_sql.DeleteHardware("999");
 
 	CDomoticzHardwareBase* pHardware = GetHardware(HWID);
-	if (pHardware == nullptr)
+	if (pHardware == NULL)
 	{
 		pHardware = new CDummy(HWID);
 		//pHardware->sDecodeRXMessage.connect(boost::bind(&MainWorker::DecodeRXMessage, this, _1, _2, _3, _4));
 		AddDomoticzHardware(pHardware);
 	}
 
-	std::vector<std::string>::iterator itt;
 	unsigned char rxbuffer[600];
 	static const char* const lut = "0123456789ABCDEF";
-	for (itt = _lines.begin(); itt != _lines.end(); ++itt)
+	for (const auto &hexstring : _lines.begin())
 	{
-		std::string hexstring = *itt;
 		if (hexstring.size() % 2 != 0)
 			continue;//illegal
 		int totbytes = hexstring.size() / 2;
@@ -1483,7 +1459,7 @@ void MainWorker::ParseRFXLogFile()
 		if (CRFXBase::CheckValidRFXData((const uint8_t*)&rxbuffer))
 		{
 			//pHardware->WriteToHardware((const char *)&rxbuffer, totbytes);
-			DecodeRXMessage(pHardware, (const unsigned char*)&rxbuffer, nullptr, 255);
+			DecodeRXMessage(pHardware, (const unsigned char*)&rxbuffer, NULL, 255);
 			sleep_milliseconds(300);
 		}
 		else
@@ -1522,11 +1498,10 @@ void MainWorker::Do_Work()
 				m_notificationsystem.Notify(Notification::DZ_START, Notification::STATUS_INFO);
 			}
 		}
-		if (m_devicestorestart.size() > 0)
+		if (!m_devicestorestart.empty())
 		{
-			for (const auto& itt : m_devicestorestart)
+			for (const auto &hwid : m_devicestorestart)
 			{
-				int hwid = itt;
 				std::stringstream sstr;
 				sstr << hwid;
 				std::string idx = sstr.str();
@@ -1616,10 +1591,8 @@ void MainWorker::Do_Work()
 				{
 					//Heal the OpenZWave network
 					std::lock_guard<std::mutex> l(m_devicemutex);
-					std::vector<CDomoticzHardwareBase*>::iterator itt;
-					for (itt = m_hardwaredevices.begin(); itt != m_hardwaredevices.end(); ++itt)
+					for (const auto &pHardware : m_hardwaredevices)
 					{
-						CDomoticzHardwareBase* pHardware = (*itt);
 						if (pHardware->HwdType == hardware::type::OpenZWave)
 						{
 							COpenZWave* pZWave = reinterpret_cast<COpenZWave*>(pHardware);
@@ -1696,7 +1669,7 @@ uint64_t MainWorker::PerformRealActionFromDomoticzClient(const uint8_t* pRXComma
 	*pOriginalHardware = nullptr;
 	uint8_t devType = pRXCommand[1];
 	uint8_t subType = pRXCommand[2];
-	std::string ID = "";
+	std::string ID;
 	uint8_t Unit = 0;
 	const tRBUF* pResponse = reinterpret_cast<const tRBUF*>(pRXCommand);
 	char szTmp[300];
@@ -1815,7 +1788,7 @@ uint64_t MainWorker::PerformRealActionFromDomoticzClient(const uint8_t* pRXComma
 		return -1;
 	}
 
-	if (ID != "")
+	if (!ID.empty())
 	{
 		// find our original hardware
 		// if it is not a domoticz type, perform the actual command
@@ -1877,10 +1850,10 @@ void MainWorker::PushAndWaitRxMessage(const CDomoticzHardwareBase* pHardware, co
 
 void MainWorker::CheckAndPushRxMessage(const CDomoticzHardwareBase* pHardware, const uint8_t* pRXCommand, const char* defaultName, const int BatteryLevel, const bool wait)
 {
-	if ((pHardware == nullptr) || (pRXCommand == nullptr)) {
+	if ((pHardware == nullptr) || (pRXCommand == nullptr))
+	{
 		_log.Log(LOG_ERROR, "RxQueue: cannot push message with undefined hardware (%s) or command (%s)",
-			(pHardware == nullptr) ? "null" : "not null",
-			(pRXCommand == nullptr) ? "null" : "not null");
+			 (pHardware == nullptr) ? "null" : "not null", (pRXCommand == nullptr) ? "null" : "not null");
 		return;
 	}
 	if (pHardware->m_HwdID < 1) {
@@ -1935,7 +1908,8 @@ void MainWorker::CheckAndPushRxMessage(const CDomoticzHardwareBase* pHardware, c
 	// Push item to queue
 	m_rxMessageQueue.push(rxMessage);
 
-	if (rxMessage.trigger != nullptr) {
+	if (rxMessage.trigger != nullptr)
+	{
 #ifdef DEBUG_RXQUEUE
 		_log.Log(LOG_STATUS, "RxQueue: wait for rxMessage(%lu) to be processed...", rxMessage.rxMessageIdx);
 #endif
@@ -1999,21 +1973,25 @@ void MainWorker::Do_Work_On_Rx_Messages()
 		if (rxQItem.hardwareId < 1) {
 			_log.Log(LOG_ERROR, "RxQueue: cannot process invalid hardware id: (%d)", rxQItem.hardwareId);
 			// cannot process message with invalid id or null message
-			if (rxQItem.trigger != nullptr) rxQItem.trigger->popped();
+			if (rxQItem.trigger != nullptr)
+				rxQItem.trigger->popped();
 			continue;
 		}
 
 		const CDomoticzHardwareBase* pHardware = GetHardware(rxQItem.hardwareId);
 
 		// Check pointers
-		if (pHardware == nullptr) {
+		if (pHardware == nullptr)
+		{
 			_log.Log(LOG_ERROR, "RxQueue: cannot retrieve hardware with id: %d", rxQItem.hardwareId);
-			if (rxQItem.trigger != nullptr) rxQItem.trigger->popped();
+			if (rxQItem.trigger != nullptr)
+				rxQItem.trigger->popped();
 			continue;
 		}
 		if (rxQItem.vrxCommand.empty()) {
 			_log.Log(LOG_ERROR, "RxQueue: cannot retrieve command with id: %d", rxQItem.hardwareId);
-			if (rxQItem.trigger != nullptr) rxQItem.trigger->popped();
+			if (rxQItem.trigger != nullptr)
+				rxQItem.trigger->popped();
 			continue;
 		}
 
@@ -2029,7 +2007,7 @@ void MainWorker::Do_Work_On_Rx_Messages()
 				rxQItem.rxMessageIdx,
 				rxQItem.hardwareId,
 				pHardware->HwdType);
-			if (rxQItem.trigger != nullptr) rxQItem.trigger->popped();
+			if (rxQItem.trigger != NULL) rxQItem.trigger->popped();
 			continue;
 		}
 
@@ -2059,56 +2037,59 @@ void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase* pHardware, const 
 	const_cast<CDomoticzHardwareBase*>(pHardware)->SetHeartbeatReceived();
 
 	uint64_t DeviceRowIdx = (uint64_t)-1;
-	std::string DeviceName = "";
-	tcp::server::CTCPClient* pClient2Ignore = nullptr;
+	std::string DeviceName;
+	tcp::server::CTCPClient *pClient2Ignore = nullptr;
 
 	if (pHardware->HwdType == hardware::type::Domoticz)
 	{
-		if (pHardware->m_HwdID == 8765) //did we receive it from our master?
+		if (pHardware->m_HwdID == 8765) // did we receive it from our master?
 		{
-			CDomoticzHardwareBase* pOrgHardware = nullptr;
+			CDomoticzHardwareBase *pOrgHardware = nullptr;
 			switch (pRXCommand[1])
 			{
-			case pTypeLighting1:
-			case pTypeLighting2:
-			case pTypeLighting3:
-			case pTypeLighting4:
-			case pTypeLighting5:
-			case pTypeLighting6:
-			case pTypeColorSwitch:
-			case pTypeCurtain:
-			case pTypeBlinds:
-			case pTypeRFY:
-			case pTypeSecurity1:
-			case pTypeSecurity2:
-			case pTypeChime:
-			case pTypeThermostat:
-			case pTypeThermostat2:
-			case pTypeThermostat3:
-			case pTypeThermostat4:
-			case pTypeRadiator1:
-			case pTypeGeneralSwitch:
-			case pTypeHomeConfort:
-			case pTypeFan:
-			case pTypeFS20:
-			case pTypeHunter:
-				//we received a control message from a domoticz client,
-				//and should actually perform this command ourself switch
-				DeviceRowIdx = PerformRealActionFromDomoticzClient(pRXCommand, &pOrgHardware);
-				if (DeviceRowIdx != (uint64_t)-1)
-				{
-					if (pOrgHardware != nullptr)
+				case pTypeLighting1:
+				case pTypeLighting2:
+				case pTypeLighting3:
+				case pTypeLighting4:
+				case pTypeLighting5:
+				case pTypeLighting6:
+				case pTypeColorSwitch:
+				case pTypeCurtain:
+				case pTypeBlinds:
+				case pTypeRFY:
+				case pTypeSecurity1:
+				case pTypeSecurity2:
+				case pTypeChime:
+				case pTypeThermostat:
+				case pTypeThermostat2:
+				case pTypeThermostat3:
+				case pTypeThermostat4:
+				case pTypeRadiator1:
+				case pTypeGeneralSwitch:
+				case pTypeHomeConfort:
+				case pTypeFan:
+				case pTypeFS20:
+				case pTypeHunter:
+					// we received a control message from a domoticz client,
+					// and should actually perform this command ourself switch
+					DeviceRowIdx = PerformRealActionFromDomoticzClient(pRXCommand, &pOrgHardware);
+					if (DeviceRowIdx != (uint64_t)-1)
 					{
-						DeviceRowIdx = -1;
-						pClient2Ignore = (tcp::server::CTCPClient*)pHardware->m_pUserData;
-						pHardware = pOrgHardware;
+						if (pOrgHardware != nullptr)
+						{
+							DeviceRowIdx = -1;
+							pClient2Ignore = (tcp::server::CTCPClient *)pHardware->m_pUserData;
+							pHardware = pOrgHardware;
+						}
+						WriteMessage("Control Command, ", (pOrgHardware == nullptr));
 					}
-					WriteMessage("Control Command, ", (pOrgHardware == nullptr));
-				}
-				break;
+					break;
 			}
 		}
 	}
+
+	m_szLastSwitchUser = pHardware->m_Name;
+
 
 	_tRxMessageProcessingResult procResult;
 	procResult.DeviceName = "";
@@ -2963,10 +2944,8 @@ void MainWorker::decode_Rain(const CDomoticzHardwareBase* pHardware, const tRBUF
 				struct tm midnightTime;
 				getMidnight(countTime, midnightTime);
 
-				for (const auto& itt : result)
+				for (const auto &sd : result)
 				{
-					std::vector<std::string> sd = itt;
-
 					float rate = (float)atof(sd[0].c_str()) / 10000.0f;
 					std::string date = sd[1];
 
@@ -6112,9 +6091,7 @@ void MainWorker::decode_UNDECODED(const CDomoticzHardwareBase* pHardware, const 
 	std::stringstream sHexDump;
 	uint8_t* pRXBytes = (uint8_t*)&pResponse->UNDECODED.msg1;
 	for (int i = 0; i < pResponse->UNDECODED.packetlength - 3; i++)
-	{
 		sHexDump << HEX(pRXBytes[i]);
-	}
 	WriteMessage(sHexDump.str().c_str());
 	procResult.DeviceRowIdx = -1;
 }
@@ -6630,7 +6607,7 @@ void MainWorker::decode_evohome2(const CDomoticzHardwareBase* pHardware, const t
 			"FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID == '%x') AND (Type==%d)",
 			pHardware->m_HwdID, (int)RFX_GETID3(pEvo->id1, pEvo->id2, pEvo->id3), (int)pEvo->type);
 	}
-	if (result.size() < 1 && !pEvo->zone)
+	if (result.empty() && !pEvo->zone)
 		return;
 
 	CEvohomeBase* pEvoHW = (CEvohomeBase*)pHardware;
@@ -6678,8 +6655,8 @@ void MainWorker::decode_evohome2(const CDomoticzHardwareBase* pHardware, const t
 		BatteryLevel = pEvo->battery_level;
 	else
 	{
-		if (dType == pTypeEvohomeWater && pEvo->updatetype == pEvoHW->updSetPoint)
-			sprintf(szTmp, "%s", pEvo->temperature ? "On" : "Off");
+		if (dType == pTypeEvohomeWater && pEvo->updatetype == pEvoHW->updSetPoint && !pEvo->temperature)
+			sprintf(szTmp, "%s", "Off");
 		else
 			sprintf(szTmp, "%.2f", pEvo->temperature / 100.0f);
 
@@ -6702,8 +6679,6 @@ void MainWorker::decode_evohome2(const CDomoticzHardwareBase* pHardware, const t
 					if (pEvo->mode == pEvoHW->zmTmp)
 					{
 						std::string szISODate(CEvohomeDateTime::GetISODate(pEvo));
-						if (pHardware->HwdType == hardware::type::EVOHOME_WEB)
-							szISODate.append(1,'Z');
 						if (strarray.size() < 4) //add or set until
 							strarray.push_back(szISODate);
 						else
@@ -6715,7 +6690,6 @@ void MainWorker::decode_evohome2(const CDomoticzHardwareBase* pHardware, const t
 						if ((pEvo->year != 0) && (pEvo->year != 0xFFFF))
 						{
 							std::string szISODate(CEvohomeDateTime::GetISODate(pEvo));
-							szISODate.append(1,'Z');
 							if (strarray.size() < 4) //add or set until
 								strarray.push_back(szISODate);
 							else
@@ -11251,12 +11225,12 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 	uint8_t dType = atoi(sd[3].c_str());
 	uint8_t dSubType = atoi(sd[4].c_str());
 	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
-	std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10].c_str());
+	std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10]);
 
 	//when asking for Toggle, just switch to the opposite value
 	if (switchcmd == "Toggle") {
 		//Request current state of switch
-		std::string lstatus = "";
+		std::string lstatus;
 		int llevel = 0;
 		bool bHaveDimmer = false;
 		bool bHaveGroupCmd = false;
@@ -11340,7 +11314,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11420,7 +11394,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11455,7 +11429,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 				return false;
 			if (!IsTesting) {
 				//send to internal for now (later we use the ACK)
-				PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+				PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 			}
 			return true;
 		}
@@ -11515,16 +11489,12 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			{
 				//dim value we have to send multiple times
 				for (int iDim = 0; iDim < level; iDim++)
-				{
 					if (!WriteToHardware(HardwareID, (const char*)&lcmd, sizeof(lcmd.LIGHTING5)))
 						return false;
-				}
 			}
 			else
-			{
 				if (!WriteToHardware(HardwareID, (const char*)&lcmd, sizeof(lcmd.LIGHTING5)))
 					return false;
-			}
 		}
 		else if ((dSubType == sTypeTRC02) || (dSubType == sTypeTRC02_2))
 		{
@@ -11578,7 +11548,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		}
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11605,7 +11575,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11640,7 +11610,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11666,7 +11636,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11690,7 +11660,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11720,7 +11690,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11752,7 +11722,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 				return false;
 			if (!IsTesting) {
 				//send to internal for now (later we use the ACK)
-				PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+				PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 			}
 		}
 		break;
@@ -11767,7 +11737,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 				return false;
 			if (!IsTesting) {
 				//send to internal for now (later we use the ACK)
-				PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+				PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 			}
 		}
 		break;
@@ -11814,7 +11784,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11854,7 +11824,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11876,7 +11846,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11926,7 +11896,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -11970,7 +11940,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -12001,7 +11971,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -12025,7 +11995,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -12049,7 +12019,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -12075,7 +12045,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		return false;
 		if (!IsTesting) {
 		//send to internal for now (later we use the ACK)
-		PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
+		PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, NULL, -1);
 		}
 		*/
 		return true;
@@ -12097,7 +12067,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -12120,7 +12090,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			return false;
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	}
@@ -12150,7 +12120,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
 			lcmd.RADIATOR1.subtype = sTypeSmartwaresSwitchRadiator;
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		return true;
 	case pTypeGeneralSwitch:
@@ -12232,7 +12202,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		}
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&gswitch, nullptr, -1);
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&gswitch, nullptr, -1);
 		}
 	}
 	return true;
@@ -12308,7 +12278,7 @@ bool MainWorker::SwitchModal(const std::string& idx, const std::string& status, 
 	WriteToHardware(HardwareID, (const char*)&tsen, sizeof(_tEVOHOME1));
 
 	//the latency on the scripted solution is quite bad so it's good to see the update happening...ideally this would go to an 'updating' status (also useful to update database if we ever use this as a pure virtual device)
-	PushRxMessage(pHardware, (const uint8_t*)&tsen, nullptr, 255);
+	PushRxMessage(pHardware, (const uint8_t *)&tsen, nullptr, 255);
 	return true;
 }
 
@@ -12316,7 +12286,7 @@ bool MainWorker::SwitchLight(const std::string& idx, const std::string& switchcm
 {
 	uint64_t ID = std::strtoull(idx.c_str(), nullptr, 10);
 	int ilevel = -1;
-	if (level != "")
+	if (!level.empty())
 		ilevel = atoi(level.c_str());
 
 	return SwitchLight(ID, switchcmd, ilevel, _tColor(color), atoi(ooc.c_str()) != 0, ExtraDelay, User);
@@ -12340,8 +12310,8 @@ bool MainWorker::SwitchLight(const uint64_t idx, const std::string& switchcmd, c
 	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 	int iOnDelay = atoi(sd[6].c_str());
 	int nValue = atoi(sd[7].c_str());
-	std::string sValue = sd[8].c_str();
-	std::string devName = sd[9].c_str();
+	std::string sValue = sd[8];
+	std::string devName = sd[9];
 	//std::string sOptions = sd[10].c_str();
 
 	bool bIsOn = IsLightSwitchOn(switchcmd);
@@ -12351,7 +12321,8 @@ bool MainWorker::SwitchLight(const uint64_t idx, const std::string& switchcmd, c
 		if ((switchtype == device::tswitch::type::Selector) && (nValue == nNewVal) && (level == atoi(sValue.c_str()))) {
 			return true;
 		}
-		else if (nValue == nNewVal) {
+		if (nValue == nNewVal)
+		{
 			return true;//FIXME no return code for already set
 		}
 	}
@@ -12365,8 +12336,7 @@ bool MainWorker::SwitchLight(const uint64_t idx, const std::string& switchcmd, c
 		m_sql.AddTaskItem(_tTaskItem::SwitchLightEvent(static_cast<float>(iOnDelay + ExtraDelay), idx, switchcmd, level, color, "Switch with Delay", User));
 		return true;
 	}
-	else
-		return SwitchLightInt(sd, switchcmd, level, color, false, User);
+	return SwitchLightInt(sd, switchcmd, level, color, false, User);
 }
 
 bool MainWorker::SetSetPoint(const std::string& idx, const float TempValue, const std::string& newMode, const std::string& until)
@@ -12440,7 +12410,7 @@ bool MainWorker::SetSetPoint(const std::string& idx, const float TempValue, cons
 			tsen.controllermode = atoi(sd[2].c_str());
 		}
 		//the latency on the scripted solution is quite bad so it's good to see the update happening...ideally this would go to an 'updating' status (also useful to update database if we ever use this as a pure virtual device)
-		PushAndWaitRxMessage(pHardware, (const uint8_t*)&tsen, nullptr, -1);
+		PushAndWaitRxMessage(pHardware, (const uint8_t *)&tsen, nullptr, -1);
 	}
 	return true;
 }
@@ -12615,7 +12585,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 			lcmd.RADIATOR1.tempPoint5 = (uint8_t)atoi(strarray[1].c_str());
 			if (!WriteToHardware(HardwareID, (const char*)&lcmd, sizeof(lcmd.RADIATOR1)))
 				return false;
-			PushAndWaitRxMessage(pHardware, (const uint8_t*)&lcmd, nullptr, -1);
+			PushAndWaitRxMessage(pHardware, (const uint8_t *)&lcmd, nullptr, -1);
 		}
 		else
 		{
@@ -12640,7 +12610,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 			if (pHardware->HwdType == hardware::type::Dummy)
 			{
 				//Also put it in the database, as this devices does not send updates
-				PushAndWaitRxMessage(pHardware, (const uint8_t*)&tmeter, nullptr, -1);
+				PushAndWaitRxMessage(pHardware, (const uint8_t *)&tmeter, nullptr, -1);
 			}
 		}
 	}
@@ -12810,38 +12780,38 @@ bool MainWorker::SetThermostatState(const std::string& idx, const int newState)
 		//pGateway->SetProgramState(newState);
 		return true;
 	}
-	else if (pHardware->HwdType == hardware::type::NestThermostat)
+	if (pHardware->HwdType == hardware::type::NestThermostat)
 	{
 		CNest* pGateway = reinterpret_cast<CNest*>(pHardware);
 		pGateway->SetProgramState(newState);
 		return true;
 	}
-	else if (pHardware->HwdType == hardware::type::Nest_OAuthAPI)
+	if (pHardware->HwdType == hardware::type::Nest_OAuthAPI)
 	{
 		CNestOAuthAPI* pGateway = reinterpret_cast<CNestOAuthAPI*>(pHardware);
 		pGateway->SetProgramState(newState);
 		return true;
 	}
-	else if (pHardware->HwdType == hardware::type::ANNATHERMOSTAT)
+	if (pHardware->HwdType == hardware::type::ANNATHERMOSTAT)
 	{
 		CAnnaThermostat* pGateway = reinterpret_cast<CAnnaThermostat*>(pHardware);
 		pGateway->SetProgramState(newState);
 		return true;
 	}
-	else if (pHardware->HwdType == hardware::type::THERMOSMART)
+	if (pHardware->HwdType == hardware::type::THERMOSMART)
 	{
 		//CThermosmart *pGateway = reinterpret_cast<CThermosmart *>(pHardware);
 		//pGateway->SetProgramState(newState);
 		return true;
 	}
-	else if (pHardware->HwdType == hardware::type::Netatmo)
+	if (pHardware->HwdType == hardware::type::Netatmo)
 	{
 		CNetatmo* pGateway = reinterpret_cast<CNetatmo*>(pHardware);
 		int tIndex = atoi(idx.c_str());
 		pGateway->SetProgramState(tIndex, newState);
 		return true;
 	}
-	else if (pHardware->HwdType == hardware::type::IntergasInComfortLAN2RF)
+	if (pHardware->HwdType == hardware::type::IntergasInComfortLAN2RF)
 	{
 		CInComfort* pGateway = reinterpret_cast<CInComfort*>(pHardware);
 		pGateway->SetProgramState(newState);
@@ -12860,23 +12830,19 @@ bool MainWorker::DoesDeviceActiveAScene(const uint64_t DevRowIdx, const int Cmnd
 	result = m_sql.safe_query("SELECT Activators, SceneType FROM Scenes WHERE (Activators!='')");
 	if (!result.empty())
 	{
-		for (const auto& itt : result)
+		for (const auto &sd : result)
 		{
-			std::vector<std::string> sd = itt;
-
 			int SceneType = atoi(sd[1].c_str());
 
 			std::vector<std::string> arrayActivators;
 			StringSplit(sd[0], ";", arrayActivators);
-			for (const auto& ittAct : arrayActivators)
+			for (const auto &sCodeCmd : arrayActivators)
 			{
-				std::string sCodeCmd = ittAct;
-
 				std::vector<std::string> arrayCode;
 				StringSplit(sCodeCmd, ":", arrayCode);
 
 				std::string sID = arrayCode[0];
-				std::string sCode = "";
+				std::string sCode;
 				if (arrayCode.size() == 2)
 				{
 					sCode = arrayCode[1];
@@ -12911,9 +12877,9 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd, const st
 
 	std::string Name = "Unknown?";
 	_eSceneGroupType scenetype = SGTYPE_SCENE;
-	std::string onaction = "";
-	std::string offaction = "";
-	std::string status = "";
+	std::string onaction;
+	std::string offaction;
+	std::string status;
 
 	//Get Scene details
 	result = m_sql.safe_query("SELECT Name, SceneType, OnAction, OffAction, nValue FROM Scenes WHERE (ID == %" PRIu64 ")", idx);
@@ -12958,7 +12924,7 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd, const st
 	int n2Value;
 	if (m_sql.GetPreferencesVar("EmailServer", n2Value, emailserver))
 	{
-		if (emailserver != "")
+		if (!emailserver.empty())
 		{
 			result = m_sql.safe_query(
 				"SELECT CameraRowID, DevSceneDelay FROM CamerasActiveDevices WHERE (DevSceneType==1) AND (DevSceneRowID==%" PRIu64 ") AND (DevSceneWhen==%d)",
@@ -12967,9 +12933,8 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd, const st
 			);
 			if (!result.empty())
 			{
-				for (const auto& ittCam : result)
+				for (const auto &sd : result)
 				{
-					std::vector<std::string> sd = ittCam;
 					std::string camidx = sd[0];
 					int delay = atoi(sd[1].c_str());
 					std::string subject;
@@ -12998,10 +12963,8 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd, const st
 	if (result.empty())
 		return true; //no devices in the scene
 
-	for (const auto& itt : result)
+	for (const auto &sd : result)
 	{
-		std::vector<std::string> sd = itt;
-
 		int cmd = atoi(sd[1].c_str());
 		int level = atoi(sd[2].c_str());
 		_tColor color(sd[3]);
@@ -13110,21 +13073,17 @@ void MainWorker::CheckSceneCode(const uint64_t DevRowIdx, const uint8_t dType, c
 	result = m_sql.safe_query("SELECT ID, Activators, SceneType FROM Scenes WHERE (Activators!='')");
 	if (!result.empty())
 	{
-		for (const auto& itt : result)
+		for (const auto &sd : result)
 		{
-			std::vector<std::string> sd = itt;
-
 			std::vector<std::string> arrayActivators;
 			StringSplit(sd[1], ";", arrayActivators);
-			for (const auto& ittAct : arrayActivators)
+			for (const auto &sCodeCmd : arrayActivators)
 			{
-				std::string sCodeCmd = ittAct;
-
 				std::vector<std::string> arrayCode;
 				StringSplit(sCodeCmd, ":", arrayCode);
 
 				std::string sID = arrayCode[0];
-				std::string sCode = "";
+				std::string sCode;
 				if (arrayCode.size() == 2)
 				{
 					sCode = arrayCode[1];
@@ -13146,7 +13105,7 @@ void MainWorker::CheckSceneCode(const uint64_t DevRowIdx, const uint8_t dType, c
 						rnValue = 1; //A Scene can only be activated (On)
 					}
 
-					std::string lstatus = "";
+					std::string lstatus;
 					int llevel = 0;
 					bool bHaveDimmer = false;
 					bool bHaveGroupCmd = false;
@@ -13172,9 +13131,8 @@ void MainWorker::LoadSharedUsers()
 	result = m_sql.safe_query("SELECT ID, Username, Password FROM USERS WHERE ((RemoteSharing==1) AND (Active==1))");
 	if (!result.empty())
 	{
-		for (const auto& itt : result)
+		for (const auto &sd : result)
 		{
-			std::vector<std::string> sd = itt;
 			tcp::server::_tRemoteShareUser suser;
 			suser.Username = base64_decode(sd[1]);
 			suser.Password = sd[2];
@@ -13183,9 +13141,8 @@ void MainWorker::LoadSharedUsers()
 			result2 = m_sql.safe_query("SELECT DeviceRowID FROM SharedDevices WHERE (SharedUserID == '%q')", sd[0].c_str());
 			if (!result2.empty())
 			{
-				for (const auto& itt2 : result2)
+				for (const auto &sd2 : result2)
 				{
-					std::vector<std::string> sd2 = itt2;
 					uint64_t ID = std::strtoull(sd2[0].c_str(), nullptr, 10);
 					suser.Devices.push_back(ID);
 				}
@@ -13264,7 +13221,6 @@ void MainWorker::HandleLogNotifications()
 	//Assemble notification message
 
 	std::stringstream sstr;
-	std::list<CLogger::_tLogLineStruct>::const_iterator itt;
 	std::string sTopic;
 
 	if (_loglines.size() > 1)
@@ -13274,21 +13230,19 @@ void MainWorker::HandleLogNotifications()
 	}
 	else
 	{
-		itt = _loglines.begin();
+		auto itt = _loglines.begin();
 		sTopic = "Domoticz: " + itt->logmessage;
 	}
 
-	for (itt = _loglines.begin(); itt != _loglines.end(); ++itt)
-	{
-		sstr << itt->logmessage << "<br>";
-	}
+	for (const auto &str : _loglines)
+		sstr << str.logmessage << "<br>";
 	m_sql.AddTaskItem(_tTaskItem::SendEmail(1, sTopic, sstr.str()));
 }
 
 void MainWorker::HeartbeatUpdate(const std::string& component, bool critical /*= true*/)
 {
 	std::lock_guard<std::mutex> l(m_heartbeatmutex);
-	time_t now = time(0);
+	time_t now = time(nullptr);
 	auto itt = m_componentheartbeats.find(component);
 	if (itt != m_componentheartbeats.end()) {
 		itt->second.first = now;
@@ -13317,14 +13271,16 @@ void MainWorker::HeartbeatCheck()
 	time_t now;
 	mytime(&now);
 
-	for (const auto& itt : m_componentheartbeats)
+	for (const auto &heartbeat : m_componentheartbeats)
 	{
-		double diff = difftime(now, itt.second.first);
+		double diff = difftime(now, heartbeat.second.first);
 		if (diff > 60)
 		{
-			_log.Log(LOG_ERROR, "%s thread seems to have ended unexpectedly (last update %f seconds ago)", itt.first.c_str(), diff);
+			_log.Log(LOG_ERROR, "%s thread seems to have ended unexpectedly (last update %f seconds ago)",
+				 heartbeat.first.c_str(), diff);
 			/* GizMoCuz: This causes long operations to crash (Like Issue #3011)
-						if (itt.second.second) // If the stalled component is marked as critical, call abort / raise signal
+						if (heartbeat.second.second) // If the stalled component is marked as critical, call abort /
+			raise signal
 						{
 							if (!IsDebuggerPresent())
 							{
@@ -13340,10 +13296,8 @@ void MainWorker::HeartbeatCheck()
 	}
 
 	//Check hardware heartbeats
-	std::vector<CDomoticzHardwareBase*>::const_iterator itt;
-	for (itt = m_hardwaredevices.begin(); itt != m_hardwaredevices.end(); ++itt)
+	for (const auto &pHardware : m_hardwaredevices)
 	{
-		CDomoticzHardwareBase* pHardware = (CDomoticzHardwareBase*)(*itt);
 		if (!pHardware->m_bSkipReceiveCheck)
 		{
 			//Skip Dummy Hardware
@@ -13389,7 +13343,7 @@ void MainWorker::HeartbeatCheck()
 				}
 				if (bHaveDataTimeout)
 				{
-					std::string sDataTimeout = "";
+					std::string sDataTimeout;
 					int totNum = 0;
 					if (pHardware->m_DataTimeout < 60) {
 						totNum = pHardware->m_DataTimeout;
@@ -13453,7 +13407,7 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string& DeviceID,
 {
 	// Prevent hazardous modification of DB from JSON calls
 	std::string devname = "Unknown";
-	uint64_t devidx = m_sql.GetDeviceIndex(HardwareID, DeviceID.c_str(), unit, devType, subType, devname);
+	uint64_t devidx = m_sql.GetDeviceIndex(HardwareID, DeviceID, unit, devType, subType, devname);
 	if (devidx == (uint64_t)-1)
 		return false;
 	std::stringstream sidx;
@@ -13517,7 +13471,7 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string& DeviceID,
 			lcmd.LIGHTING2.level = (uint8_t)atoi(sValue.c_str());
 			lcmd.LIGHTING2.filler = 0;
 			lcmd.LIGHTING2.rssi = signallevel;
-			DecodeRXMessage(pHardware, (const uint8_t*)&lcmd.LIGHTING2, nullptr, batterylevel);
+			DecodeRXMessage(pHardware, (const uint8_t *)&lcmd.LIGHTING2, nullptr, batterylevel);
 			g_bUseEventTrigger = true;
 			return true;
 		}

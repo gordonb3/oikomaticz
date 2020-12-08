@@ -23,9 +23,7 @@
 
 #define round(a) ( int ) ( a + .5 )
 
-ZWaveBase::ZWaveBase() :
-	m_updateTime(0),
-	m_ControllerCommandStartTime(0)
+ZWaveBase::ZWaveBase()
 {
 	m_bNodeReplaced=true;
 	m_NodeToBeReplaced=0;
@@ -40,11 +38,6 @@ ZWaveBase::ZWaveBase() :
 	m_bHaveLastIncludedNodeInfo = false;
 	m_LastRemovedNode = -1;
 	m_bInitState = true;
-}
-
-
-ZWaveBase::~ZWaveBase(void)
-{
 }
 
 bool ZWaveBase::StartHardware()
@@ -209,8 +202,8 @@ void ZWaveBase::SendSwitchIfNotExists(const _tZWaveDevice* pDevice)
 		// but instead of returning a single result, checks if there is more than one in memory
 		// device satisfying those criteria
 
-		std::map<std::string, _tZWaveDevice>::iterator itt;
-		for (itt = m_devices.begin(); itt != m_devices.end(); ++itt)
+		auto itt = m_devices.begin();
+		while (itt != m_devices.end())
 		{
 			if (
 				// Node ID1 is not used when searching for switch-like devices, see ID1 = 0; at the start
@@ -241,6 +234,7 @@ void ZWaveBase::SendSwitchIfNotExists(const _tZWaveDevice* pDevice)
 					break;
 				}
 			}
+			++itt;
 		}
 		if (itt != m_devices.end())
 		{
@@ -380,10 +374,10 @@ void ZWaveBase::SendDevice2Domoticz(const _tZWaveDevice* pDevice)
 		// Update the lcmd with the correct level value.
 		gswitch.level = level;
 		gswitch.rssi = 12;
-		sDecodeRXMessage(this, (const unsigned char*)& gswitch, nullptr, BatLevel);
+		sDecodeRXMessage(this, (const unsigned char *)&gswitch, nullptr, BatLevel);
 		return;
 	}
-	else if ((pDevice->devType == ZDTYPE_SWITCH_RGBW) || (pDevice->devType == ZDTYPE_SWITCH_COLOR))
+	if ((pDevice->devType == ZDTYPE_SWITCH_RGBW) || (pDevice->devType == ZDTYPE_SWITCH_COLOR))
 	{
 		//Send as ColorSwitch
 		_tColorSwitch lcmd;
@@ -397,7 +391,7 @@ void ZWaveBase::SendDevice2Domoticz(const _tZWaveDevice* pDevice)
 		else
 			lcmd.command = Color_LedOn;
 		lcmd.value = 0;
-		sDecodeRXMessage(this, (const unsigned char*)& lcmd, nullptr, BatLevel);
+		sDecodeRXMessage(this, (const unsigned char *)&lcmd, nullptr, BatLevel);
 	}
 	else if (pDevice->devType == ZDTYPE_SENSOR_POWER)
 	{
@@ -408,7 +402,7 @@ void ZWaveBase::SendDevice2Domoticz(const _tZWaveDevice* pDevice)
 		umeter.id4 = ID4;
 		umeter.dunit = 2;
 		umeter.fusage = pDevice->floatValue;
-		sDecodeRXMessage(this, (const unsigned char*)& umeter, nullptr, BatLevel);
+		sDecodeRXMessage(this, (const unsigned char *)&umeter, nullptr, BatLevel);
 
 		//Search Energy Device
 		const _tZWaveDevice* pEnergyDevice;
@@ -549,7 +543,7 @@ void ZWaveBase::SendDevice2Domoticz(const _tZWaveDevice* pDevice)
 		tsen.CURRENT.ch1l = (BYTE)amps;
 		tsen.CURRENT.battery_level = Convert_Battery_To_PercInt(pDevice->batValue);
 		tsen.CURRENT.rssi = 12;
-		sDecodeRXMessage(this, (const unsigned char*)& tsen.CURRENT, nullptr, BatLevel);
+		sDecodeRXMessage(this, (const unsigned char *)&tsen.CURRENT, nullptr, BatLevel);
 	}
 	else if (pDevice->devType == ZDTYPE_SENSOR_UV)
 	{
@@ -576,7 +570,7 @@ void ZWaveBase::SendDevice2Domoticz(const _tZWaveDevice* pDevice)
 				devName = pDevice->label + std::string("/") + pHumDevice->label;
 			}
 
-			SendTempHumSensor(NodeID, BatLevel, pDevice->floatValue, pHumDevice->intvalue, devName.c_str());
+			SendTempHumSensor(NodeID, BatLevel, pDevice->floatValue, pHumDevice->intvalue, devName);
 		}
 		else
 		{
@@ -607,7 +601,7 @@ void ZWaveBase::SendDevice2Domoticz(const _tZWaveDevice* pDevice)
 				devName = pTempDevice->label + std::string("/") + pDevice->label;
 			}
 
-			SendTempHumSensor(NodeID, BatLevel, pTempDevice->floatValue, pDevice->intvalue, devName.c_str());
+			SendTempHumSensor(NodeID, BatLevel, pTempDevice->floatValue, pDevice->intvalue, devName);
 		}
 		else
 		{
@@ -663,7 +657,7 @@ void ZWaveBase::SendDevice2Domoticz(const _tZWaveDevice* pDevice)
 			tsen.WIND.temperaturel = (BYTE)(at10);
 			tsen.WIND.chilll = (BYTE)(at10);
 		}
-		sDecodeRXMessage(this, (const unsigned char*)& tsen.WIND, nullptr, BatLevel);
+		sDecodeRXMessage(this, (const unsigned char *)&tsen.WIND, nullptr, BatLevel);
 	}
 	else if (pDevice->devType == ZDTYPE_SENSOR_BAROMETER)
 	{
@@ -799,14 +793,10 @@ void ZWaveBase::SendDevice2Domoticz(const _tZWaveDevice* pDevice)
 
 ZWaveBase::_tZWaveDevice* ZWaveBase::FindDevice(const uint8_t nodeID, const int instanceID, const int indexID)
 {
-	for (auto& itt : m_devices)
+	for (auto &m : m_devices)
 	{
-		if (
-			(itt.second.nodeID == nodeID) &&
-			(itt.second.instanceID == instanceID) &&
-			(itt.second.indexID == indexID)
-			)
-			return &itt.second;
+		if ((m.second.nodeID == nodeID) && (m.second.instanceID == instanceID) && (m.second.indexID == indexID))
+			return &m.second;
 	}
 	return nullptr;
 }
@@ -814,43 +804,32 @@ ZWaveBase::_tZWaveDevice* ZWaveBase::FindDevice(const uint8_t nodeID, const int 
 //Used for power/energy devices
 ZWaveBase::_tZWaveDevice* ZWaveBase::FindDeviceEx(const uint8_t nodeID, const int instanceID, const _eZWaveDeviceType devType)
 {
-	for (auto& itt : m_devices)
+	for (auto &m : m_devices)
 	{
-		if (
-			(itt.second.nodeID == nodeID) &&
-			(itt.second.instanceID == instanceID) &&
-			(itt.second.devType == devType)
-			)
-			return &itt.second;
+		if ((m.second.nodeID == nodeID) && (m.second.instanceID == instanceID) && (m.second.devType == devType))
+			return &m.second;
 	}
 	return nullptr;
 }
 
 ZWaveBase::_tZWaveDevice* ZWaveBase::FindDevice(const uint8_t nodeID, const int instanceID, const int indexID, const _eZWaveDeviceType devType)
 {
-	for (auto& itt : m_devices)
+	for (auto &m : m_devices)
 	{
-		if (
-			(itt.second.nodeID == nodeID) &&
-			((itt.second.instanceID == instanceID) || (instanceID == -1)) &&
-			(itt.second.devType == devType)
-			)
-			return &itt.second;
+		if ((m.second.nodeID == nodeID) && ((m.second.instanceID == instanceID) || (instanceID == -1))
+		    && (m.second.devType == devType))
+			return &m.second;
 	}
 	return nullptr;
 }
 
 ZWaveBase::_tZWaveDevice* ZWaveBase::FindDevice(const uint8_t nodeID, const int instanceID, const int indexID, const int CommandClassID, const _eZWaveDeviceType devType)
 {
-	for (auto& itt : m_devices)
+	for (auto &m : m_devices)
 	{
-		if (
-			(itt.second.nodeID == nodeID) &&
-			((itt.second.instanceID == instanceID) || (instanceID == -1)) &&
-			(itt.second.commandClassID == CommandClassID) &&
-			(itt.second.devType == devType)
-			)
-			return &itt.second;
+		if ((m.second.nodeID == nodeID) && ((m.second.instanceID == instanceID) || (instanceID == -1))
+		    && (m.second.commandClassID == CommandClassID) && (m.second.devType == devType))
+			return &m.second;
 	}
 	return nullptr;
 }
@@ -859,7 +838,7 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 {
 	std::lock_guard<std::mutex> l(m_NotificationMutex);
 
-	_tZWaveDevice* pDevice = nullptr;
+	_tZWaveDevice *pDevice = nullptr;
 
 	unsigned char packettype = pdata[1];
 	unsigned char subtype = pdata[2];
@@ -915,23 +894,20 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 			}
 			return SwitchLight(pDevice, instanceID, svalue);
 		}
-		else
+		// find normal
+		pDevice = FindDevice(nodeID, instanceID, indexID, ZDTYPE_SWITCH_NORMAL);
+		if (pDevice)
 		{
-			//find normal
-			pDevice = FindDevice(nodeID, instanceID, indexID, ZDTYPE_SWITCH_NORMAL);
-			if (pDevice)
-			{
-				if ((cmnd == gswitch_sOff) || (cmnd == gswitch_sGroupOff))
-					svalue = 0;
-				else
-					svalue = 255;
-				return SwitchLight(pDevice, instanceID, svalue);
-			}
-			_log.Log(LOG_ERROR, "ZWave: Node not found! (NodeID: %d, 0x%02x)", nodeID, nodeID);
-			return false;
+			if ((cmnd == gswitch_sOff) || (cmnd == gswitch_sGroupOff))
+				svalue = 0;
+			else
+				svalue = 255;
+			return SwitchLight(pDevice, instanceID, svalue);
 		}
+		_log.Log(LOG_ERROR, "ZWave: Node not found! (NodeID: %d, 0x%02x)", nodeID, nodeID);
+		return false;
 	}
-	else if ((packettype == pTypeThermostat) && (subtype == sTypeThermSetpoint))
+	if ((packettype == pTypeThermostat) && (subtype == sTypeThermSetpoint))
 	{
 		//Set Point
 		const _tThermostat* pMeter = reinterpret_cast<const _tThermostat*>(pdata);
@@ -949,7 +925,7 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 		_log.Log(LOG_ERROR, "ZWave: Node not found! (NodeID: %d, 0x%02x)", nodeID, nodeID);
 		return false;
 	}
-	else if ((packettype == pTypeGeneral) && (subtype == sTypeZWaveClock))
+	if ((packettype == pTypeGeneral) && (subtype == sTypeZWaveClock))
 	{
 		const _tGeneralDevice* pMeter = reinterpret_cast<const _tGeneralDevice*>(pdata);
 		uint8_t ID1 = (uint8_t)((pMeter->intval1 & 0xFF000000) >> 24);
@@ -975,7 +951,7 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 		_log.Log(LOG_ERROR, "ZWave: Node not found! (NodeID: %d, 0x%02x)", nodeID, nodeID);
 		return false;
 	}
-	else if ((packettype == pTypeGeneral) && (subtype == sTypeZWaveThermostatMode))
+	if ((packettype == pTypeGeneral) && (subtype == sTypeZWaveThermostatMode))
 	{
 		const _tGeneralDevice* pMeter = reinterpret_cast<const _tGeneralDevice*>(pdata);
 		uint8_t ID1 = (uint8_t)((pMeter->intval1 & 0xFF000000) >> 24);
@@ -997,7 +973,7 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 		_log.Log(LOG_ERROR, "ZWave: Node not found! (NodeID: %d, 0x%02x)", nodeID, nodeID);
 		return false;
 	}
-	else if ((packettype == pTypeGeneral) && (subtype == sTypeZWaveThermostatFanMode))
+	if ((packettype == pTypeGeneral) && (subtype == sTypeZWaveThermostatFanMode))
 	{
 		const _tGeneralDevice* pMeter = reinterpret_cast<const _tGeneralDevice*>(pdata);
 		uint8_t ID1 = (uint8_t)((pMeter->intval1 & 0xFF000000) >> 24);
@@ -1019,7 +995,7 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 		_log.Log(LOG_ERROR, "ZWave: Node not found! (NodeID: %d, 0x%02x)", nodeID, nodeID);
 		return false;
 	}
-	else if (packettype == pTypeColorSwitch)
+	if (packettype == pTypeColorSwitch)
 	{
 		const _tColorSwitch* pLed = reinterpret_cast<const _tColorSwitch*>(pdata);
 		uint8_t ID1 = (uint8_t)((pLed->id & 0xFF000000) >> 24);
@@ -1037,12 +1013,12 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 				instanceID = 2;
 				return SwitchLight(pDevice, instanceID, 0);
 			}
-			else if (pLed->command == Color_LedOn)
+			if (pLed->command == Color_LedOn)
 			{
 				instanceID = 2;
 				return SwitchLight(pDevice, instanceID, 255);
 			}
-			else if (pLed->command == Color_SetBrightnessLevel)
+			if (pLed->command == Color_SetBrightnessLevel)
 			{
 				instanceID = 2;
 				int ivalue = pLed->value;
@@ -1050,7 +1026,7 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 					ivalue = 99; //99 is fully on
 				return SwitchLight(pDevice, instanceID, ivalue);
 			}
-			else if (pLed->command == Color_SetColorToWhite)
+			if (pLed->command == Color_SetColorToWhite)
 			{
 				instanceID = 3;//red
 				if (!SwitchLight(pDevice, instanceID, 0))
@@ -1066,7 +1042,7 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 					return false;
 				return true;
 			}
-			else if (pLed->command == Color_SetColor)
+			if (pLed->command == Color_SetColor)
 			{
 				int ivalue = pLed->value;
 				if (ivalue > 99)
@@ -1141,12 +1117,12 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 					instanceID = 1;
 					return SwitchLight(pDevice, instanceID, 0);
 				}
-				else if (pLed->command == Color_LedOn)
+				if (pLed->command == Color_LedOn)
 				{
 					instanceID = 1;
 					return SwitchLight(pDevice, instanceID, 255);
 				}
-				else if (pLed->command == Color_SetBrightnessLevel)
+				if (pLed->command == Color_SetBrightnessLevel)
 				{
 					instanceID = 1;
 					int ivalue = pLed->value;
@@ -1154,7 +1130,7 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 						ivalue = 99; //99 is fully on
 					return SwitchLight(pDevice, instanceID, ivalue);
 				}
-				else if (pLed->command == Color_SetColorToWhite)
+				if (pLed->command == Color_SetColorToWhite)
 				{
 					int Brightness = 100;
 					int wWhite = round((255.0f / 100.0f) * float(Brightness));
@@ -1165,7 +1141,7 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 					instanceID = 1;
 					return SwitchColor(nodeID, instanceID, sstr.str());
 				}
-				else if (pLed->command == Color_SetColor)
+				if (pLed->command == Color_SetColor)
 				{
 					int red = 0, green = 0, blue = 0, wWhite = 0, cWhite = 0;
 

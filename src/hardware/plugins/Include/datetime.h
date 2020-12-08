@@ -188,7 +188,7 @@ typedef struct {
 #else
 
 /* Define global variable for the C API and a macro for setting it. */
-static PyDateTime_CAPI *PyDateTimeAPI = nullptr;
+static PyDateTime_CAPI *PyDateTimeAPI = NULL;
 
 #define PyDateTime_IMPORT \
     PyDateTimeAPI = (PyDateTime_CAPI *)PyCapsule_Import(PyDateTime_CAPSULE_NAME, 0)
@@ -228,7 +228,7 @@ static PyDateTime_CAPI *PyDateTimeAPI = nullptr;
 /* Macros supporting the DB API. */
 #define PyDateTime_FromTimestamp(args) \
     PyDateTimeAPI->DateTime_FromTimestamp( \
-        (PyObject*) (PyDateTimeAPI->DateTimeType), args, nullptr)
+        (PyObject*) (PyDateTimeAPI->DateTimeType), args, NULL)
 
 #define PyDate_FromTimestamp(args) \
     PyDateTimeAPI->Date_FromTimestamp( \

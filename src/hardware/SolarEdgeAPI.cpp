@@ -59,10 +59,6 @@ SolarEdgeAPI::SolarEdgeAPI(const int ID, const std::string& APIKey) :
 	m_totalEnergy = 0;
 }
 
-SolarEdgeAPI::~SolarEdgeAPI(void)
-{
-}
-
 bool SolarEdgeAPI::StartHardware()
 {
 	RequestStart();
@@ -135,9 +131,7 @@ int SolarEdgeAPI::getSunRiseSunSetMinutes(const bool bGetSunRise)
 		if (bGetSunRise) {
 			return sunRiseInMinutes;
 		}
-		else {
-			return sunSetInMinutes;
-		}
+		return sunSetInMinutes;
 	}
 	return 0;
 }

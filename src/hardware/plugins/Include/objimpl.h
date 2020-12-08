@@ -80,7 +80,7 @@ PyObject_{New, NewVar, Del}.
    PyObject_Malloc(0) returns a unique non-NULL pointer if possible.
 
    PyObject_Realloc(NULL, n) acts like PyObject_Malloc(n).
-   PyObject_Realloc(p != nullptr, 0) does not return  NULL, or free the memory
+   PyObject_Realloc(p != NULL, 0) does not return  NULL, or free the memory
    at p.
 
    Returned pointers must be checked for NULL explicitly; no action is
@@ -184,7 +184,7 @@ PyAPI_FUNC(PyVarObject *) _PyObject_NewVar(PyTypeObject *, Py_ssize_t);
        PyObject *op;
 
        op = (PyObject *) Your_Allocator(_PyObject_SIZE(YourTypeStruct));
-       if (op == nullptr)
+       if (op == NULL)
        return PyErr_NoMemory();
 
        PyObject_Init(op, &YourTypeStruct);
@@ -236,7 +236,7 @@ PyAPI_FUNC(Py_ssize_t) _PyGC_CollectNoFail(void);
 
 /* Test if an object has a GC head */
 #define PyObject_IS_GC(o) (PyType_IS_GC(Py_TYPE(o)) && \
-    (Py_TYPE(o)->tp_is_gc == nullptr || Py_TYPE(o)->tp_is_gc(o)))
+    (Py_TYPE(o)->tp_is_gc == NULL || Py_TYPE(o)->tp_is_gc(o)))
 
 PyAPI_FUNC(PyVarObject *) _PyObject_GC_Resize(PyVarObject *, Py_ssize_t);
 #define PyObject_GC_Resize(type, op, n) \
@@ -308,7 +308,7 @@ extern PyGC_Head *_PyGC_generation0;
     _PyGCHead_SET_REFS(g, _PyGC_REFS_UNTRACKED); \
     g->gc.gc_prev->gc.gc_next = g->gc.gc_next; \
     g->gc.gc_next->gc.gc_prev = g->gc.gc_prev; \
-    g->gc.gc_next = nullptr; \
+    g->gc.gc_next = NULL; \
     } while (0);
 
 /* True if the object is currently tracked by the GC. */

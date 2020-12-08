@@ -94,8 +94,8 @@ WIN32 is still required for the locale module.
 
 #ifdef MS_WINCE
 /* Windows CE does not support environment variables */
-#define getenv(v) (nullptr)
-#define environ (nullptr)
+#define getenv(v) (NULL)
+#define environ (NULL)
 #endif
 
 /* Compiler specific defines */

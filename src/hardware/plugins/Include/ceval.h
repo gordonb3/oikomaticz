@@ -140,7 +140,7 @@ PyAPI_FUNC(PyObject *) PyEval_EvalFrameEx(struct _frame *f, int exc);
     if (...premature_exit...) {
         Py_BLOCK_THREADS
         PyErr_SetFromErrno(PyExc_IOError);
-        return nullptr;
+        return NULL;
     }
 
    An alternative is:
@@ -148,7 +148,7 @@ PyAPI_FUNC(PyObject *) PyEval_EvalFrameEx(struct _frame *f, int exc);
     Py_BLOCK_THREADS
     if (...premature_exit...) {
         PyErr_SetFromErrno(PyExc_IOError);
-        return nullptr;
+        return NULL;
     }
     Py_UNBLOCK_THREADS
 

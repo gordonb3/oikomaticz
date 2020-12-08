@@ -36,11 +36,6 @@ CDavisLoggerSerial::CDavisLoggerSerial(const int ID, const std::string& devname,
 	m_state = DSTATE_WAKEUP;
 }
 
-CDavisLoggerSerial::~CDavisLoggerSerial(void)
-{
-
-}
-
 bool CDavisLoggerSerial::StartHardware()
 {
 	StopHardware();
@@ -526,7 +521,6 @@ bool CDavisLoggerSerial::HandleLoopData(const unsigned char *data, size_t len)
 		gdevice.subtype = sTypeSolarRadiation;
 		gdevice.floatval1 = float(solarRadiation);
 		sDecodeRXMessage(this, (const unsigned char *)&gdevice, nullptr, 255);
-
 	}
 
 	//Soil Moistures

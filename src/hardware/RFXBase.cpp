@@ -11,10 +11,6 @@ CRFXBase::CRFXBase()
 	m_AsyncType = ATYPE_DISABLED;
 }
 
-CRFXBase::~CRFXBase()
-{
-}
-
 bool CRFXBase::onInternalMessage(const unsigned char *pBuffer, const size_t Len, const bool checkValid/* = true*/)
 {
 	if (!m_bEnableReceive)
@@ -41,7 +37,7 @@ bool CRFXBase::onInternalMessage(const unsigned char *pBuffer, const size_t Len,
 		if (m_rxbufferpos > m_rxbuffer[0])
 		{
 			if (!checkValid || CheckValidRFXData((uint8_t*)&m_rxbuffer))
-				sDecodeRXMessage(this, (const uint8_t*)&m_rxbuffer, nullptr, -1);
+				sDecodeRXMessage(this, (const uint8_t *)&m_rxbuffer, nullptr, -1);
 			else
 				Log(LOG_ERROR, "Invalid data received!....");
 

@@ -14,11 +14,6 @@ m_szSerialPort(devname)
 	m_retrycntr = RFLINK_RETRY_DELAY * 5;
 }
 
-CRFLinkSerial::~CRFLinkSerial()
-{
-
-}
-
 bool CRFLinkSerial::StartHardware()
 {
 	RequestStart();
@@ -67,7 +62,8 @@ void CRFLinkSerial::Do_Work()
 				{
 				time_t atime = mytime(nullptr);
 				//Send ping (keep alive)
-				_log.Log(LOG_STATUS, "RFLink: t1=%d t2=%d t3=%d", m_LastHeartbeat, m_LastHeartbeatReceive, m_LastReceivedTime);
+				_log.Log(LOG_STATUS, "RFLink: t1=%d t2=%d t3=%d", m_LastHeartbeat, m_LastHeartbeatReceive,
+				m_LastReceivedTime);
 
 				if (atime - m_LastReceivedTime > 25) {
 				//_log.Log(LOG_STATUS, "RFLink: ping...");

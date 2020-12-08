@@ -104,7 +104,7 @@ extern "C" {
 #define MODIFY_LIGHS		105u
 #define MODIFY_LIGHS_EV         105u
 
-#define SETSINGLELIGHT_EV	106u		
+#define SETSINGLELIGHT_EV	106u
 #define SETSINGLELIGHT		106u
 
 #define SET_TIME		107u            //not supported here performed immediatelly

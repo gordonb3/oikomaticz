@@ -196,11 +196,11 @@ int usb_find_devices(void)
 	GUID hGuid=WEATHER_DEVICE_GUID ;
 	//HidD_GetHidGuid(&hGuid);
    // Get the set of device interfaces that have been matched by our INF
-   HDEVINFO deviceInfo = SetupDiGetClassDevs(&hGuid, nullptr, nullptr, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-   if (!deviceInfo)
-   {
-      return 0;
-   }
+	HDEVINFO deviceInfo = SetupDiGetClassDevs(&hGuid, nullptr, nullptr, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+	if (!deviceInfo)
+	{
+		return 0;
+	}
 
    // Iterate over all interfaces
    int ndevs = 0;
@@ -210,16 +210,15 @@ int usb_find_devices(void)
       // Get interface data for next interface and attempt to init it
       SP_DEVICE_INTERFACE_DATA interfaceData;
       interfaceData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
-      if (!SetupDiEnumDeviceInterfaces(
-            deviceInfo, nullptr, &hGuid, devidx++, &interfaceData))
+      if (!SetupDiEnumDeviceInterfaces(deviceInfo, nullptr, &hGuid, devidx++, &interfaceData))
       {
          break;
       }
 
       // Determine required size for interface detail data
       ULONG requiredLength = 0;
-	  if (!SetupDiGetDeviceInterfaceDetail(deviceInfo, &interfaceData, nullptr, 0, &requiredLength, nullptr))
-		  return 0;
+      if (!SetupDiGetDeviceInterfaceDetail(deviceInfo, &interfaceData, nullptr, 0, &requiredLength, nullptr))
+	      return 0;
 
       // Allocate storage for interface detail data
       PSP_DEVICE_INTERFACE_DETAIL_DATA detailData =
@@ -229,9 +228,7 @@ int usb_find_devices(void)
       detailData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
 
       // Fetch interface detail data
-      if (!SetupDiGetDeviceInterfaceDetail(
-            deviceInfo, &interfaceData, detailData, requiredLength,
-            &requiredLength, nullptr))
+      if (!SetupDiGetDeviceInterfaceDetail(deviceInfo, &interfaceData, detailData, requiredLength, &requiredLength, nullptr))
       {
          free(detailData);
          continue;
@@ -268,15 +265,10 @@ struct usb_bus *usb_get_busses(void)
 usb_dev_handle *usb_open(struct usb_device *dev)
 {
    // Open generic handle to device
-   HANDLE hnd = CreateFile(dev->filename,
-                           GENERIC_WRITE | GENERIC_READ,
-                           FILE_SHARE_WRITE | FILE_SHARE_READ,
-                           nullptr,
-                           OPEN_EXISTING,
-                           FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
-                           nullptr);
-   if ((hnd == nullptr)||(hnd==INVALID_HANDLE_VALUE))
-      return nullptr;
+   HANDLE hnd = CreateFile(dev->filename, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+			   FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, nullptr);
+   if ((hnd == nullptr) || (hnd == INVALID_HANDLE_VALUE))
+	   return nullptr;
 
    // Initialize WinUSB for this device and get a WinUSB handle for it
    WINUSB_INTERFACE_HANDLE fd;
@@ -296,11 +288,11 @@ usb_dev_handle *usb_open(struct usb_device *dev)
 		   {
 		   // Failed in translating.
 		   }
-		   //MessageBox(nullptr, Error," Failed", MB_OK);
+		   //MessageBox(nullptr,Error,"Failed",MB_OK);
 		   LocalFree(Error);
 	   */
-      CloseHandle(hnd);
-      return nullptr;
+	   CloseHandle(hnd);
+	   return nullptr;
    }
 
    // Device opened successfully. Allocate storage for handles.
@@ -346,8 +338,8 @@ int usb_control_msg(usb_dev_handle *dev, int requesttype,
    sp.Length = size;
 
    ULONG actlen = 0;
-   if (!WinUsb_ControlTransfer(dev->fd, sp, (unsigned char*)bytes, size, &actlen, nullptr))
-      return -(int)GetLastError();
+   if (!WinUsb_ControlTransfer(dev->fd, sp, (unsigned char *)bytes, size, &actlen, nullptr))
+	   return -(int)GetLastError();
 
    return actlen;
 }
@@ -390,7 +382,7 @@ int usb_interrupt_read(usb_dev_handle *dev, int ep, char *bytes, int size,
 
    // Perform transfer
    tmp = 0;
-   if (!WinUsb_ReadPipe(dev->fd, ep, (unsigned char*)bytes, size, &tmp, nullptr))
+   if (!WinUsb_ReadPipe(dev->fd, ep, (unsigned char *)bytes, size, &tmp, nullptr))
    {
       tmp = GetLastError();
       if (tmp == ERROR_SEM_TIMEOUT)

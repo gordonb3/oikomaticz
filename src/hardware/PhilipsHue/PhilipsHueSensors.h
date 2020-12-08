@@ -18,7 +18,7 @@ namespace Json
 
 class CPHSensorState
 {
-public:
+      public:
 	CPHSensorState() {};
 	CPHSensorState(const Json::Value& state, const Json::Value& capabilities);
 
@@ -45,7 +45,7 @@ public:
 
 class CPHSensorConfig
 {
-public:
+      public:
 	CPHSensorConfig() {};
 	CPHSensorConfig(const Json::Value& config);
 
@@ -62,7 +62,7 @@ public:
 
 class CPHSensor
 {
-public:
+      public:
 	CPHSensor() {};
 	CPHSensor(const Json::Value& sensor);
 

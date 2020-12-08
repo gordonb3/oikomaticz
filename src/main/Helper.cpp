@@ -146,6 +146,21 @@ std::string ToHexString(const uint8_t* pSource, const size_t length)
 	return ret;
 }
 
+std::vector<char> HexToBytes(const std::string& hex) {
+	std::vector<char> bytes;
+
+	if (hex.size() % 2 != 0)
+		return bytes; //invalid length
+
+	for (unsigned int i = 0; i < hex.length(); i += 2) {
+		std::string byteString = hex.substr(i, 2);
+		char byte = (char)strtol(byteString.c_str(), nullptr, 16);
+		bytes.push_back(byte);
+	}
+
+	return bytes;
+}
+
 void stdreplace(
 	std::string &inoutstring,
 	const std::string& replaceWhat,
@@ -161,8 +176,8 @@ void stdreplace(
 
 void stdupper(std::string &inoutstring)
 {
-	for (size_t i = 0; i < inoutstring.size(); ++i)
-		inoutstring[i] = toupper(inoutstring[i]);
+	for (char &i : inoutstring)
+		i = toupper(i);
 }
 
 void stdlower(std::string &inoutstring)
@@ -172,8 +187,8 @@ void stdlower(std::string &inoutstring)
 
 void stdupper(std::wstring& inoutstring)
 {
-	for (size_t i = 0; i < inoutstring.size(); ++i)
-		inoutstring[i] = towupper(inoutstring[i]);
+	for (wchar_t &i : inoutstring)
+		i = towupper(i);
 }
 
 void stdlower(std::wstring& inoutstring)
@@ -324,7 +339,7 @@ std::vector<std::string> GetSerialPorts(bool &bUseDirectPath)
 	//also scan /dev/serial/by-id/* on Linux
 
 	bool bHaveTtyAMAfree=false;
-	std::string sLine = "";
+	std::string sLine;
 	std::ifstream infile;
 
 	infile.open("/boot/cmdline.txt");
@@ -342,7 +357,7 @@ std::vector<std::string> GetSerialPorts(bool &bUseDirectPath)
 	if (d != nullptr)
 	{
 		struct dirent *de = nullptr;
-		// Loop while not NULL
+		// Loop while not nullptr
 		while ((de = readdir(d)))
 		{
 			// Only consider character devices and symbolic links
@@ -423,7 +438,7 @@ std::vector<std::string> GetSerialPorts(bool &bUseDirectPath)
 	if (d != nullptr)
 	{
 		struct dirent *de = nullptr;
-		// Loop while not NULL
+		// Loop while not nullptr
 		while ((de = readdir(d)))
 		{
 			std::string fname = de->d_name;
@@ -441,7 +456,7 @@ std::vector<std::string> GetSerialPorts(bool &bUseDirectPath)
 	if (d != nullptr)
 	{
 		struct dirent *de = nullptr;
-		// Loop while not NULL
+		// Loop while not nullptr
 		while ((de = readdir(d)))
 		{
 			// Only consider symbolic links
@@ -612,11 +627,7 @@ uint32_t IPToUInt(const std::string &ip)
 
 bool isInt(const std::string &s)
 {
-	for(size_t i = 0; i < s.length(); i++){
-		if(!isdigit(s[i]))
-			return false;
-	}
-	return true;
+	return std::all_of(s.begin(), s.end(), ::isdigit);
 }
 
 void sleep_seconds(const long seconds)
@@ -685,7 +696,9 @@ int RemoveDir(const std::string &dirnames, std::string &errorPath)
 				strcpy_s(deletePath, splitresults[i].c_str());
 				deletePath[s_szLen + 1] = '\0'; // SHFILEOPSTRUCT needs an additional null char
 
-				SHFILEOPSTRUCT shfo = { NULL, FO_DELETE, deletePath, nullptr, FOF_SILENT | FOF_NOERRORUI | FOF_NOCONFIRMATION, FALSE, nullptr, nullptr };
+				SHFILEOPSTRUCT shfo
+					= { nullptr, FO_DELETE, deletePath, nullptr, FOF_SILENT | FOF_NOERRORUI | FOF_NOCONFIRMATION,
+					    FALSE,   nullptr,	nullptr };
 				if (returncode = SHFileOperation(&shfo))
 				{
 					errorPath = splitresults[i];
@@ -694,14 +707,14 @@ int RemoveDir(const std::string &dirnames, std::string &errorPath)
 			}
 		}
 #else
-		for (size_t i = 0; i < splitresults.size(); i++)
+		for (auto &splitresult : splitresults)
 		{
-			if (!file_exist(splitresults[i].c_str()))
+			if (!file_exist(splitresult.c_str()))
 				continue;
-			ExecuteCommandAndReturn("rm -rf \"" + splitresults[i] + "\"", returncode);
+			ExecuteCommandAndReturn("rm -rf \"" + splitresult + "\"", returncode);
 			if (returncode)
 			{
-				errorPath = splitresults[i];
+				errorPath = splitresult;
 				break;
 			}
 		}
@@ -1060,7 +1073,8 @@ void DirectoryListing(std::vector<std::string>& entries, const std::string &dir,
 	struct dirent *ent;
 	if ((d = opendir(dir.c_str())) != nullptr)
 	{
-		while ((ent = readdir(d)) != nullptr) {
+		while ((ent = readdir(d)) != nullptr)
+		{
 			std::string name = ent->d_name;
 			if (bInclDirs && dirent_is_directory(dir, ent) && name != "." && name != "..") {
 				entries.push_back(name);
@@ -1073,7 +1087,6 @@ void DirectoryListing(std::vector<std::string>& entries, const std::string &dir,
 		}
 		closedir(d);
 	}
-	return;
 }
 
 std::string GenerateUserAgent()
@@ -1139,7 +1152,7 @@ int getclock(struct timeval *tv) {
 			return 0;
 		}
 #endif
-	return gettimeofday(tv, nullptr);
+		return gettimeofday(tv, nullptr);
 }
 int timeval_subtract (struct timeval *result, struct timeval *x, struct timeval *y) {
 	/* Perform the carry for the later subtraction by updating y. */
@@ -1163,22 +1176,7 @@ int timeval_subtract (struct timeval *result, struct timeval *x, struct timeval 
   return x->tv_sec < y->tv_sec;
 }
 
-const char *szInsecureArgumentOptions[] = {
-	"import",
-	"socket",
-	"process",
-	"os",
-	"|",
-	";",
-	"&",
-	"$",
-	"<",
-	">",
-	"`",
-	"\n",
-	"\r",
-	nullptr
-};
+const char *szInsecureArgumentOptions[] = { "import", "socket", "process", "os", "|", ";", "&", "$", "<", ">", "`", "\n", "\r", nullptr };
 
 bool IsArgumentSecure(const std::string &arg)
 {
@@ -1240,7 +1238,7 @@ int GenerateRandomNumber(const int range)
 		switch (entropy.which)
 		{
 			case 0:
-				entropy.t += time (nullptr);
+				entropy.t += time(nullptr);
 				accSeed ^= entropy.t;
 				break;
 			case 1:
@@ -1272,7 +1270,7 @@ int GetDirFilesRecursive(const std::string &DirPath, std::map<std::string, int> 
 				if ((strcmp(ent->d_name, ".") != 0) && (strcmp(ent->d_name, "..") != 0) && (strcmp(ent->d_name, ".svn") != 0))
 				{
 					std::string nextdir = DirPath + ent->d_name + "/";
-					if (GetDirFilesRecursive(nextdir.c_str(), _Files))
+					if (GetDirFilesRecursive(nextdir, _Files))
 					{
 						closedir(dir);
 						return 1;
@@ -1353,7 +1351,7 @@ int SetThreadName(const std::thread::native_handle_type &thread, const char *nam
 #endif
 
 #if !defined(WIN32)
-bool IsDebuggerPresent(void)
+bool IsDebuggerPresent()
 {
 #if defined(__linux__)
 	// Linux implementation: Search for 'TracerPid:' in /proc/self/status
@@ -1377,8 +1375,7 @@ bool IsDebuggerPresent(void)
 	{
 		if (::isspace(*characterPtr))
 			continue;
-		else
-			return ::isdigit(*characterPtr) != 0 && *characterPtr != '0';
+		return ::isdigit(*characterPtr) != 0 && *characterPtr != '0';
 	}
 
 	return false;

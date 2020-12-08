@@ -1,11 +1,11 @@
 #pragma once
 #ifndef BUFFEREDP1ASYNCSERIAL_H
-#define	BUFFEREDP1ASYNCSERIAL_H
+#define BUFFEREDP1ASYNCSERIAL_H
 
 #include "protocols/ASyncSerial.h"
 #include "P1MeterBase.h"
 
-class P1MeterSerial: public AsyncSerial, public P1MeterBase
+class P1MeterSerial : public AsyncSerial, public P1MeterBase
 {
       public:
 	P1MeterSerial(int ID, const std::string &devname, unsigned int baud_rate, bool disable_crc, int ratelimit, int gasmeterchannel, const std::string &DecryptionKey);
@@ -22,6 +22,7 @@ class P1MeterSerial: public AsyncSerial, public P1MeterBase
 	bool StopHardware() override;
 	void Do_Work();
 	void readCallback(const char *data, size_t len);
+
       private:
 	std::string m_szSerialPort;
 	unsigned int m_iBaudRate;

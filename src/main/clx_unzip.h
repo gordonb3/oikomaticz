@@ -104,7 +104,7 @@ namespace clx {
 
 		bool open(const char_type* path) {
 			handler_type h = unzOpen(path);
-			if (h == nullptr) return false;
+			if (h == NULL) return false;
 			p_ = boost::shared_ptr<storage_impl>(new storage_impl(h));
 			return true;
 		}
@@ -163,14 +163,14 @@ namespace clx {
 			~storage_impl() { this->close(); }
 
 			void close() {
-				if (in_ != nullptr) {
+				if (in_ != NULL) {
 					unzClose(in_);
-					in_ = nullptr;
+					in_ = NULL;
 				}
 			}
 
 			handler_type handler() { return in_; }
-			bool is_open() const { return (in_ != nullptr); }
+			bool is_open() const { return (in_ != NULL); }
 
 		private:
 			handler_type in_;

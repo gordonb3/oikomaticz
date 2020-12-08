@@ -53,7 +53,7 @@ double _tWindCalculator::AddValueAndReturnAvarage(const double degree)
 		dirresult+=360;
 	return dirresult;
 /*
-	time_t atime = mytime(nullptr);
+	time_t atime=mytime(NULL);
 	long tot_minutes=(long)((atime-m_FirstMeasureTime)/60);
 	if (tot_minutes<0)
 	{

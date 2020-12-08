@@ -72,7 +72,7 @@ CHardwareMonitor::CHardwareMonitor(const int ID)
 #endif
 }
 
-CHardwareMonitor::~CHardwareMonitor(void)
+CHardwareMonitor::~CHardwareMonitor()
 {
 	StopHardware();
 }
@@ -224,7 +224,7 @@ void CHardwareMonitor::GetInternalTemperature()
 	if (tmpline.find("temp=") == std::string::npos)
 		return;
 	tmpline = tmpline.substr(5);
-	size_t pos = tmpline.find("'");
+	size_t pos = tmpline.find('\'');
 	if (pos != std::string::npos)
 	{
 		tmpline = tmpline.substr(0, pos);
@@ -243,7 +243,7 @@ void CHardwareMonitor::GetInternalTemperature()
 void CHardwareMonitor::GetInternalARMClockSpeed()
 {
 	Debug(DEBUG_NORM,"Getting ARM Clock speed");
-	float ArmClockSpeed;
+	float ArmClockSpeed = 0.0;
 	int returncode = 0;
 	std::vector<std::string> ret = ExecuteCommandAndReturn(szInternalARMSpeedCommand, returncode);
 	if (ret.empty())
@@ -274,7 +274,7 @@ void CHardwareMonitor::GetInternalARMClockSpeed()
 void CHardwareMonitor::GetInternalV3DClockSpeed()
 {
 	Debug(DEBUG_NORM,"Getting V3D Clock speed");
-	float V3DClockSpeed;
+	float V3DClockSpeed = 0.0;
 	int returncode = 0;
 	std::vector<std::string> ret = ExecuteCommandAndReturn(szInternalV3DSpeedCommand, returncode);
 	if (ret.empty())
@@ -305,7 +305,7 @@ void CHardwareMonitor::GetInternalV3DClockSpeed()
 void CHardwareMonitor::GetInternalCoreClockSpeed()
 {
 	Debug(DEBUG_NORM,"Getting Core Clock speed");
-	float CoreClockSpeed;
+	float CoreClockSpeed = 0.0;
 	int returncode = 0;
 	std::vector<std::string> ret = ExecuteCommandAndReturn(szInternalCoreSpeedCommand, returncode);
 	if (ret.empty())
@@ -344,7 +344,7 @@ void CHardwareMonitor::GetInternalVoltage()
 	if (tmpline.find("volt=") == std::string::npos)
 		return;
 	tmpline = tmpline.substr(5);
-	size_t pos = tmpline.find("'");
+	size_t pos = tmpline.find('\'');
 	if (pos != std::string::npos)
 	{
 		tmpline = tmpline.substr(0, pos);
@@ -368,7 +368,7 @@ void CHardwareMonitor::GetInternalCurrent()
 	if (tmpline.find("curr=") == std::string::npos)
 		return;
 	tmpline = tmpline.substr(5);
-	size_t pos = tmpline.find("'");
+	size_t pos = tmpline.find('\'');
 	if (pos != std::string::npos)
 	{
 		tmpline = tmpline.substr(0, pos);
@@ -424,7 +424,6 @@ void CHardwareMonitor::UpdateSystemSensor(const std::string& qType, const int di
 		float usage = static_cast<float>(atof(devValue.c_str()));
 		SendCustomSensor(0, doffset + dindex, 255, usage, devName, "MB");
 	}
-	return;
 }
 
 bool CHardwareMonitor::GetOSType(nOSType &OStype)
@@ -465,7 +464,7 @@ bool CHardwareMonitor::GetOSType(nOSType &OStype)
 
 std::string CHardwareMonitor::TranslateOSTypeToString(nOSType OSType)
 {
-	std::string sOSType = "";
+	std::string sOSType;
 
 	switch (OSType)
 	{
@@ -561,10 +560,10 @@ bool CHardwareMonitor::InitWMI()
 	HRESULT hr;
 	if (m_pLocator)
 		return true; //already initialized
-	hr = CoCreateInstance(CLSID_WbemAdministrativeLocator, nullptr, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&m_pLocator);
+	hr = CoCreateInstance(CLSID_WbemAdministrativeLocator, nullptr, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID *)&m_pLocator);
 	if (FAILED(hr))
 		return false;
-	hr = m_pLocator->ConnectServer(L"root\\OpenHardwareMonitor",nullptr , nullptr, nullptr, 0, nullptr, nullptr, &m_pServicesOHM);
+	hr = m_pLocator->ConnectServer(L"root\\OpenHardwareMonitor", nullptr, nullptr, nullptr, 0, nullptr, nullptr, &m_pServicesOHM);
 	if (FAILED(hr))
 	{
 		Log(LOG_STATUS, "Hardware Monitor: Warning, OpenHardware Monitor is not installed on this system. (http://openhardwaremonitor.org)");
@@ -579,10 +578,10 @@ bool CHardwareMonitor::InitWMI()
 		m_pServicesSystem,                        // Indicates the proxy to set
 		RPC_C_AUTHN_WINNT,           // RPC_C_AUTHN_xxx
 		RPC_C_AUTHZ_NONE,            // RPC_C_AUTHZ_xxx
-		nullptr,                        // Server principal name
+		NULL,                        // Server principal name
 		RPC_C_AUTHN_LEVEL_CALL,      // RPC_C_AUTHN_LEVEL_xxx
 		RPC_C_IMP_LEVEL_IMPERSONATE, // RPC_C_IMP_LEVEL_xxx
-		nullptr,                        // client identity
+		NULL,                        // client identity
 		EOAC_NONE                    // proxy capabilities
 		);
 */
@@ -612,9 +611,10 @@ bool CHardwareMonitor::IsOHMRunning()
 	if ((m_pServicesOHM == nullptr) || (m_pServicesSystem == nullptr))
 		return false;
 	bool bOHMRunning = false;
-	IEnumWbemClassObject* pEnumerator = nullptr;
+	IEnumWbemClassObject *pEnumerator = nullptr;
 	HRESULT hr;
-	hr = m_pServicesSystem->ExecQuery(L"WQL", L"Select * from win32_Process WHERE Name='OpenHardwareMonitor.exe'" , WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &pEnumerator);
+	hr = m_pServicesSystem->ExecQuery(L"WQL", L"Select * from win32_Process WHERE Name='OpenHardwareMonitor.exe'",
+					  WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &pEnumerator);
 	if (SUCCEEDED(hr))
 	{
 		IWbemClassObject *pclsObj = nullptr;
@@ -648,8 +648,9 @@ void CHardwareMonitor::RunWMIQuery(const char* qTable, const std::string &qType)
 	query.append(" WHERE SensorType = '");
 	query.append(qType);
 	query.append("'");
-	IEnumWbemClassObject* pEnumerator = nullptr;
-	hr = m_pServicesOHM->ExecQuery(L"WQL", bstr_t(query.c_str()), WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &pEnumerator);
+	IEnumWbemClassObject *pEnumerator = nullptr;
+	hr = m_pServicesOHM->ExecQuery(L"WQL", bstr_t(query.c_str()), WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr,
+				       &pEnumerator);
 	if (!FAILED(hr))
 	{
 		int dindex = 0;
@@ -711,7 +712,7 @@ void CHardwareMonitor::RunWMIQuery(const char* qTable, const std::string &qType)
 	double CHardwareMonitor::time_so_far()
 	{
 		struct timeval tp;
-		if (gettimeofday(&tp, (struct timezone *) NULL) == -1)
+		if (gettimeofday(&tp, (struct timezone *)nullptr) == -1)
 			return 0;
 		return ((double) (tp.tv_sec)) +
 			(((double) tp.tv_usec) * 0.000001 );
@@ -798,18 +799,18 @@ void CHardwareMonitor::RunWMIQuery(const char* qTable, const std::string &qType)
 		size_t len = sizeof(totalMemBytes);
 		float percent;
 		struct vmtotal memStats;
-		if (sysctl(mibTotalMem, 2, &totalMemBytes,
-			   &len, nullptr, 0) == -1){
+		if (sysctl(mibTotalMem, 2, &totalMemBytes, &len, nullptr, 0) == -1)
+		{
 			return -1;
 		}
 		len = sizeof(pageSize);
-		if (sysctl(mibPageSize, 2, &pageSize,
-			   &len, nullptr, 0) == -1){
+		if (sysctl(mibPageSize, 2, &pageSize, &len, nullptr, 0) == -1)
+		{
 			return -1;
 		}
 		len = sizeof(memStats);
-		if (sysctl(mibMemStats, 2, &memStats,
-			   &len, nullptr, 0) == -1){
+		if (sysctl(mibMemStats, 2, &memStats, &len, nullptr, 0) == -1)
+		{
 			return -1;
 		}
 		usedMem = memStats.t_arm * pageSize;//active real memory
@@ -865,7 +866,8 @@ void CHardwareMonitor::FetchUnixCPU()
 		int totcpu = -1;
 		size_t size = sizeof(totcpu);
 		long loads[CPUSTATES];
-		if (sysctl(mib, 2, &totcpu, &size, nullptr, 0) <0){
+		if (sysctl(mib, 2, &totcpu, &size, nullptr, 0) < 0)
+		{
 			Log(LOG_ERROR, "sysctl NCPU failed.");
 			return;
 		}
@@ -875,7 +877,8 @@ void CHardwareMonitor::FetchUnixCPU()
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CPTIME;
 		size = sizeof(loads);
-		if (sysctl(mib, 2, loads, &size, nullptr, 0) < 0){
+		if (sysctl(mib, 2, loads, &size, nullptr, 0) < 0)
+		{
 			Log(LOG_ERROR, "sysctl CPTIME failed.");
 			return;
 		}
@@ -895,7 +898,7 @@ void CHardwareMonitor::FetchUnixCPU()
 		if (fIn != nullptr)
 		{
 			bool bFirstLine=true;
-			while( fgets(szTmp, sizeof(szTmp), fIn) != nullptr )
+			while (fgets(szTmp, sizeof(szTmp), fIn) != nullptr)
 			{
 				int ret=sscanf(szTmp, "%s\t%d\t%d\t%d\n", cname, &actload1, &actload2, &actload3);
 				if ((bFirstLine)&&(ret==4)) {
@@ -922,10 +925,13 @@ void CHardwareMonitor::FetchUnixCPU()
 		int mib[] = {CTL_KERN, KERN_CPTIME};
 		long loads[CPUSTATES];
 		size_t size = sizeof(loads);
-		if (sysctl(mib, 2, loads, &size, nullptr, 0) < 0){
+		if (sysctl(mib, 2, loads, &size, nullptr, 0) < 0)
+		{
 			Log(LOG_ERROR, "sysctl CPTIME failed.");
 			return;
-		}else {
+		}
+		else
+		{
 			long long t = (loads[CP_USER] + loads[CP_NICE] + loads[CP_SYS])-m_lastloadcpu;
 			double cpuper=((double(t) / (difftime(acttime,m_lastquerytime) * HZ)) * 100);///double(m_totcpu);
 			if (cpuper>0)
@@ -1083,7 +1089,7 @@ void CHardwareMonitor::CheckForOnboardSensors()
 #if defined(__linux__) || defined(__CYGWIN32__) || defined(__FreeBSD__)
 
 	//Check if we are running on a RaspberryPi
-	std::string sLine = "";
+	std::string sLine;
 	std::ifstream infile;
 	bool bPi = false;
 
@@ -1151,39 +1157,39 @@ void CHardwareMonitor::CheckForOnboardSensors()
 		if (file_exist("/sys/devices/platform/sunxi-i2c.0/i2c-0/0-0034/temp1_input"))
 		{
 			Log(LOG_STATUS, "System: Cubieboard/Cubietruck");
-			szInternalTemperatureCommand = "cat /sys/devices/platform/sunxi-i2c.0/i2c-0/0-0034/temp1_input | awk '{ printf (\"temp=%0.2f\\n\",$1/1000); }'";
+			szInternalTemperatureCommand = R"(cat /sys/devices/platform/sunxi-i2c.0/i2c-0/0-0034/temp1_input | awk '{ printf ("temp=%0.2f\n",$1/1000); }')";
 			bHasInternalTemperature = true;
 		}
 		else if (file_exist("/sys/devices/virtual/thermal/thermal_zone0/temp"))
 		{
 			Log(LOG_STATUS,"System: ODroid");
-			szInternalTemperatureCommand = "cat /sys/devices/virtual/thermal/thermal_zone0/temp | awk '{ if ($1 < 100) printf(\"temp=%d\\n\",$1); else printf (\"temp=%0.2f\\n\",$1/1000); }'";
+			szInternalTemperatureCommand = R"(cat /sys/devices/virtual/thermal/thermal_zone0/temp | awk '{ if ($1 < 100) printf("temp=%d\n",$1); else printf ("temp=%0.2f\n",$1/1000); }')";
 			bHasInternalTemperature = true;
 		}
 	}
 	if (file_exist("/sys/class/power_supply/ac/voltage_now"))
 	{
 		Debug(DEBUG_NORM, "Internal voltage sensor detected");
-		szInternalVoltageCommand = "cat /sys/class/power_supply/ac/voltage_now | awk '{ printf (\"volt=%0.2f\\n\",$1/1000000); }'";
+		szInternalVoltageCommand = R"(cat /sys/class/power_supply/ac/voltage_now | awk '{ printf ("volt=%0.2f\n",$1/1000000); }')";
 		bHasInternalVoltage = true;
 	}
 	if (file_exist("/sys/class/power_supply/ac/current_now"))
 	{
 		Debug(DEBUG_NORM, "Internal current sensor detected");
-		szInternalCurrentCommand = "cat /sys/class/power_supply/ac/current_now | awk '{ printf (\"curr=%0.2f\\n\",$1/1000000); }'";
+		szInternalCurrentCommand = R"(cat /sys/class/power_supply/ac/current_now | awk '{ printf ("curr=%0.2f\n",$1/1000000); }')";
 		bHasInternalCurrent = true;
 	}
 	//New Armbian Kernal 4.14+
 	if (file_exist("/sys/class/power_supply/axp20x-ac/voltage_now"))
 	{
 		Debug(DEBUG_NORM, "Internal voltage sensor detected");
-		szInternalVoltageCommand = "cat /sys/class/power_supply/axp20x-ac/voltage_now | awk '{ printf (\"volt=%0.2f\\n\",$1/1000000); }'";
+		szInternalVoltageCommand = R"(cat /sys/class/power_supply/axp20x-ac/voltage_now | awk '{ printf ("volt=%0.2f\n",$1/1000000); }')";
 		bHasInternalVoltage = true;
 	}
 	if (file_exist("/sys/class/power_supply/axp20x-ac/current_now"))
 	{
 		Debug(DEBUG_NORM, "Internal current sensor detected");
-		szInternalCurrentCommand = "cat /sys/class/power_supply/axp20x-ac/current_now | awk '{ printf (\"curr=%0.2f\\n\",$1/1000000); }'";
+		szInternalCurrentCommand = R"(cat /sys/class/power_supply/axp20x-ac/current_now | awk '{ printf ("curr=%0.2f\n",$1/1000000); }')";
 		bHasInternalCurrent = true;
 	}
 #endif

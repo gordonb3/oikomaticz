@@ -95,7 +95,7 @@ extern "C" {
  *     ....
  * }
  *
- * If a floating point error occurs in dangerous_op, foobar returns 0 (nullptr),
+ * If a floating point error occurs in dangerous_op, foobar returns 0 (NULL),
  * after setting the associated value of the FloatingPointError exception to
  * "Error in foobar". ``Dangerous_op'' can be a single operation, or a block
  * of code, function calls, or any combination, so long as no alternate

@@ -13,7 +13,7 @@ class HTTPClient
 	// give MainWorker acces to the protected Cleanup() function
 	friend class MainWorker;
 
-public:
+      public:
 
 	/************************************************************************
 	 *									*
@@ -96,7 +96,7 @@ std::vector<std::string> &vHeaderData, const long iTimeOut = -1);
 	static void SetCookieFile(const std::string &cookiefile);
 
 
-protected:
+      protected:
 	//Cleanup function, should be called before application closed
 	static void Cleanup();
 

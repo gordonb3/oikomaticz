@@ -57,8 +57,11 @@ namespace clx {
 		typedef unzFile handler_type;
 		typedef std::basic_string<CharT, Traits> string_type;
 
-		basic_unzip_iterator() :
-			cur_(), handler_(nullptr), pass_() {}
+		basic_unzip_iterator()
+			: cur_()
+			, pass_()
+		{
+		}
 
 		basic_unzip_iterator(const basic_unzip_iterator& cp) :
 			cur_(cp.cur_), handler_(cp.handler_), pass_(cp.pass_) {}
@@ -87,17 +90,17 @@ namespace clx {
 			if (err != UNZ_OK)
 			{
 				//printf("error %d with zipfile in unzOpenCurrentFilePassword\n",err);
-				return nullptr;
+				return NULL;
 			}
 			unz_file_info64 info;
-			err = unzGetCurrentFileInfo64((unzFile)handler_, &info, nullptr, 0, nullptr, 0, nullptr, 0);
+			err = unzGetCurrentFileInfo64((unzFile)handler_, &info, NULL, 0, NULL, 0, NULL, 0);
 			if (err != UNZ_OK)
-				return nullptr;
+				return NULL;
 
 			file_size = (uLong) info.uncompressed_size;
 			unsigned char *buf = (unsigned char*)malloc(file_size + ExtraAllocBytes);
-			if (buf == nullptr)
-				return nullptr;
+			if (buf == NULL)
+				return NULL;
 			//Extract into our buffer
 			int offset = 0;
 			int tot_read = 0;
@@ -148,7 +151,7 @@ namespace clx {
 
 	private:
 		stream_ptr cur_;
-		handler_type handler_;
+		handler_type handler_{ nullptr };
 		string_type pass_;
 
 		basic_unzip_iterator& create() {

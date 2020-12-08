@@ -40,10 +40,6 @@ CNestOAuthAPI::CNestOAuthAPI(const int ID, const std::string &apikey, const std:
 	Init();
 }
 
-CNestOAuthAPI::~CNestOAuthAPI(void)
-{
-}
-
 void CNestOAuthAPI::Init()
 {
 	m_bDoLogin = true;
@@ -214,7 +210,7 @@ bool CNestOAuthAPI::Login()
 		if (!m_ProductId.empty() && !m_ProductSecret.empty() && !m_PinCode.empty()) {
 			_log.Log(LOG_NORM, "NestOAuthAPI: Access token missing. Will request an API key based on Product Id, Product Secret and PIN code.");
 
-			std::string sTmpToken = "";
+			std::string sTmpToken;
 			try
 			{
 				// Request the token using the information that we already have.
@@ -262,10 +258,9 @@ bool CNestOAuthAPI::Login()
 		m_bDoLogin = false;
 		return true;
 	}
-	else {
-		_log.Log(LOG_ERROR, "NestOAuthAPI: Login failed: token did not validate.");
-		return false;
-	}
+
+	_log.Log(LOG_ERROR, "NestOAuthAPI: Login failed: token did not validate.");
+	return false;
 }
 
 void CNestOAuthAPI::Logout()
@@ -325,7 +320,7 @@ void CNestOAuthAPI::UpdateSmokeSensor(const unsigned char Idx, const bool bOn, c
 			bNoChange = true;
 		if (bNoChange)
 		{
-			time_t now = time(0);
+			time_t now = time(nullptr);
 			struct tm ltime;
 			localtime_r(&now, &ltime);
 
@@ -457,16 +452,15 @@ void CNestOAuthAPI::GetMeterDetails()
 			return;
 		}
 		int SwitchIndex = 1;
-		for (Json::Value::iterator itDevice = deviceRoot["smoke_co_alarms"].begin(); itDevice != deviceRoot["smoke_co_alarms"].end(); ++itDevice)
+		for (auto device : deviceRoot["smoke_co_alarms"])
 		{
-			Json::Value device = *itDevice;
-			//std::string devstring = itDevice.key().asString();
+			// std::string devstring = itDevice.key().asString();
 			std::string devWhereName = device["where_name"].asString();
 
 			if (devWhereName.empty())
 				continue;
 
-			std::string devName = devWhereName;
+			const std::string &devName = devWhereName;
 
 			// Default value is true, let's assume the worst.
 			bool bSmokeAlarm = true;
@@ -517,11 +511,11 @@ void CNestOAuthAPI::GetMeterDetails()
 
 	size_t iThermostat = 0;
 	size_t iStructure = 0;
-	for (Json::Value::iterator ittStructure = structureRoot.begin(); ittStructure != structureRoot.end(); ++ittStructure)
+	for (auto nstructure : structureRoot)
 	{
 		// Get general structure information
-		Json::Value nstructure = *ittStructure;
-		if (!nstructure.isObject()) continue;
+		if (!nstructure.isObject())
+			continue;
 
 		// Store the structure information in a map.
 		_tNestStructure nstruct;
@@ -537,9 +531,9 @@ void CNestOAuthAPI::GetMeterDetails()
 		}
 
 		// Find out which thermostats are available under this structure
-		for (Json::Value::iterator ittDevice = nstructure["thermostats"].begin(); ittDevice != nstructure["thermostats"].end(); ++ittDevice)
+		for (auto &ittDevice : nstructure["thermostats"])
 		{
-			std::string devID = (*ittDevice).asString();
+			std::string devID = ittDevice.asString();
 
 			// _log.Log(LOG_NORM, ("Nest: Found Thermostat " + devID + " in structure " + StructureName).c_str());
 

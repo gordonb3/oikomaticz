@@ -30,10 +30,6 @@ CVoltCraftCO20::CVoltCraftCO20(const int ID)
 	m_HwdID=ID;
 }
 
-CVoltCraftCO20::~CVoltCraftCO20(void)
-{
-}
-
 bool CVoltCraftCO20::StartHardware()
 {
 	RequestStart();

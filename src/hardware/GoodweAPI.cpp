@@ -126,10 +126,6 @@ GoodweAPI::GoodweAPI(const int ID, const std::string &userName, const int Server
 	Init();
 }
 
-GoodweAPI::~GoodweAPI(void)
-{
-}
-
 void GoodweAPI::Init()
 {
 }
@@ -212,9 +208,8 @@ int GoodweAPI::getSunRiseSunSetMinutes(const bool bGetSunRise)
 		if (bGetSunRise) {
 			return sunRiseInMinutes;
 		}
-		else {
-			return sunSetInMinutes;
-		}
+
+		return sunSetInMinutes;
 	}
 	return 0;
 }
@@ -289,7 +284,8 @@ std::string getStatusString(const int status)
 	case STATUS_WAITING: return "Waiting for the Sun";
 	case STATUS_NORMAL: return "Normal/ Working";
 	case STATUS_OFFLINE: return "Offline";
-	default: return ("Unkown status value " + status);
+	default:
+		return "Unkown status value " + std::to_string(status);
 	}
 }
 
@@ -332,27 +328,27 @@ void GoodweAPI::GetMeterDetails()
 		_log.Log(LOG_ERROR,"GoodweAPI: Invalid user data received!");
 		return;
 	}
-	if (root.size() < 1)
+	if (root.empty())
 	{
 		_log.Log(LOG_ERROR,"GoodweAPI: Invalid user data received, or invalid username");
 		return;
 	}
-	for (Json::ArrayIndex i = 0; i < root.size(); i++)
+	for (auto &i : root)
 	{
 		// We use the received data only to retrieve station-id and station-name
 
-		if (root[i][BY_USER_STATION_ID].empty() )
+		if (i[BY_USER_STATION_ID].empty())
 		{
-			 _log.Log(LOG_ERROR,"GoodweAPI: no or invalid data received - StationID is missing!");
+			_log.Log(LOG_ERROR, "GoodweAPI: no or invalid data received - StationID is missing!");
 			return;
 		}
-		if (root[i][BY_USER_STATION_NAME].empty() )
+		if (i[BY_USER_STATION_NAME].empty())
 		{
-			 _log.Log(LOG_ERROR,"GoodweAPI: invalid data received - stationName is missing!");
+			_log.Log(LOG_ERROR, "GoodweAPI: invalid data received - stationName is missing!");
 			return;
 		}
-		std::string sStationId = root[i][BY_USER_STATION_ID].asString();
-		std::string sStationName = root[i][BY_USER_STATION_NAME].asString();
+		std::string sStationId = i[BY_USER_STATION_ID].asString();
+		std::string sStationName = i[BY_USER_STATION_NAME].asString();
 
 		ParseDeviceList(sStationId, sStationName);
 	}
@@ -386,15 +382,15 @@ void GoodweAPI::ParseDeviceList(const std::string &sStationId, const std::string
 
 	Json::Value result;
 	result = root[DEVICE_RESULT];
-	if (result.size() < 1)
+	if (result.empty())
 	{
 		_log.Log(LOG_STATUS, "GoodweAPI: devicelist result is empty!");
 		return;
 	}
 
-	for (Json::ArrayIndex i = 0; i < result.size(); i++)
+	for (auto &i : result)
 	{
-		ParseDevice(result[i], sStationId, sStationName);
+		ParseDevice(i, sStationId, sStationName);
 	}
 }
 

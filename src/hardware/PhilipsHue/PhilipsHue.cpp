@@ -81,10 +81,6 @@ m_UserName(Username)
 	Init();
 }
 
-CPhilipsHue::~CPhilipsHue(void)
-{
-}
-
 void CPhilipsHue::Init()
 {
 }
@@ -148,7 +144,7 @@ bool CPhilipsHue::WriteToHardware(const char *pdata, const unsigned char /*lengt
 	int svalue = 0;
 	int svalue2 = 0;
 	int svalue3 = 0;
-	std::string LCmd = "";
+	std::string LCmd;
 	int nodeID = 0;
 
 	if (packettype == pTypeGeneralSwitch)
@@ -190,14 +186,14 @@ bool CPhilipsHue::WriteToHardware(const char *pdata, const unsigned char /*lengt
 			SwitchLight(nodeID, LCmd, svalue);
 			return true;
 		}
-		else if (pLed->command == Color_LedOn)
+		if (pLed->command == Color_LedOn)
 		{
 			LCmd = "On";
 			svalue = 254;
 			SwitchLight(nodeID, LCmd, svalue);
 			return true;
 		}
-		else if (pLed->command == Color_SetBrightnessLevel)
+		if (pLed->command == Color_SetBrightnessLevel)
 		{
 			if (pLed->value == 0)
 			{
@@ -219,13 +215,13 @@ bool CPhilipsHue::WriteToHardware(const char *pdata, const unsigned char /*lengt
 			}
 			return true;
 		}
-		else if (pLed->command == Color_SetColorToWhite)
+		if (pLed->command == Color_SetColorToWhite)
 		{
 			LCmd = "Set White";
 			SwitchLight(nodeID, LCmd, 0);
 			return true;
 		}
-		else if (pLed->command == Color_SetColor)
+		if (pLed->command == Color_SetColor)
 		{
 			// From Philips Hue API documentation:
 			// bri: Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
@@ -302,18 +298,18 @@ bool CPhilipsHue::SwitchLight(const int nodeID, const std::string &LCmd, const i
 	}
 	else if (LCmd == "Set Level")
 	{
-		sPostData << "{\"on\": true, \"bri\": " << svalue << " }";
+		sPostData << R"({"on": true, "bri": )" << svalue << " }";
 		setOn = true;
 		setLevel = true;
 	}
 	else if (LCmd == "Set White")
 	{
-		sPostData << "{\"on\": true, \"sat\": 0 , \"bri\": 255, \"hue\": 0 }";
+		sPostData << R"({"on": true, "sat": 0 , "bri": 255, "hue": 0 })";
 		// Do state update next time the light is polled
 	}
 	else if (LCmd == "Set Hue")
 	{
-		sPostData << "{\"on\": true, \"sat\": " << svalue3 << ", \"hue\": " << svalue2 << ", \"bri\": " << svalue << "  }";
+		sPostData << R"({"on": true, "sat": )" << svalue3 << ", \"hue\": " << svalue2 << ", \"bri\": " << svalue << "  }";
 		setOn = true;
 		setLevel = true;
 		setHueSat = true;
@@ -322,7 +318,7 @@ bool CPhilipsHue::SwitchLight(const int nodeID, const std::string &LCmd, const i
 	}
 	else if (LCmd == "Set CT")
 	{
-		sPostData << "{\"on\": true, \"ct\": " << svalue2 << ", \"bri\": " << svalue << "  }";
+		sPostData << R"({"on": true, "ct": )" << svalue2 << ", \"bri\": " << svalue << "  }";
 		setOn = true;
 		setLevel = true;
 		setCt = true;
@@ -398,7 +394,7 @@ bool CPhilipsHue::SwitchLight(const int nodeID, const std::string &LCmd, const i
 		}
 		sPostData.clear();
 		sPostData.str("");
-		sPostData << "{\"scene\": \"" << result[0][0] << "\"}";
+		sPostData << R"({"scene": ")" << result[0][0] << "\"}";
 		sstr2 << "http://" << m_IPAddress
 			<< ":" << m_Port
 			<< "/api/" << m_UserName
@@ -438,7 +434,7 @@ std::string CPhilipsHue::RegisterUser(const std::string &IPAddress, const unsign
 	std::string sPostData;
 
 	//Providing own username is not allowed, so don't use it and only provide devicetype
-	sPostData = "{ \"devicetype\": \"domoticz\" }";
+	sPostData = R"({ "devicetype": "domoticz" })";
 
 	std::stringstream sstr2;
 	sstr2 << "http://" << IPAddress
@@ -1220,7 +1216,7 @@ void CPhilipsHue::InsertUpdateSwitch(const int NodeID, const uint8_t Unitcode, c
 	}
 }
 
-void CPhilipsHue::SetSwitchOptions(const int NodeID, const uint8_t Unitcode, const std::map<std::string, std::string> options)
+void CPhilipsHue::SetSwitchOptions(const int NodeID, const uint8_t Unitcode, const std::map<std::string, std::string> &options)
 {
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%08X') AND (Unit == '%d')", m_HwdID, NodeID, Unitcode);
@@ -1247,10 +1243,7 @@ namespace http {
 			std::string sipaddress = request::findValue(&req, "ipaddress");
 			std::string sport = request::findValue(&req, "port");
 			std::string susername = request::findValue(&req, "username");
-			if (
-				(sipaddress == "") ||
-				(sport == "")
-				)
+			if ((sipaddress.empty()) || (sport.empty()))
 				return;
 
 			std::string sresult = CPhilipsHue::RegisterUser(sipaddress, (unsigned short)atoi(sport.c_str()), susername);
@@ -1286,5 +1279,5 @@ namespace http {
 		{
 
 		}
-	}
-}
+	} // namespace server
+} // namespace http

@@ -18,10 +18,6 @@ CDomoticzHardwareBase::CDomoticzHardwareBase()
 	mytime(&m_LastHeartbeatReceive);
 };
 
-CDomoticzHardwareBase::~CDomoticzHardwareBase()
-{
-}
-
 bool CDomoticzHardwareBase::CustomCommand(const uint64_t /*idx*/, const std::string& /*sCommand*/)
 {
 	return false;
@@ -351,7 +347,7 @@ void CDomoticzHardwareBase::SendTextSensor(const int NodeID, const int ChildID, 
 std::string CDomoticzHardwareBase::GetTextSensorText(const int NodeID, const int ChildID, bool& bExists)
 {
 	bExists = false;
-	std::string ret = "";
+	std::string ret;
 
 	std::vector<std::vector<std::string> > result;
 
@@ -457,7 +453,7 @@ float CDomoticzHardwareBase::GetRainSensorValue(const int NodeID, bool& bExists)
 
 	std::vector<std::vector<std::string> > results;
 	results = m_sql.safe_query("SELECT ID,sValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit == %d) AND (Type==%d) AND (Subtype==%d)", m_HwdID, szIdx, Unit, int(pTypeRAIN), int(sTypeRAIN3));
-	if (results.size() < 1)
+	if (results.empty())
 	{
 		bExists = false;
 		return 0.0f;
@@ -484,7 +480,7 @@ bool CDomoticzHardwareBase::GetWindSensorValue(const int NodeID, int& WindDir, f
 		results = m_sql.safe_query("SELECT ID,sValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit == %d) AND (Type==%d) AND (Subtype==%d)", m_HwdID, szIdx, Unit, int(pTypeWIND), int(sTypeWINDNoTemp));
 	else
 		results = m_sql.safe_query("SELECT ID,sValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit == %d) AND (Type==%d) AND (Subtype==%d)", m_HwdID, szIdx, Unit, int(pTypeWIND), int(sTypeWIND4));
-	if (results.size() < 1)
+	if (results.empty())
 	{
 		bExists = false;
 		return 0.0f;
@@ -508,6 +504,12 @@ bool CDomoticzHardwareBase::GetWindSensorValue(const int NodeID, int& WindDir, f
 
 void CDomoticzHardwareBase::SendWattMeter(const uint8_t NodeID, const uint8_t ChildID, const int BatteryLevel, const float musage, const std::string& defaultname, const int RssiLevel /* =12 */)
 {
+	if (musage > m_sql.m_max_kwh_usage)
+	{
+		Log(LOG_ERROR, "Power usage to high! Usage: %g Watt. Max Usage configured: %g. (NodeID: 0x%04X, ChildID: 0x%04X, SID: %s)", musage, m_sql.m_max_kwh_usage, NodeID, ChildID,
+		    defaultname.c_str());
+		return;
+	}
 	_tUsageMeter umeter;
 	umeter.id1 = 0;
 	umeter.id2 = 0;
@@ -528,6 +530,12 @@ void CDomoticzHardwareBase::SendKwhMeterOldWay(const int NodeID, const int Child
 
 void CDomoticzHardwareBase::SendKwhMeter(const int NodeID, const int ChildID, const int BatteryLevel, const double musage, const double mtotal, const std::string& defaultname, const int RssiLevel /* =12 */)
 {
+	if (musage > m_sql.m_max_kwh_usage)
+	{
+		Log(LOG_ERROR, "Power usage to high! Usage: %g Watt. Max Usage configured: %g. (NodeID: 0x%04X, ChildID: 0x%04X, SID: %s)", musage, m_sql.m_max_kwh_usage, NodeID, ChildID,
+		    defaultname.c_str());
+		return;
+	}
 	_tGeneralDevice gdevice;
 	gdevice.subtype = sTypeKwh;
 	gdevice.intval1 = (NodeID << 8) | ChildID;
@@ -770,16 +778,19 @@ void CDomoticzHardwareBase::SendCurrentSensor(const int NodeID, const int Batter
 	tsen.CURRENT.battery_level = BatteryLevel;
 
 	int at10 = round(std::abs(Current1 * 10.0f));
-	tsen.CURRENT.ch1h = (BYTE)((at10 & 0xFF00) >> 8);
-	tsen.CURRENT.ch1l = (BYTE)(at10 & 0xFF);
+	tsen.CURRENT.ch1h = (BYTE)(at10 / 256);
+	at10 -= (tsen.TEMP.temperatureh * 256);
+	tsen.CURRENT.ch1l = (BYTE)(at10);
 
 	at10 = round(std::abs(Current2 * 10.0f));
-	tsen.CURRENT.ch2h = (BYTE)((at10 & 0xFF00) >> 8);
-	tsen.CURRENT.ch2l = (BYTE)(at10 & 0xFF);
+	tsen.CURRENT.ch2h = (BYTE)(at10 / 256);
+	at10 -= (tsen.TEMP.temperatureh * 256);
+	tsen.CURRENT.ch2l = (BYTE)(at10);
 
 	at10 = round(std::abs(Current3 * 10.0f));
-	tsen.CURRENT.ch3h = (BYTE)((at10 & 0xFF00) >> 8);
-	tsen.CURRENT.ch3l = (BYTE)(at10 & 0xFF);
+	tsen.CURRENT.ch3h = (BYTE)(at10 / 256);
+	at10 -= (tsen.TEMP.temperatureh * 256);
+	tsen.CURRENT.ch3l = (BYTE)(at10);
 
 	sDecodeRXMessage(this, (const unsigned char*)& tsen.CURRENT, defaultname.c_str(), BatteryLevel);
 }
@@ -1060,9 +1071,10 @@ void CDomoticzHardwareBase::SendSecurity1Sensor(const int NodeID, const int Devi
  * @param  {std::string} LevelActions : String with numbers, one for eacht Action, seperated with |.  Example: "00|10,|20|30"  - Off is 00
  * @param  {bool} bHideOff            : Boolean: true will hide the off level, false will enable it.
   */
-void CDomoticzHardwareBase::SendSelectorSwitch(const int NodeID, const uint8_t ChildID, const std::string sValue, const std::string& defaultname, const int customImage , const bool bDropdown, const std::string& LevelNames,const std::string& LevelActions, const bool bHideOff )
+void CDomoticzHardwareBase::SendSelectorSwitch(const int NodeID, const uint8_t ChildID, const std::string &sValue, const std::string &defaultname, const int customImage, const bool bDropdown,
+					       const std::string &LevelNames, const std::string &LevelActions, const bool bHideOff)
 {
- 	if (std::size_t index = LevelActions.find(sValue.c_str()) == std::string::npos)
+	if (std::size_t index = LevelActions.find(sValue) == std::string::npos)
 	{
 	   Log(LOG_ERROR,"Value %s not supported by Selector Switch %s, it needs %s ",sValue.c_str() , defaultname.c_str(), LevelActions.c_str() );
 	   return; // did not find sValue in LevelAction string so exit with warning
@@ -1105,7 +1117,7 @@ void CDomoticzHardwareBase::SendSelectorSwitch(const int NodeID, const uint8_t C
 	else
 	{
 		//Check Level
-		if ( xcmd.level == std::stoi(result[0][1].c_str()))
+		if (xcmd.level == std::stoi(result[0][1]))
 			return; // no need to uodate
 		result = m_sql.safe_query("UPDATE DeviceStatus SET sValue=%i WHERE (HardwareID==%d) AND (DeviceID=='%08X')", xcmd.level, m_HwdID, NodeID);
 	}
@@ -1139,21 +1151,21 @@ int CDomoticzHardwareBase::MigrateSelectorSwitch(const int NodeID, const uint8_t
 	{
 		int i = 0;
 		std::stringstream ssoptions;
-		for (const auto& itt : optionsMap)
+		for (const auto &option : optionsMap)
 		{
-			std::string optionName = itt.first.c_str();
-			std::string optionValue = itt.second.c_str();
-			if(strcmp(itt.first.c_str(),"LevelActions") == 0)
+			std::string optionName = option.first;
+			std::string optionValue = option.second;
+			if (strcmp(option.first.c_str(), "LevelActions") == 0)
 			{
-				if(strcmp(itt.second.c_str(), LevelActions.c_str()) !=  0 )
+				if (strcmp(option.second.c_str(), LevelActions.c_str()) != 0)
 				{
 					bUpdated = true;  // the list of actions is not what we expected. flag  that Migration is required
-					optionValue = LevelActions.c_str();
+					optionValue = LevelActions;
 				}
 			}
-			else if(strcmp(itt.first.c_str(),"LevelNames") == 0)
+			else if (strcmp(option.first.c_str(), "LevelNames") == 0)
 			{
-					optionValue = LevelNames.c_str();
+				optionValue = LevelNames;
 			}
 			ssoptions << optionName << ":" << optionValue;
 			if (i < count) {
@@ -1166,7 +1178,7 @@ int CDomoticzHardwareBase::MigrateSelectorSwitch(const int NodeID, const uint8_t
 	{
 		if(!bMigrate)
 			return -1;  // Signnal  selector switch is not latest version
-		std::string options_str = m_sql.FormatDeviceOptions(m_sql.BuildDeviceOptions( options.c_str(), false));
+		std::string options_str = m_sql.FormatDeviceOptions(m_sql.BuildDeviceOptions(options, false));
 		m_sql.safe_query("UPDATE DeviceStatus SET options='%q' WHERE (HardwareID==%d) AND (DeviceID=='%08X')", options_str.c_str(), m_HwdID, NodeID);
 	   return 1; // signal migratreion completed
 	}

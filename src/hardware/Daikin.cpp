@@ -89,10 +89,6 @@ CDaikin::CDaikin(const int ID, const std::string& IPAddress, const unsigned shor
 	Init();
 }
 
-CDaikin::~CDaikin(void)
-{
-}
-
 void CDaikin::Init()
 {
 }
@@ -307,9 +303,8 @@ void CDaikin::GetBasicInfo()
 		return;
 	}
 
-	for (const auto& itt : results)
+	for (const auto &sVar : results)
 	{
-		std::string sVar = itt;
 		std::vector<std::string> results2;
 		StringSplit(sVar, "=", results2);
 		if (results2.size() != 2)
@@ -379,9 +374,8 @@ void CDaikin::GetControlInfo()
 		Log(LOG_ERROR, "Invalid data received");
 		return;
 	}
-	for (const auto& itt : results)
+	for (const auto &sVar : results)
 	{
-		std::string sVar = itt;
 		std::vector<std::string> results2;
 		StringSplit(sVar, "=", results2);
 		if (results2.size() != 2)
@@ -543,9 +537,8 @@ void CDaikin::GetSensorInfo()
 	}
 	float htemp = -1;
 	int hhum = -1;
-	for (const auto& itt : results)
+	for (const auto &sVar : results)
 	{
-		std::string sVar = itt;
 		std::vector<std::string> results2;
 		StringSplit(sVar, "=", results2);
 		if (results2.size() != 2)
@@ -763,7 +756,10 @@ bool CDaikin::SetModeLevel(const int NewLevel)
 		stemp = m_dt[(NewLevel / 10)]; //szURL << "&stemp=" << m_dt[(NewLevel/10)];
 		shum = m_dh[(NewLevel / 10)]; //szURL << "&shum=" << m_dh[(NewLevel/10)];
 	}
-	AggregateSetControlInfo(stemp.c_str(), nullptr, mode.c_str(), nullptr, nullptr, shum.c_str()); // temp & hum are memorized value from the device itself, they can be modified by another command safely (does not have to fire 2 different http request in case of instantly modification on temp or hum
+	AggregateSetControlInfo(
+		stemp.c_str(), nullptr, mode.c_str(), nullptr, nullptr,
+		shum.c_str()); // temp & hum are memorized value from the device itself, they can be modified by another command safely
+			       // (does not have to fire 2 different http request in case of instantly modification on temp or hum
 	return true;
 }
 

@@ -89,15 +89,6 @@ COpenWebNetTCP::COpenWebNetTCP(const int ID, const std::string &IPAddress, const
 
 	m_heartbeatcntr = OPENWEBNET_HEARTBEAT_DELAY;
 	m_pStatusSocket = nullptr;
-
-
-}
-
-/**
-	destroys hardware OpenWebNet instance
-**/
-COpenWebNetTCP::~COpenWebNetTCP(void)
-{
 }
 
 /**
@@ -116,7 +107,8 @@ bool COpenWebNetTCP::StartHardware()
 	SetThreadName(m_monitorThread->native_handle(), "OpenWebNetTCPMF");
 
 	//Start worker thread
-	if (m_monitorThread != nullptr) {
+	if (m_monitorThread != nullptr)
+	{
 		m_heartbeatThread = std::make_shared<std::thread>(&COpenWebNetTCP::Do_Work, this);
 		SetThreadName(m_heartbeatThread->native_handle(), "OpenWebNetTCPW");
 	}
@@ -187,7 +179,6 @@ bool COpenWebNetTCP::isStatusSocketConnected()
 {
 	return m_pStatusSocket != nullptr && m_pStatusSocket->getState() == csocket::CONNECTED;
 };
-
 
 /**
    write ...
@@ -329,7 +320,7 @@ uint32_t COpenWebNetTCP::ownCalcPass(const std::string &password, const std::str
 /**
 	Perform conversion 80/128 DEC-chars to 40/64 HEX-chars
 **/
-const std::string COpenWebNetTCP::decToHexStrConvert(std::string paramString)
+std::string COpenWebNetTCP::decToHexStrConvert(const std::string &paramString)
 {
 	char retStr[256];
 	size_t idxb, idxh;
@@ -344,7 +335,7 @@ const std::string COpenWebNetTCP::decToHexStrConvert(std::string paramString)
 /**
 	Perform conversion HEX-40/64 chars to 80/128 DEC-chars
 **/
-const std::string COpenWebNetTCP::hexToDecStrConvert(std::string paramString)
+std::string COpenWebNetTCP::hexToDecStrConvert(const std::string &paramString)
 {
 	uint32_t bval;
 	size_t idxb, idxh;
@@ -363,7 +354,7 @@ const std::string COpenWebNetTCP::hexToDecStrConvert(std::string paramString)
 /**
 	Perform conversion byte to HEX-chars
 **/
-const std::string COpenWebNetTCP::byteToHexStrConvert(uint8_t *digest, size_t digestLen, char *pArray)
+std::string COpenWebNetTCP::byteToHexStrConvert(uint8_t *digest, size_t digestLen, char *pArray)
 {
 	size_t idxb, idxh;
 	char arrayOfChar1[] = "0123456789abcdef";
@@ -380,7 +371,7 @@ const std::string COpenWebNetTCP::byteToHexStrConvert(uint8_t *digest, size_t di
 /**
 	Perform SHA1/SHA256 and convert into HEX-chars
 **/
-const std::string COpenWebNetTCP::shaCalc(std::string paramString, int auth_type)
+std::string COpenWebNetTCP::shaCalc(const std::string &paramString, int auth_type)
 {
 	uint8_t *digest;
 	uint8_t strArray[OPENWEBNET_BUFFER_SIZE];
@@ -390,19 +381,14 @@ const std::string COpenWebNetTCP::shaCalc(std::string paramString, int auth_type
 	if (auth_type == 0)
 	{
 		// Perform SHA1
-		digest = SHA1(strArray, paramString.length(), 0);
+		digest = SHA1(strArray, paramString.length(), nullptr);
 		char arrayOfChar2[(SHA_DIGEST_LENGTH * 2) + 1];
 		return (byteToHexStrConvert(digest, SHA_DIGEST_LENGTH, arrayOfChar2));
 	}
-	else
-	{
-		// Perform SHA256
-		digest = SHA256(strArray, paramString.length(), 0);
-		char arrayOfChar2[(SHA256_DIGEST_LENGTH * 2) + 1];
-		return (byteToHexStrConvert(digest, SHA256_DIGEST_LENGTH, arrayOfChar2));
-	}
-
-	return(std::string(""));
+	// Perform SHA256
+	digest = SHA256(strArray, paramString.length(), nullptr);
+	char arrayOfChar2[(SHA256_DIGEST_LENGTH * 2) + 1];
+	return (byteToHexStrConvert(digest, SHA256_DIGEST_LENGTH, arrayOfChar2));
 }
 
 /**
@@ -454,16 +440,13 @@ bool COpenWebNetTCP::hmacAuthentication(csocket *connectionSocket, int auth_type
 			const std::string strRcvSrv2 = decToHexStrConvert(responseSrv2.Extract_who());
 			const std::string strHMAC2 = shaCalc(strRa + strRb + strKab, auth_type);
 
-			if (strHMAC2.compare(strRcvSrv2) == 0)
+			if (strHMAC2 == strRcvSrv2)
 			{
 				ownWrite(connectionSocket, OPENWEBNET_MSG_OPEN_OK, strlen(OPENWEBNET_MSG_OPEN_OK)); // Write ACK
 				return (true); // HMAC authentication OK
 			}
-			else
-			{
-				_log.Log(LOG_ERROR, "COpenWebNetTCP: HMAC(Ra,Rb,Kab) received: '%s'", strRcvSrv2.c_str());
-				_log.Log(LOG_ERROR, "COpenWebNetTCP: not match with: '%s'", strHMAC2.c_str());
-			}
+			_log.Log(LOG_ERROR, "COpenWebNetTCP: HMAC(Ra,Rb,Kab) received: '%s'", strRcvSrv2.c_str());
+			_log.Log(LOG_ERROR, "COpenWebNetTCP: not match with: '%s'", strHMAC2.c_str());
 		}
 	}
 	_log.Log(LOG_ERROR, "COpenWebNetTCP: HMAC authentication ERROR!");
@@ -473,7 +456,7 @@ bool COpenWebNetTCP::hmacAuthentication(csocket *connectionSocket, int auth_type
 /**
 	Perform nonce-hash authentication
 **/
-bool COpenWebNetTCP::nonceHashAuthentication(csocket *connectionSocket, std::string nonce)
+bool COpenWebNetTCP::nonceHashAuthentication(csocket *connectionSocket, const std::string &nonce)
 {
 	std::stringstream frame;
 	/** calculate nonce-hash **/
@@ -517,7 +500,7 @@ bool COpenWebNetTCP::ownAuthentication(csocket *connectionSocket)
 		// Hash authentication for unofficial gateway
 		return(nonceHashAuthentication(connectionSocket, responseNonce.Extract_who()));
 	}
-	else if (responseNonce.IsNormalFrame())
+	if (responseNonce.IsNormalFrame())
 	{
 		if (!m_ownPassword.length())
 		{
@@ -528,23 +511,20 @@ bool COpenWebNetTCP::ownAuthentication(csocket *connectionSocket)
 		// TODO: only alphanumeric password....
 
 		const std::string strFrame = responseNonce.Extract_frame();
-		if (strFrame.compare(OPENWEBNET_AUTH_REQ_SHA1) == 0) 	// *98*1##
+		if (strFrame == OPENWEBNET_AUTH_REQ_SHA1) // *98*1##
 		{
 			// HMAC authentication with SHA-1
 			return (hmacAuthentication(connectionSocket, 0));
 		}
-		else if	(strFrame.compare(OPENWEBNET_AUTH_REQ_SHA2) == 0)		// *98*2##
+		if (strFrame == OPENWEBNET_AUTH_REQ_SHA2) // *98*2##
 		{
 			// HMAC authentication with SHA-256
 			return (hmacAuthentication(connectionSocket, 1));
 		}
-		else
-		{
-			_log.Log(LOG_ERROR, "COpenWebNetTCP: frame request error:'%s'", strFrame.c_str());
-			return false;
-		}
+		_log.Log(LOG_ERROR, "COpenWebNetTCP: frame request error:'%s'", strFrame.c_str());
+		return false;
 	}
-	else if (responseNonce.IsOKFrame())
+	if (responseNonce.IsOKFrame())
 	{
 		// no authentication required..ok!
 		//_log.Log(LOG_STATUS, "COpenWebNetTCP: authentication OK, no password!");
@@ -559,7 +539,7 @@ bool COpenWebNetTCP::ownAuthentication(csocket *connectionSocket)
 **/
 csocket* COpenWebNetTCP::connectGwOwn(const char *connectionMode)
 {
-	if (m_szIPAddress.size() == 0 || m_usIPPort == 0 || m_usIPPort > 65535)
+	if (m_szIPAddress.empty() || m_usIPPort == 0 || m_usIPPort > 65535)
 	{
 		_log.Log(LOG_ERROR, "COpenWebNetTCP: Cannot connect to gateway, empty  IP Address or Port");
 		return nullptr;
@@ -588,7 +568,8 @@ csocket* COpenWebNetTCP::connectGwOwn(const char *connectionMode)
 
 	ownWrite(connectionSocket, connectionMode, strlen(connectionMode));
 
-	if (!ownAuthentication(connectionSocket)) return nullptr;
+	if (!ownAuthentication(connectionSocket))
+		return nullptr;
 
 	return connectionSocket;
 }
@@ -713,9 +694,9 @@ bool COpenWebNetTCP::GetValueMeter(const int NodeID, const int ChildID, double *
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query("SELECT sValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Type==%d) AND (Subtype==%d)",
 		m_HwdID, szTmp, int(pTypeGeneral), int(sTypeKwh));
-	if (result.size() >= 1)
+	if (!result.empty())
 	{
-		std::string sup, sValue = result[0][0].c_str();
+		std::string sup, sValue = result[0][0];
 
 		if (usage)
 			*usage = (float)atof(sValue.c_str());
@@ -1010,7 +991,7 @@ void COpenWebNetTCP::UpdateSwitch(const int who, const int where, const int what
 /**
 	Decode where and get tipe of command with details..
 **/
-void COpenWebNetTCP::decodeWhereAndFill(const int who, std::string where, std::vector<std::string> whereParam, std::string *devname, int *iWhere)
+void COpenWebNetTCP::decodeWhereAndFill(const int who, const std::string &where, std::vector<std::string> whereParam, std::string *devname, int *iWhere)
 {
 	int wlen = where.length();
 	int iArea = -1;
@@ -1363,7 +1344,7 @@ void COpenWebNetTCP::UpdateDeviceValue(std::vector<bt_openwebnet>::iterator iter
 			iAppValue = atoi(whatParam[0].c_str());
 			_log.Log(LOG_STATUS, "COpenWebNetTCP: CEN PLUS Short pressure %d Button %d", iWhere, iAppValue);
 			devname = OPENWEBNET_CENPLUS;
-			devname += " " + where + " Short Press Button " + whatParam[0].c_str();
+			devname += " " + where + " Short Press Button " + whatParam[0];
 			UpdateCenPlus(WHO_CEN_PLUS_DRY_CONTACT_IR_DETECTION, iWhere, 1, iAppValue, atoi(what.c_str()), atoi(sInterface.c_str()), 255, devname.c_str());
 			break;
 
@@ -1381,7 +1362,7 @@ void COpenWebNetTCP::UpdateDeviceValue(std::vector<bt_openwebnet>::iterator iter
 
 			_log.Log(LOG_STATUS, "COpenWebNetTCP: CEN PLUS Long pressure %d Button %d", iWhere, iAppValue);
 			devname = OPENWEBNET_CENPLUS;
-			devname += " " + where + " Long Press Button " + whatParam[0].c_str();
+			devname += " " + where + " Long Press Button " + whatParam[0];
 			UpdateCenPlus(WHO_CEN_PLUS_DRY_CONTACT_IR_DETECTION, iWhere, 1, iAppValue, atoi(what.c_str()), atoi(sInterface.c_str()), 255, devname.c_str());
 			break;
 
@@ -1483,7 +1464,7 @@ void COpenWebNetTCP::UpdateDeviceValue(std::vector<bt_openwebnet>::iterator iter
 			}
 			break;
 		case GATEWAY_INTERFACES_MANAGEMENT_DIMENSION_DEVICE_TYPE:			// 15,		/* Read		  */
-			if (valueParam.size() >= 1)
+			if (!valueParam.empty())
 			{
 				model = atoi(valueParam[0].c_str());
 				switch (model)
@@ -1839,7 +1820,8 @@ bool COpenWebNetTCP::WriteToHardware(const char *pdata, const unsigned char leng
 			request.CreateWrDimensionMsgOpen2(sWho, sWhere, sDimension, value);
 			if (sendCommand(request, responses))
 			{
-				if (responses.size() > 0) return responses.at(0).IsOKFrame();
+				if (!responses.empty())
+					return responses.at(0).IsOKFrame();
 			}
 		}
 		else {
@@ -1855,11 +1837,12 @@ bool COpenWebNetTCP::WriteToHardware(const char *pdata, const unsigned char leng
 
 			std::string sWhere = getWhereForWrite(where);
 
-			std::string when = "";
+			std::string when;
 			bt_openwebnet request(sWho, sWhat, sWhere, when);
 			if (sendCommand(request, responses))
 			{
-				if (responses.size() > 0) return responses.at(0).IsOKFrame();
+				if (!responses.empty())
+					return responses.at(0).IsOKFrame();
 			}
 		}
 	}
@@ -1882,12 +1865,13 @@ bool COpenWebNetTCP::WriteToHardware(const char *pdata, const unsigned char leng
 		interfaceStr << iInterface;
 		std::string sInterface = interfaceStr.str();
 
-		std::string lev = "";
-		std::string when = "";
+		std::string lev;
+		std::string when;
 		request.CreateMsgOpen(sWho, sWhat, sWhere, lev, sInterface, when);
 		if (sendCommand(request, responses))
 		{
-			if (responses.size() > 0) return responses.at(0).IsOKFrame();
+			if (!responses.empty())
+				return responses.at(0).IsOKFrame();
 		}
 	}
 
@@ -1931,11 +1915,12 @@ bool COpenWebNetTCP::SetSetpoint(const int idx, const float temp)
 		interfaceStr << iInterface;
 		std::string sInterface = interfaceStr.str();
 
-		std::string sLev = "";
+		std::string sLev;
 		request.CreateWrDimensionMsgOpen(sWho, sWhere, sLev, sInterface, sDimension, sValue);
 		if (sendCommand(request, responses))
 		{
-			if (responses.size() > 0) return responses.at(0).IsOKFrame();
+			if (!responses.empty())
+				return responses.at(0).IsOKFrame();
 		}
 	}
 	else
@@ -1944,7 +1929,7 @@ bool COpenWebNetTCP::SetSetpoint(const int idx, const float temp)
 		request.CreateWrDimensionMsgOpen(sWho, sWhere, sDimension, sValue); // (const std::string& who, const std::string& where, const std::string& dimension, const std::vector<std::string>& value)
 		if (sendCommand(request, responses, 1, false))
 		{
-			if (responses.size() > 0)
+			if (!responses.empty())
 			{
 				return responses.at(0).IsOKFrame();
 			}

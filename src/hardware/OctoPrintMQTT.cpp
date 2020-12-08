@@ -69,7 +69,7 @@ COctoPrintMQTT::COctoPrintMQTT(const int ID, const std::string &IPAddress, const
 	mosqdz::lib_init();
 }
 
-COctoPrintMQTT::~COctoPrintMQTT(void)
+COctoPrintMQTT::~COctoPrintMQTT()
 {
 	mosqdz::lib_cleanup();
 }
@@ -184,9 +184,7 @@ bool COctoPrintMQTT::ConnectIntEx()
 			_log.Log(LOG_ERROR, "OCTO_MQTT: Failed enabling TLS mode, return code: %d (CA certificate: '%s')", rc, m_CAFilename.c_str());
 			return false;
 		}
-		else {
-			_log.Log(LOG_STATUS, "OCTO_MQTT: enabled TLS mode");
-		}
+		_log.Log(LOG_STATUS, "OCTO_MQTT: enabled TLS mode");
 	}
 	rc = username_pw_set((!m_UserName.empty()) ? m_UserName.c_str() : nullptr, (!m_Password.empty()) ? m_Password.c_str() : nullptr);
 

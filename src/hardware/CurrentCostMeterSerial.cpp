@@ -26,11 +26,6 @@ CurrentCostMeterSerial::CurrentCostMeterSerial(const int ID, const std::string& 
 	m_HwdID=ID;
 }
 
-CurrentCostMeterSerial::~CurrentCostMeterSerial()
-{
-
-}
-
 bool CurrentCostMeterSerial::StartHardware()
 {
 	RequestStart();
@@ -135,7 +130,8 @@ namespace http {
 			}
 
 			std::string idx = request::findValue(&req, "idx");
-			if (idx == "") {
+			if (idx.empty())
+			{
 				return;
 			}
 
@@ -155,5 +151,5 @@ namespace http {
 
 			m_mainworker.RestartHardware(idx);
 		}
-	}
-}
+	} // namespace server
+} // namespace http

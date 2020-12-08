@@ -48,7 +48,7 @@ typedef struct {
 
 class CTE923Tool
 {
-public:
+      public:
 	CTE923Tool(void);
 	~CTE923Tool(void);
 
@@ -63,7 +63,7 @@ public:
 	struct usb_dev_handle *te923_handle();
 	void te923_close( usb_dev_handle *devh );
 	struct usb_dev_handle *m_device_handle;
-private:
+      private:
 	int get_te923_lifedata( Te923DataSet_t *data );
 	int get_te923_devstate( Te923DevSet_t *dev );
 	int get_te923_memdata( Te923DataSet_t *data );

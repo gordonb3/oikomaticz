@@ -4,7 +4,7 @@
 #include <string.h>
 #include "main/Helper.h"
 
-time_t m_lasttime=time(nullptr);
+time_t m_lasttime = time(nullptr);
 std::mutex& TimeMutex_() {
 	static std::mutex lTimeMutex_;
 	return lTimeMutex_;
@@ -26,8 +26,8 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 #else
 	std::unique_lock<std::mutex> lock(TimeMutex_());
 	struct tm *s = localtime(timep);
-	if (s == nullptr)
-		return nullptr;
+	if (s == NULL)
+		return NULL;
 	memcpy(result, s, sizeof(struct tm));
 #endif
 	return result;
