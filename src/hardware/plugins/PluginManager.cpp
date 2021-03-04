@@ -29,10 +29,7 @@
 #endif
 
 #include "DelayedLink.h"
-
-#ifdef ENABLE_PYTHON
 #include "main/EventsPythonModule.h"
-#endif
 
 #define MINIMUM_PYTHON_VERSION "3.4.0"
 
@@ -70,13 +67,13 @@ namespace Plugins {
 
 	std::map<int, CDomoticzHardwareBase*>	CPluginSystem::m_pPlugins;
 	std::map<std::string, std::string>		CPluginSystem::m_PluginXml;
+	void *CPluginSystem::m_InitialPythonThread;
 
 	CPluginSystem::CPluginSystem()
 	{
 		m_bEnabled = false;
 		m_bAllPluginsStarted = false;
 		m_iPollInterval = 10;
-		m_InitialPythonThread = nullptr;
 	}
 
 	bool CPluginSystem::StartPluginSystem()
@@ -99,7 +96,7 @@ namespace Plugins {
 		// Pull UI elements from plugins and create manifest map in memory
 		BuildManifest();
 
-		m_thread = std::make_shared<std::thread>(&CPluginSystem::Do_Work, this);
+		m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 		SetThreadName(m_thread->native_handle(), "PluginMgr");
 
 		szPyVersion = Py_GetVersion();
@@ -469,6 +466,7 @@ namespace http {
 									ATTRIBUTE_VALUE(pXmlEle, "required", root[iPluginCnt]["parameters"][iParams]["required"]);
 									ATTRIBUTE_VALUE(pXmlEle, "default", root[iPluginCnt]["parameters"][iParams]["default"]);
 									ATTRIBUTE_VALUE(pXmlEle, "password", root[iPluginCnt]["parameters"][iParams]["password"]);
+									ATTRIBUTE_VALUE(pXmlEle, "rows", root[iPluginCnt]["parameters"][iParams]["rows"]);
 
 									TiXmlNode* pXmlOptionsNode = pXmlEle->FirstChild("options");
 									int	iOptions = 0;

@@ -9,10 +9,8 @@
 #include "webserver/cWebem.h"
 #include "main/json_helper.h"
 #include "XiaomiGateway.h"
-#include "XiaomiHardware.h"
 #include <openssl/aes.h>
 #include <boost/asio.hpp>
-#include <boost/bind/bind.hpp>
 
 #ifndef WIN32
 #include <ifaddrs.h>
@@ -30,6 +28,179 @@ Domoticz need to be in the same network/subnet with multicast working
 #define round(a) ( int ) ( a + .5 )
 // Removing this vector and use unitcode to tell what kind of device each is
 //std::vector<std::string> arrAqara_Wired_ID;
+
+// Unitcode ('Unit' in 'Devices' overview)
+typedef enum
+{
+	ACT_ONOFF_PLUG = 1,		    //  1, TODO: also used for channel 0?
+	ACT_ONOFF_WIRED_WALL,		    //  2, TODO: what is this? single or dual channel wired wall switch?
+	GATEWAY_SOUND_ALARM_RINGTONE,	    //  3, Xiaomi Gateway Alarm Ringtone
+	GATEWAY_SOUND_ALARM_CLOCK,	    //  4, Xiaomi Gateway Alarm Clock
+	GATEWAY_SOUND_DOORBELL,		    //  5, Xiaomi Gateway Doorbell
+	GATEWAY_SOUND_MP3,		    //  6, Xiaomi Gateway MP3
+	GATEWAY_SOUND_VOLUME_CONTROL,	    //  7, Xiaomi Gateway Volume
+	SELECTOR_WIRED_WALL_SINGLE,	    //  8, Xiaomi Wired Single Wall Switch
+	SELECTOR_WIRED_WALL_DUAL_CHANNEL_0, //  9, Xiaomi Wired Dual Wall Switch Channel 0
+	SELECTOR_WIRED_WALL_DUAL_CHANNEL_1  // 10, Xiaomi Wired Dual Wall Switch Channel 1
+} XiaomiUnitCode;
+
+/****************************************************************************
+ ********************************* SWITCHES *********************************
+ ****************************************************************************/
+
+// Unknown Xiaomi device
+#define NAME_UNKNOWN_XIAOMI "Unknown Xiaomi device"
+
+// Xiaomi Wireless Switch
+#define MODEL_SELECTOR_WIRELESS_SINGLE_1 "switch"
+#define MODEL_SELECTOR_WIRELESS_SINGLE_2 "remote.b1acn01"
+#define NAME_SELECTOR_WIRELESS_SINGLE "Xiaomi Wireless Switch"
+
+// Xiaomi Square Wireless Switch
+#define MODEL_SELECTOR_WIRELESS_SINGLE_SQUARE "sensor_switch.aq2"
+#define NAME_SELECTOR_WIRELESS_SINGLE_SQUARE "Xiaomi Square Wireless Switch"
+
+// Xiaomi Wireless Single Wall Switch | WXKG03LM
+#define MODEL_SELECTOR_WIRELESS_WALL_SINGLE_1 "86sw1"
+#define MODEL_SELECTOR_WIRELESS_WALL_SINGLE_2 "remote.b186acn01"
+#define NAME_SELECTOR_WIRELESS_WALL_SINGLE "Xiaomi Wireless Single Wall Switch"
+
+// Xiaomi Wireless Dual Wall Switch | WXKG02LM
+#define MODEL_SELECTOR_WIRELESS_WALL_DUAL_1 "86sw2"
+#define MODEL_SELECTOR_WIRELESS_WALL_DUAL_2 "remote.b286acn01"
+#define MODEL_SELECTOR_WIRELESS_WALL_DUAL_3 "remote.b286acn02"
+#define NAME_SELECTOR_WIRELESS_WALL_DUAL "Xiaomi Wireless Dual Wall Switch"
+
+// Xiaomi Wired Single Wall Switch
+#define MODEL_SELECTOR_WIRED_WALL_SINGLE_1 "ctrl_neutral1"
+#define MODEL_SELECTOR_WIRED_WALL_SINGLE_2 "ctrl_ln1"
+#define MODEL_SELECTOR_WIRED_WALL_SINGLE_3 "ctrl_ln1.aq1"
+#define NAME_SELECTOR_WIRED_WALL_SINGLE "Xiaomi Wired Single Wall Switch"
+
+// Xiaomi Wired Dual Wall Switch | QBKG12LM (QBKG26LM)
+#define MODEL_SELECTOR_WIRED_WALL_DUAL_1 "ctrl_neutral2"
+#define MODEL_SELECTOR_WIRED_WALL_DUAL_2 "ctrl_ln2"
+#define MODEL_SELECTOR_WIRED_WALL_DUAL_3 "ctrl_ln2.aq1"
+#define MODEL_SELECTOR_WIRED_WALL_DUAL_4 "switch_b2lacn02"
+#define NAME_SELECTOR_WIRED_WALL_DUAL "Xiaomi Wired Dual Wall Switch"
+#define NAME_SELECTOR_WIRED_WALL_DUAL_CHANNEL_0 "Xiaomi Wired Dual Wall Switch Channel 0"
+#define NAME_SELECTOR_WIRED_WALL_DUAL_CHANNEL_1 "Xiaomi Wired Dual Wall Switch Channel 1"
+
+// Xiaomi Smart Push Button
+#define MODEL_SELECTOR_WIRELESS_SINGLE_SMART_PUSH "sensor_switch.aq3"
+#define NAME_SELECTOR_WIRELESS_SINGLE_SMART_PUSH "Xiaomi Smart Push Button"
+
+// Xiaomi Cube
+#define MODEL_SELECTOR_CUBE_V1 "cube"
+#define NAME_SELECTOR_CUBE_V1 "Xiaomi Cube"
+#define MODEL_SELECTOR_CUBE_AQARA "sensor_cube.aqgl01"
+#define NAME_SELECTOR_CUBE_AQARA "Aqara Cube"
+
+/****************************************************************************
+ ********************************* SENSORS **********************************
+ ****************************************************************************/
+
+// Motion Sensor Xiaomi
+#define MODEL_SENSOR_MOTION_XIAOMI "motion"
+#define NAME_SENSOR_MOTION_XIAOMI "Xiaomi Motion Sensor"
+
+// Motion Sensor Aqara | RTCGQ11LM
+#define MODEL_SENSOR_MOTION_AQARA "sensor_motion.aq2"
+#define NAME_SENSOR_MOTION_AQARA "Aqara Motion Sensor"
+
+// Xiaomi Door and Window Sensor | MCCGQ11LM
+#define MODEL_SENSOR_DOOR "magnet"
+#define MODEL_SENSOR_DOOR_AQARA "sensor_magnet.aq2"
+#define NAME_SENSOR_DOOR "Xiaomi Door Sensor"
+
+// Xiaomi Temperature/Humidity | WSDCGQ01LM
+#define MODEL_SENSOR_TEMP_HUM_V1 "sensor_ht"
+#define NAME_SENSOR_TEMP_HUM_V1 "Xiaomi Temperature/Humidity"
+
+// Xiaomi Aqara Weather | WSDCGQ11LM
+#define MODEL_SENSOR_TEMP_HUM_AQARA "weather.v1"
+#define NAME_SENSOR_TEMP_HUM_AQARA "Xiaomi Aqara Weather"
+
+// Aqara Vibration Sensor | DJT11LM
+#define MODEL_SENSOR_VIBRATION "vibration"
+#define NAME_SENSOR_VIBRATION "Aqara Vibration Sensor"
+
+// Smoke Detector (sensor_smoke.v1)
+#define MODEL_SENSOR_SMOKE "smoke"
+#define NAME_SENSOR_SMOKE "Xiaomi Smoke Detector"
+
+// Xiaomi Gas Detector
+#define MODEL_SENSOR_GAS "natgas"
+#define NAME_SENSOR_GAS "Xiaomi Gas Detector"
+
+// Xiaomi Water Leak Detector | SJCGQ11LM
+#define MODEL_SENSOR_WATER "sensor_wleak.aq1"
+#define NAME_SENSOR_WATER "Xiaomi Water Leak Detector"
+
+/****************************************************************************
+ ********************************* ACTUATORS ********************************
+ ****************************************************************************/
+
+// Xiaomi Smart Plug (plug.v1) | ZNCZ02LM
+#define MODEL_ACT_ONOFF_PLUG "plug"
+#define NAME_ACT_ONOFF_PLUG "Xiaomi Smart Plug"
+
+// Xiaomi Smart Wall Plug
+#define MODEL_ACT_ONOFF_PLUG_WALL_1 "86plug"
+#define MODEL_ACT_ONOFF_PLUG_WALL_2 "ctrl_86plug.aq1"
+#define NAME_ACT_ONOFF_PLUG_WALL "Xiaomi Smart Wall Plug"
+
+// Xiaomi Curtain
+#define MODEL_ACT_BLINDS_CURTAIN "curtain"
+#define NAME_ACT_BLINDS_CURTAIN "Xiaomi Curtain"
+
+// [NEW] Aqara LED Light Bulb (Tunable White) // TODO: not implemented yet
+#define MODEL_ACT_LIGHT "light.aqcb02"
+#define NAME_ACT_LIGHT "Light bulb"
+
+// [NEW] Aqara Aqara Wireless Relay Controller (2 Channels) | LLKZMK11LM // TODO: not implemented yet
+#define MODEL_ACT_RELAIS "relay.c2acn01"
+#define NAME_ACT_RELAIS "Aqara Wireless Relay Controller"
+
+/****************************************************************************
+ ********************************* GATEWAY **********************************
+ ****************************************************************************/
+
+// Xiaomi Gateway
+#define MODEL_GATEWAY_1 "gateway"
+#define MODEL_GATEWAY_2 "gateway.v3" // Mi Control Hub Gateway
+#define MODEL_GATEWAY_3 "acpartner.v3"
+#define NAME_GATEWAY "Xiaomi RGB Gateway"
+#define NAME_GATEWAY_LUX "Xiaomi Gateway Lux"
+#define NAME_GATEWAY_SOUND_MP3 "Xiaomi Gateway MP3"
+#define NAME_GATEWAY_SOUND_DOORBELL "Xiaomi Gateway Doorbell"
+#define NAME_GATEWAY_SOUND_ALARM_CLOCK "Xiaomi Gateway Alarm Clock"
+#define NAME_GATEWAY_SOUND_ALARM_RINGTONE "Xiaomi Gateway Alarm Ringtone"
+#define NAME_GATEWAY_SOUND_VOLUME_CONTROL "Xiaomi Gateway Volume"
+
+/****************************************************************************
+ ********************************* STATES ***********************************
+ ****************************************************************************/
+
+#define NAME_CHANNEL_0 "channel_0"
+#define NAME_CHANNEL_1 "channel_1"
+
+#define STATE_ON "on"
+#define STATE_OFF "off"
+
+#define STATE_OPEN "open"
+#define STATE_CLOSE "close"
+
+#define STATE_WATER_LEAK_YES "leak"
+#define STATE_WATER_LEAK_NO "no_leak"
+
+#define STATE_MOTION_YES "motion"
+#define STATE_MOTION_NO "no_motion"
+
+#define COMMAND_REPORT "report"
+#define COMMAND_READ_ACK "read_ack"
+#define COMMAND_HEARTBEAT "heartbeat"
+
 
 std::list<XiaomiGateway*> gatewaylist;
 std::mutex gatewaylist_mutex;
@@ -697,7 +868,7 @@ bool XiaomiGateway::StartHardware()
 	}
 
 	// Start worker thread
-	m_thread = std::make_shared<std::thread>(&XiaomiGateway::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 
 	return (m_thread != nullptr);
@@ -774,7 +945,7 @@ void XiaomiGateway::Do_Work()
 	XiaomiGateway::xiaomi_udp_server udp_server(io_service, m_HwdID, m_GatewayIp, m_LocalIp, m_ListenPort9898, m_OutputMessage, m_IncludeVoltage, this);
 	boost::thread bt;
 	if (m_ListenPort9898) {
-		bt = boost::thread(boost::bind(&boost::asio::io_service::run, &io_service));
+		bt = boost::thread([p = &io_service] { p->run(); });
 		SetThreadName(bt.native_handle(), "XiaomiGatewayIO");
 	}
 
@@ -791,6 +962,10 @@ void XiaomiGateway::Do_Work()
 		}
 	}
 	io_service.stop();
+	if (bt.joinable())
+	{
+		bt.join();
+	}
 	RemoveFromGatewayList();
 	_log.Log(LOG_STATUS, "XiaomiGateway (ID=%d): stopped", m_HwdID);
 }
@@ -897,7 +1072,7 @@ void XiaomiGateway::xiaomi_udp_server::start_receive()
 {
 	//_log.Log(LOG_STATUS, "start_receive");
 	memset(&data_[0], 0, sizeof(data_));
-	socket_.async_receive_from(boost::asio::buffer(data_, max_length), remote_endpoint_, boost::bind(&xiaomi_udp_server::handle_receive, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+	socket_.async_receive_from(boost::asio::buffer(data_, max_length), remote_endpoint_, [this](const auto &err, size_t bytes) { handle_receive(err, bytes); });
 }
 
 void XiaomiGateway::xiaomi_udp_server::handle_receive(const boost::system::error_code & error, std::size_t bytes_recvd)
@@ -1009,7 +1184,7 @@ void XiaomiGateway::xiaomi_udp_server::handle_receive(const boost::system::error
 					type = device::tswitch::type::END; // type = device::tswitch::type::OnOff; // TODO: fix this hack
 					name = NAME_SELECTOR_WIRED_WALL_SINGLE;
 				}
-				else if (model == MODEL_SELECTOR_WIRED_WALL_DUAL_1 || model == MODEL_SELECTOR_WIRED_WALL_DUAL_2 || model == MODEL_SELECTOR_WIRED_WALL_DUAL_3)
+				else if (model == MODEL_SELECTOR_WIRED_WALL_DUAL_1 || model == MODEL_SELECTOR_WIRED_WALL_DUAL_2 || model == MODEL_SELECTOR_WIRED_WALL_DUAL_3 || model == MODEL_SELECTOR_WIRED_WALL_DUAL_4)
 				{
 					type = device::tswitch::type::END; // type = device::tswitch::type::OnOff; // TODO: fix this hack
 					name = NAME_SELECTOR_WIRED_WALL_DUAL;
@@ -1019,7 +1194,7 @@ void XiaomiGateway::xiaomi_udp_server::handle_receive(const boost::system::error
 					type = device::tswitch::type::Selector;
 					name = NAME_SELECTOR_WIRELESS_WALL_SINGLE;
 				}
-				else if (model == MODEL_SELECTOR_WIRELESS_WALL_DUAL_1 || model == MODEL_SELECTOR_WIRELESS_WALL_DUAL_2)
+				else if (model == MODEL_SELECTOR_WIRELESS_WALL_DUAL_1 || model == MODEL_SELECTOR_WIRELESS_WALL_DUAL_2 || model == MODEL_SELECTOR_WIRELESS_WALL_DUAL_3)
 				{
 					type = device::tswitch::type::Selector;
 					name = NAME_SELECTOR_WIRELESS_WALL_DUAL;
@@ -1234,26 +1409,26 @@ void XiaomiGateway::xiaomi_udp_server::handle_receive(const boost::system::error
 					if (name == NAME_SENSOR_TEMP_HUM_AQARA)
 					{
 						std::string szPressure = root2["pressure"].asString();
-						pressure = static_cast<float>(atof(szPressure.c_str())) / 100.0f;
+						pressure = static_cast<float>(atof(szPressure.c_str())) / 100.0F;
 					}
 
 					if ((!temperature.empty()) && (!humidity.empty()) && (pressure != 0))
 					{
 						// Temp+Hum+Baro
-						float temp = std::stof(temperature) / 100.0f;
+						float temp = std::stof(temperature) / 100.0F;
 						int hum = static_cast<int>((std::stof(humidity) / 100));
 						TrueGateway->InsertUpdateTempHumPressure(sid, "Xiaomi TempHumBaro", temp, hum, pressure, battery);
 					}
 					else if ((!temperature.empty()) && (!humidity.empty()))
 					{
 						// Temp+Hum
-						float temp = std::stof(temperature) / 100.0f;
+						float temp = std::stof(temperature) / 100.0F;
 						int hum = static_cast<int>((std::stof(humidity) / 100));
 						TrueGateway->InsertUpdateTempHum(sid, "Xiaomi TempHum", temp, hum, battery);
 					}
 					else if (!temperature.empty())
 					{
-						float temp = std::stof(temperature) / 100.0f;
+						float temp = std::stof(temperature) / 100.0F;
 						if (temp < 99)
 						{
 							TrueGateway->InsertUpdateTemperature(sid, "Xiaomi Temperature", temp, battery);

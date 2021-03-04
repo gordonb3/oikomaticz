@@ -472,6 +472,14 @@
 			<td align="right" style="width:110px"><label for="combotype"><span data-i18n="Type"></span>:</label></td>
 			<td><select id="combotype" style="width:410px" class="combobox ui-corner-all"></select></td>
 		</tr>
+		<tr>
+			<td align="right" style="width:110px"><label for="combotype"><span data-i18n="Log Level"></span>:</label></td>
+			<td>
+				<input type="checkbox" id="loglevelInfo" checked="checked" name="loglevelInfo"><label for="loglevelInfo"><span data-i18n="Info">Info</span></label>&nbsp;&nbsp;
+				<input type="checkbox" id="loglevelStatus" checked="checked" name="loglevelStatus"><label for="loglevelStatus"><span data-i18n="Status">Status</span></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<input type="checkbox" id="loglevelError" checked="checked" name="loglevelError"><label for="loglevelError"><span data-i18n="Error">Error</span></label>
+			</td>
+		</tr>
 		<tr valign="top">
 			<td align="right" style="width:110px"><label for="combodatatimeout"><span data-i18n="Data Timeout">Data Timeout</span>:</label></td>
 			<td>
@@ -674,7 +682,8 @@
 					<select id="combobaudrateevohome" style="width:210px" class="combobox ui-corner-all">
 						<option value="115200">115200 (for genuine Honeywell HGI80/HGS80)</option>
 						<option value="76800">76800</option>
-						<option value="38400">38400</option>
+						<option value="57600">57600</option>
+ 						<option value="38400">38400</option>
 					</select>
 				</td>
 			</tr>
@@ -998,14 +1007,28 @@
 				</td>
 			</tr>
 			<tr>
-				<td align="right" style="width:110px"><label for="adddayforecast"><span data-i18n="Daily forecast">Daily forecast</span>:</label></td>
+				<td align="right" style="width:110px"><label for="useowmforecast"><span data-i18n="Use in UI">Use in UI</span>:</label></td>
+				<td><input type="checkbox" id="useowmforecast">&nbsp;<label for="useowmforecast">&nbsp;Use OpenWeatherMap for UI forecast screen.</label></td>
+			</tr>
+			<tr>
+				<td align="right" style="width:110px"><label for="adddayforecast"><span data-i18n="Daily forecast">Daily forecast (days)</span>:</label></td>
 				<td><input type="checkbox" id="adddayforecast">&nbsp;<label for="adddayforecast">&nbsp;Forecast for today and coming 7 days (if available).</label></td>
 			</tr>
 			<tr>
-				<td align="right" style="width:110px"><label for="addhourforecast"><span data-i18n="Hourly forecast">Hourly forecast</span>:</label></td>
+				<td align="right" style="width:110px"><label for="addhourforecast"><span data-i18n="Hourly forecast">Hourly forecast (hours)</span>:</label></td>
 				<td><input type="checkbox" id="addhourforecast">&nbsp;<label for="addhourforecast">&nbsp;Forecast for each hour for 48 hours (if available).</label></td>
 			</tr>
-		</table>
+			<tr>
+				<td align="right" style="width:110px">&nbsp;</td>
+				<td>
+					<span><i>This will create 7 new devices (UV, Max Temp, Min Temp, Wind, Cloud, Precipitation, Rain/Snow) for each Forecast day and/or 4 devices for each hour.<br />And when 'forecast description devices' is enabled, 3 more devices per day/hour are created: Description, Icon and Name.<br />So 56(80) for forecasting 8 days and 192(336) for 48 hourly forecasts.<br />No need to activate these forecast settings if you just want to use the <a href="/#/Forecast">Forecast screen</a> in the UI (will be fetched on the fly).</i></span>
+				</td>
+			</tr>
+			<tr>
+				<td align="right" style="width:110px">&nbsp;</td>
+				<td><input type="checkbox" id="adddescdev">&nbsp;<label for="adddescdev">&nbsp;Add (3) devices containing forecast description information for each forecasted day and/or hour. Useful if you would like to build your own forecast dashboard.</label></td>
+			</tr>
+			</table>
 	</div>
 	<div id="divbuienradar">
 		<br>
@@ -1126,6 +1149,18 @@
 						<li>Commands sent to the car will always wake up the car</li>
 						<li>While the car is connected to a charger (home or not home), the car will always be woken up</li>
 					</ul>
+				</td>
+			</tr>
+			<tr>
+				<td align="right" style="width:110px"><label for="apikey"><span data-i18n="Manual API key"></span>:</label></td>
+				<td><input type="text" id="apikey" style="width: 500px; padding: .2em;" class="text ui-widget-content ui-corner-all"</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td>
+					When user name and password do not work (e.g. Tesla changed the login API) you can provide a manual API key here<br>
+					until it is fixed. There are various tools online available that can generate an API key.<br>
+					Note that an API key has limited validity (usually one month).
 				</td>
 			</tr>
 		</table>
@@ -1586,6 +1621,7 @@
 						<option value="0xF31E" data-i18n="Waterflow">Waterflow</option>
 						<option value="0x5601" data-i18n="Wind">Wind</option>
 						<option value="0x5604" data-i18n="Wind+Temp+Chill">Wind+Temp+Chill</option>
+						<option value="0xF108" data-i18n="WW Switch">WW Switch</option>
 					</select>
 				</td>
 			</tr>

@@ -51,12 +51,14 @@ std::string ReadFile(std::string filename)
 #define OWM_icon_URL "https://openweathermap.org/img/wn/"	// for example 10d@4x.png
 #define OWM_forecast_URL "https://openweathermap.org/city/"
 
-COpenWeatherMap::COpenWeatherMap(const int ID, const std::string &APIKey, const std::string &Location, const int adddayforecast, const int addhourforecast) :
+COpenWeatherMap::COpenWeatherMap(const int ID, const std::string &APIKey, const std::string &Location, const int adddayforecast, const int addhourforecast, const int adddescdev, const int owmforecastscreen) :
 	m_APIKey(APIKey),
 	m_Location(Location),
 	m_Language("en"),
 	m_add_dayforecast(adddayforecast),
-	m_add_hourforecast(addhourforecast)
+	m_add_hourforecast(addhourforecast),
+	m_add_descriptiondevices(adddescdev),
+	m_use_owminforecastscreen(owmforecastscreen)
 {
 	m_HwdID=ID;
 
@@ -140,7 +142,7 @@ bool COpenWeatherMap::StartHardware()
 	std::vector<std::string> strarray;
 	uint32_t cityid;
 	Debug(DEBUG_NORM, "Got location parameter %s", m_Location.c_str());
-	Debug(DEBUG_NORM, "Starting with setting %d, %d", m_add_dayforecast, m_add_hourforecast);
+	Debug(DEBUG_NORM, "Starting with setting %d, %d, %d, %d", m_add_dayforecast, m_add_hourforecast, m_add_descriptiondevices, m_use_owminforecastscreen);
 
 	if (m_Location.empty())
 	{
@@ -282,11 +284,29 @@ bool COpenWeatherMap::StartHardware()
 		std::stringstream ss;
 		ss << OWM_forecast_URL << m_CityID;
 		m_ForecastURL = ss.str();
+
+		// So we can use this for the forecast screen of the UI if the users wants that
+		if(m_use_owminforecastscreen)
+		{
+			Log(LOG_STATUS, "Updating preferences for forecastscreen to use OpenWeatherMap!");
+			m_sql.UpdatePreferencesVar("ForecastHardwareID",m_HwdID);
+		}
+	}
+	if(!m_use_owminforecastscreen)
+	{
+		int iValue;
+		m_sql.GetPreferencesVar("ForecastHardwareID", iValue);
+		if (iValue == m_HwdID)
+		{
+			// User has de-activated OWM for the forecast screen
+			m_sql.UpdatePreferencesVar("ForecastHardwareID",0);
+			Log(LOG_STATUS, "Updating preferences for forecastscreen to not use OpenWeatherMap anymore (back to default)!");
+		}
 	}
 
 	RequestStart();
 
-	m_thread = std::make_shared<std::thread>(&COpenWeatherMap::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	m_bIsStarted=true;
 	sOnConnected(this);
@@ -435,10 +455,10 @@ bool COpenWeatherMap::ProcessForecast(Json::Value &forecast, const std::string &
 	{
 		try
 		{
-			float rainmm = 9999.00f;
-			float uvi = -999.9f;
-			float mintemp = -999.9f;
-			float maxtemp = -999.9f;
+			float rainmm = 9999.00F;
+			float uvi = -999.9F;
+			float mintemp = -999.9F;
+			float maxtemp = -999.9F;
 
 			float pop = forecast["pop"].asFloat();
 			float clouds = forecast["clouds"].asFloat();
@@ -501,21 +521,24 @@ bool COpenWeatherMap::ProcessForecast(Json::Value &forecast, const std::string &
 			sName.str("");
 			sName.clear();
 			sName << "Weather Description " << period << " " << (count + 0);
-			SendTextSensor(NodeID, 1, 255, wdesc, sName.str());
+			if(m_add_descriptiondevices)
+				SendTextSensor(NodeID, 1, 255, wdesc, sName.str());
 			sName.str("");
 			sName.clear();
 			sName << "Weather Description " << period << " " << (count + 0) << " Icon";
-			SendTextSensor(NodeID, 2, 255, wicon, sName.str());
+			if(m_add_descriptiondevices)
+				SendTextSensor(NodeID, 2, 255, wicon, sName.str());
 			sName.str("");
 			sName.clear();
 			sName << "Weather Description " << period << " " << (count + 0) << " Name";
-			SendTextSensor(NodeID, 3, 255, periodname, sName.str());
+			if(m_add_descriptiondevices)
+				SendTextSensor(NodeID, 3, 255, periodname, sName.str());
 
 			NodeID++;;
 			sName.str("");
 			sName.clear();
 			sName << "Minumum Temperature " << period << " " << (count + 0);
-			if (mintemp != -999.9f)
+			if (mintemp != -999.9F)
 			{
 				SendTempSensor(NodeID, 255, mintemp, sName.str());
 			}
@@ -530,7 +553,7 @@ bool COpenWeatherMap::ProcessForecast(Json::Value &forecast, const std::string &
 			sName.str("");
 			sName.clear();
 			sName << "UV Index " << period << " " << (count + 0);
-			if (uvi != -999.9f)
+			if (uvi != -999.9F)
 			{
 				SendUVSensor(NodeID, 1, 255, uvi, sName.str());
 			}
@@ -545,7 +568,7 @@ bool COpenWeatherMap::ProcessForecast(Json::Value &forecast, const std::string &
 			SendPercentageSensor(NodeID, 1, 255, clouds, sName.str());
 
 			NodeID++;;
-			if ((rainmm != 9999.00f) && (rainmm >= 0.00f))
+			if ((rainmm != 9999.00F) && (rainmm >= 0.00F))
 			{
 				sName.str("");
 				sName.clear();
@@ -577,7 +600,7 @@ int COpenWeatherMap::GetForecastFromBarometricPressure(const float pressure, con
 	if (pressure < 1000)
 	{
 		barometric_forecast = wsbaroforecast_rain;
-		if (temp != -999.9f)
+		if (temp != -999.9F)
 		{
 			if (temp <= 0)
 				barometric_forecast = wsbaroforecast_snow;
@@ -650,8 +673,8 @@ void COpenWeatherMap::GetMeterDetails()
 
 	//Current values
 	Json::Value current;
-	float temp = -999.9f;
-	float fltemp = -999.9f;
+	float temp = -999.9F;
+	float fltemp = -999.9F;
 
 	current = root["current"];
 	int humidity = 0;
@@ -699,24 +722,24 @@ void COpenWeatherMap::GetMeterDetails()
 			}
 		}
 	}
-	if ((temp != -999.9f) && (humidity != 0) && (barometric != 0))
+	if ((temp != -999.9F) && (humidity != 0) && (barometric != 0))
 	{
 		SendTempHumBaroSensorFloat(1, 255, temp, humidity, barometric, barometric_forecast, "TempHumBaro");
 	}
-	else if ((temp != -999.9f) && (humidity != 0))
+	else if ((temp != -999.9F) && (humidity != 0))
 	{
 		SendTempHumSensor(1, 255, temp, humidity, "TempHum");
 	}
 	else
 	{
-		if (temp != -999.9f)
+		if (temp != -999.9F)
 			SendTempSensor(1, 255, temp, "Temperature");
 		if (humidity != 0)
 			SendHumiditySensor(1, 255, humidity, "Humidity");
 	}
 
 	// Feel temperature
-	if (fltemp != -999.9f)
+	if (fltemp != -999.9F)
 	{
 		SendTempSensor(3, 255, fltemp, "Feel Temperature");
 	}
@@ -741,8 +764,8 @@ void COpenWeatherMap::GetMeterDetails()
 			//we need to assume temp and chill temperatures are availabe to define subtype of wind device.
 			//It is possible that sometimes in the API a temperature is missing, but it should not change a device type.
 			//Therefor set that temp to 0
-			float wind_temp = (temp != -999.9f ? temp : 0);
-			float wind_chill = (fltemp != -999.9f ? fltemp : 0); //Wind_chill is same as feels like temperature
+			float wind_temp = (temp != -999.9F ? temp : 0);
+			float wind_chill = (fltemp != -999.9F ? fltemp : 0); // Wind_chill is same as feels like temperature
 
 			SendWind(4, 255, wind_degrees, windspeed_ms, windgust_ms, wind_temp, wind_chill, true, true, "Wind");
 		}
@@ -761,7 +784,7 @@ void COpenWeatherMap::GetMeterDetails()
 	//Visibility
 	if (!current["visibility"].empty() && current["visibility"].isInt())
 	{
-		float visibility = ((float)current["visibility"].asInt())/1000.0f;
+		float visibility = ((float)current["visibility"].asInt()) / 1000.0F;
 		if (visibility >= 0)
 		{
 			SendVisibilitySensor(6, 1, 255, visibility, "Visibility");

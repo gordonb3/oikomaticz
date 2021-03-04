@@ -37,19 +37,18 @@ bool CEvohomeBase::m_bDebug=true;
 bool CEvohomeBase::m_bDebug=false;
 #endif
 
-const char CEvohomeBase::m_szControllerMode[7][20]={"Normal","Economy","Away","Day Off","Custom","Heating Off","Unknown"};
-const char CEvohomeBase::m_szWebAPIMode[7][20]={"Auto","AutoWithEco","Away","DayOff","Custom","HeatingOff","Unknown"};
-const char CEvohomeBase::m_szZoneMode[7][20]={"Auto","PermanentOverride","TemporaryOverride","OpenWindow","LocalOverride","RemoteOverride","Unknown"};
-
+constexpr std::array<const char *, 8> CEvohomeBase::m_szControllerMode{ "Normal", "Economy", "Away", "Day Off", "Day Off With Eco", "Custom", "Heating Off", "Unknown" };
+constexpr std::array<const char *, 8> CEvohomeBase::m_szWebAPIMode{ "Auto", "AutoWithEco", "Away", "DayOff", "DayOffWithEco", "Custom", "HeatingOff", "Unknown" };
+constexpr std::array<const char *, 7> CEvohomeBase::m_szZoneMode{ "Auto", "PermanentOverride", "TemporaryOverride", "OpenWindow", "LocalOverride", "RemoteOverride", "Unknown" };
 
 const char* CEvohomeBase::GetControllerModeName(uint8_t nControllerMode)
 {
-	return m_szControllerMode[std::min(nControllerMode,(uint8_t)6)];
+	return m_szControllerMode[std::min(nControllerMode,(uint8_t)7)];
 }
 
 const char* CEvohomeBase::GetWebAPIModeName(uint8_t nControllerMode)
 {
-	return m_szWebAPIMode[std::min(nControllerMode,(uint8_t)6)];
+	return m_szWebAPIMode[std::min(nControllerMode,(uint8_t)7)];
 }
 
 const char* CEvohomeBase::GetZoneModeName(uint8_t nZoneMode)
@@ -195,6 +194,20 @@ void CEvohomeBase::SetGatewayID(unsigned int nID)
 {
 	std::lock_guard<std::mutex> l(m_mtxGatewayID);
 	m_nMyID=nID;
+}
+
+
+unsigned int CEvohomeBase::GetOpenThermBridgeID()
+{
+	std::lock_guard<std::mutex> l(m_mtxOpenThermBridgeID);
+	return m_nOtbID;
+}
+
+
+void CEvohomeBase::SetOpenThermBridgeID(unsigned int nID)
+{
+	std::lock_guard<std::mutex> l(m_mtxOpenThermBridgeID);
+	m_nOtbID=nID;
 }
 
 

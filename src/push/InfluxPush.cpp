@@ -15,7 +15,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-using namespace boost::placeholders;
+extern CInfluxPush m_influxpush;
 
 CInfluxPush::CInfluxPush()
 {
@@ -30,11 +30,12 @@ bool CInfluxPush::Start()
 	RequestStart();
 
 	UpdateSettings();
+	ReloadPushLinks(m_PushType);
 
-	m_thread = std::make_shared<std::thread>(&CInfluxPush::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadName(m_thread->native_handle(), "InfluxPush");
 
-	m_sConnection = m_mainworker.sOnDeviceReceived.connect(boost::bind(&CInfluxPush::OnDeviceReceived, this, _1, _2, _3, _4));
+	m_sConnection = m_mainworker.sOnDeviceReceived.connect([this](auto id, auto idx, const auto &name, auto rx) { OnDeviceReceived(id, idx, name, rx); });
 
 	return (m_thread != nullptr);
 }
@@ -91,85 +92,83 @@ void CInfluxPush::UpdateSettings()
 	m_szURL = sURL.str();
 }
 
-void CInfluxPush::OnDeviceReceived(const int m_HwdID, const uint64_t DeviceRowIdx, const std::string &DeviceName, const unsigned char *pRXCommand)
+void CInfluxPush::OnDeviceReceived(int m_HwdID, uint64_t DeviceRowIdx, const std::string &DeviceName, const unsigned char *pRXCommand)
 {
-	m_DeviceRowIdx = DeviceRowIdx;
 	if (m_bLinkActive)
 	{
-		DoInfluxPush();
+		DoInfluxPush(DeviceRowIdx);
 	}
 }
 
-void CInfluxPush::DoInfluxPush()
+void CInfluxPush::DoInfluxPush(const uint64_t DeviceRowIdx)
 {
+	if (!IsLinkInDatabase(DeviceRowIdx))
+		return;
+
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query(
-		"SELECT A.DeviceRowID, A.DelimitedValue, B.ID, B.Type, B.SubType, B.nValue, B.sValue, A.TargetType, A.TargetVariable, A.TargetDeviceID, A.TargetProperty, A.IncludeUnit, B.Name, B.SwitchType FROM PushLink as A, DeviceStatus as B "
+		"SELECT A.DeviceRowID, A.DelimitedValue, B.ID, B.Type, B.SubType, B.nValue, B.sValue, A.TargetType, A.IncludeUnit, B.Name, B.SwitchType FROM PushLink as A, DeviceStatus as B "
 		"WHERE (A.PushType==%d AND A.DeviceRowID == '%" PRIu64 "' AND A.Enabled==1 AND A.DeviceRowID==B.ID)",
-		PushType::PUSHTYPE_INFLUXDB,
-		m_DeviceRowIdx);
-	if (!result.empty())
+		PushType::PUSHTYPE_INFLUXDB, DeviceRowIdx);
+	if (result.empty())
+		return;
+
+	time_t atime = mytime(nullptr);
+	for (const auto &sd : result)
 	{
-		time_t atime = mytime(nullptr);
 		std::string sendValue;
-		for (const auto &sd : result)
+		int delpos = atoi(sd[1].c_str());
+		int dType = atoi(sd[3].c_str());
+		int dSubType = atoi(sd[4].c_str());
+		int nValue = atoi(sd[5].c_str());
+		std::string sValue = sd[6];
+		int targetType = atoi(sd[7].c_str());
+		int includeUnit = atoi(sd[8].c_str());
+		std::string name = sd[9];
+		int metertype = atoi(sd[10].c_str());
+
+		std::vector<std::string> strarray;
+		if (sValue.find(';') != std::string::npos)
 		{
-			int delpos = atoi(sd[1].c_str());
-			int dType = atoi(sd[3].c_str());
-			int dSubType = atoi(sd[4].c_str());
-			int nValue = atoi(sd[5].c_str());
-			std::string sValue = sd[6];
-			int targetType = atoi(sd[7].c_str());
-			//std::string targetVariable = sd[8].c_str();
-			//int targetDeviceID = atoi(sd[9].c_str());
-			//std::string targetProperty = sd[10].c_str();
-			int includeUnit = atoi(sd[11].c_str());
-			std::string name = sd[12];
-			int metertype = atoi(sd[13].c_str());
-
-			std::vector<std::string> strarray;
-			if (sValue.find(';') != std::string::npos)
+			StringSplit(sValue, ";", strarray);
+			if (int(strarray.size()) >= delpos)
 			{
-				StringSplit(sValue, ";", strarray);
-				if (int(strarray.size()) >= delpos)
-				{
-					std::string rawsendValue = strarray[delpos - 1];
-					sendValue = ProcessSendValue(rawsendValue, delpos, nValue, includeUnit, dType, dSubType, metertype);
-				}
-			}
-			else
-				sendValue = ProcessSendValue(sValue, delpos, nValue, includeUnit, dType, dSubType, metertype);
-
-			if (!sendValue.empty())
-			{
-				std::string szKey;
-				std::string vType = CBasePush::DropdownOptionsValue(std::stoi(sd[0]), delpos);
-				stdreplace(vType, " ", "-");
-				stdreplace(name, " ", "-");
-				szKey = vType + ",idx=" + sd[0] + ",name=" + name;
-
-				_tPushItem pItem;
-				pItem.skey = szKey;
-				pItem.stimestamp = atime;
-				pItem.svalue = sendValue;
-
-				if (targetType == 0)
-				{
-					//Only send on change
-					std::map<std::string, _tPushItem>::iterator itt = m_PushedItems.find(szKey);
-					if (itt != m_PushedItems.end())
-					{
-						if (sendValue == itt->second.svalue)
-							continue;
-					}
-					m_PushedItems[szKey] = pItem;
-				}
-
-				std::lock_guard<std::mutex> l(m_background_task_mutex);
-				if (m_background_task_queue.size() < 50)
-					m_background_task_queue.push_back(pItem);
+				std::string rawsendValue = strarray[delpos - 1];
+				sendValue = ProcessSendValue(DeviceRowIdx, rawsendValue, delpos, nValue, includeUnit, dType, dSubType, metertype);
 			}
 		}
+		else
+			sendValue = ProcessSendValue(DeviceRowIdx, sValue, delpos, nValue, includeUnit, dType, dSubType, metertype);
+
+		if (sendValue.empty())
+			continue;
+
+		std::string szKey;
+		std::string vType = CBasePush::DropdownOptionsValue(dType, dSubType, delpos);
+		stdreplace(vType, " ", "-");
+		stdreplace(name, " ", "-");
+		szKey = vType + ",idx=" + sd[0] + ",name=" + name;
+
+		_tPushItem pItem;
+		pItem.skey = szKey;
+		pItem.stimestamp = atime;
+		pItem.svalue = sendValue;
+
+		if (targetType == 0)
+		{
+			//Only send on change
+			std::map<std::string, _tPushItem>::iterator itt = m_PushedItems.find(szKey);
+			if (itt != m_PushedItems.end())
+			{
+				if (sendValue == itt->second.svalue)
+					continue;
+			}
+			m_PushedItems[szKey] = pItem;
+		}
+
+		std::lock_guard<std::mutex> l(m_background_task_mutex);
+		if (m_background_task_queue.size() < 50)
+			m_background_task_queue.push_back(pItem);
 	}
 }
 
@@ -309,15 +308,20 @@ namespace http {
 			}
 			std::vector<std::vector<std::string> > result;
 			result = m_sql.safe_query(
-				"SELECT A.ID,A.DeviceRowID,A.Delimitedvalue,A.TargetType,A.TargetVariable,A.TargetDeviceID,A.TargetProperty,A.Enabled, B.Name, A.IncludeUnit FROM PushLink as A, DeviceStatus as B WHERE (A.PushType==%d AND A.DeviceRowID==B.ID)", CBasePush::PushType::PUSHTYPE_INFLUXDB);
+				"SELECT A.ID,A.DeviceRowID,A.Delimitedvalue,A.TargetType,A.TargetVariable,A.TargetDeviceID,A.TargetProperty,A.Enabled, B.Name, A.IncludeUnit, B.Type, B.SubType FROM PushLink as A, DeviceStatus as B WHERE (A.PushType==%d AND A.DeviceRowID==B.ID)", CBasePush::PushType::PUSHTYPE_INFLUXDB);
 			if (!result.empty())
 			{
 				int ii = 0;
 				for (const auto &sd : result)
 				{
+					int Delimitedvalue = std::stoi(sd[2]);
+					int devType = std::stoi(sd[10]);
+					int devSubType = std::stoi(sd[11]);
+
 					root["result"][ii]["idx"] = sd[0];
 					root["result"][ii]["DeviceID"] = sd[1];
-					root["result"][ii]["Delimitedvalue"] = sd[2];
+					root["result"][ii]["Delimitedvalue"] = Delimitedvalue;
+					root["result"][ii]["Delimitedname"] = CBasePush::DropdownOptionsValue(devType, devSubType, Delimitedvalue);
 					root["result"][ii]["TargetType"] = sd[3];
 					root["result"][ii]["TargetVariable"] = sd[4];
 					root["result"][ii]["TargetDevice"] = sd[5];
@@ -370,6 +374,7 @@ namespace http {
 					idx.c_str()
 				);
 			}
+			m_influxpush.ReloadPushLinks(CBasePush::PushType::PUSHTYPE_INFLUXDB);
 			root["status"] = "OK";
 			root["title"] = "SaveInfluxLink";
 		}
@@ -386,6 +391,7 @@ namespace http {
 			if (idx.empty())
 				return;
 			m_sql.safe_query("DELETE FROM PushLink WHERE (ID=='%q')", idx.c_str());
+			m_influxpush.ReloadPushLinks(CBasePush::PushType::PUSHTYPE_INFLUXDB);
 			root["status"] = "OK";
 			root["title"] = "DeleteInfluxLink";
 		}

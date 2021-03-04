@@ -11,7 +11,7 @@ struct lua_Debug;
 namespace Json
 {
 	class Value;
-};
+} // namespace Json
 
 namespace http {
 	namespace server {
@@ -103,7 +103,7 @@ private:
 	void Cmd_RFXComGetFirmwarePercentage(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetLanguage(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetThemes(WebEmSession & session, const request& req, Json::Value &root);
-        void Cmd_GetTitle(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_GetTitle(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_LoginCheck(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetHardwareTypes(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_AddHardware(WebEmSession & session, const request& req, Json::Value &root);
@@ -188,7 +188,8 @@ private:
 	void Cmd_ExcecuteScript(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetCosts(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_CustomEvent(WebEmSession& session, const request& req, Json::Value& root);
-	void Cmd_DeleteDatePoint(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_DeleteDataPoint(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_DeleteDateRange(WebEmSession &session, const request &req, Json::Value &root);
 	void Cmd_SetActiveTimerPlan(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_AddTimer(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_UpdateTimer(WebEmSession & session, const request& req, Json::Value &root);
@@ -227,7 +228,7 @@ private:
 	void Cmd_DeleteCustomIcon(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_UpdateCustomIcon(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_RenameDevice(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_SetUnused(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_SetDeviceUsed(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_SaveHttpLinkConfig(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetHttpLinkConfig(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetHttpLinks(WebEmSession & session, const request& req, Json::Value &root);
@@ -381,5 +382,5 @@ private:
 	std::string m_server_alias;
 };
 
-} //server
-}//http
+	} // namespace server
+} // namespace http

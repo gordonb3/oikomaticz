@@ -6,6 +6,7 @@
 #include "main/Logger.h"
 #include "main/RFXNames.h"
 #include "main/WebServerHelper.h"
+#include "webserver/server_settings.hpp"
 #include "main/LuaTable.h"
 #include "main/json_helper.h"
 #include "dzVents.h"
@@ -17,15 +18,19 @@ extern "C" {
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+
 }
 
 extern std::string szUserDataFolder, szWebRoot, szStartupFolder, szAppVersion;
 extern http::server::CWebServerHelper m_webservers;
+extern http::server::server_settings webserver_settings;
+extern http::server::ssl_server_settings secure_webserver_settings;
+
 
 CdzVents CdzVents::m_dzvents;
 
 CdzVents::CdzVents()
-	: m_version("3.0.19")
+	: m_version("3.1.5")
 {
 	m_bdzVentsExist = false;
 }
@@ -44,12 +49,15 @@ void CdzVents::EvaluateDzVents(lua_State *lua_state, const std::vector<CEventSys
 
 	bool reasonTime = false;
 	bool reasonURL = false;
+	bool reasonShellCommand = false;
 	bool reasonSecurity = false;
 	bool reasonNotification = false;
 	for (const auto &item : items)
 	{
 		if (item.reason == m_mainworker.m_eventsystem.REASON_URL)
 			reasonURL = true;
+		else if (item.reason == m_mainworker.m_eventsystem.REASON_SHELLCOMMAND)
+			reasonShellCommand = true;
 		else if (item.reason == m_mainworker.m_eventsystem.REASON_SECURITY)
 			reasonSecurity = true;
 		else if (item.reason == m_mainworker.m_eventsystem.REASON_TIME)
@@ -63,6 +71,8 @@ void CdzVents::EvaluateDzVents(lua_State *lua_state, const std::vector<CEventSys
 
 	if (reasonURL)
 		ProcessHttpResponse(lua_state, items);
+	if (reasonShellCommand)
+		ProcessShellCommandResponse(lua_state, items);
 	if (reasonSecurity)
 		ProcessSecurity(lua_state, items);
 	if (reasonNotification)
@@ -137,7 +147,9 @@ void CdzVents::ProcessNotification(lua_State* lua_state, const std::vector<CEven
 				case Notification::DZ_STOP:
 				case Notification::DZ_BACKUP_DONE:
 				case Notification::DZ_NOTIFICATION:
-					ProcessNotificationItem(luaTable, index, item);
+				case Notification::DZ_ALLDEVICESTATUSRESET:
+				case Notification::DZ_ALLEVENTRESET:
+				ProcessNotificationItem(luaTable, index, item);
 					break;
 				case Notification::DZ_CUSTOM:
 					bCustomEvent = true;
@@ -222,6 +234,30 @@ void CdzVents::ProcessSecurity(lua_State *lua_state, const std::vector<CEventSys
 	luaTable.Publish();
 }
 
+void CdzVents::ProcessShellCommandResponse(lua_State* lua_state, const std::vector<CEventSystem::_tEventQueue>& items)
+{
+	int index = 1;
+	CLuaTable luaTable(lua_state, "shellcommandresponse");
+
+	for (const auto &item : items)
+	{
+		if (item.reason == m_mainworker.m_eventsystem.REASON_SHELLCOMMAND)
+		{
+
+			luaTable.OpenSubTableEntry(index, 0, 0);
+			luaTable.AddString("data", item.sValue);
+			luaTable.AddString("callback", item.nValueWording);
+			luaTable.AddInteger("statusCode",item.nValue);
+			luaTable.AddString("errorText", item.errorText);
+			luaTable.AddBool("timeoutOccurred",item.timeoutOccurred);
+			luaTable.CloseSubTableEntry(); // index entry
+			index++;
+		}
+	}
+
+	luaTable.Publish();
+}
+
 void CdzVents::ProcessHttpResponse(lua_State* lua_state, const std::vector<CEventSystem::_tEventQueue>& items)
 {
 	int index = 1;
@@ -282,6 +318,48 @@ void CdzVents::ProcessHttpResponse(lua_State* lua_state, const std::vector<CEven
 	}
 
 	luaTable.Publish();
+}
+
+bool CdzVents::ExecuteShellCommand(lua_State *lua_state, const std::vector<_tLuaTableValues> &vLuaTable)
+{
+	float delayTime = 0;
+	std::string command, callback, trigger, path;
+	int timeout=10; // default timeout value
+
+	for (const auto &value : vLuaTable)
+	{
+		if (value.type == TYPE_STRING)
+		{
+			if (value.name == "command")
+				command = value.sValue;
+			else if (value.name == "callback")
+				callback = value.sValue;
+			else if (value.name == "path")
+				path = value.sValue;
+		}
+		else if (value.type == TYPE_INTEGER)
+		{
+			if (value.name == "_random")
+				delayTime = static_cast<float>(GenerateRandomNumber(value.iValue));
+			if (value.name == "timeout")
+			{
+				timeout = value.iValue;
+			}
+		}
+		else if ((value.type == TYPE_FLOAT) && (value.name == "_after"))
+			delayTime = value.fValue;
+
+	}
+
+	if (command.empty())
+	{
+		_log.Log(LOG_ERROR, "dzVents: No command supplied!");
+		return false;
+	}
+
+	m_sql.AddTaskItem(_tTaskItem::ExecuteShellCommand(delayTime, command, callback, timeout, path));
+
+	return true;
 }
 
 bool CdzVents::OpenURL(lua_State *lua_state, const std::vector<_tLuaTableValues> &vLuaTable)
@@ -547,6 +625,8 @@ bool CdzVents::processLuaCommand(lua_State *lua_state, const std::string &filena
 	{
 		if (lCommand == "OpenURL")
 			scriptTrue = OpenURL(lua_state, vLuaTable);
+		else if (lCommand == "ExecuteShellCommand")
+			scriptTrue = ExecuteShellCommand(lua_state, vLuaTable);
 		else if (lCommand == "UpdateDevice")
 			scriptTrue = UpdateDevice(lua_state, vLuaTable, filename);
 		else if (lCommand == "Variable")
@@ -681,10 +761,10 @@ void CdzVents::SetGlobalVariables(lua_State *lua_state, const bool reasonTime, c
 	luaTable.AddBool("isTimeEvent", reasonTime);
 
 	char szTmp[10];
-	sprintf(szTmp, "%.02f", 1.23f);
+	sprintf(szTmp, "%.02f", 1.23F);
 	luaTable.AddString("radix_separator", std::string(1,szTmp[1]));
 
-	sprintf(szTmp, "%.02f", 1234.56f);
+	sprintf(szTmp, "%.02f", 1234.56F);
 	if (szTmp[1] == '2')
 		luaTable.AddString("group_separator", "");
 	else
@@ -724,7 +804,10 @@ void CdzVents::SetGlobalVariables(lua_State *lua_state, const bool reasonTime, c
 
 	luaTable.AddBool("locationSet", locationSet);
 	luaTable.AddString("domoticz_listening_port", m_webservers.our_listener_port);
+	luaTable.AddString("domoticz_secure_listening_port", secure_webserver_settings.listening_port);
+	luaTable.AddBool("domoticz_is_secure", secure_webserver_settings.is_secure());
 	luaTable.AddString("domoticz_webroot", szWebRoot);
+	luaTable.AddString("domoticz_wwwbind", m_mainworker.GetWebserverAddress());
 	luaTable.AddString("domoticz_start_time", m_mainworker.m_eventsystem.m_szStartTime);
 	luaTable.AddString("currentTime", TimeToString(nullptr, TF_DateTimeMs));
 	luaTable.AddInteger("systemUptime", SystemUptime());
@@ -789,11 +872,13 @@ void CdzVents::ExportDomoticzDataToLua(lua_State *lua_state, const std::vector<C
 		bool timed_out = (now - checktime >= SensorTimeOut * 60);
 		if (sitem.ID > 0)
 		{
-			luaTable.OpenSubTableEntry(index, 1, 12);
+			luaTable.OpenSubTableEntry(index, 1, 14);
 
 			luaTable.AddString("name", sitem.deviceName);
 			luaTable.AddBool("protected", (sitem.protection == 1) );
 			luaTable.AddInteger("id", sitem.ID);
+			luaTable.AddInteger("iconNumber", sitem.customImage);
+			luaTable.AddString("image", sitem.image);
 			luaTable.AddString("baseType","device");
 			luaTable.AddString("deviceType", dev_type);
 			luaTable.AddString("subType", sub_type);
@@ -809,7 +894,7 @@ void CdzVents::ExportDomoticzDataToLua(lua_State *lua_state, const std::vector<C
 			StringSplit(sitem.sValue, ";", strarray);
 
 			luaTable.OpenSubTableEntry("rawData", 0, 0);
-			for (uint8_t i = 0; i < strarray.size(); i++)
+			for (size_t i = 0; i < strarray.size(); i++)
 				luaTable.AddString(i + 1, strarray[i]);
 
 			luaTable.CloseSubTableEntry();
@@ -825,11 +910,11 @@ void CdzVents::ExportDomoticzDataToLua(lua_State *lua_state, const std::vector<C
 			luaTable.AddInteger("hardwareID", sitem.hardwareID);
 			if (sitem.devType == pTypeGeneral && sitem.subType == sTypeKwh)
 			{
-				long double value = 0.0f;
+				long double value = 0.0F;
 				if (strarray.size() > 1)
 					value = atof(strarray[1].c_str());
 				luaTable.AddNumber("whTotal", value);
-				value = 0.0f;
+				value = 0.0F;
 				if (!strarray.empty())
 					value = atof(strarray[0].c_str());
 				luaTable.AddNumber("whActual", value);
@@ -876,7 +961,6 @@ void CdzVents::ExportDomoticzDataToLua(lua_State *lua_state, const std::vector<C
 	devicestatesMutexLock.unlock();
 
 	// Now do the scenes and groups.
-	const char *description = "";
 	boost::shared_lock<boost::shared_mutex> scenesgroupsMutexLock(m_mainworker.m_eventsystem.m_scenesgroupsMutex);
 
 	std::vector<std::vector<std::string> > result;
@@ -895,17 +979,11 @@ void CdzVents::ExportDomoticzDataToLua(lua_State *lua_state, const std::vector<C
 			}
 		}
 
-		result = m_sql.safe_query("SELECT Description FROM Scenes WHERE (ID=='%d')", sgitem.ID);
-		if (result.empty())
-			description = "";
-		else
-			description = result[0][0].c_str();
-
 		luaTable.OpenSubTableEntry(index, 1, 7);
 
 		luaTable.AddString("name", sgitem.scenesgroupName);
 		luaTable.AddInteger("id", sgitem.ID);
-		luaTable.AddString("description", description);
+		luaTable.AddString("description", sgitem.description);
 		luaTable.AddString("baseType", (sgitem.scenesgroupType == 0) ? "scene" : "group");
 		luaTable.AddBool("protected", (lua_Number)sgitem.protection == 1);
 		luaTable.AddString("lastUpdate", sgitem.lastUpdate);

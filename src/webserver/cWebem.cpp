@@ -5,7 +5,6 @@
 //Modified, extended etc by Robbert E. Peters/RTSS B.V.
 #include "stdafx.h"
 #include "cWebem.h"
-#include <boost/bind/bind.hpp>
 #include "reply.hpp"
 #include "request.hpp"
 #include "mime_types.hpp"
@@ -53,8 +52,8 @@ namespace http {
 			, m_session_clean_timer(m_io_service, boost::posix_time::minutes(1))
 		{
 			// associate handler to timer and schedule the first iteration
-			m_session_clean_timer.async_wait(boost::bind(&cWebem::CleanSessions, this));
-			m_io_service_thread = std::make_shared<std::thread>(boost::bind(&boost::asio::io_service::run, &m_io_service));
+			m_session_clean_timer.async_wait([this](auto &&) { CleanSessions(); });
+			m_io_service_thread = std::make_shared<std::thread>([p = &m_io_service] { p->run(); });
 			SetThreadName(m_io_service_thread->native_handle(), "Webem_ssncleaner");
 		}
 
@@ -655,6 +654,7 @@ namespace http {
 								(szContentType.find("application/octet-stream") != std::string::npos)
 								|| (szContentType.find("application/json") != std::string::npos)
 								|| (szContentType.find("application/x-zip") != std::string::npos)
+								|| (szContentType.find("application/zip") != std::string::npos)
 								|| (szContentType.find("Content-Type: text/xml") != std::string::npos)
 								)
 							{
@@ -936,16 +936,16 @@ namespace http {
 			m_sessions.clear(); //TODO : check if it is really necessary
 		}
 
-	uint8_t ip_bit_8_array[8] = {
-		0b00000000,
-		0b10000000,
-		0b11000000,
-		0b11100000,
-		0b11110000,
-		0b11111000,
-		0b11111100,
-		0b11111110,
-	};
+		constexpr std::array<uint8_t, 8> ip_bit_8_array{
+			0b00000000, //
+			0b10000000, //
+			0b11000000, //
+			0b11100000, //
+			0b11110000, //
+			0b11111000, //
+			0b11111100, //
+			0b11111110, //
+		};
 
 		void cWebem::AddLocalNetworks(std::string network)
 		{
@@ -1168,45 +1168,37 @@ namespace http {
 			return (int)m_sessions.size();
 		}
 
+		std::vector<std::string> cWebem::GetExpiredSessions()
+		{
+			std::unique_lock<std::mutex> lock(m_sessionsMutex);
+			std::vector<std::string> ret;
+			time_t now = mytime(nullptr);
+			for (const auto &session : m_sessions)
+			{
+				if (session.second.timeout < now)
+					ret.push_back(session.second.id);
+			}
+			return ret;
+		}
+
 		void cWebem::CleanSessions()
 		{
 			_log.Debug(DEBUG_WEBSERVER, "[web:%s] cleaning sessions...", GetPort().c_str());
 
-			int before = CountSessions();
 			// Clean up timed out sessions from memory
-			std::vector<std::string> ssids;
-			{
-				std::unique_lock<std::mutex> lock(m_sessionsMutex);
-				time_t now = mytime(nullptr);
-				for (const auto &session : m_sessions)
-					if (session.second.timeout < now)
-						ssids.push_back(session.second.id);
-			}
-			for (const auto &ssid : ssids)
+			std::vector<std::string> expired_ssids = GetExpiredSessions();
+			for (const auto &ssid : expired_ssids)
 			{
 				RemoveSession(ssid);
-			}
-			int after = CountSessions();
-			std::stringstream ss;
-			{
-				std::unique_lock<std::mutex> lock(m_sessionsMutex);
-				int i = 0;
-				for (const auto &session : m_sessions)
-				{
-					if (i > 0)
-						ss << ",";
-					ss << session.second.id;
-					i += 1;
-				}
 			}
 			// Clean up expired sessions from database in order to avoid to wait for the domoticz restart (long time running instance)
 			if (mySessionStore != nullptr)
 			{
-				this->mySessionStore->CleanSessions();
+				mySessionStore->CleanSessions();
 			}
 			// Schedule next cleanup
 			m_session_clean_timer.expires_at(m_session_clean_timer.expires_at() + boost::posix_time::minutes(15));
-			m_session_clean_timer.async_wait(boost::bind(&cWebem::CleanSessions, this));
+			m_session_clean_timer.async_wait([this](auto &&) { CleanSessions(); });
 		}
 
 		// Return 1 on success. Always initializes the ah structure.
@@ -1388,13 +1380,8 @@ namespace http {
 					   [&](const _tIPNetwork &my) { return IsIPInRange(sHost, my); });
 		}
 
-		const char * months[12] = {
-			"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-		};
-
-		const char * wkdays[7] = {
-			"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-		};
+		constexpr std::array<const char *, 12> months{ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+		constexpr std::array<const char *, 7> wkdays{ "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 
 		char *make_web_time(const time_t rawtime)
 		{

@@ -46,6 +46,7 @@ private:
 	bool GetAuthToken(const std::string &username, const std::string &password, bool refreshUsingToken = false);
 	bool SendToApi(eApiMethod eMethod, const std::string &sUrl, const std::string &sPostData, std::string &sResponse, const std::vector<std::string> &vExtraHeaders, Json::Value &jsDecodedResponse,
 		       bool bSendAuthHeaders = true, int timeout = 0);
+	uint16_t ExtractHTTPResultCode(const std::string& sResponseHeaderLine0);
 
 	std::string m_username;
 	std::string m_password;
@@ -62,4 +63,5 @@ private:
 	uint32_t m_crc;
 	std::string m_fields;
 	int16_t m_fieldcnt;
+	uint16_t m_httpresultcode;
 };

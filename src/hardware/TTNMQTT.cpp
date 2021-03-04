@@ -127,7 +127,7 @@ bool CTTNMQTT::StartHardware()
 	m_bIsStarted = true;
 
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&CTTNMQTT::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	return (m_thread != nullptr);
 }
@@ -218,6 +218,7 @@ bool CTTNMQTT::ConnectIntEx()
 
 	if (!m_CAFilename.empty()) {
 		rc = tls_set(m_CAFilename.c_str());
+		rc = tls_insecure_set(true);
 
 		if (rc != MOSQ_ERR_SUCCESS)
 		{
@@ -892,11 +893,11 @@ void CTTNMQTT::on_message(const struct mosquitto_message *message)
 
 						}
 						else if (type == "digital_input") {
-							SendGeneralSwitch(DeviceID, channel, BatteryLevel, vSensor["value"].asInt(), 0, DeviceName, m_Name.c_str(), rssi);
+							SendGeneralSwitch(DeviceID, channel, BatteryLevel, vSensor["value"].asInt(), 0, DeviceName, m_Name, rssi);
 							bDin = true;
 						}
 						else if (type == "digital_output") {
-							SendGeneralSwitch(DeviceID, channel, BatteryLevel, vSensor["value"].asInt(), 0, DeviceName, m_Name.c_str(), rssi);
+							SendGeneralSwitch(DeviceID, channel, BatteryLevel, vSensor["value"].asInt(), 0, DeviceName, m_Name, rssi);
 							bDout = true;
 						}
 						else if (type == "analog_input") {

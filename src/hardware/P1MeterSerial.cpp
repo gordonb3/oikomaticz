@@ -14,7 +14,6 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
-
 #include <ctime>
 
 //
@@ -105,10 +104,10 @@ bool P1MeterSerial::StartHardware()
 
 	m_bIsStarted=true;
 
-	m_thread = std::make_shared<std::thread>(&P1MeterSerial::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 
-	setReadCallback([this](const char *d, size_t l) { readCallback(d, l); });
+	setReadCallback([this](auto d, auto l) { readCallback(d, l); });
 	sOnConnected(this);
 
 #ifdef DEBUG_P1_R

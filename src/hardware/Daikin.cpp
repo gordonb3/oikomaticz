@@ -99,7 +99,7 @@ bool CDaikin::StartHardware()
 
 	Init();
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&CDaikin::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	m_bIsStarted = true;
 	sOnConnected(this);
@@ -622,24 +622,25 @@ void CDaikin::GetYearPower()
 			continue;
 		if (results2[0] == "curr_year_cool")
 		{
-            std::vector<std::string> months;
-            StringSplit(results2[1], "/", months);
-            for (std::string month : months) {
-                cooltotalkWh += static_cast<float>(atoi(month.c_str())) / 10; //energy saved as 0.1 kWh units
-            }
+			std::vector<std::string> months;
+			StringSplit(results2[1], "/", months);
+			for (const auto &month : months)
+			{
+				cooltotalkWh += std::stof(month) / 10; // energy saved as 0.1 kWh units
+			}
 			SendKwhMeter(30, 30, 255, 0, cooltotalkWh, "Cool kWh");
 		}
 		else if (results2[0] == "curr_year_heat")
 		{
-            std::vector<std::string> months;
-            StringSplit(results2[1], "/", months);
-            for (std::string month : months) {
-                heattotalkWh += static_cast<float>(atoi(month.c_str())) / 10; //energy saved as 0.1 kWh units
-            }
+			std::vector<std::string> months;
+			StringSplit(results2[1], "/", months);
+			for (const auto &month : months)
+			{
+				heattotalkWh += std::stof(month) / 10; // energy saved as 0.1 kWh units
+			}
 			SendKwhMeter(31, 31, 255, 0, heattotalkWh, "Heat kWh");
 		}
 	}
-
 }
 
 bool CDaikin::SetLedOnOFF(const bool OnOFF)

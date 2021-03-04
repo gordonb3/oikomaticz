@@ -228,7 +228,7 @@ bool CEvohomeWeb::StartHardware()
 	if (m_username.empty() || m_password.empty())
 		return false;
 	Init();
-	m_thread = std::make_shared<std::thread>(&CEvohomeWeb::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	if (!m_thread)
 		return false;
@@ -857,7 +857,7 @@ uint8_t CEvohomeWeb::GetUnit_by_ID(unsigned long evoID)
 			m_vUnits[m_locationIdx][unit] = static_cast<unsigned long>(atol(result[row][1].c_str()));
 			if (m_vUnits[m_locationIdx][unit] == evoID)
 				found = unit;
-			else if (m_vUnits[m_locationIdx][unit] == (unsigned long)(unit + 92000)) // mark manually added, unlinked zone as free
+			else if (m_vUnits[m_locationIdx][unit] == (uint64_t(unit) + 92000)) // mark manually added, unlinked zone as free
 				m_vUnits[m_locationIdx][unit] = 0;
 		}
 	}

@@ -30,7 +30,7 @@ CScheduler::CScheduler()
 
 void CScheduler::StartScheduler()
 {
-	m_thread = std::make_shared<std::thread>(&CScheduler::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadName(m_thread->native_handle(), "Scheduler");
 }
 
@@ -349,9 +349,9 @@ void CScheduler::SetSunRiseSetTimers(const std::string &sSunRise, const std::str
 		localtime_r(&atime, &ltime);
 		struct tm tm1;
 
-		std::string  allSchedules[] = {sSunRise, sSunSet, sSunAtSouth, sCivTwStart, sCivTwEnd, sNautTwStart, sNautTwEnd, sAstTwStart, sAstTwEnd};
+		auto allSchedules = std::array<std::string, 9>{ sSunRise, sSunSet, sSunAtSouth, sCivTwStart, sCivTwEnd, sNautTwStart, sNautTwEnd, sAstTwStart, sAstTwEnd };
 		time_t *allTimes[] = {&m_tSunRise, &m_tSunSet, &m_tSunAtSouth, &m_tCivTwStart, &m_tCivTwEnd, &m_tNautTwStart, &m_tNautTwEnd, &m_tAstTwStart, &m_tAstTwEnd};
-		for(unsigned int a = 0; a < sizeof(allSchedules)/sizeof(allSchedules[0]); a = a + 1)
+		for (size_t a = 0; a < allSchedules.size(); a = a + 1)
 		{
 			//std::cout << allSchedules[a].c_str() << ' ';
 			int hour = atoi(allSchedules[a].substr(0, 2).c_str());
@@ -871,7 +871,7 @@ void CScheduler::CheckSchedules()
 								if (item.timerCmd == device::ttimer::command::ON)
 								{
 									switchcmd = "Set Level";
-									float fLevel = (maxDimLevel / 100.0f) * item.Level;
+									float fLevel = (maxDimLevel / 100.0F) * item.Level;
 									if (fLevel > 100)
 										fLevel = 100;
 									ilevel = int(fLevel);
@@ -884,7 +884,7 @@ void CScheduler::CheckSchedules()
 								if (item.timerCmd == device::ttimer::command::ON)
 								{
 									switchcmd = "Set Level";
-									float fLevel = (maxDimLevel / 100.0f) * item.Level;
+									float fLevel = (maxDimLevel / 100.0F) * item.Level;
 									if (fLevel > 100)
 										fLevel = 100;
 									ilevel = int(fLevel);
@@ -2132,14 +2132,15 @@ namespace http {
 			root["status"] = "OK";
 			root["title"] = "GetTimerPlans";
 			std::vector<std::vector<std::string> > result;
-			result = m_sql.safe_query("SELECT ID, Name FROM TimerPlans ORDER BY Name COLLATE NOCASE ASC");
+			result = m_sql.safe_query("SELECT a.ID, a.Name, b.nValue FROM TimerPlans a, Preferences b WHERE b.Key = 'ActiveTimerPlan' ORDER BY Name COLLATE NOCASE ASC");
 			if (!result.empty())
 			{
 				int ii = 0;
 				for (const auto &sd : result)
 				{
-					root["result"][ii]["idx"] = sd[0];
+					root["result"][ii]["idx"] = atoi(sd[0].c_str());
 					root["result"][ii]["Name"] = sd[1];
+					root["result"][ii]["Active"] = (sd[0] == sd[2]);
 					ii++;
 				}
 			}
@@ -2251,11 +2252,11 @@ namespace http {
 				std::string nID = result[0][0];
 
 				//Normal Timers
-				result = m_sql.safe_query("SELECT Active, DeviceRowID, Time, Type, Cmd, Level, Days, UseRandomness, Hue, [Date], MDay, Month, Occurence, Color FROM Timers WHERE (TimerPlan==%q) ORDER BY ID", idx.c_str());
+				result = m_sql.safe_query("SELECT Active, DeviceRowID, Time, Type, Cmd, Level, Days, UseRandomness, [Date], MDay, Month, Occurence, Color FROM Timers WHERE (TimerPlan==%q) ORDER BY ID", idx.c_str());
 				for (const auto &sd : result)
 				{
 					m_sql.safe_query(
-						"INSERT INTO Timers (Active, DeviceRowID, Time, Type, Cmd, Level, Days, UseRandomness, Hue, [Date], MDay, Month, Occurence, Color, TimerPlan) VALUES (%q, %q, '%q', %q, %q, %q, %q, %q, %q, '%q', %q, %q, %q, '%q', %q)",
+						"INSERT INTO Timers (Active, DeviceRowID, Time, Type, Cmd, Level, Days, UseRandomness, [Date], MDay, Month, Occurence, Color, TimerPlan) VALUES (%q, %q, '%q', %q, %q, %q, %q, %q, '%q', %q, %q, %q, '%q', %q)",
 						sd[0].c_str(),
 						sd[1].c_str(),
 						sd[2].c_str(),
@@ -2269,16 +2270,15 @@ namespace http {
 						sd[10].c_str(),
 						sd[11].c_str(),
 						sd[12].c_str(),
-						sd[13].c_str(),
 						nID.c_str()
 					);
 				}
 				//Scene Timers
-				result = m_sql.safe_query("SELECT Active, SceneRowID, Time, Type, Cmd, Level, Days, UseRandomness, Hue, [Date], Month, MDay, Occurence FROM SceneTimers WHERE (TimerPlan==%q) ORDER BY ID", idx.c_str());
+				result = m_sql.safe_query("SELECT Active, SceneRowID, Time, Type, Cmd, Level, Days, UseRandomness, [Date], Month, MDay, Occurence FROM SceneTimers WHERE (TimerPlan==%q) ORDER BY ID", idx.c_str());
 				for (const auto &sd : result)
 				{
 					m_sql.safe_query(
-						"INSERT INTO SceneTimers (Active, SceneRowID, Time, Type, Cmd, Level, Days, UseRandomness, Hue, [Date], Month, MDay, Occurence, TimerPlan) VALUES (%q, %q, '%q', %q, %q, %q, %q, %q, %q, '%q', %q, %q, %q, %q)",
+						"INSERT INTO SceneTimers (Active, SceneRowID, Time, Type, Cmd, Level, Days, UseRandomness, [Date], Month, MDay, Occurence, TimerPlan) VALUES (%q, %q, '%q', %q, %q, %q, %q, %q, '%q', %q, %q, %q, %q)",
 						sd[0].c_str(),
 						sd[1].c_str(),
 						sd[2].c_str(),
@@ -2316,6 +2316,5 @@ namespace http {
 				}
 			}
 		}
-
 	} // namespace server
 } // namespace http

@@ -93,7 +93,7 @@ bool CAtagOne::StartHardware()
 
 	m_LastMinute = -1;
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&CAtagOne::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	m_bIsStarted=true;
 	sOnConnected(this);
@@ -502,8 +502,8 @@ void CAtagOne::SetSetpoint(const int idx, const float temp)
 		return;
 	}
 
-	int rtemp = int(temp*2.0f);
-	float dtemp = float(rtemp) / 2.0f;
+	int rtemp = int(temp * 2.0F);
+	float dtemp = float(rtemp) / 2.0F;
 	if (
 		(dtemp<ATAGONE_TEMPERATURE_MIN) ||
 		(dtemp>ATAGONE_TEMPERATURE_MAX)

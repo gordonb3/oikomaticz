@@ -78,6 +78,7 @@ const CEventSystem::_tJsonMap CEventSystem::JsonMap[] = {
 	{ "CounterDelivToday", "counterDeliveredToday", JTYPE_STRING },
 	{ "CounterToday", "counterToday", JTYPE_STRING },
 	{ "Current", "current", JTYPE_FLOAT },
+	{ "CustomImage", "customImage", JTYPE_INT },
 	{ "DewPoint", "dewPoint", JTYPE_FLOAT },
 	{ "Direction", "direction", JTYPE_FLOAT },
 	{ "DirectionStr", "directionString", JTYPE_STRING },
@@ -88,6 +89,7 @@ const CEventSystem::_tJsonMap CEventSystem::JsonMap[] = {
 	{ "HardwareTypeVal", "hardwareTypeValue", JTYPE_INT },
 	{ "Humidity", "humidity", JTYPE_INT },
 	{ "HumidityStatus", "humidityStatus", JTYPE_STRING },
+	{ "Image", "Image", JTYPE_STRING },
 	{ "InternalState", "internalState", JTYPE_STRING }, // door contact
 	{ "LevelActions", "levelActions", JTYPE_STRING },
 	{ "LevelInt", "levelVal", JTYPE_INT },
@@ -152,9 +154,9 @@ void CEventSystem::StartEventSystem()
 	Plugins::PythonEventsInitialize(szUserDataFolder);
 #endif
 
-	m_thread = std::make_shared<std::thread>(&CEventSystem::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadName(m_thread->native_handle(), "EventSystem");
-	m_eventqueuethread = std::make_shared<std::thread>(&CEventSystem::EventQueueThread, this);
+	m_eventqueuethread = std::make_shared<std::thread>([this] { EventQueueThread(); });
 	SetThreadName(m_eventqueuethread->native_handle(), "EventSystemQueue");
 	m_szStartTime = TimeToString(&m_StartTime, TF_DateTime);
 }
@@ -287,6 +289,7 @@ void CEventSystem::LoadEvents()
 			}
 		}
 	}
+	m_mainworker.m_notificationsystem.Notify(Notification::DZ_ALLEVENTRESET, Notification::STATUS_INFO);
 #ifdef _DEBUG
 	_log.Log(LOG_STATUS, "EventSystem: Events (re)loaded");
 #endif
@@ -510,6 +513,7 @@ void CEventSystem::GetCurrentStates()
 		}
 		m_devicestates = m_devicestates_temp;
 	}
+	m_mainworker.m_notificationsystem.Notify(Notification::DZ_ALLDEVICESTATUSRESET, Notification::STATUS_INFO);
 }
 
 void CEventSystem::GetCurrentUserVariables()
@@ -543,7 +547,7 @@ void CEventSystem::GetCurrentScenesGroups()
 	m_scenesgroups.clear();
 
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT ID, Name, nValue, SceneType, LastUpdate, Protected FROM Scenes");
+	result = m_sql.safe_query("SELECT ID, Name, nValue, SceneType, LastUpdate, Protected, Description FROM Scenes");
 	if (!result.empty())
 	{
 		for (const auto &sd : result)
@@ -564,6 +568,7 @@ void CEventSystem::GetCurrentScenesGroups()
 			sgitem.scenesgroupType = atoi(sd[3].c_str());
 			sgitem.lastUpdate = sd[4];
 			sgitem.protection = atoi(sd[5].c_str());
+			sgitem.description = sd[6];
 			result2 = m_sql.safe_query("SELECT DISTINCT A.DeviceRowID FROM SceneDevices AS A, DeviceStatus AS B WHERE (A.SceneRowID == %" PRIu64 ") AND (A.DeviceRowID == B.ID)", sgitem.ID);
 			if (!result2.empty())
 			{
@@ -755,12 +760,12 @@ void CEventSystem::GetCurrentMeasurementStates()
 				if (sitem.subType != sTypeWIND5)
 				{
 					int intSpeed = atoi(splitresults[2].c_str());
-					windspeed = float(intSpeed) * 0.1f; //m/s
+					windspeed = float(intSpeed) * 0.1F; // m/s
 					isWindSpeed = true;
 				}
 
 				int intGust = atoi(splitresults[3].c_str());
-				windgust = float(intGust) * 0.1f; //m/s
+				windgust = float(intGust) * 0.1F; // m/s
 				isWindGust = true;
 				if ((windgust == 0) && (windspeed != 0))
 				{
@@ -924,7 +929,7 @@ void CEventSystem::GetCurrentMeasurementStates()
 			if (splitresults.size() == 2)
 			{
 				rainmm = 0;
-				rainmmlasthour = static_cast<float>(atof(splitresults[0].c_str())) / 100.0f;
+				rainmmlasthour = static_cast<float>(atof(splitresults[0].c_str())) / 100.0F;
 				isRain = true;
 				weatherval = rainmmlasthour;
 				isWeather = true;
@@ -966,7 +971,7 @@ void CEventSystem::GetCurrentMeasurementStates()
 			break;
 		case pTypeP1Gas:
 		{
-			float GasDivider = 1000.0f;
+			float GasDivider = 1000.0F;
 			//get lowest value of today
 			std::string szDate = TimeToString(nullptr, TF_Date);
 			std::vector<std::vector<std::string> > result2;
@@ -1188,6 +1193,19 @@ void CEventSystem::TriggerURL(const std::string &result, const std::vector<std::
 	item.sValue = result;
 	item.nValueWording = callback;
 	item.vData = headerData;
+	m_eventqueue.push(item);
+}
+
+void CEventSystem::TriggerShellCommand(const std::string &result, const std::string &scriptstderr, const std::string &callback, int exitcode, bool timeoutOccurred)
+{
+	_tEventQueue item;
+	item.reason = REASON_SHELLCOMMAND;
+	item.id = 0;
+	item.sValue = result;
+	item.nValue = exitcode;
+	item.nValueWording = callback;
+	item.errorText = scriptstderr;
+	item.timeoutOccurred = timeoutOccurred;
 	m_eventqueue.push(item);
 }
 
@@ -1424,18 +1442,17 @@ void CEventSystem::ProcessDevice(
 	const unsigned char signallevel,
 	const unsigned char batterylevel,
 	const int nValue,
-	const char* sValue,
-	const std::string &devname)
+	const char* sValue)
 {
 	if (!m_bEnabled)
 		return;
 
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT SwitchType, LastUpdate, LastLevel, Options FROM DeviceStatus WHERE (Name == '%q')", devname.c_str());
+	result = m_sql.safe_query("SELECT SwitchType, LastUpdate, LastLevel, Options, Name FROM DeviceStatus WHERE (ID==%" PRIu64 ")", ulDevID);
 	if (result.empty())
 	{
-		//inpossible as we just updated it
-		_log.Log(LOG_ERROR, "EventSystem: Could not find device in system: ((ID=%" PRIu64 ": %s)", ulDevID, devname.c_str());
+		//impossible as we just updated it
+		_log.Log(LOG_ERROR, "EventSystem: Could not find device in system: (idx %" PRIu64 ")",  ulDevID);
 		return;
 	}
 
@@ -1445,6 +1462,7 @@ void CEventSystem::ProcessDevice(
 	std::string lastUpdate = sd[1];
 	uint8_t lastLevel = (uint8_t)std::stoi(sd[2]);
 	std::string dev_options = sd[3];
+	std::string devname = sd[4];
 
 	std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(dev_options);
 
@@ -1477,6 +1495,7 @@ void CEventSystem::ProcessDevice(
 		item.devname = devname;
 		item.nValue = nValue;
 		item.sValue = osValue;
+
 		item.nValueWording = UpdateSingleState(ulDevID, devname, nValue, osValue, devType, subType, switchType, "", 255, batterylevel, options);
 		boost::unique_lock<boost::shared_mutex> devicestatesMutexLock(m_devicestatesMutex);
 		auto itt = m_devicestates.find(ulDevID);
@@ -2265,7 +2284,7 @@ bool CEventSystem::parseBlocklyActions(const _tEventItem &item)
 				mode = ParseBlocklyString(aParam[1]);
 			case 1:
 				temp = ParseBlocklyString(aParam[0]);
-				m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5f, idx, temp, mode, until));
+				m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5F, idx, temp, mode, until));
 				actionsDone = true;
 				break;
 
@@ -2333,7 +2352,7 @@ bool CEventSystem::parseBlocklyActions(const _tEventItem &item)
 		else if (deviceName.find("OpenURL") != std::string::npos)
 		{
 			_tActionParseResults parseResult;
-			parseResult.fAfterSec = 0.2f;
+			parseResult.fAfterSec = 0.2F;
 			ParseActionString(doWhat, parseResult);
 			OpenURL(parseResult.fAfterSec, parseResult.sCommand);
 			actionsDone = true;
@@ -2361,7 +2380,7 @@ bool CEventSystem::parseBlocklyActions(const _tEventItem &item)
 				sPath = szUserDataFolder + "scripts/" + sPath;
 #endif
 
-			m_sql.AddTaskItem(_tTaskItem::ExecuteScript(0.2f, sPath, sParam));
+			m_sql.AddTaskItem(_tTaskItem::ExecuteScript(0.2F, sPath, sParam));
 			actionsDone = true;
 			continue;
 		}
@@ -2496,19 +2515,19 @@ void CEventSystem::ParseActionString(const std::string &oAction_, _tActionParseR
 				oResults_.sCommand.append(sToken);
 				break;
 			case 1:
-				oResults_.fForSec = 60.f * static_cast<float>(atof(sToken.c_str()));
+				oResults_.fForSec = 60.F * static_cast<float>(atof(sToken.c_str()));
 				break;
 			case 2:
-				oResults_.fAfterSec = 1.f * static_cast<float>(atof(sToken.c_str()));
+				oResults_.fAfterSec = 1.F * static_cast<float>(atof(sToken.c_str()));
 				break;
 			case 3:
-				oResults_.fRandomSec = 60.f * static_cast<float>(atof(sToken.c_str()));
+				oResults_.fRandomSec = 60.F * static_cast<float>(atof(sToken.c_str()));
 				break;
 			case 4:
 				oResults_.iRepeat = atoi(sToken.c_str());
 				break;
 			case 5:
-				oResults_.fRepeatSec = 1.f * static_cast<float>(atof(sToken.c_str()));
+				oResults_.fRepeatSec = 1.F * static_cast<float>(atof(sToken.c_str()));
 				break;
 			}
 		}
@@ -2568,7 +2587,7 @@ bool CEventSystem::PythonScheduleEvent(const std::string &ID, const std::string 
 			mode = aParam[1];
 		case 1:
 			temp = aParam[0];
-			m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5f, idx, temp, mode, until));
+			m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5F, idx, temp, mode, until));
 			break;
 
 		default:
@@ -3108,10 +3127,10 @@ void CEventSystem::EvaluateLua(const std::vector<_tEventQueue> &items, const std
 	{
 		lua_sethook(lua_state, luaStop, LUA_MASKCOUNT, 10000000);
 
-		boost::thread luaThread(boost::bind(&CEventSystem::luaThread, this, lua_state, filename));
-		SetThreadName(luaThread.native_handle(), "luaThread");
+		boost::thread aluaThread([this, lua_state, filename] { luaThread(lua_state, filename); });
+		SetThreadName(aluaThread.native_handle(), "luaThread");
 
-		if (!luaThread.timed_join(boost::posix_time::seconds(10)))
+		if (!aluaThread.timed_join(boost::posix_time::seconds(10)))
 		{
 			_log.Log(LOG_ERROR, "EventSystem: Warning!, lua script %s has been running for more than 10 seconds", filename.c_str());
 		}
@@ -3323,7 +3342,7 @@ bool CEventSystem::processLuaCommand(lua_State *lua_state, const std::string &fi
 	{
 		std::string luaString = lua_tostring(lua_state, -1);
 		_tActionParseResults parseResult;
-		parseResult.fAfterSec = 0.2f;
+		parseResult.fAfterSec = 0.2F;
 		ParseActionString(luaString, parseResult);
 		OpenURL(parseResult.fAfterSec, parseResult.sCommand);
 		scriptTrue = true;
@@ -3399,7 +3418,7 @@ bool CEventSystem::processLuaCommand(lua_State *lua_state, const std::string &fi
 		case 1:
 			idx = atoi(SetPointIdx.c_str());
 			temp = aParam[0];
-			m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5f, idx, temp, mode, until));
+			m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5F, idx, temp, mode, until));
 			break;
 
 		default:
@@ -3999,7 +4018,7 @@ int CEventSystem::calculateDimLevel(int deviceID, int percentageLevel)
 		{
 			if ((switchtype == device::tswitch::type::Dimmer) || (switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageInverted))
 			{
-				float fLevel = (maxDimLevel / 100.0f) * percentageLevel;
+				float fLevel = (maxDimLevel / 100.0F) * percentageLevel;
 				if (fLevel > 100)
 					fLevel = 100;
 				iLevel = int(fLevel);

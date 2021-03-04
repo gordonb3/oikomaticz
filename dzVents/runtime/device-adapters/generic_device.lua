@@ -30,6 +30,9 @@ local function setStateAttribute(state, device, _states)
 			device['state'] = state
 			device['bState'] = stateToBool(state, _states)
 			device['active'] = device['bState']
+			if device.active then device.inActive = false
+			elseif device.active == false then device.inActive = true
+			end
 		else
 			device['state'] = state
 		end
@@ -116,6 +119,9 @@ return {
 					type = 'device',
 					idx = data.id
 				})
+			end
+			if customImage and tonumber(customImage) and customImage >= 100 then
+				device.icon = device.Image
 			end
 
 			device.isDevice = true

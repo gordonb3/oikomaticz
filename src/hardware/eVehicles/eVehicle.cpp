@@ -7,6 +7,7 @@ Author: MrHobbes74 (github.com/MrHobbes74)
 13/03/2020 1.1 Added keep asleep support
 28/04/2020 1.2 Added new devices (odometer, lock alert, max charge switch)
 24/07/2020 1.3 Added new Mercedes Class (KidDigital)
+09/02/2021 1.4 Added Testcar Class for easier testing of eVehicle framework
 
 License: Public domain
 
@@ -14,6 +15,7 @@ License: Public domain
 #include "stdafx.h"
 #include "eVehicle.h"
 #include "TeslaApi.h"
+#include "TestcarApi.h"
 #include "MercApi.h"
 #include "main/Helper.h"
 #include "main/Logger.h"
@@ -50,7 +52,11 @@ CeVehicle::CeVehicle(const int ID, eVehicleType vehicletype, const std::string& 
 	m_currentalert = Sleeping;
 	m_currentalerttext = "";
 
-	switch (vehicletype)
+	eVehicleType checkedVehicleType = vehicletype;
+	if (username == "testcar@evehicle")
+		checkedVehicleType = Testcar;
+
+	switch (checkedVehicleType)
 	{
 	case Tesla:
 		m_api = new CTeslaApi(username, password, carid);
@@ -58,24 +64,27 @@ CeVehicle::CeVehicle(const int ID, eVehicleType vehicletype, const std::string& 
 	case Mercedes:
 		m_api = new CMercApi(username, password, carid);
 		break;
+	case Testcar:
+		m_api = new CTestcarApi(username, password, carid);
+		break;
 	default:
 		Log(LOG_ERROR, "Unsupported vehicle type.");
 		m_api = nullptr;
 		break;
 	}
-	if (defaultinterval > 0)
+	if ((defaultinterval > 0) && (checkedVehicleType != Testcar))
 	{
-		m_defaultinterval = defaultinterval;
-		if(m_defaultinterval < m_api->m_capabilities.sleep_interval)
-			Log(LOG_ERROR, "Warning: default interval of %d minutes will prevent the car to sleep.", m_defaultinterval);
+		m_defaultinterval = defaultinterval*60;
+		if(m_defaultinterval < m_api->m_capabilities.seconds_to_sleep)
+			Log(LOG_ERROR, "Warning: default interval of %d minutes will prevent the car to sleep.", defaultinterval);
 	}
 	else
-		m_defaultinterval = m_api->m_capabilities.sleep_interval;
+		m_defaultinterval = std::max(m_api->m_capabilities.seconds_to_sleep, m_api->m_capabilities.minimum_poll_interval);
 
 	if (activeinterval > 0)
-		m_activeinterval = activeinterval;
+		m_activeinterval = activeinterval*60;
 	else
-		m_activeinterval = 1;
+		m_activeinterval = m_api->m_capabilities.minimum_poll_interval;
 
 	m_allowwakeup = allowwakeup;
 }
@@ -97,8 +106,6 @@ void CeVehicle::Init()
 	m_car.charge_state = "";
 	m_command_nr_tries = 0;
 	m_setcommand_scheduled = false;
-	m_home_lat = 0;
-	m_home_lon = 0;
 }
 
 void CeVehicle::SendAlert()
@@ -189,7 +196,16 @@ void CeVehicle::SendTemperature(int tempType, float value)
 void CeVehicle::SendPercentage(int percType, float value)
 {
 	if ((percType == VEHICLE_LEVEL_BATTERY) && m_api->m_capabilities.has_battery_level)
-		SendPercentageSensor(VEHICLE_LEVEL_BATTERY, 1, static_cast<int>(value), value, m_Name + " Battery Level");
+	{
+		int iBattLevel = static_cast<int>(value);
+		float fBattLevel = value;
+		if (fBattLevel < 0.0F || fBattLevel > 100.0F)	// Filter out wrong readings
+		{
+			fBattLevel = 0.0F;
+			iBattLevel = 255;	// Means no batterylevel available (and hides batterylevel indicator in UI)
+		}
+		SendPercentageSensor(VEHICLE_LEVEL_BATTERY, 1, iBattLevel, fBattLevel, m_Name + " Battery Level");
+	}
 }
 
 void CeVehicle::SendCounter(int countType, float value)
@@ -198,15 +214,23 @@ void CeVehicle::SendCounter(int countType, float value)
 		SendCustomSensor(VEHICLE_COUNTER_ODO, 1, 255, value, m_Name + " Odometer", m_api->m_config.distance_unit);
 }
 
-void CeVehicle::SendCustom(int countType, int ChildId, float value, const std::string &label)
+void CeVehicle::SendCustom(int customType, int ChildId, float value, const std::string &label)
 {
-	if ((countType == VEHICLE_CUSTOM) && m_api->m_capabilities.has_custom_data)
+	if ((customType == VEHICLE_CUSTOM) && m_api->m_capabilities.has_custom_data)
 		SendCustomSensor(VEHICLE_CUSTOM, ChildId, 255, value, m_Name + " " + label, "");
 }
 
-void CeVehicle::SendText(int countType, int ChildId, const std::string &value, const std::string &label)
+void CeVehicle::SendCustomSwitch(int customType, int ChildId, bool value, const std::string &label)
 {
-	if ((countType == VEHICLE_CUSTOM) && m_api->m_capabilities.has_custom_data)
+	if ((customType == VEHICLE_CUSTOM) && m_api->m_capabilities.has_custom_data)
+		{
+			CDomoticzHardwareBase::SendGeneralSwitch(((VEHICLE_CUSTOM << 8) | ChildId), 1, 255, value, 0, m_Name + " " + label, m_Name);
+		}
+}
+
+void CeVehicle::SendCustomText(int customType, int ChildId, const std::string &value, const std::string &label)
+{
+	if ((customType == VEHICLE_CUSTOM) && m_api->m_capabilities.has_custom_data)
 		SendTextSensor(VEHICLE_CUSTOM, ChildId, 255, value, m_Name + " " + label);
 }
 
@@ -265,14 +289,14 @@ bool CeVehicle::StartHardware()
 	{
 		std::string Latitude = strarray[0];
 		std::string Longitude = strarray[1];
-		m_home_lat = std::stod(Latitude);
-		m_home_lon = std::stod(Longitude);
+		m_api->m_config.home_latitude = std::stod(Latitude);
+		m_api->m_config.home_longitude = std::stod(Longitude);
 
 		Log(LOG_STATUS, "Using Oikomaticz home location (Lat %s, Lon %s) as car's home location.", Latitude.c_str(), Longitude.c_str());
 	}
 
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&CeVehicle::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	if (!m_thread)
 		return false;
@@ -414,7 +438,7 @@ void CeVehicle::Do_Work()
 				{
 					tApiCommand item;
 					m_commands.try_pop(item);
-					Log(LOG_STATUS, "Car asleep, not allowed to wake up, command %s ignored.", GetCommandString(item.command_type).c_str());
+					Debug(DEBUG_NORM, "Car asleep, not allowed to wake up, command %s ignored.", GetCommandString(item.command_type).c_str());
 				}
 			}
 		}
@@ -430,9 +454,9 @@ void CeVehicle::Do_Work()
 				AddCommand(Get_All_States);
 			initial_check = false;
 		}
-		else if ((sec_counter % 60) == 0)
+		else if ((sec_counter % m_api->m_capabilities.minimum_poll_interval) == 0)
 		{
-			// check awake state every minute
+			// check awake state every minimum poll interval
 			if (IsAwake())
 			{
 				if (!m_allowwakeup && m_car.wake_state == SelfAwake)
@@ -443,12 +467,12 @@ void CeVehicle::Do_Work()
 		}
 
 		// now schedule timed commands
-		if ((sec_counter % (60*m_defaultinterval) == 0))
+		if ((sec_counter % (m_defaultinterval) == 0))
 		{
 			// check all states every default interval
 			AddCommand(Get_All_States);
 		}
-		else if (sec_counter % (60*m_activeinterval) == 0)
+		else if (sec_counter % (m_activeinterval) == 0)
 		{
 			if ((m_car.home_state == AtHome) && (m_car.charging || m_car.climate_on || m_car.defrost))
 			{
@@ -725,7 +749,7 @@ bool CeVehicle::DoSetCommand(const tApiCommand &command)
 
 bool CeVehicle::GetAllStates()
 {
-	CVehicleApi::tAllCarData reply;
+	CVehicleApi::tAllCarData reply{};
 
 	if (m_api->GetAllData(reply))
 	{
@@ -742,7 +766,7 @@ bool CeVehicle::GetAllStates()
 
 bool CeVehicle::GetLocationState()
 {
-	CVehicleApi::tLocationData reply;
+	CVehicleApi::tLocationData reply{};
 
 	if (m_api->GetLocationData(reply))
 	{
@@ -755,22 +779,19 @@ bool CeVehicle::GetLocationState()
 
 void CeVehicle::UpdateLocationData(CVehicleApi::tLocationData& data)
 {
-	if (m_home_lat != 0 && m_home_lon != 0)
-	{
-		if ((std::fabs(m_home_lat - data.latitude) < 2E-4) && (std::fabs(m_home_lon - data.longitude) < 2E-3) && !data.is_driving)
-			m_car.home_state = AtHome;
-		else
-			m_car.home_state = NotAtHome;
+	if (data.is_home)
+		m_car.home_state = AtHome;
+	else
+		m_car.home_state = NotAtHome;
 
-		Debug(DEBUG_NORM, "Location: %f %f Speed: %d Home: %s", data.latitude, data.longitude, data.speed, (m_car.home_state == AtHome) ? "true" : "false");
+	m_car.is_driving = data.is_driving;
 
-		m_car.is_driving = data.is_driving;
-	}
+	Debug(DEBUG_NORM, "Location: %f %f Speed: %d Home: %s", data.latitude, data.longitude, data.speed, data.is_home ? "true" : "false");
 }
 
 bool CeVehicle::GetClimateState()
 {
-	CVehicleApi::tClimateData reply;
+	CVehicleApi::tClimateData reply{};
 
 	if (m_api->GetClimateData(reply))
 	{
@@ -793,7 +814,7 @@ void CeVehicle::UpdateClimateData(CVehicleApi::tClimateData& data)
 
 bool CeVehicle::GetChargeState()
 {
-	CVehicleApi::tChargeData reply;
+	CVehicleApi::tChargeData reply{};
 
 	if (m_api->GetChargeData(reply))
 	{
@@ -845,17 +866,36 @@ void CeVehicle::UpdateCustomVehicleData(CVehicleApi::tCustomData& data)
 						Json::Value jValue = iter["value"];
 						std::string sLabel = iter["label"].asString();
 						std::string sValue = jValue.asString();
+						bool isBool = jValue.isBool();
+						bool bValue = false;
 
-						_log.Debug(DEBUG_NORM, "Processing custom data %d - %s - %s", iChildID, sValue.c_str(), sLabel.c_str());
+						// Determine if Value might a boolean value
+						if(isBool)
+						{
+							bValue = jValue.asBool();
+						}
+						else	// Not a native JSON boolean anyway
+						{
+							std::string sBoolValue = sValue;
+							stdlower(sBoolValue);
+							isBool = (sBoolValue == "true" || sBoolValue == "false");
+							bValue = (sBoolValue == "true");
+						}
+
+						_log.Debug(DEBUG_NORM, "Processing custom data %d - %s - %s (%s)", iChildID, sValue.c_str(), sLabel.c_str(), (isBool ? "Boolean" : (is_number(sValue) ? "Number": "Text" )));
 
 						if (is_number(sValue))
 						{
 							float fValue = static_cast<float>(std::atof(sValue.c_str()));
 							SendCustom(VEHICLE_CUSTOM, iChildID, fValue, sLabel);
 						}
+						else if (isBool)
+						{
+							SendCustomSwitch(VEHICLE_CUSTOM, iChildID, bValue, sLabel);
+						}
 						else
 						{
-							SendText(VEHICLE_CUSTOM, iChildID, sValue, sLabel);
+							SendCustomText(VEHICLE_CUSTOM, iChildID, sValue, sLabel);
 						}
 				}
 				cnt++;

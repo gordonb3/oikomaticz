@@ -13,27 +13,26 @@
 
 struct STR_DEVICE {
 	int			unit;
-	std::string api_name;
-	std::string name;
+	const char *api_name;
+	const char *name;
 	int			deviceID;
 	uint8_t		subType;
 	int			switchType;
-	std::string api_state;
+	const char *api_state;
 };
 
-#define TOT_DEVICE_TYPES 9
-
-const STR_DEVICE DevicesType[TOT_DEVICE_TYPES] =
-{
-	{ 0, "switchBox", "Switch Box",pTypeLighting2, sTypeAC, device::tswitch::type::OnOff, "relay" },
-	{ 1, "shutterBox", "Shutter Box", pTypeLighting2, sTypeAC, device::tswitch::type::BlindsPercentageInverted, "shutter" },
-	{ 2, "wLightBoxS", "Light Box S", pTypeLighting2, sTypeAC, device::tswitch::type::Dimmer, "light" },
-	{ 3, "wLightBox", "Light Box", pTypeColorSwitch, sTypeColor_RGB_W, device::tswitch::type::Dimmer, "rgbw" },
-	{ 4, "gateBox", "Gate Box", pTypeGeneral, sTypePercentage, 0, "gate" },
-	{ 5, "dimmerBox", "Dimmer Box", pTypeLighting2, sTypeAC, device::tswitch::type::Dimmer, "dimmer" },
-	{ 6, "switchBoxD", "Switch Box D", pTypeLighting2, sTypeAC, device::tswitch::type::OnOff, "relay" },
-	{ 7, "airSensor", "Air Sensor", pTypeAirQuality, sTypeVoltcraft, 0, "air" },
-	{ 8, "tempSensor", "Temp Sensor", pTypeGeneral, sTypeTemperature, 0, "tempsensor" },
+constexpr std::array<STR_DEVICE, 9> DevicesType{
+	{
+		{ 0, "switchBox", "Switch Box", pTypeLighting2, sTypeAC, device::tswitch::type::OnOff, "relay" },
+		{ 1, "shutterBox", "Shutter Box", pTypeLighting2, sTypeAC, device::tswitch::type::BlindsPercentageInverted, "shutter" },
+		{ 2, "wLightBoxS", "Light Box S", pTypeLighting2, sTypeAC, device::tswitch::type::Dimmer, "light" },
+		{ 3, "wLightBox", "Light Box", pTypeColorSwitch, sTypeColor_RGB_W, device::tswitch::type::Dimmer, "rgbw" },
+		{ 4, "gateBox", "Gate Box", pTypeGeneral, sTypePercentage, 0, "gate" },
+		{ 5, "dimmerBox", "Dimmer Box", pTypeLighting2, sTypeAC, device::tswitch::type::Dimmer, "dimmer" },
+		{ 6, "switchBoxD", "Switch Box D", pTypeLighting2, sTypeAC, device::tswitch::type::OnOff, "relay" },
+		{ 7, "airSensor", "Air Sensor", pTypeAirQuality, sTypeVoltcraft, 0, "air" },
+		{ 8, "tempSensor", "Temp Sensor", pTypeGeneral, sTypeTemperature, 0, "tempsensor" },
+	},
 };
 
 BleBox::BleBox(const int id, const int pollIntervalsec)
@@ -50,7 +49,7 @@ bool BleBox::StartHardware()
 
 	LoadNodes();
 
-	m_thread = std::make_shared<std::thread>(&BleBox::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	m_bIsStarted = true;
 	sOnConnected(this);
@@ -157,7 +156,7 @@ void BleBox::GetDevicesState()
 					unsigned int hexNumber;
 					sscanf(currentColor.c_str(), "%x", &hexNumber);
 
-					SendRGBWSwitch(IP, 0, 255, hexNumber, true, DevicesType[device.second].name, m_Name.c_str());
+					SendRGBWSwitch(IP, 0, 255, hexNumber, true, DevicesType[device.second].name, m_Name);
 					break;
 				}
 				case 4:
@@ -559,9 +558,9 @@ bool BleBox::WriteToHardware(const char* pdata, const unsigned char /*length*/)
 		case Color_LedOn: {
 			if (m_RGBWColorState.mode != ColorModeNone && !m_RGBWisWhiteState)
 			{
-				red = int(round(m_RGBWColorState.r * m_RGBWbrightnessState / 255.0f));
-				green = int(round(m_RGBWColorState.g * m_RGBWbrightnessState / 255.0f));
-				blue = int(round(m_RGBWColorState.b * m_RGBWbrightnessState / 255.0f));
+				red = int(round(m_RGBWColorState.r * m_RGBWbrightnessState / 255.0F));
+				green = int(round(m_RGBWColorState.g * m_RGBWbrightnessState / 255.0F));
+				blue = int(round(m_RGBWColorState.b * m_RGBWbrightnessState / 255.0F));
 				white = 0;
 			}
 			else
@@ -603,7 +602,7 @@ bool BleBox::WriteToHardware(const char* pdata, const unsigned char /*length*/)
 		}
 		case Color_SetBrightnessLevel: {
 			int BrightnessBase = (int)pLed->value;
-			int dMax_Send = (int)(round((255.0f / 100.0f) * float(BrightnessBase)));
+			int dMax_Send = (int)(round((255.0F / 100.0F) * float(BrightnessBase)));
 
 			m_RGBWbrightnessState = dMax_Send;
 
@@ -616,9 +615,9 @@ bool BleBox::WriteToHardware(const char* pdata, const unsigned char /*length*/)
 			}
 			else
 			{
-				red = int(round(m_RGBWColorState.r * dMax_Send / 255.0f));
-				green = int(round(m_RGBWColorState.g * dMax_Send / 255.0f));
-				blue = int(round(m_RGBWColorState.b * dMax_Send / 255.0f));
+				red = int(round(m_RGBWColorState.r * dMax_Send / 255.0F));
+				green = int(round(m_RGBWColorState.g * dMax_Send / 255.0F));
+				blue = int(round(m_RGBWColorState.b * dMax_Send / 255.0F));
 				white = 0;
 			}
 			break;
@@ -1090,7 +1089,7 @@ void BleBox::AddNode(const std::string & name, const std::string & IPAddress, bo
 	if (deviceTypeID == -1)
 		return;
 
-	STR_DEVICE deviceType = DevicesType[deviceTypeID];
+	const auto deviceType = DevicesType[deviceTypeID];
 
 	std::string szIdx = IPToHex(IPAddress, deviceType.deviceID);
 
@@ -1193,7 +1192,7 @@ void BleBox::SearchNodes(const std::string & pattern)
 	std::vector<std::thread> searchingThreads;
 	for(auto&& host : hosts)
 		if (m_devices.find(host) == m_devices.end())
-			searchingThreads.emplace_back(&BleBox::AddNode, this, "unknown", std::ref(host), false);
+			searchingThreads.emplace_back([this, &host] { AddNode("unknown", host, false); });
 
 	for (auto&& thread : searchingThreads)
 	{

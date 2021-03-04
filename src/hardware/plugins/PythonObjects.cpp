@@ -231,7 +231,7 @@ namespace Plugins {
 				{
 					m_sql.safe_query("DELETE FROM CustomImages WHERE (ID==%d)", self->ImageID);
 
-					PyObject*	pKey = PyLong_FromLong(self->ImageID);
+					PyNewRef	pKey = PyLong_FromLong(self->ImageID);
 					if (PyDict_DelItem((PyObject*)self->pPlugin->m_ImageDict, pKey) == -1)
 					{
 						_log.Log(LOG_ERROR, "(%s) failed to delete image '%d' from images dictionary.", self->pPlugin->m_Name.c_str(), self->ImageID);
@@ -692,20 +692,19 @@ namespace Plugins {
 						}
 						else
 						{
-							std::map<std::string, std::string> mpOptions = m_sql.BuildDeviceOptions(sd[14], true);
+							std::map<std::string, std::string> mpOptions;
+							Py_BEGIN_ALLOW_THREADS
+							mpOptions =	m_sql.BuildDeviceOptions(sd[14], true);
+							Py_END_ALLOW_THREADS
 							for (const auto &opt : mpOptions)
 							{
-								PyObject *pKeyDict = PyUnicode_FromString(opt.first.c_str());
-								PyObject *pValueDict = PyUnicode_FromString(opt.second.c_str());
+								PyNewRef	pKeyDict = PyUnicode_FromString(opt.first.c_str());
+								PyNewRef	pValueDict = PyUnicode_FromString(opt.second.c_str());
 								if (PyDict_SetItem(self->Options, pKeyDict, pValueDict) == -1)
 								{
 									_log.Log(LOG_ERROR, "(%s) Failed to refresh Options dictionary for Hardware/Unit combination (%d:%d).", self->pPlugin->m_Name.c_str(), self->HwdID, self->Unit);
-									Py_DECREF(pKeyDict);
-									Py_DECREF(pValueDict);
 									break;
 								}
-								Py_DECREF(pKeyDict);
-								Py_DECREF(pValueDict);
 							}
 						}
 					}
@@ -755,9 +754,9 @@ namespace Plugins {
 						std::string	sDescription = PyUnicode_AsUTF8(self->Description);
 						if ((self->SubType == sTypeCustom) && (PyDict_Size(self->Options) > 0))
 						{
-							PyObject *pValueDict = PyDict_GetItemString(self->Options, "Custom");
+							PyBorrowedRef	pValueDict = PyDict_GetItemString(self->Options, "Custom");
 							std::string sOptionValue;
-							if (pValueDict == nullptr)
+							if (!pValueDict)
 								sOptionValue = "";
 							else
 								sOptionValue = PyUnicode_AsUTF8(pValueDict);
@@ -780,7 +779,7 @@ namespace Plugins {
 						{
 							self->ID = atoi(result[0][0].c_str());
 
-							PyObject*	pKey = PyLong_FromLong(self->Unit);
+							PyNewRef	pKey = PyLong_FromLong(self->Unit);
 							if (PyDict_SetItem((PyObject*)self->pPlugin->m_DeviceDict, pKey, (PyObject*)self) == -1)
 							{
 								_log.Log(LOG_ERROR, "(%s) failed to add unit '%d' to device dictionary.", self->pPlugin->m_Name.c_str(), self->Unit);
@@ -796,9 +795,8 @@ namespace Plugins {
 								std::map<std::string, std::string> mpOptions;
 								while (PyDict_Next(self->Options, &pos, &pKeyDict, &pValueDict)) {
 									std::string sOptionName = PyUnicode_AsUTF8(pKeyDict);
-									PyObject* pStr = PyObject_Str(pValueDict);
+									PyNewRef pStr = PyObject_Str(pValueDict);
 									std::string sOptionValue = PyUnicode_AsUTF8(pStr);
-									Py_XDECREF(pStr);
 									mpOptions.insert(std::pair<std::string, std::string>(sOptionName, sOptionValue));
 								}
 								m_sql.SetDeviceOptions(self->ID, mpOptions);
@@ -881,14 +879,18 @@ namespace Plugins {
 			if (Name)
 			{
 				sName = Name;
+				Py_BEGIN_ALLOW_THREADS
 				m_sql.UpdateDeviceValue("Name", sName, sID);
+				Py_END_ALLOW_THREADS
 			}
 
 			// Description change
 			if (Description)
 			{
 				std::string sDescription = Description;
+				Py_BEGIN_ALLOW_THREADS
 				m_sql.UpdateDeviceValue("Description", sDescription, sID);
+				Py_END_ALLOW_THREADS
 			}
 
 			// TypeName change - actually derives new Type, SubType and SwitchType values
@@ -897,45 +899,59 @@ namespace Plugins {
 				maptypename(std::string(TypeName), iType, iSubType, iSwitchType, stdsValue, pOptionsDict, pOptionsDict);
 
 				// Reset nValue and sValue when changing device types
+				Py_BEGIN_ALLOW_THREADS
 				m_sql.UpdateDeviceValue("nValue", 0, sID);
 				m_sql.UpdateDeviceValue("sValue", stdsValue, sID);
+				Py_END_ALLOW_THREADS
 			}
 
 			// Type change
 			if (iType != self->Type)
 			{
+				Py_BEGIN_ALLOW_THREADS
 				m_sql.UpdateDeviceValue("Type", iType, sID);
+				Py_END_ALLOW_THREADS
 			}
 
 			// SubType change
 			if (iSubType != self->SubType)
 			{
+				Py_BEGIN_ALLOW_THREADS
 				m_sql.UpdateDeviceValue("SubType", iSubType, sID);
+				Py_END_ALLOW_THREADS
 			}
 
 			// SwitchType change
 			if (iSwitchType != self->SwitchType)
 			{
+				Py_BEGIN_ALLOW_THREADS
 				m_sql.UpdateDeviceValue("SwitchType", iSwitchType, sID);
+				Py_END_ALLOW_THREADS
 			}
 
 			// Image change
 			if (iImage != self->Image)
 			{
+				Py_BEGIN_ALLOW_THREADS
 				m_sql.UpdateDeviceValue("CustomImage", iImage, sID);
+				Py_END_ALLOW_THREADS
 			}
 
 			// Used change
 			if (iUsed != self->Used)
 			{
+				Py_BEGIN_ALLOW_THREADS
 				m_sql.UpdateDeviceValue("Used", iUsed, sID);
+				Py_END_ALLOW_THREADS
 			}
 
 			// Color change
 			if (Color)
 			{
 				std::string	sColor = _tColor(std::string(Color)).toJSONString(); //Parse the color to detect incorrectly formatted color data
+				Py_BEGIN_ALLOW_THREADS
 				m_sql.UpdateDeviceValue("Color", sColor, sID);
+				Py_END_ALLOW_THREADS
 			}
 
 			// Options provided, assume change
@@ -949,17 +965,18 @@ namespace Plugins {
 					while (PyDict_Next(pOptionsDict, &pos, &pKeyDict, &pValueDict))
 					{
 						std::string sOptionName = PyUnicode_AsUTF8(pKeyDict);
-						PyObject* pStr = PyObject_Str(pValueDict);
+						PyNewRef pStr = PyObject_Str(pValueDict);
 						std::string sOptionValue = PyUnicode_AsUTF8(pStr);
-						Py_XDECREF(pStr);
 						mpOptions.insert(std::pair<std::string, std::string>(sOptionName, sOptionValue));
 					}
+					Py_BEGIN_ALLOW_THREADS
 					m_sql.SetDeviceOptions(self->ID, mpOptions);
+					Py_END_ALLOW_THREADS
 				}
 				else
 				{
 					std::string sOptionValue;
-					PyObject *pValue = PyDict_GetItemString(pOptionsDict, "Custom");
+					PyBorrowedRef	pValue = PyDict_GetItemString(pOptionsDict, "Custom");
 					if (pValue)
 					{
 						sOptionValue = PyUnicode_AsUTF8(pValue);
@@ -968,9 +985,11 @@ namespace Plugins {
 					time_t now = time(nullptr);
 					struct tm ltime;
 					localtime_r(&now, &ltime);
+					Py_BEGIN_ALLOW_THREADS
 					m_sql.UpdateDeviceValue("Options", iUsed, sID);
 					m_sql.safe_query("UPDATE DeviceStatus SET Options='%q', LastUpdate='%04d-%02d-%02d %02d:%02d:%02d' WHERE (HardwareID==%d) and (Unit==%d)",
 						sOptionValue.c_str(), ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec, self->HwdID, self->Unit);
+					Py_END_ALLOW_THREADS
 				}
 			}
 
@@ -987,9 +1006,9 @@ namespace Plugins {
 				{
 					_log.Log(LOG_NORM, "(%s) Updating device from %d:'%s' to have values %d:'%s'.", sName.c_str(), self->nValue, PyUnicode_AsUTF8(self->sValue), nValue, sValue);
 				}
-
+				Py_BEGIN_ALLOW_THREADS
 				DevRowIdx = m_sql.UpdateValue(self->HwdID, sDeviceID.c_str(), (const unsigned char)self->Unit, (const unsigned char)iType, (const unsigned char)iSubType, iSignalLevel, iBatteryLevel, nValue, sValue, sName, true);
-
+				Py_END_ALLOW_THREADS
 				// if this is an internal Security Panel then there are some extra updates required if state has changed
 				if ((self->Type == pTypeSecurity1) && (self->SubType == sTypeDomoticzSecurity) && (self->nValue != nValue))
 				{
@@ -997,31 +1016,40 @@ namespace Plugins {
 					{
 					case sStatusArmHome:
 					case sStatusArmHomeDelayed:
+						Py_BEGIN_ALLOW_THREADS
 						m_sql.UpdatePreferencesVar("SecStatus", SECSTATUS_ARMEDHOME);
 						m_mainworker.UpdateDomoticzSecurityStatus(SECSTATUS_ARMEDHOME);
+						Py_END_ALLOW_THREADS
 						break;
 					case sStatusArmAway:
 					case sStatusArmAwayDelayed:
+						Py_BEGIN_ALLOW_THREADS
 						m_sql.UpdatePreferencesVar("SecStatus", SECSTATUS_ARMEDAWAY);
 						m_mainworker.UpdateDomoticzSecurityStatus(SECSTATUS_ARMEDAWAY);
+						Py_END_ALLOW_THREADS
 						break;
 					case sStatusDisarm:
 					case sStatusNormal:
 					case sStatusNormalDelayed:
 					case sStatusNormalTamper:
 					case sStatusNormalDelayedTamper:
+						Py_BEGIN_ALLOW_THREADS
 						m_sql.UpdatePreferencesVar("SecStatus", SECSTATUS_DISARMED);
 						m_mainworker.UpdateDomoticzSecurityStatus(SECSTATUS_DISARMED);
+						Py_END_ALLOW_THREADS
 						break;
 					}
 				}
 
 				// Notify MQTT and various push mechanisms and notifications
+				Py_BEGIN_ALLOW_THREADS
 				m_mainworker.sOnDeviceReceived(self->pPlugin->m_HwdID, self->ID, self->pPlugin->m_Name, NULL);
 				m_notifications.CheckAndHandleNotification(DevRowIdx, self->HwdID, sDeviceID, sName, self->Unit, iType, iSubType, nValue, sValue);
 
 				// Trigger any associated scene / groups
 				m_mainworker.CheckSceneCode(DevRowIdx, (const unsigned char)self->Type, (const unsigned char)self->SubType, nValue, sValue, "Python");
+				Py_END_ALLOW_THREADS
+
 			}
 
 			CDevice_refresh(self);
@@ -1053,7 +1081,7 @@ namespace Plugins {
 				{
 					m_sql.safe_query("DELETE FROM DeviceStatus WHERE (HardwareID==%d) AND (Unit==%d)", self->HwdID, self->Unit);
 
-					PyObject*	pKey = PyLong_FromLong(self->Unit);
+					PyNewRef	pKey = PyLong_FromLong(self->Unit);
 					if (PyDict_DelItem((PyObject*)self->pPlugin->m_DeviceDict, pKey) == -1)
 					{
 						_log.Log(LOG_ERROR, "(%s) failed to delete unit '%d' from device dictionary.", self->pPlugin->m_Name.c_str(), self->Unit);
@@ -1082,6 +1110,7 @@ namespace Plugins {
 
 	PyObject * CDevice_touch(CDevice * self)
 	{
+		Py_BEGIN_ALLOW_THREADS
 		if ((self->pPlugin) && (self->HwdID != -1) && (self->Unit != -1))
 		{
 			self->pPlugin->SetHeartbeatReceived();
@@ -1093,7 +1122,7 @@ namespace Plugins {
 		{
 			_log.Log(LOG_ERROR, "Device touch failed, Device object is not associated with a plugin.");
 		}
-
+		Py_END_ALLOW_THREADS
 		return CDevice_refresh(self);
 	}
 
@@ -1189,7 +1218,7 @@ namespace Plugins {
 					return nullptr;
 				}
 
-				self->Parent = Py_None;
+				self->Parent = (CConnection *)Py_None;
 				Py_INCREF(Py_None);
 
 				self->pPlugin = nullptr;
@@ -1266,7 +1295,7 @@ namespace Plugins {
 				{
 					Py_XDECREF(self->Protocol);
 					self->Protocol = PyUnicode_FromString(pProtocol);
-					self->pPlugin->MessagePlugin(new ProtocolDirective(self->pPlugin, (PyObject*)self));
+					self->pPlugin->MessagePlugin(new ProtocolDirective(self->pPlugin, self));
 				}
 			}
 			else
@@ -1290,7 +1319,7 @@ namespace Plugins {
 		return 0;
 	}
 
-	PyObject * CConnection_connect(CConnection * self)
+	PyObject *CConnection_connect(CConnection *self, PyObject *args, PyObject *kwds)
 	{
 		Py_INCREF(Py_None);
 
@@ -1319,7 +1348,20 @@ namespace Plugins {
 			return Py_None;
 		}
 
-		self->pPlugin->MessagePlugin(new ConnectDirective(self->pPlugin, (PyObject*)self));
+		int iTimeout = 0;
+		static char *kwlist[] = { "Timeout", NULL };
+		if (PyArg_ParseTupleAndKeywords(args, kwds, "|I", kwlist, &iTimeout))
+		{
+			if (!iTimeout || (iTimeout > 199))
+			{
+				self->Timeout = iTimeout;
+				self->pPlugin->MessagePlugin(new ConnectDirective(self->pPlugin, self));
+			}
+			else
+			{
+				_log.Log(LOG_ERROR, "Timeout parameter ignored, must be zero or greater than 250 milliseconds.");
+			}
+		}
 
 		return Py_None;
 	}
@@ -1353,7 +1395,7 @@ namespace Plugins {
 			return Py_None;
 		}
 
-		self->pPlugin->MessagePlugin(new ListenDirective(self->pPlugin, (PyObject*)self));
+		self->pPlugin->MessagePlugin(new ListenDirective(self->pPlugin, self));
 
 		return Py_None;
 	}
@@ -1381,7 +1423,7 @@ namespace Plugins {
 			else
 			{
 				//	Add start command to message queue
-				self->pPlugin->MessagePlugin(new WriteDirective(self->pPlugin, (PyObject*)self, pData, iDelay));
+				self->pPlugin->MessagePlugin(new WriteDirective(self->pPlugin, self, pData, iDelay));
 			}
 		}
 
@@ -1395,7 +1437,7 @@ namespace Plugins {
 		{
 			if (self->pTransport->IsConnecting() || self->pTransport->IsConnected())
 			{
-				self->pPlugin->MessagePlugin(new DisconnectDirective(self->pPlugin, (PyObject*)self));
+				self->pPlugin->MessagePlugin(new DisconnectDirective(self->pPlugin, self));
 			}
 			else
 				_log.Log(LOG_ERROR, "%s, disconnection request from '%s' ignored. Transport is not connecting or connected.", __func__, self->pPlugin->m_Name.c_str());
@@ -1457,7 +1499,7 @@ namespace Plugins {
 	PyObject * CConnection_str(CConnection * self)
 	{
 		std::string		sParent = "None";
-		if (self->Parent != Py_None)
+		if (((PyObject *)self->Parent) != Py_None)
 		{
 			sParent = PyUnicode_AsUTF8(((CConnection*)self->Parent)->Name);
 		}
@@ -1469,14 +1511,14 @@ namespace Plugins {
 			localtime_r(&tLastSeen, &ltime);
 			char date[32];
 			strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", &ltime);
-			PyObject*	pRetVal = PyUnicode_FromFormat("Name: '%U', Transport: '%U', Protocol: '%U', Address: '%U', Port: '%U', Baud: %d, Bytes: %d, Connected: %s, Last Seen: %s, Parent: '%s'",
-				self->Name, self->Transport, self->Protocol, self->Address, self->Port, self->Baud,
+			PyObject*	pRetVal = PyUnicode_FromFormat("Name: '%U', Transport: '%U', Protocol: '%U', Address: '%U', Port: '%U', Baud: %d, Timeout: %d, Bytes: %d, Connected: %s, Last Seen: %s, Parent: '%s'",
+				self->Name, self->Transport, self->Protocol, self->Address, self->Port, self->Baud, self->Timeout,
 				(self->pTransport ? self->pTransport->TotalBytes() : -1),
 				(self->pTransport ? (self->pTransport->IsConnected() ? "True" : "False") : "False"), date, sParent.c_str());
 			return pRetVal;
 		}
-		PyObject *pRetVal = PyUnicode_FromFormat("Name: '%U', Transport: '%U', Protocol: '%U', Address: '%U', Port: '%U', Baud: %d, Connected: False, Parent: '%s'", self->Name,
-							 self->Transport, self->Protocol, self->Address, self->Port, self->Baud, sParent.c_str());
+		PyObject *pRetVal = PyUnicode_FromFormat("Name: '%U', Transport: '%U', Protocol: '%U', Address: '%U', Port: '%U', Baud: %d, Timeout: %d, Connected: False, Parent: '%s'", self->Name,
+							 self->Transport, self->Protocol, self->Address, self->Port, self->Baud, self->Timeout, sParent.c_str());
 		return pRetVal;
 	}
 

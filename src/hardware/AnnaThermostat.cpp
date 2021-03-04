@@ -98,7 +98,7 @@ bool CAnnaThermostat::StartHardware()
 	RequestStart();
 	Init();
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&CAnnaThermostat::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	m_bIsStarted = true;
 	sOnConnected(this);
@@ -668,7 +668,7 @@ void CAnnaThermostat::GetMeterDetails()
 				else strncpy(sPreset, "50", sizeof(sPreset));
 
 				std::string PresetName = "Anna Preset";
-				SendSelectorSwitch(sAnnaPresets, 1, sPreset, PresetName, 16, false, ANNA_LEVEL_NAMES, ANNA_LEVEL_ACTIONS, true, m_Name.c_str());
+				SendSelectorSwitch(sAnnaPresets, 1, sPreset, PresetName, 16, false, ANNA_LEVEL_NAMES, ANNA_LEVEL_ACTIONS, true, m_Name);
 			}
 		}
 		pAppliance = pAppliance->NextSiblingElement("appliance");

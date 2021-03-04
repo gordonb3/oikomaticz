@@ -72,11 +72,11 @@ bool C1Wire::StartHardware()
 
 	// Start worker thread
 	if (m_sensorThreadPeriod != 0) {
-		m_threadSensors = std::make_shared<std::thread>(&C1Wire::SensorThread, this);
+		m_threadSensors = std::make_shared<std::thread>([this] { SensorThread(); });
 		SetThreadName(m_threadSensors->native_handle(), "1WireSensors");
 	}
 	if (m_switchThreadPeriod != 0) {
-		m_threadSwitches = std::make_shared<std::thread>(&C1Wire::SwitchThread, this);
+		m_threadSwitches = std::make_shared<std::thread>([this] { SwitchThread(); });
 		SetThreadName(m_threadSwitches->native_handle(), "1WireSwitches");
 	}
 	m_bIsStarted = true;
@@ -506,7 +506,7 @@ void C1Wire::ReportCounter(const std::string& deviceId, const int unit, const un
 	unsigned char deviceIdByteArray[DEVICE_ID_SIZE] = { 0 };
 	DeviceIdToByteArray(deviceId, deviceIdByteArray);
 
-	SendMeterSensor(deviceIdByteArray[0], deviceIdByteArray[1] + unit, 255, (const float)counter / 1000.0f, "Counter");
+	SendMeterSensor(deviceIdByteArray[0], deviceIdByteArray[1] + unit, 255, (const float)counter / 1000.0F, "Counter");
 }
 
 void C1Wire::ReportVoltage(const std::string& /*deviceId*/, const int unit, const int voltage)

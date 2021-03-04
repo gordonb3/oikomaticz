@@ -6,7 +6,6 @@
 
 #ifdef ENABLE_PYTHON
 #include "PythonObjects.h"
-#endif
 
 #ifndef byte
 typedef unsigned char byte;
@@ -65,9 +64,9 @@ namespace Plugins {
 	  ~CPlugin() override;
 
 	  int PollInterval(int Interval = -1);
-	  void *PythonModule()
+	  PyObject*	PythonModule()
 	  {
-		  return m_PyModule;
+		  return (PyObject*)m_PyModule;
 	  };
 	  void Notifier(const std::string &Notifier = "");
 	  void AddConnection(CPluginTransport *);
@@ -83,7 +82,7 @@ namespace Plugins {
 	  void ConnectionWrite(CDirectiveBase *);
 	  void ConnectionDisconnect(CDirectiveBase *);
 	  void DisconnectEvent(CEventBase *);
-	  void Callback(const std::string &sHandler, void *pParams);
+	  void Callback(PyObject* pTarget, const std::string &sHandler, PyObject *pParams);
 	  void RestoreThread();
 	  void ReleaseThread();
 	  void Stop();
@@ -132,10 +131,85 @@ namespace Plugins {
 	//
 //	Holds per plugin state details, specifically plugin object, read using PyModule_GetState(PyObject *module)
 //
-#ifdef ENABLE_PYTHON
 	struct module_state {
 		CPlugin* pPlugin;
 		PyObject* error;
+		PyTypeObject*	pDeviceClass;
 	};
-#endif
-}
+
+	//
+	//	Controls lifetime of Python Objects to ensure they always release
+	//
+	class PyBorrowedRef
+	{
+	      protected:
+		PyObject *m_pObject;
+
+	      public:
+		PyBorrowedRef()
+			: m_pObject(NULL){};
+		PyBorrowedRef(PyObject *pObject)
+		{
+			m_pObject = pObject;
+		};
+		operator PyObject *() const
+		{
+			return m_pObject;
+		}
+		operator PyTypeObject *() const
+		{
+			return (PyTypeObject *)m_pObject;
+		}
+		operator PyBytesObject *() const
+		{
+			return (PyBytesObject *)m_pObject;
+		}
+		operator bool() const
+		{
+			return (m_pObject != NULL);
+		}
+		PyObject **operator&()
+		{
+			return &m_pObject;
+		};
+		PyObject *operator->()
+		{
+			return m_pObject;
+		};
+		void operator=(PyObject *pObject)
+		{
+			m_pObject = pObject;
+		}
+		~PyBorrowedRef()
+		{
+			m_pObject = NULL;
+		};
+	};
+
+	class PyNewRef : public PyBorrowedRef
+	{
+	      public:
+		PyNewRef()
+			: PyBorrowedRef(){};
+		PyNewRef(PyObject *pObject)
+			: PyBorrowedRef(pObject){};
+		void operator=(PyObject *pObject)
+		{
+			if (m_pObject)
+			{
+				Py_XDECREF(m_pObject);
+			}
+			m_pObject = pObject;
+		}
+		~PyNewRef()
+		{
+			if (m_pObject)
+			{
+				// Py_CLEAR(m_pObject);  // Need to look into using clear more broadly
+				Py_XDECREF(m_pObject);
+			}
+		};
+	};
+} // namespace Plugins
+#endif // ENABLE_PYTHON
+

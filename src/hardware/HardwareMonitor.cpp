@@ -112,7 +112,7 @@ bool CHardwareMonitor::StartHardware()
 #endif
 
 	m_lastquerytime = 0;
-	m_thread = std::make_shared<std::thread>(&CHardwareMonitor::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	m_bIsStarted = true;
 	sOnConnected(this);
@@ -268,7 +268,7 @@ void CHardwareMonitor::GetInternalARMClockSpeed()
 
 	Debug(DEBUG_NORM,"Updating sensor with value %.2f",ArmClockSpeed);
 
-	SendCustomSensor(0, 1, 255, ArmClockSpeed, "Arm Clock Speed","Mhz");
+	SendCustomSensor(0, 1, 255, ArmClockSpeed, "Arm Clock Speed","MHz");
 }
 
 void CHardwareMonitor::GetInternalV3DClockSpeed()
@@ -299,7 +299,7 @@ void CHardwareMonitor::GetInternalV3DClockSpeed()
 
 	Debug(DEBUG_NORM,"Updating sensor with value %.2f",V3DClockSpeed);
 
-	SendCustomSensor(0, 2, 255, V3DClockSpeed, "V3D Clock Speed","Mhz");
+	SendCustomSensor(0, 2, 255, V3DClockSpeed, "V3D Clock Speed","MHz");
 }
 
 void CHardwareMonitor::GetInternalCoreClockSpeed()
@@ -330,7 +330,7 @@ void CHardwareMonitor::GetInternalCoreClockSpeed()
 
 	Debug(DEBUG_NORM,"Updating sensor with value %.2f",CoreClockSpeed);
 
-	SendCustomSensor(0, 3, 255, CoreClockSpeed, "Core Clock Speed","Mhz");
+	SendCustomSensor(0, 3, 255, CoreClockSpeed, "Core Clock Speed","MHz");
 }
 
 void CHardwareMonitor::GetInternalVoltage()
@@ -740,7 +740,7 @@ void CHardwareMonitor::RunWMIQuery(const char* qTable, const std::string &qType)
 			// ignore rest of the line
 			mfile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
-		return (VmRSS + VmSwap) / 1000.f;
+		return (VmRSS + VmSwap) / 1000.F;
 	}
 #endif
 
@@ -775,7 +775,7 @@ void CHardwareMonitor::RunWMIQuery(const char* qTable, const std::string &qType)
 			mfile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 		unsigned long MemUsed = MemTotal - MemFree - MemBuffers - MemCached;
-		float memusedpercentage = (100.0f / float(MemTotal))*MemUsed;
+		float memusedpercentage = (100.0F / float(MemTotal)) * MemUsed;
 		return memusedpercentage;
 	}
 
@@ -836,7 +836,7 @@ void CHardwareMonitor::FetchUnixMemory()
 		if (ret != 0)
 			return;
 		unsigned long usedram = mySysInfo.totalram - mySysInfo.freeram;
-		memusedpercentage = (100.0f / float(mySysInfo.totalram))*usedram;
+		memusedpercentage = (100.0F / float(mySysInfo.totalram)) * usedram;
 #endif
 	}
 #endif
@@ -983,8 +983,8 @@ void CHardwareMonitor::FetchUnixDisk()
 			char dname[200];
 			char suse[30];
 			char smountpoint[300];
-			long numblock, usedblocks, availblocks;
-			int ret = sscanf(ittDF.c_str(), "%s\t%ld\t%ld\t%ld\t%s\t%s\n", dname, &numblock, &usedblocks, &availblocks, suse, smountpoint);
+			long long numblock, usedblocks, availblocks;
+			int ret = sscanf(ittDF.c_str(), "%s\t%lld\t%lld\t%lld\t%s\t%s\n", dname, &numblock, &usedblocks, &availblocks, suse, smountpoint);
 			if (ret == 6)
 			{
 				std::map<std::string, std::string>::iterator it = _dmounts_.find(dname);

@@ -11,8 +11,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-using namespace boost::placeholders;
-
 #define RETRY_DELAY 30
 
 #define CLIENTID	"Domoticz"
@@ -20,12 +18,14 @@ using namespace boost::placeholders;
 #define TOPIC_IN	"domoticz/in"
 #define QOS         1
 
-const char* szTLSVersions[3] =
+namespace
 {
-	"tlsv1",
-	"tlsv1.1",
-	"tlsv1.2"
-};
+	constexpr std::array<const char *, 3> szTLSVersions{
+		"tlsv1",   //
+		"tlsv1.1", //
+		"tlsv1.2", //
+	};
+} // namespace
 
 MQTT::MQTT(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const std::string &Username, const std::string &Password, const std::string &CAfilenameExtra,
 	   const int TLS_Version, const int PublishScheme, const std::string &MQTTClientID, const bool PreventLoop)
@@ -84,7 +84,7 @@ bool MQTT::StartHardware()
 	m_LastUpdatedSceneRowIdx = 0;
 
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&MQTT::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 
 	StartHeartbeatThread();
@@ -153,8 +153,8 @@ void MQTT::on_connect(int rc)
 			_log.Log(LOG_STATUS, "MQTT: connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 			m_IsConnected = true;
 			sOnConnected(this);
-			m_sDeviceReceivedConnection = m_mainworker.sOnDeviceReceived.connect(boost::bind(&MQTT::SendDeviceInfo, this, _1, _2, _3, _4));
-			m_sSwitchSceneConnection = m_mainworker.sOnSwitchScene.connect(boost::bind(&MQTT::SendSceneInfo, this, _1, _2));
+			m_sDeviceReceivedConnection = m_mainworker.sOnDeviceReceived.connect([this](auto id, auto idx, auto &&name, auto cmd) { SendDeviceInfo(id, idx, name, cmd); });
+			m_sSwitchSceneConnection = m_mainworker.sOnSwitchScene.connect([this](auto scene, auto &&name) { SendSceneInfo(scene, name); });
 		}
 		subscribe(nullptr, m_TopicIn.c_str());
 	}
@@ -329,7 +329,7 @@ void MQTT::on_message(const struct mosquitto_message* message)
 			}
 
 			int ival = 100;
-			float brightnessAdj = 1.0f;
+			float brightnessAdj = 1.0F;
 
 			if (!root["color"].empty())
 			{
@@ -340,7 +340,7 @@ void MQTT::on_message(const struct mosquitto_message* message)
 					float hsb[3];
 					int r, g, b;
 					rgb2hsb(color.r, color.g, color.b, hsb);
-					hsb2rgb(hsb[0] * 360.0f, hsb[1], 1.0f, r, g, b, 255);
+					hsb2rgb(hsb[0] * 360.0F, hsb[1], 1.0F, r, g, b, 255);
 					color.r = (uint8_t)r;
 					color.g = (uint8_t)g;
 					color.b = (uint8_t)b;
@@ -367,7 +367,7 @@ void MQTT::on_message(const struct mosquitto_message* message)
 					int tr, tg, tb; // tmp of 'int' type so can be passed as references to hsb2rgb
 					rgb2hsb(r, g, b, hsb);
 					// Normalize RGB to full brightness
-					hsb2rgb(hsb[0] * 360.0f, hsb[1], 1.0f, tr, tg, tb, 255);
+					hsb2rgb(hsb[0] * 360.0F, hsb[1], 1.0F, tr, tg, tb, 255);
 					r = (uint8_t)tr;
 					g = (uint8_t)tg;
 					b = (uint8_t)tb;
@@ -401,9 +401,9 @@ void MQTT::on_message(const struct mosquitto_message* message)
 
 				//convert hue to RGB
 				float iHue = float(atof(hue.c_str()));
-				float iSat = 100.0f;
+				float iSat = 100.0F;
 				if (!sat.empty()) iSat = float(atof(sat.c_str()));
-				hsb2rgb(iHue, iSat / 100.0f, 1.0f, r, g, b, 255);
+				hsb2rgb(iHue, iSat / 100.0F, 1.0F, r, g, b, 255);
 
 				color = _tColor((uint8_t)r, (uint8_t)g, (uint8_t)b, 0, 0, ColorModeRGB);
 				if (iswhite == "true") color.mode = ColorModeWhite;
@@ -482,8 +482,23 @@ void MQTT::on_message(const struct mosquitto_message* message)
 		}
 		else if (szCommand == "sendnotification")
 		{
-			std::string subject, body, sound;
+			uint64_t idx=0;
+			std::string name, subject, body, extradata, sound;
+			std::string subsystems=NOTIFYALL;
+			bool bfromnotification=true;
 			int priority = 0;
+			if (!root["idx"].empty())
+			{
+				idx = root["idx"].asUInt64();
+			}
+			if (!root["name"].empty())
+			{
+				name = root["name"].asString();
+			}
+			if (!root["subsystems"].empty())
+			{
+				subsystems = root["subsystems"].asString();
+			}
 			if (!root["subject"].empty())
 			{
 				subject = root["subject"].asString();
@@ -491,6 +506,10 @@ void MQTT::on_message(const struct mosquitto_message* message)
 			if (!root["body"].empty())
 			{
 				body = root["body"].asString();
+			}
+			if (!root["extradata"].empty())
+			{
+				extradata = root["extradata"].asString();
 			}
 			if (!root["priority"].empty())
 			{
@@ -500,7 +519,11 @@ void MQTT::on_message(const struct mosquitto_message* message)
 			{
 				sound = root["sound"].asString();
 			}
-			m_notifications.SendMessageEx(0, std::string(""), NOTIFYALL, subject, body, std::string(""), priority, sound, true);
+			if (!root["bfromnotification"].empty())
+			{
+				bfromnotification = root["bfromnotification"].asBool();
+			}
+			m_notifications.SendMessageEx(idx, name, subsystems, subject, body, extradata, priority, sound, bfromnotification);
 		}
 		else if (szCommand == "getdeviceinfo")
 		{
@@ -561,8 +584,9 @@ bool MQTT::ConnectIntEx()
 	int keepalive = 40;
 
 	if (!m_CAFilename.empty()) {
-		rc = tls_opts_set(SSL_VERIFY_PEER, szTLSVersions[m_TLS_Version], nullptr);
+		rc = tls_opts_set(SSL_VERIFY_NONE, szTLSVersions[m_TLS_Version], nullptr);
 		rc = tls_set(m_CAFilename.c_str());
+		rc = tls_insecure_set(true);
 
 		if (rc != MOSQ_ERR_SUCCESS)
 		{

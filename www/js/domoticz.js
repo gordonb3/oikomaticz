@@ -1424,11 +1424,11 @@ function ShowMediaRemote(Name, devIdx, HWType) {
 	var vBox = $(svgId).prop("viewBox").baseVal;
 	var svgRatio = (vBox.width - vBox.x) / (vBox.height - vBox.y);
 	var dheight = $(window).height() * 0.85;
-	var dwidth = dheight * svgRatio;
+	var dwidth = dheight * svgRatio ;
 	// for v2.0, if screen is wide enough add room to show media at the side of the remote
 	$(divId).dialog({
 		resizable: false,
-		show: "blind",
+		//show: "blind", // effects are causing issue with changing the height during the animation
 		hide: "blind",
 		width: dwidth,
 		height: dheight,
@@ -1441,6 +1441,79 @@ function ShowMediaRemote(Name, devIdx, HWType) {
 			$(divId).attr("HardwareType", HWType);
 			$(svgId).css("-ms-overflow-style", "none");
 			$(divId).bind('touchstart', function () { });
+			if ( HWType.indexOf('Panasonic') >= 0) {
+				// Here is a little painful because we need to get hardware id  first...
+				$.ajax({
+					url: "json.htm?type=devices&rid=" + devIdx,
+					async: true,
+					dataType: 'json',
+					success: function (data) { 
+						hwId = data.result[0].HardwareID;
+						$.ajax({
+							url: "json.htm?type=hardware",
+							async: true,
+							dataType: 'json',
+							success: function (data) { 
+								// Need to iterate over all hardware to find the good one
+								for(var i in data.result) {
+									var hw = data.result[i];
+									if (hw.idx == hwId) {
+										if (hw.Extra !== null && hw.Extra !== '') {
+											// We finally have the custombuttons string, process!
+											var bspacing = 20;
+											var bvspacing = 20;
+											var bheight = 100;
+											var bindex = 0;
+											// Reset buttons
+											$("#MediaRemote-custom-buttons").html('');
+											$(svgId).prop("viewBox").baseVal.height = 1875;
+											// Loop lines
+											hw.Extra.split(';').forEach(function (line) {
+												// Add line
+												var vBox = $(svgId).prop("viewBox").baseVal;
+												var bvline = vBox.y + vBox.height +  bvspacing;
+												$(svgId).prop("viewBox").baseVal.height = vBox.height + bheight + bvspacing;
+												var buttons = line.split(',');
+												var bwidth = (vBox.width + bspacing) / buttons.length - bspacing; 
+												// Loop buttons
+												buttons.forEach(function (val, index) {
+													var tokens = val.split(':');
+													var btitle = tokens[0];
+													var bcommand = tokens[1];
+													var buttonSVG = "";
+													bindex++;
+													bx = $(svgId).prop("viewBox").baseVal.x + index * (bwidth+bspacing);
+													// Button shadow
+													buttonSVG += '<rect id="toto" class="remoteshadow" x="'+bx+'" y="'+(bvline+10)+'" width="'+bwidth+'" height="'+bheight+'" rx="50" ry="50"></rect>';
+													// Button 
+													buttonSVG += '<rect class="remotehoverable" fill="url(#grad1)" x="'+bx+'" y="'+(bvline)+'" width="'+bwidth+'" height="'+bheight+'"  rx="50" ry="50" ';
+													buttonSVG += 'onclick="javascript: click_media_remote(\'' + bcommand + '\');" ';
+													buttonSVG += '><title id="dialog-media-remote-opt1-title">' + btitle + '</title></rect>';
+													// Button text
+													buttonSVG += '<text text-anchor="middle" x="'+(bx+bwidth/2)+'" y="'+(bvline+bheight*0.55)+'" class="remotetext" ';
+													buttonSVG += 'fill="black"  style="font-size: 60px; font-weight: bold;">' + btitle + '</text>';
+													// Add button
+													$("#MediaRemote-custom-buttons").append(buttonSVG);
+												});
+											});
+
+											// Refresh SVG
+											$(svgId).parent().html($(svgId).parent().html());
+											// Ajust dialog width
+											var vBox = $(svgId).prop("viewBox").baseVal;
+											var svgRatio = (vBox.width - vBox.x) / (vBox.height - vBox.y);
+											var dheight = $(window).height() * 0.85;
+											var dwidth = dheight * svgRatio;
+											$(divId).dialog( "option", "width", dwidth);
+											$(divId).dialog( "option", "height", dheight);
+										}
+									}
+								}
+							}
+						});
+					}
+				});
+			}
 		},
 		close: function () {
 			if (typeof $.myglobals.refreshTimer != 'undefined') {
@@ -5791,337 +5864,6 @@ function GetGraphUnit(uname) {
 		return 'kWh';
 
 	return '?';
-}
-
-function ShowSmartLog(contentdiv, backfunction, id, name, switchtype) {
-	clearInterval($.myglobals.refreshTimer);
-	$(window).scrollTop(0);
-	$('#modal').show();
-	$.content = contentdiv;
-	$.backfunction = backfunction;
-	$.devIdx = id;
-	$.devName = name;
-	$.devSwitchType = switchtype;
-
-	var htmlcontent = $('#dayweekmonthyearlog').html();
-
-	$.costsT1 = 0.2389;
-	$.costsT2 = 0.2389;
-	$.costsR1 = 0.08;
-	$.costsR2 = 0.08;
-	$.costsGas = 0.6218;
-	$.costsWater = 1.6473;
-
-	$.ajax({
-		url: "json.htm?type=command&param=getcosts&idx=" + $.devIdx,
-		async: false,
-		dataType: 'json',
-		success: function (data) {
-			$.costsT1 = parseFloat(data.CostEnergy) / 10000;
-			$.costsT2 = parseFloat(data.CostEnergyT2) / 10000;
-			$.costsR1 = parseFloat(data.CostEnergyR1) / 10000;
-			$.costsR2 = parseFloat(data.CostEnergyR2) / 10000;
-			$.costsGas = parseFloat(data.CostGas) / 10000;
-			$.costsWater = parseFloat(data.CostWater) / 10000;
-			$.CounterT1 = parseFloat(data.CounterT1);
-			$.CounterT2 = parseFloat(data.CounterT2);
-			$.CounterR1 = parseFloat(data.CounterR1);
-			$.CounterR2 = parseFloat(data.CounterR2);
-		}
-	});
-
-	$.monthNames = ["January", "February", "March", "April", "May", "June",
-		"July", "August", "September", "October", "November", "December"];
-
-	var d = new Date();
-	var actMonth = d.getMonth() + 1;
-	var actYear = d.getYear() + 1900;
-
-	$($.content).html(htmlcontent);
-	$($.content).i18n();
-
-	$.DayChart = $($.content + ' #daygraph');
-	$.DayChart.highcharts({
-		chart: {
-			type: 'spline',
-			zoomType: 'x',
-			resetZoomButton: {
-				position: {
-					x: -30,
-					y: -36
-				}
-			},
-			events: {
-				load: function () {
-					$.getJSON("json.htm?type=graph&sensor=counter&idx=" + id + "&range=day",
-						function (data) {
-							if (typeof data.result != 'undefined') {
-								AddDataToUtilityChart(data, $.DayChart, switchtype);
-								$.DayChart.highcharts().redraw();
-							}
-						});
-				}
-			}
-		},
-		title: {
-			text: Get5MinuteHistoryDaysGraphTitle()
-		},
-		xAxis: {
-			type: 'datetime'
-		},
-		yAxis: [{
-			title: {
-				text: $.t('Energy') + ' (Wh)'
-			},
-			min: 0
-		},
-		{
-			title: {
-				text: $.t('Power') + ' (Watt)'
-			},
-			min: 0,
-			opposite: true
-		}],
-		tooltip: {
-			crosshairs: true,
-			shared: true
-		},
-		plotOptions: {
-			series: {
-				point: {
-					events: {
-						click: function (event) {
-							chartPointClickNewEx(event, true, ShowSmartLog);
-						}
-					}
-				}
-			},
-			spline: {
-				lineWidth: 3,
-				states: {
-					hover: {
-						lineWidth: 3
-					}
-				},
-				marker: {
-					enabled: false,
-					states: {
-						hover: {
-							enabled: true,
-							symbol: 'circle',
-							radius: 5,
-							lineWidth: 1
-						}
-					}
-				}
-			}
-		},
-		legend: {
-			enabled: true
-		}
-	});
-
-	$.WeekChart = $($.content + ' #weekgraph');
-	$.WeekChart.highcharts({
-		chart: {
-			type: 'column',
-			marginRight: 10,
-			events: {
-				load: function () {
-					$.getJSON("json.htm?type=graph&sensor=counter&idx=" + id + "&range=week",
-						function (data) {
-							if (typeof data.result != 'undefined') {
-								AddDataToUtilityChart(data, $.WeekChart, switchtype);
-								$.WeekChart.highcharts().redraw();
-							}
-						});
-				}
-			}
-		},
-		title: {
-			text: $.t('Last Week')
-		},
-		xAxis: {
-			type: 'datetime',
-			dateTimeLabelFormats: {
-				day: '%a'
-			},
-			tickInterval: 24 * 3600 * 1000
-		},
-		yAxis: {
-			title: {
-				text: $.t('Energy') + ' (kWh)'
-			},
-			min: 0
-		},
-		tooltip: {
-			formatter: function () {
-				var unit = GetGraphUnit(this.series.name);
-				return $.t(Highcharts.dateFormat('%A', this.x)) + ' ' + Highcharts.dateFormat('%Y-%m-%d', this.x) + '<br/>' + $.t(this.series.name) + ': ' + this.y + ' ' + unit + '<br/>Total: ' + this.point.stackTotal + ' ' + unit;
-			}
-		},
-		plotOptions: {
-			column: {
-				stacking: 'normal',
-				minPointLength: 4,
-				pointPadding: 0.1,
-				groupPadding: 0
-			}
-		},
-		legend: {
-			enabled: true
-		}
-	});
-
-	$.MonthChart = $($.content + ' #monthgraph');
-	$.MonthChart.highcharts({
-		chart: {
-			type: 'spline',
-			marginRight: 10,
-			zoomType: 'x',
-			resetZoomButton: {
-				position: {
-					x: -30,
-					y: -36
-				}
-			},
-			events: {
-				load: function () {
-					$.getJSON("json.htm?type=graph&sensor=counter&idx=" + id + "&range=month",
-						function (data) {
-							if (typeof data.result != 'undefined') {
-								AddDataToUtilityChart(data, $.MonthChart, switchtype);
-								$.MonthChart.highcharts().redraw();
-							}
-						});
-				}
-			}
-		},
-		title: {
-			text: $.t('Last Month')
-		},
-		xAxis: {
-			type: 'datetime'
-		},
-		yAxis: {
-			title: {
-				text: $.t('Energy') + ' (kWh)'
-			},
-			min: 0
-		},
-		tooltip: {
-			crosshairs: true,
-			shared: true
-		},
-		plotOptions: {
-			series: {
-				point: {
-					events: {
-						click: function (event) {
-							chartPointClickNewEx(event, false, ShowSmartLog);
-						}
-					}
-				}
-			},
-			spline: {
-				lineWidth: 3,
-				states: {
-					hover: {
-						lineWidth: 3
-					}
-				},
-				marker: {
-					enabled: false,
-					states: {
-						hover: {
-							enabled: true,
-							symbol: 'circle',
-							radius: 5,
-							lineWidth: 1
-						}
-					}
-				}
-			}
-		},
-		legend: {
-			enabled: true
-		}
-	});
-
-	$.YearChart = $($.content + ' #yeargraph');
-	$.YearChart.highcharts({
-		chart: {
-			type: 'spline',
-			marginRight: 10,
-			zoomType: 'x',
-			resetZoomButton: {
-				position: {
-					x: -30,
-					y: -36
-				}
-			},
-			events: {
-				load: function () {
-					$.getJSON("json.htm?type=graph&sensor=counter&idx=" + id + "&range=year",
-						function (data) {
-							if (typeof data.result != 'undefined') {
-								AddDataToUtilityChart(data, $.YearChart, switchtype);
-								$.YearChart.highcharts().redraw();
-							}
-						});
-				}
-			}
-		},
-		title: {
-			text: $.t('Last Year')
-		},
-		xAxis: {
-			type: 'datetime'
-		},
-		yAxis: {
-			title: {
-				text: $.t('Energy') + ' (kWh)'
-			},
-			min: 0
-		},
-		tooltip: {
-			crosshairs: true,
-			shared: true
-		},
-		plotOptions: {
-			series: {
-				point: {
-					events: {
-						click: function (event) {
-							chartPointClickNewEx(event, false, ShowSmartLog);
-						}
-					}
-				}
-			},
-			spline: {
-				lineWidth: 3,
-				states: {
-					hover: {
-						lineWidth: 3
-					}
-				},
-				marker: {
-					enabled: false,
-					states: {
-						hover: {
-							enabled: true,
-							symbol: 'circle',
-							radius: 5,
-							lineWidth: 1
-						}
-					}
-				}
-			}
-		},
-		legend: {
-			enabled: true
-		}
-	});
 }
 
 function addLeadingZeros(n, length) {

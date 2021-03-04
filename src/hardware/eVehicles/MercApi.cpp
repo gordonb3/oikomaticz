@@ -32,7 +32,6 @@ License: Public domain
 // so use the following 5 scope's: mb:vehicle:mbdata:vehiclestatus mb:vehicle:mbdata:fuelstatus mb:vehicle:mbdata:payasyoudrive mb:vehicle:mbdata:vehiclelock mb:vehicle:mbdata:evstatus
 // and we need the additional scope to get a refresh token: offline_access
 #define MERC_URL_AUTH "https://id.mercedes-benz.com"
-#define MERC_API_AUTH "as/authorization.oauth2"
 #define MERC_API_TOKEN "/as/token.oauth2"
 #define MERC_URL "https://api.mercedes-benz.com"
 #define MERC_API "/vehicledata/v2/vehicles"
@@ -58,12 +57,14 @@ CMercApi::CMercApi(const std::string &username, const std::string &password, con
 	m_config.car_name = "";
 	m_config.unit_miles = false;
 	m_config.distance_unit = "km";
+	m_config.home_latitude = 0;
+	m_config.home_longitude = 0;
 
 	m_crc = 0;
 	m_fields = "";
 	m_fieldcnt = -1;
 
-	m_capabilities.has_battery_level = false;
+	m_capabilities.has_battery_level = true;
 	m_capabilities.has_charge_command = false;
 	m_capabilities.has_climate_command = false;
 	m_capabilities.has_defrost_command = false;
@@ -73,7 +74,8 @@ CMercApi::CMercApi(const std::string &username, const std::string &password, con
 	m_capabilities.has_lock_status = true;
 	m_capabilities.has_charge_limit = false;
 	m_capabilities.has_custom_data = true;
-	m_capabilities.sleep_interval = 0;
+	m_capabilities.seconds_to_sleep = 0;
+	m_capabilities.minimum_poll_interval = 60;
 
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query("SELECT ID, Value FROM UserVariables WHERE (Name=='%q')", m_uservar_refreshtoken.c_str());
@@ -181,12 +183,14 @@ bool CMercApi::GetLocationData(tLocationData& data)
 
 void CMercApi::GetLocationData(Json::Value& jsondata, tLocationData& data)
 {
+	/*
 	std::string CarLatitude = jsondata["latitude"].asString();
 	std::string CarLongitude = jsondata["longitude"].asString();
 	data.speed = jsondata["speed"].asInt();
 	data.is_driving = data.speed > 0;
 	data.latitude = std::stod(CarLatitude);
 	data.longitude = std::stod(CarLongitude);
+	*/
 }
 
 bool CMercApi::GetChargeData(CVehicleApi::tChargeData& data)
@@ -196,6 +200,7 @@ bool CMercApi::GetChargeData(CVehicleApi::tChargeData& data)
 
 	if (GetData("electricvehicle", reply))
 	{
+		data.battery_level = 255.0F;	// Initialize at 'no reading'
 		if (reply.empty())
 		{
 			bData = true;	// This occurs when the API call return a 204 (No Content). So everything is valid/ok, just no data
@@ -211,6 +216,14 @@ bool CMercApi::GetChargeData(CVehicleApi::tChargeData& data)
 				GetChargeData(reply, data);
 				bData = true;
 			}
+		}
+	}
+	else
+	{
+		if (m_httpresultcode == 403)
+		{
+			_log.Log(LOG_STATUS, "Access has been denied to the ElectricVehicle data!");
+			bData = true;	// We should see if we can continue with the rest
 		}
 	}
 
@@ -274,10 +287,12 @@ bool CMercApi::GetClimateData(tClimateData& data)
 
 void CMercApi::GetClimateData(Json::Value& jsondata, tClimateData& data)
 {
+	/*
 	data.inside_temp = jsondata["inside_temp"].asFloat();
 	data.outside_temp = jsondata["outside_temp"].asFloat();
 	data.is_climate_on = jsondata["is_climate_on"].asBool();
 	data.is_defrost_on = (jsondata["defrost_mode"].asInt() != 0);
+	*/
 }
 
 bool CMercApi::GetVehicleData(tVehicleData& data)
@@ -304,6 +319,14 @@ bool CMercApi::GetVehicleData(tVehicleData& data)
 			}
 		}
 	}
+	else
+	{
+		if (m_httpresultcode == 403)
+		{
+			_log.Log(LOG_STATUS, "Access has been denied to the VehicleLockStatus data!");
+			bData = true;	// We should see if we can continue with the rest
+		}
+	}
 
 	reply.clear();
 
@@ -326,6 +349,14 @@ bool CMercApi::GetVehicleData(tVehicleData& data)
 			}
 		}
 	}
+	else
+	{
+		if (m_httpresultcode == 403)
+		{
+			_log.Log(LOG_STATUS, "Access has been denied to the PayAsYouDrive data!");
+			bData = true;	// We should see if we can continue with the rest
+		}
+	}
 
 	return bData;
 }
@@ -334,7 +365,6 @@ bool CMercApi::GetCustomData(tCustomData& data)
 {
 	Json::Value reply;
 	std::vector<std::string> strarray;
-	bool bCustom = true;
 
 	if (m_capabilities.has_custom_data)
 	{
@@ -383,7 +413,7 @@ bool CMercApi::GetCustomData(tCustomData& data)
 		}
 	}
 
-	return bCustom;
+	return true;
 }
 
 void CMercApi::GetVehicleData(Json::Value& jsondata, tVehicleData& data)
@@ -754,6 +784,8 @@ bool CMercApi::GetAuthToken(const std::string &username, const std::string &pass
 bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, const std::string& sPostData,
 	std::string& sResponse, const std::vector<std::string>& vExtraHeaders, Json::Value& jsDecodedResponse, const bool bSendAuthHeaders, const int timeout)
 {
+	m_httpresultcode = 0;	// Reset to 0
+
 	// If there is no token stored then there is no point in doing a request. Unless we specifically
 	// decide not to do authentication.
 	if (m_accesstoken.empty() && bSendAuthHeaders)
@@ -776,7 +808,7 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 		if (bSendAuthHeaders)
 			_vExtraHeaders.push_back("Authorization: Bearer " + m_accesstoken);
 
-		// Increase default timeout
+		// In/Decrease default timeout
 		if(timeout == 0)
 		{
 			HTTPClient::SetConnectionTimeout(MERC_APITIMEOUT);
@@ -799,7 +831,7 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 		case Post:
 			if (!HTTPClient::POST(sUrl, sPostData, _vExtraHeaders, sResponse, _vResponseHeaders))
 			{
-				_iHttpCode = (!_vResponseHeaders[0].empty() ? (uint16_t)std::stoi(_vResponseHeaders[0].substr(9, 3)) : 9999);
+				_iHttpCode = ExtractHTTPResultCode(_vResponseHeaders[0]);
 				_log.Log(LOG_ERROR, "Failed to perform POST request (%d)!", _iHttpCode);
 			}
 			break;
@@ -807,7 +839,7 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 		case Get:
 			if (!HTTPClient::GET(sUrl, _vExtraHeaders, sResponse, _vResponseHeaders, true))
 			{
-				_iHttpCode = (!_vResponseHeaders[0].empty() ? (uint16_t)std::stoi(_vResponseHeaders[0].substr(9, 3)) : 9999);
+				_iHttpCode = ExtractHTTPResultCode(_vResponseHeaders[0]);
 				_log.Log(LOG_ERROR, "Failed to perform GET request (%d)!", _iHttpCode);
 			}
 			break;
@@ -819,15 +851,19 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 			}
 		}
 
-		_iHttpCode = (!_vResponseHeaders[0].empty() ? (uint16_t)std::stoi(_vResponseHeaders[0].substr(9, 3)) : 0);
+		m_httpresultcode = ExtractHTTPResultCode(_vResponseHeaders[0]);
 
 		// Debug response
 		for (auto &_vResponseHeader : _vResponseHeaders)
 			_ssResponseHeaderString << _vResponseHeader;
-		_log.Debug(DEBUG_RECEIVED, "MercApi: Performed request to Api: (%d)\n%s\nResponse headers: %s", _iHttpCode, sResponse.c_str(), _ssResponseHeaderString.str().c_str());
+		_log.Debug(DEBUG_RECEIVED, "MercApi: Performed request to Api: (%d)\n%s\nResponse headers: %s", m_httpresultcode, sResponse.c_str(), _ssResponseHeaderString.str().c_str());
 
-		switch(_iHttpCode)
+		switch(m_httpresultcode)
 		{
+		case 28:
+			_log.Log(LOG_STATUS, "Received (Curl) returncode 28.. API request response took too long, timed-out!");
+			return false;
+			break;
 		case 200:
 			break; // Ok, continue to process content
 		case 204:
@@ -847,6 +883,17 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 			}
 			return false;
 			break;
+		case 403:
+			if(!m_authenticating)
+			{
+				_log.Log(LOG_STATUS, "Received 403.. Access has been denied!");
+			}
+			else
+			{
+				_log.Log(LOG_STATUS, "Received 403.. Access denied during authorisation proces. Aborting!");
+			}
+			return false;
+			break;
 		case 429:
 			_log.Log(LOG_STATUS, "Received 429.. Too many request... we need to back off!");
 			return false;
@@ -857,19 +904,19 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 			return false;
 			break;
 		default:
-			_log.Log(LOG_STATUS, "Received unhandled HTTP returncode %d !", _iHttpCode);
+			_log.Log(LOG_STATUS, "Received unhandled HTTP returncode %d !", m_httpresultcode);
 			return false;
 		}
 
 		if (sResponse.empty())
 		{
-			_log.Log(LOG_ERROR, "MercApi: Received an empty response from Api (HTTP %d).", _iHttpCode);
+			_log.Log(LOG_ERROR, "MercApi: Received an empty response from Api (HTTP %d).", m_httpresultcode);
 			return false;
 		}
 
 		if (!ParseJSon(sResponse, jsDecodedResponse))
 		{
-			_log.Log(LOG_ERROR, "MercApi: Failed to decode Json response from Api (HTTP %d).", _iHttpCode);
+			_log.Log(LOG_ERROR, "MercApi: Failed to decode Json response from Api (HTTP %d).", m_httpresultcode);
 			return false;
 		}
 	}
@@ -880,4 +927,30 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 		return false;
 	}
 	return true;
+}
+
+// Interpret the return message headers to extract the HTTP resultcode
+uint16_t CMercApi::ExtractHTTPResultCode(const std::string& sResponseHeaderLine0)
+{
+	uint16_t iHttpCode = 9999;
+	uint8_t iHttpCodeStartPos = 0;
+
+	if(!sResponseHeaderLine0.empty())
+	{
+		if (sResponseHeaderLine0.find("HTTP") == 0)		// Ok, so this header indeeds starts with HTTP
+		{
+			if (sResponseHeaderLine0.find_first_of(' ') != std::string::npos)
+			{
+				iHttpCodeStartPos = (uint8_t)sResponseHeaderLine0.find_first_of(' ') + 1;	// So look for a SPACE as the seperator (RFC2616)
+
+				iHttpCode = (uint16_t)std::stoi(sResponseHeaderLine0.substr(iHttpCodeStartPos, 3));
+				if (iHttpCode < 100 || iHttpCode > 599)		// Check valid resultcode range
+				{
+					_log.Log(LOG_STATUS, "Found non-standard resultcode (%d) in HTTP response statusline: %s", iHttpCode, sResponseHeaderLine0.c_str());
+				}
+			}
+		}
+	}
+
+	return iHttpCode;
 }

@@ -23,18 +23,18 @@
 
 #define round(a) ( int ) ( a + .5 )
 
-const std::string HONEYWELL_DEFAULT_APIKEY = "atD3jtzXC5z4X8WPbzvo0CBqWi7S81Nh";
-const std::string HONEYWELL_DEFAULT_APISECRET = "TXDzy2aHpAJw6YiO";
-const std::string HONEYWELL_LOCATIONS_PATH = "https://api.honeywell.com/v2/locations?apikey={apikey}";
-const std::string HONEYWELL_UPDATE_THERMOSTAT = "https://api.honeywell.com/v2/devices/thermostats/{deviceid}?apikey={apikey}&locationId={locationid}";
-const std::string HONEYWELL_TOKEN_PATH = "https://api.honeywell.com/oauth2/token";
+constexpr auto HONEYWELL_DEFAULT_APIKEY = "atD3jtzXC5z4X8WPbzvo0CBqWi7S81Nh";
+constexpr auto HONEYWELL_DEFAULT_APISECRET = "TXDzy2aHpAJw6YiO";
+constexpr auto HONEYWELL_LOCATIONS_PATH = "https://api.honeywell.com/v2/locations?apikey={apikey}";
+constexpr auto HONEYWELL_UPDATE_THERMOSTAT = "https://api.honeywell.com/v2/devices/thermostats/{deviceid}?apikey={apikey}&locationId={locationid}";
+constexpr auto HONEYWELL_TOKEN_PATH = "https://api.honeywell.com/oauth2/token";
 
-const std::string kHeatSetPointDesc = "Target temperature ({devicename})";
-const std::string kHeatingDesc = "Heating ({devicename})";
-const std::string kOperationStatusDesc = "Heating state ({devicename})";
-const std::string kOutdoorTempDesc = "Outdoor temperature ({devicename})";
-const std::string kRoomTempDesc = "Room temperature ({devicename})";
-const std::string kWithinFenceDesc = "Within proximity ({name})";
+constexpr auto kHeatSetPointDesc = "Target temperature ({devicename})";
+constexpr auto kHeatingDesc = "Heating ({devicename})";
+constexpr auto kOperationStatusDesc = "Heating state ({devicename})";
+constexpr auto kOutdoorTempDesc = "Outdoor temperature ({devicename})";
+constexpr auto kRoomTempDesc = "Room temperature ({devicename})";
+constexpr auto kWithinFenceDesc = "Within proximity ({name})";
 
 extern http::server::CWebServerHelper m_webservers;
 
@@ -81,7 +81,7 @@ bool Lyric::StartHardware()
 	Init();
 	mLastMinute = -1;
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&Lyric::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	mIsStarted = true;
 	sOnConnected(this);

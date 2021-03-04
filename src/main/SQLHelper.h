@@ -51,6 +51,7 @@ enum _eTaskItemType
 	TITEM_SWITCHCMD_EVENT,
 	TITEM_SWITCHCMD_SCENE,
 	TITEM_GETURL,
+	TITEM_EXECUTESHELLCOMMAND,
 	TITEM_SEND_EMAIL_TO,
 	TITEM_SET_VARIABLE,
 	TITEM_SEND_SMS,
@@ -223,6 +224,19 @@ struct _tTaskItem
 	{
 		return GetHTTPPage(DelayTime, URL, "", connection::HTTP::method::GET, "", "");
 	}
+	static _tTaskItem ExecuteShellCommand(const float DelayTime, const std::string &command, const std::string &trigger, int timeout, const std::string &path)
+	{
+		_tTaskItem tItem;
+		tItem._ItemType = TITEM_EXECUTESHELLCOMMAND;
+		tItem._DelayTime = DelayTime;
+		tItem._sValue = command;
+		tItem._sUser= path;
+		tItem._nValue= timeout;
+		tItem._ID = trigger;
+		if (DelayTime)
+			getclock(&tItem._DelayTimeBegin);
+		return tItem;
+	}
 	static _tTaskItem GetHTTPPage(const float DelayTime, const std::string &URL, const std::string &extraHeaders, const connection::HTTP::method::value method, const std::string &postData,
 				      const std::string &trigger)
 	{
@@ -348,6 +362,7 @@ class CSQLHelper : public StoppableTask
 
 	void GetMeterType(int HardwareID, const char *ID, unsigned char unit, unsigned char devType, unsigned char subType, int &meterType);
 
+	void DeleteDateRange(const char *ID, const std::string &fromDate, const std::string &toDate);
 	void DeleteDataPoint(const char *ID, const std::string &Date);
 
 	void UpdateRFXCOMHardwareDetails(int HardwareID, int msg1, int msg2, int msg3, int msg4, int msg5, int msg6);
@@ -462,6 +477,8 @@ class CSQLHelper : public StoppableTask
 	double m_max_kwh_usage;
 
       private:
+	int scriptoutputindex=0;
+	std::mutex m_executeThreadMutex;
 	std::mutex m_sqlQueryMutex;
 	sqlite3 *m_dbase;
 	std::string m_dbase_name;
@@ -478,7 +495,10 @@ class CSQLHelper : public StoppableTask
 	bool StartThread();
 	void StopThread();
 	void Do_Work();
-
+#ifndef WIN32
+	void ManageExecuteScriptTimeout(int pid, int timeout, bool *stillRunning, bool *timeoutOccurred);
+#endif
+	void PerformThreadedAction(const _tTaskItem tItem);
 	bool SwitchLightFromTasker(const std::string &idx, const std::string &switchcmd, const std::string &level, const std::string &color, const std::string &User);
 	bool SwitchLightFromTasker(uint64_t idx, const std::string &switchcmd, int level, _tColor color, const std::string &User);
 

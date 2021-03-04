@@ -72,22 +72,25 @@ enum _eDenkoviIOType
 	DIOType_TXT			//8
 };
 
-const char *szDenkoviHardwareNames[14] = {
-		"DAEnetIP4",
-		"smartDEN IP-16R",
-		"smartDEN IP-32IN",
-		"smartDEN IP-Maxi",
-		"smartDEN IP-Watchdog",
-		"smartDEN Logger",
-		"smartDEN Notifier",
-		"DAEnetIP3",
-		"DAEnetIP2 (DAEnetIP2 v2)",
-		"DAEnetIP2 (DAEnetIP2 v2) 8 Relay Module - LM35DZ",
-		"smartDEN Opener",
-		"smartDEN IP-PLC",
-		"smartDEN IP-16R-MT",
-		"smartDEN IP-16R-MQ"
-		};
+namespace
+{
+	constexpr std::array<const char *, 14> szDenkoviHardwareNames{
+		"DAEnetIP4",					    //
+		"smartDEN IP-16R",				    //
+		"smartDEN IP-32IN",				    //
+		"smartDEN IP-Maxi",				    //
+		"smartDEN IP-Watchdog",				    //
+		"smartDEN Logger",				    //
+		"smartDEN Notifier",				    //
+		"DAEnetIP3",					    //
+		"DAEnetIP2 (DAEnetIP2 v2)",			    //
+		"DAEnetIP2 (DAEnetIP2 v2) 8 Relay Module - LM35DZ", //
+		"smartDEN Opener",				    //
+		"smartDEN IP-PLC",				    //
+		"smartDEN IP-16R-MT",				    //
+		"smartDEN IP-16R-MQ",				    //
+	};
+} // namespace
 
 CDenkoviDevices::CDenkoviDevices(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const std::string &password, const int pollInterval, const int model) :
 	m_szIPAddress(IPAddress),
@@ -115,8 +118,8 @@ bool CDenkoviDevices::StartHardware()
 
 	Init();
 
-	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&CDenkoviDevices::Do_Work, this);
+	// Start worker thread
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	m_bIsStarted = true;
 	sOnConnected(this);
@@ -652,7 +655,8 @@ uint8_t CDenkoviDevices::DAEnetIP2GetIoPort(const std::string &tmpstr, const int
 std::string CDenkoviDevices::DAEnetIP2GetName(const std::string &tmpstr, const int &nmr)
 { // nmr should be from 1 to 24
 	size_t pos1 = 0, pos2 = 0;
-	for (uint8_t ii = 0; ii < (((nmr - 1) * 2) + 1); ii++) {
+	for (int ii = 0; ii < (((nmr - 1) * 2) + 1); ii++)
+	{
 		pos1 = tmpstr.find('"', pos1 + 1);
 	}
 	pos2 = tmpstr.find('"', pos1 + 1);
@@ -681,7 +685,7 @@ float CDenkoviDevices::DAEnetIP2CalculateAi(int adc, const int &valType) {
 	{
 		return static_cast<float>(10000 * ((1.2*0.377)*adc / (4.7 * 1024) + 0) / 100);
 	}
-	return 0.0f;
+	return 0.0F;
 }
 
 void CDenkoviDevices::SendDenkoviTextSensor(const int NodeID, const int ChildID, const int BatteryLevel, const std::string &textMessage, const std::string &defaultname)
@@ -1343,7 +1347,7 @@ void CDenkoviDevices::GetMeterDetails()
 			{
 				name = "Analog Output " + std::to_string(Idx) + " (" + name + ")";
 				double val = (100 * tmpValue) / 1023;
-				SendGeneralSwitch(DIOType_AO, Idx, 255, (tmpValue > 0) ? true : false, (uint8_t)val, name, m_Name.c_str());
+				SendGeneralSwitch(DIOType_AO, Idx, 255, (tmpValue > 0) ? true : false, (uint8_t)val, name, m_Name);
 				Idx = -1;
 				bHaveAnalogOutput = false;
 				continue;
@@ -1439,7 +1443,7 @@ void CDenkoviDevices::GetMeterDetails()
 			if (bHavePWM && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_VALUE_DEF)) != -1))
 			{
 				name = "PWM " + std::to_string(Idx) + " (" + name + ")";
-				SendGeneralSwitch(DIOType_PWM, Idx, 255, (tmpValue > 0) ? true : false, (uint8_t)tmpValue, name, m_Name.c_str());
+				SendGeneralSwitch(DIOType_PWM, Idx, 255, (tmpValue > 0) ? true : false, (uint8_t)tmpValue, name, m_Name);
 				Idx = -1;
 				bHavePWM = false;
 				continue;

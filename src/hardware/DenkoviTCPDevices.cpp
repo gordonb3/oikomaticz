@@ -16,11 +16,14 @@
 #define READ_COILS_CMD_LENGTH				11
 #define WRITE_SINGLE_COIL_CMD_LENGTH		12
 
-const char *szDenkoviHardwareNamesTCP[3] = {
-		"WiFi 16 Relays-VCP",
-		"WiFi 16 Relays-TCP Modbus",
-		"smartDEN IP-16R-MT"
-		};
+namespace
+{
+	constexpr std::array<const char *, 3> szDenkoviHardwareNamesTCP{
+		"WiFi 16 Relays-VCP",	     //
+		"WiFi 16 Relays-TCP Modbus", //
+		"smartDEN IP-16R-MT",	     //
+	};
+} // namespace
 
 CDenkoviTCPDevices::CDenkoviTCPDevices(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const int pollInterval, const int model, const int slaveId) :
 	m_szIPAddress(IPAddress),
@@ -54,7 +57,7 @@ bool CDenkoviTCPDevices::StartHardware()
 	m_uiReceivedDataLength = 0;
 
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&CDenkoviTCPDevices::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	m_bIsStarted = true;
 	Log(LOG_STATUS, "%s: Started.",szDenkoviHardwareNamesTCP[m_iModel]);
 	return (m_thread != nullptr);
@@ -88,7 +91,7 @@ void CDenkoviTCPDevices::CreateRequest(uint8_t * pData, size_t length)
 	pData[7] = m_pReq.fc;
 	pData[8] = m_pReq.address[0];
 	pData[9] = m_pReq.address[1];
-	for (uint8_t ii = 10; ii < length; ii++)
+	for (size_t ii = 10; ii < length; ii++)
 		pData[ii] = m_pReq.data[ii - 10];
 
 }

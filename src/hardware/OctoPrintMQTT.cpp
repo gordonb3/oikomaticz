@@ -86,7 +86,7 @@ bool COctoPrintMQTT::StartHardware()
 	m_bIsStarted = true;
 
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&COctoPrintMQTT::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	return (m_thread != nullptr);
 }
@@ -178,6 +178,7 @@ bool COctoPrintMQTT::ConnectIntEx()
 
 	if (!m_CAFilename.empty()) {
 		rc = tls_set(m_CAFilename.c_str());
+		rc = tls_insecure_set(true);
 
 		if (rc != MOSQ_ERR_SUCCESS)
 		{

@@ -9,7 +9,7 @@
 namespace Json
 {
 	class Value;
-};
+} // namespace Json
 
 class Lyric : public CDomoticzHardwareBase
 {

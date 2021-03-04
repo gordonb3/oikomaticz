@@ -136,9 +136,7 @@ bool CNotificationHelper::SendMessageEx(
 			{
 				if (bThread)
 				{
-					boost::thread SendMessageEx(boost::bind(&CNotificationBase::SendMessageEx, m_notifier.second, Idx,
-										Name, Subject, Text, ExtraData, Priority, Sound,
-										bFromNotification));
+					boost::thread SendMessageEx([=] { m_notifier.second->SendMessageEx(Idx, Name, Subject, Text, ExtraData, Priority, Sound, bFromNotification); });
 					SetThreadName(SendMessageEx.native_handle(), "SendMessageEx");
 				}
 				else
@@ -215,7 +213,7 @@ bool CNotificationHelper::ApplyRule(const std::string &rule, const bool equal, c
 }
 
 bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, const int HardwareID, const std::string &ID, const std::string &sName, const unsigned char unit, const unsigned char cType, const unsigned char cSubType, const int nValue) {
-	return CheckAndHandleNotification(DevRowIdx, HardwareID, ID, sName, unit, cType, cSubType, nValue, "", 0.0f);
+	return CheckAndHandleNotification(DevRowIdx, HardwareID, ID, sName, unit, cType, cSubType, nValue, "", 0.0F);
 }
 
 bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, const int HardwareID, const std::string &ID, const std::string &sName, const unsigned char unit, const unsigned char cType, const unsigned char cSubType, const float fValue) {
@@ -352,7 +350,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 		case pTypeWIND:
 			nexpected = 5;
 			if (nsize >= nexpected) {
-				float wspeedms = (float)(atof(strarray[2].c_str()) / 10.0f);
+				float wspeedms = (float)(atof(strarray[2].c_str()) / 10.0F);
 				float temp = (float)atof(strarray[4].c_str());
 				r1 = CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, notification::type::WIND, wspeedms);
 				r2 = CheckAndHandleTempHumidityNotification(DevRowIdx, sName, temp, 0, true, false);
@@ -401,7 +399,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 					fValue2 = fValue;
 					if (meterType == 1) {
 						//miles
-						fValue2 *= 0.6214f;
+						fValue2 *= 0.6214F;
 					}
 					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, notification::type::USAGE, fValue2);
 				case sTypeDistance:
@@ -409,7 +407,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 					fValue2 = fValue;
 					if (meterType == 1) {
 						//inches
-						fValue2 *= 0.3937007874015748f;
+						fValue2 *= 0.3937007874015748F;
 					}
 					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, notification::type::USAGE, fValue2);
 				case sTypeBaro:
@@ -762,7 +760,7 @@ bool CNotificationHelper::CheckAndHandleAmpere123Notification(
 			std::string custommsg;
 			std::string ltype;
 			float svalue = static_cast<float>(atof(splitresults[2].c_str()));
-			float ampere = 0.0f;
+			float ampere = 0.0F;
 			bool bSendNotification = false;
 			bool bCustomMessage = false;
 			bCustomMessage = CustomRecoveryMessage(n.ID, custommsg, false);

@@ -33,7 +33,8 @@ local function getDevice_(
 	dummyLogger,
 	batteryLevel,
 	signalLevel,
-	nValue)
+	nValue,
+	customImage)
 
 	local Device = require('Device')
 
@@ -64,6 +65,7 @@ local function getDevice_(
 	{
 		["id"] = 1,
 		["name"] = name,
+		["customImage"] = 102,
 		["description"] = "Description 1",
 		["batteryLevel"] = batteryLevel and batteryLevel or 50,
 		["protected"] = true,
@@ -119,7 +121,8 @@ local function getDevice(domoticz, options)
 		options.dummyLogger,
 		options.batteryLevel,
 		options.signalLevel,
-		options.nValue)
+		options.nValue,
+		options.customImage)
 
 end
 
@@ -180,6 +183,7 @@ describe('device', function()
 			['name'] = 'myDevice',
 			['type'] = 'Light/Switch',
 			['state'] = 'On',
+			['customImage'] = 102,
 			['changed'] = true,
 		})
 		utils = device._getUtilsInstance()
@@ -604,6 +608,7 @@ describe('device', function()
 					"updateDistance",
 					"updateElectricity",
 					"updateGas",
+					"updateHistory",
 					"updateHumidity",
 					"updateLux",
 					"updateMode",
@@ -1068,6 +1073,37 @@ describe('device', function()
 			commandArray = {}
 			device.incrementCounter(10)
 			assert.is_same({ { ["UpdateDevice"] = {idx=1, nValue=0, sValue="10", _trigger=true} } }, commandArray)
+		end)
+
+		it('should detect a managed counter device', function()
+			local device = getDevice(domoticz, {
+				['name'] = 'myDevice',
+				['type'] = 'Counter',
+				['subType'] = 'Managed Counter',
+				['additionalDataData'] = {
+					["counterToday"] = "123.44 Watt";
+					["counter"] = "6.7894 kWh";
+				}
+			})
+
+			domoticz.openURL = function(url)
+				return table.insert(commandArray, url)
+			end
+
+			assert.is_same(123.44, device.counterToday)
+			assert.is_same(6.7894, device.counter)
+
+			commandArray = {}
+			device.updateCounter(555.123)
+			assert.is_same({ { ["UpdateDevice"] = {idx=1, nValue=0, sValue="555.123", _trigger=true} } }, commandArray)
+
+			 commandArray = {}
+			device.updateHistory('2021-13-32','12;234567')
+			assert.is_same( { 'http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=1&nvalue=0&svalue=12;234567;2021-13-32' }, commandArray)
+
+			commandArray = {}
+			device.updateHistory('2021-13-32 12:34:56','12;234567')
+			assert.is_same( { 'http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=1&nvalue=0&svalue=12;234567;2021-13-32+12%3A34%3A56' }, commandArray)
 		end)
 
 		it('should detect a pressure device', function()
@@ -1853,13 +1889,13 @@ describe('device', function()
 			it('should handle setColor method correctly',function()
 				commandArray = {}
 				assert.is_nil(device.setColor(15,31,44))
-				assert.is_same({'http://127.0.0.1:8080/json.htm?type=command&param=setcolbrightnessvalue&idx=1&brightness=100&color={"m":3,"t":0,"cw":0,"ww":0,"r":15,"g":31,"b":44}'},commandArray)
+				assert.is_same({'http://127.0.0.1:8080/json.htm?type=command&param=setcolbrightnessvalue&idx=1&brightness=1&color={"m":3,"t":0,"cw":0,"ww":0,"r":15,"g":31,"b":44}'},commandArray)
 			end)
 
 			it('should handle setColorBrightness method correctly',function()
 				commandArray = {}
 				assert.is_nil(device.setColorBrightness(15,31,44))
-				assert.is_same({'http://127.0.0.1:8080/json.htm?type=command&param=setcolbrightnessvalue&idx=1&brightness=100&color={"m":3,"t":0,"cw":0,"ww":0,"r":15,"g":31,"b":44}'},commandArray)
+				assert.is_same({'http://127.0.0.1:8080/json.htm?type=command&param=setcolbrightnessvalue&idx=1&brightness=1&color={"m":3,"t":0,"cw":0,"ww":0,"r":15,"g":31,"b":44}'},commandArray)
 			end)
 
 			it('should handle setDiscomode method correctly',function()

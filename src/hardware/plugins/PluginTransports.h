@@ -22,26 +22,24 @@ namespace Plugins {
 
 		unsigned char	m_Buffer[4096];
 
-		PyObject*		m_pConnection;
+		CConnection *	m_pConnection;
 
-	public:
-	  CPluginTransport(int HwdID, PyObject *pConnection)
-		  : m_HwdID(HwdID)
-		  , m_bDisconnectQueued(false)
-		  , m_bConnecting(false)
-		  , m_bConnected(false)
-		  , m_iTotalBytes(0)
-		  , m_tLastSeen(0)
-		  , m_pConnection(pConnection)
+	protected:
+		boost::asio::deadline_timer *m_Timer;
+		virtual void configureTimeout();
+
+	      public:
+		CPluginTransport(int HwdID, CConnection *pConnection) : m_HwdID(HwdID), m_pConnection(pConnection), m_bDisconnectQueued(false), m_bConnecting(false), m_bConnected(false), m_iTotalBytes(0), m_tLastSeen(0), m_Timer(NULL)
 	  {
 		  Py_INCREF(m_pConnection);
 	  };
-		virtual	bool		handleConnect() { return false; };
-		virtual	bool		handleListen() { return false; };
-		virtual void		handleRead(const boost::system::error_code& e, std::size_t bytes_transferred);
-		virtual void		handleRead(const char *data, std::size_t bytes_transferred);
-		virtual void		handleWrite(const std::vector<byte>&) = 0;
-		virtual	bool		handleDisconnect() { return false; };
+		virtual	bool	handleConnect() { return false; };
+		virtual	bool	handleListen() { return false; };
+		virtual void	handleTimeout(const boost::system::error_code &);
+		virtual void	handleRead(const boost::system::error_code &e, std::size_t bytes_transferred);
+		virtual void	handleRead(const char *data, std::size_t bytes_transferred);
+		virtual void	handleWrite(const std::vector<byte>&) = 0;
+		virtual	bool	handleDisconnect() { return false; };
 		virtual ~CPluginTransport()
 		{
 			Py_DECREF(m_pConnection);
@@ -54,7 +52,10 @@ namespace Plugins {
 		virtual bool		ThreadPoolRequired() { return false; };
 		long				TotalBytes() { return m_iTotalBytes; };
 		virtual void		VerifyConnection();
-		PyObject*			Connection() { return m_pConnection; };
+		CConnection *		Connection()
+		{
+			return m_pConnection;
+		};
 	};
 
 	class CPluginTransportIP : public CPluginTransport
@@ -62,7 +63,12 @@ namespace Plugins {
 	protected:
 		std::string			m_IP;
 	public:
-		CPluginTransportIP(int HwdID, PyObject* pConnection, const std::string& Address, const std::string& Port) : CPluginTransport(HwdID, pConnection), m_IP(Address) { m_Port = Port; };
+		CPluginTransportIP(int HwdID, CConnection *pConnection, const std::string &Address, const std::string &Port)
+			: CPluginTransport(HwdID, pConnection)
+			, m_IP(Address)
+		{
+			m_Port = Port;
+		};
 		bool AsyncDisconnect() override
 		{
 			return IsConnected() || IsConnecting();
@@ -72,7 +78,7 @@ namespace Plugins {
 	class CPluginTransportTCP : public CPluginTransportIP, std::enable_shared_from_this<CPluginTransportTCP>
 	{
 	public:
-	  CPluginTransportTCP(int HwdID, PyObject *pConnection, const std::string &Address, const std::string &Port)
+		CPluginTransportTCP(int HwdID, CConnection *pConnection, const std::string &Address, const std::string &Port)
 		  : CPluginTransportIP(HwdID, pConnection, Address, Port)
 		  , m_Resolver(ios)
 		  , m_Acceptor(nullptr)
@@ -80,7 +86,7 @@ namespace Plugins {
 	  bool handleConnect() override;
 	  bool handleListen() override;
 	  virtual void handleAsyncResolve(const boost::system::error_code &err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator);
-	  virtual void handleAsyncConnect(const boost::system::error_code &err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator);
+	  virtual void handleAsyncConnect(const boost::system::error_code &err, const boost::asio::ip::tcp::resolver::iterator &endpoint_iterator);
 	  virtual void handleAsyncAccept(boost::asio::ip::tcp::socket *pSocket, const boost::system::error_code &error);
 	  void handleRead(const boost::system::error_code &e, std::size_t bytes_transferred) override;
 	  void handleWrite(const std::vector<byte> &pMessage) override;
@@ -101,11 +107,11 @@ namespace Plugins {
 	class CPluginTransportTCPSecure : public CPluginTransportTCP
 	{
 	public:
-	  CPluginTransportTCPSecure(int HwdID, PyObject *pConnection, const std::string &Address, const std::string &Port)
+		CPluginTransportTCPSecure(int HwdID, CConnection *pConnection, const std::string &Address, const std::string &Port)
 		  : CPluginTransportTCP(HwdID, pConnection, Address, Port)
 		  , m_Context(nullptr)
 		  , m_TLSSock(nullptr){};
-	  void handleAsyncConnect(const boost::system::error_code &err, boost::asio::ip::tcp::resolver::iterator endpoint_iterator) override;
+	  void handleAsyncConnect(const boost::system::error_code &err, const boost::asio::ip::tcp::resolver::iterator &endpoint_iterator) override;
 	  void handleRead(const boost::system::error_code &e, std::size_t bytes_transferred) override;
 	  void handleWrite(const std::vector<byte> &pMessage) override;
 	  ~CPluginTransportTCPSecure() override;
@@ -120,7 +126,7 @@ namespace Plugins {
 	class CPluginTransportUDP : CPluginTransportIP
 	{
 	public:
-	  CPluginTransportUDP(int HwdID, PyObject *pConnection, const std::string &Address, const std::string &Port)
+		CPluginTransportUDP(int HwdID, CConnection *pConnection, const std::string &Address, const std::string &Port)
 		  : CPluginTransportIP(HwdID, pConnection, Address, Port)
 		  , m_Resolver(ios)
 		  , m_Socket(nullptr){};
@@ -139,7 +145,7 @@ namespace Plugins {
 	class CPluginTransportICMP : CPluginTransportIP
 	{
 	public:
-	  CPluginTransportICMP(int HwdID, PyObject *pConnection, const std::string &Address, const std::string &Port)
+		CPluginTransportICMP(int HwdID, CConnection *pConnection, const std::string &Address, const std::string &Port)
 		  : CPluginTransportIP(HwdID, pConnection, Address, Port)
 		  , m_Resolver(ios)
 		  , m_Socket(nullptr)
@@ -168,7 +174,7 @@ namespace Plugins {
 	private:
 		int					m_Baud;
 	public:
-		CPluginTransportSerial(int HwdID, PyObject* pConnection, const std::string& Port, int Baud);
+		CPluginTransportSerial(int HwdID, CConnection *pConnection, const std::string &Port, int Baud);
 		~CPluginTransportSerial() override = default;
 		bool handleConnect() override;
 		void handleRead(const char *data, std::size_t bytes_transferred) override;

@@ -9,15 +9,12 @@
 //
 #include "stdafx.h"
 #include "connection.hpp"
-#include <boost/bind/bind.hpp>
 #include <boost/algorithm/string.hpp>
 #include "connection_manager.hpp"
 #include "request_handler.hpp"
 #include "mime_types.hpp"
 #include "main/localtime_r.h"
 #include "main/Logger.h"
-
-using namespace boost::placeholders;
 
 namespace http {
 	namespace server {
@@ -36,7 +33,7 @@ namespace http {
 			, request_handler_(handler)
 			, status_(INITIALIZING)
 			, default_max_requests_(20)
-			, websocket_parser(boost::bind(&connection::MyWrite, this, _1), handler.Get_myWebem(), boost::bind(&connection::WS_Write, this, _1))
+			, websocket_parser([this](auto &&r) { MyWrite(r); }, handler.Get_myWebem(), [this](auto &&r) { WS_Write(r); })
 		{
 			secure_ = false;
 			keepalive_ = false;
@@ -61,7 +58,7 @@ namespace http {
 			, request_handler_(handler)
 			, status_(INITIALIZING)
 			, default_max_requests_(20)
-			, websocket_parser(boost::bind(&connection::MyWrite, this, _1), handler.Get_myWebem(), boost::bind(&connection::WS_Write, this, _1))
+			, websocket_parser([this](auto &&r) { MyWrite(r); }, handler.Get_myWebem(), [this](auto &&r) { WS_Write(r); })
 		{
 			secure_ = true;
 			keepalive_ = false;
@@ -111,9 +108,7 @@ namespace http {
 #ifdef WWW_ENABLE_SSL
 				status_ = WAITING_HANDSHAKE;
 				// with ssl, we first need to complete the handshake before reading
-				sslsocket_->async_handshake(boost::asio::ssl::stream_base::server,
-					boost::bind(&connection::handle_handshake, shared_from_this(),
-						boost::asio::placeholders::error));
+				sslsocket_->async_handshake(boost::asio::ssl::stream_base::server, [self = shared_from_this()](auto &&err) { self->handle_handshake(err); });
 #endif
 			}
 			else {
@@ -207,18 +202,12 @@ namespace http {
 			if (secure_) {
 #ifdef WWW_ENABLE_SSL
 				// Perform secure read
-				sslsocket_->async_read_some(buf,
-					boost::bind(&connection::handle_read, shared_from_this(),
-						boost::asio::placeholders::error,
-						boost::asio::placeholders::bytes_transferred));
+				sslsocket_->async_read_some(buf, [self = shared_from_this()](auto &&err, auto bytes) { self->handle_read(err, bytes); });
 #endif
 			}
 			else {
 				// Perform plain read
-				socket_->async_read_some(buf,
-					boost::bind(&connection::handle_read, shared_from_this(),
-						boost::asio::placeholders::error,
-						boost::asio::placeholders::bytes_transferred));
+				socket_->async_read_some(buf, [self = shared_from_this()](auto &&err, auto bytes) { self->handle_read(err, bytes); });
 			}
 		}
 
@@ -232,11 +221,11 @@ namespace http {
 			write_buffer = buf;
 			if (secure_) {
 #ifdef WWW_ENABLE_SSL
-				boost::asio::async_write(*sslsocket_, boost::asio::buffer(write_buffer), boost::bind(&connection::handle_write, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+				boost::asio::async_write(*sslsocket_, boost::asio::buffer(write_buffer), [self = shared_from_this()](auto &&err, auto bytes) { self->handle_write(err, bytes); });
 #endif
 			}
 			else {
-				boost::asio::async_write(*socket_, boost::asio::buffer(write_buffer), boost::bind(&connection::handle_write, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+				boost::asio::async_write(*socket_, boost::asio::buffer(write_buffer), [self = shared_from_this()](auto &&err, auto bytes) { self->handle_write(err, bytes); });
 			}
 
 		}
@@ -286,11 +275,13 @@ namespace http {
 				};
 				if (secure_) {
 #ifdef WWW_ENABLE_SSL
-					boost::asio::async_write(*sslsocket_, boost::asio::buffer(send_buffer_, bread), boost::bind(&connection::handle_write_file, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+					boost::asio::async_write(*sslsocket_, boost::asio::buffer(send_buffer_, bread),
+								 [self = shared_from_this()](auto &&err, auto bytes) { self->handle_write_file(err, bytes); });
 #endif
 				}
 				else {
-					boost::asio::async_write(*socket_, boost::asio::buffer(send_buffer_, bread), boost::bind(&connection::handle_write_file, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+					boost::asio::async_write(*socket_, boost::asio::buffer(send_buffer_, bread),
+								 [self = shared_from_this()](auto &&err, auto bytes) { self->handle_write_file(err, bytes); });
 				}
 				return;
 			}
@@ -350,11 +341,11 @@ namespace http {
 
 			if (secure_) {
 #ifdef WWW_ENABLE_SSL
-				boost::asio::async_write(*sslsocket_, boost::asio::buffer(write_buffer), boost::bind(&connection::handle_write_file, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+				boost::asio::async_write(*sslsocket_, boost::asio::buffer(write_buffer), [self = shared_from_this()](auto &&err, auto bytes) { self->handle_write_file(err, bytes); });
 #endif
 			}
 			else {
-				boost::asio::async_write(*socket_, boost::asio::buffer(write_buffer), boost::bind(&connection::handle_write_file, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+				boost::asio::async_write(*socket_, boost::asio::buffer(write_buffer), [self = shared_from_this()](auto &&err, auto bytes) { self->handle_write_file(err, bytes); });
 			}
 			return true;
 		}
@@ -393,7 +384,7 @@ namespace http {
 					}
 					catch (...)
 					{
-						_log.Log(LOG_ERROR, "Exception parsing http request.");
+						_log.Log(LOG_ERROR, "Exception parsing HTTP. Address: %s", host_endpoint_address_.c_str());
 					}
 
 					if (result) {
@@ -456,14 +447,7 @@ namespace http {
 					}
 					else if (!result)
 					{
-/*
-This does not seem to print the correct request
-						begin = boost::asio::buffer_cast<const char*>(_buf.data());
-						std::string sRequest(begin, begin + _buf.size());
-
-						_log.Log(LOG_ERROR, "Error parsing http request. (%s)", sRequest.c_str());
-*/
-						_log.Log(LOG_ERROR, "Error parsing http request.");
+						_log.Log(LOG_ERROR, "Error parsing http request address: %s", host_endpoint_address_.c_str());
 						keepalive_ = false;
 						reply_ = reply::stock_reply(reply::bad_request);
 						MyWrite(reply_.to_string(request_.method));
@@ -566,7 +550,7 @@ This does not seem to print the correct request
 		// schedule read timeout timer
 		void connection::set_read_timeout() {
 			read_timer_.expires_from_now(boost::posix_time::seconds(read_timeout_));
-			read_timer_.async_wait(boost::bind(&connection::handle_read_timeout, shared_from_this(), boost::asio::placeholders::error));
+			read_timer_.async_wait([self = shared_from_this()](auto &&err) { self->handle_read_timeout(err); });
 		}
 
 		/// simply cancel read timeout timer
@@ -609,7 +593,7 @@ This does not seem to print the correct request
 		/// schedule abandoned timeout timer
 		void connection::set_abandoned_timeout() {
 			abandoned_timer_.expires_from_now(boost::posix_time::seconds(default_abandoned_timeout_));
-			abandoned_timer_.async_wait(boost::bind(&connection::handle_abandoned_timeout, shared_from_this(), boost::asio::placeholders::error));
+			abandoned_timer_.async_wait([self = shared_from_this()](auto &&err) { self->handle_abandoned_timeout(err); });
 		}
 
 		/// simply cancel abandoned timeout timer

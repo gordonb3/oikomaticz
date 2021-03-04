@@ -68,7 +68,7 @@ bool Yeelight::StartHardware()
 	m_bIsStarted = true;
 
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&Yeelight::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 
 	return (m_thread != nullptr);
@@ -301,7 +301,7 @@ bool Yeelight::WriteToHardware(const char *pdata, const unsigned char length)
 			else if (pLed->color.mode == ColorModeTemp)
 			{
 				// Convert temperature to Kelvin 1700..6500
-				int kelvin = (int(float((255 - pLed->color.t))*(6500.0f - 1700.0f) / 255.0f)) + 1700;
+				int kelvin = (int(float((255 - pLed->color.t)) * (6500.0F - 1700.0F) / 255.0F)) + 1700;
 				ss << R"({"id":1,"method":"set_ct_abx","params":[)" << kelvin << ", \"smooth\", 2000]}\r\n";
 				message = ss.str();
 			}

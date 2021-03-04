@@ -57,10 +57,10 @@ enum evoCommands
 };
 
 const char  CEvohomeRadio::m_szNameErr[18] = { 0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F };
-const int CEvohomeRadio::m_evoToDczControllerMode[8] = { 0,5,1,2,3,-1,-1,4 };//are the hidden modes actually valid?
+const int CEvohomeRadio::m_evoToDczControllerMode[8] = { 0,6,1,2,3,4,-1,5 };//are the hidden modes actually valid?
 const int  CEvohomeRadio::m_evoToDczOverrideMode[5] = { zmAuto,-1,zmPerm,-1,zmTmp };//are the hidden modes actually valid?
 const uint8_t CEvohomeRadio::m_dczToEvoZoneMode[3] = { 0,2,4 };
-const uint8_t CEvohomeRadio::m_dczToEvoControllerMode[6] = { 0,2,3,4,7,1 };
+const uint8_t CEvohomeRadio::m_dczToEvoControllerMode[7] = { 0,2,3,4,5,7,1 };
 
 char const CEvohomeMsg::szPacketType[5][8] = { "Unknown","I","RQ","RP","W" };
 
@@ -69,8 +69,9 @@ CEvohomeRadio::CEvohomeRadio(const int ID, const std::string& UserContID)
 	m_HwdID = ID;
 	m_nDevID = 0;
 	m_nMyID = 0;
+	m_nOtbID = 0;
 	m_nBindID = 0;
-	std::fill(std::begin(m_bStartup), std::end(m_bStartup), true);
+	m_bStartup.fill(true);
 	m_nBufPtr = 0;
 	m_nSendFail = 0;
 	m_nZoneCount = 0;
@@ -85,27 +86,28 @@ CEvohomeRadio::CEvohomeRadio(const int ID, const std::string& UserContID)
 		s_strid >> std::hex >> m_UControllerID;
 	}
 
-	RegisterDecoder(cmdZoneTemp, [this](CEvohomeMsg &msg) { return DecodeZoneTemp(msg); });
-	RegisterDecoder(cmdSetPoint, [this](CEvohomeMsg &msg) { return DecodeSetpoint(msg); });
-	RegisterDecoder(cmdSetpointOverride, [this](CEvohomeMsg &msg) { return DecodeSetpointOverride(msg); });
-	RegisterDecoder(cmdDHWState, [this](CEvohomeMsg &msg) { return DecodeDHWState(msg); });
-	RegisterDecoder(cmdDHWTemp, [this](CEvohomeMsg &msg) { return DecodeDHWTemp(msg); });
-	RegisterDecoder(cmdControllerMode, [this](CEvohomeMsg &msg) { return DecodeControllerMode(msg); });
-	RegisterDecoder(cmdSysInfo, [this](CEvohomeMsg &msg) { return DecodeSysInfo(msg); });
-	RegisterDecoder(cmdZoneName, [this](CEvohomeMsg &msg) { return DecodeZoneName(msg); });
-	RegisterDecoder(cmdZoneHeatDemand, [this](CEvohomeMsg &msg) { return DecodeHeatDemand(msg); });
-	RegisterDecoder(cmdOpenThermBridge, [this](CEvohomeMsg &msg) { return DecodeOpenThermBridge(msg); });
-	RegisterDecoder(cmdOpenThermSetpoint, [this](CEvohomeMsg &msg) { return DecodeOpenThermSetpoint(msg); });
-	RegisterDecoder(cmdZoneInfo, [this](CEvohomeMsg &msg) { return DecodeZoneInfo(msg); });
-	RegisterDecoder(cmdControllerHeatDemand, [this](CEvohomeMsg &msg) { return DecodeHeatDemand(msg); });
-	RegisterDecoder(cmdBinding, [this](CEvohomeMsg &msg) { return DecodeBinding(msg); });
-	RegisterDecoder(cmdActuatorState, [this](CEvohomeMsg &msg) { return DecodeActuatorState(msg); });
-	RegisterDecoder(cmdActuatorCheck, [this](CEvohomeMsg &msg) { return DecodeActuatorCheck(msg); });
-	RegisterDecoder(cmdZoneWindow, [this](CEvohomeMsg &msg) { return DecodeZoneWindow(msg); });
-	RegisterDecoder(cmdExternalSensor, [this](CEvohomeMsg &msg) { return DecodeExternalSensor(msg); });
-	RegisterDecoder(cmdDeviceInfo, [this](CEvohomeMsg &msg) { return DecodeDeviceInfo(msg); });
-	RegisterDecoder(cmdBatteryInfo, [this](CEvohomeMsg &msg) { return DecodeBatteryInfo(msg); });
-	RegisterDecoder(cmdSync, [this](CEvohomeMsg &msg) { return DecodeSync(msg); });
+	RegisterDecoder(cmdZoneTemp, [this](auto &&msg) { return DecodeZoneTemp(msg); });
+	RegisterDecoder(cmdSetPoint, [this](auto &&msg) { return DecodeSetpoint(msg); });
+	RegisterDecoder(cmdSetpointOverride, [this](auto &&msg) { return DecodeSetpointOverride(msg); });
+	RegisterDecoder(cmdDHWState, [this](auto &&msg) { return DecodeDHWState(msg); });
+	RegisterDecoder(cmdDHWTemp, [this](auto &&msg) { return DecodeDHWTemp(msg); });
+	RegisterDecoder(cmdDHWSettings, [this](auto &&msg) { return DecodeDHWSettings(msg); });
+	RegisterDecoder(cmdControllerMode, [this](auto &&msg) { return DecodeControllerMode(msg); });
+	RegisterDecoder(cmdSysInfo, [this](auto &&msg) { return DecodeSysInfo(msg); });
+	RegisterDecoder(cmdZoneName, [this](auto &&msg) { return DecodeZoneName(msg); });
+	RegisterDecoder(cmdZoneHeatDemand, [this](auto &&msg) { return DecodeHeatDemand(msg); });
+	RegisterDecoder(cmdOpenThermBridge, [this](auto &&msg) { return DecodeOpenThermBridge(msg); });
+	RegisterDecoder(cmdOpenThermSetpoint, [this](auto &&msg) { return DecodeOpenThermSetpoint(msg); });
+	RegisterDecoder(cmdZoneInfo, [this](auto &&msg) { return DecodeZoneInfo(msg); });
+	RegisterDecoder(cmdControllerHeatDemand, [this](auto &&msg) { return DecodeHeatDemand(msg); });
+	RegisterDecoder(cmdBinding, [this](auto &&msg) { return DecodeBinding(msg); });
+	RegisterDecoder(cmdActuatorState, [this](auto &&msg) { return DecodeActuatorState(msg); });
+	RegisterDecoder(cmdActuatorCheck, [this](auto &&msg) { return DecodeActuatorCheck(msg); });
+	RegisterDecoder(cmdZoneWindow, [this](auto &&msg) { return DecodeZoneWindow(msg); });
+	RegisterDecoder(cmdExternalSensor, [this](auto &&msg) { return DecodeExternalSensor(msg); });
+	RegisterDecoder(cmdDeviceInfo, [this](auto &&msg) { return DecodeDeviceInfo(msg); });
+	RegisterDecoder(cmdBatteryInfo, [this](auto &&msg) { return DecodeBatteryInfo(msg); });
+	RegisterDecoder(cmdSync, [this](auto &&msg) { return DecodeSync(msg); });
 }
 
 CEvohomeRadio::~CEvohomeRadio()
@@ -187,7 +189,7 @@ bool CEvohomeRadio::StartHardware()
 
 	//Start worker thread
 	m_retrycntr = EVOHOME_RETRY_DELAY; //will force reconnect first thing
-	m_thread = std::make_shared<std::thread>(&CEvohomeRadio::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 	m_bIsStarted = true;
 
@@ -407,6 +409,24 @@ void CEvohomeRadio::RequestZoneNames()
 void CEvohomeRadio::RequestDeviceInfo(uint8_t nAddr)
 {
 	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetControllerID(), cmdDeviceInfo).Add(uint8_t(0)).Add(uint8_t(0)).Add(nAddr));
+}
+
+
+void CEvohomeRadio::RequestOpenThermBridge()
+{
+	// Manual requests since the Controller no longer requests this information from the OT Bridge
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdActuatorState).Add(uint8_t(0)));
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermSetpoint).Add(uint8_t(0)));
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermBridge).Add(uint8_t(0)).Add(uint8_t(0)).Add(uint8_t(0x00)).Add(uint8_t(0)).Add(uint8_t(0)));
+ 	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermBridge).Add(uint8_t(0)).Add(uint8_t(0)).Add(uint8_t(0x05)).Add(uint8_t(0)).Add(uint8_t(0)));
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermBridge).Add(uint8_t(0)).Add(uint8_t(0)).Add(uint8_t(0x11)).Add(uint8_t(0)).Add(uint8_t(0)));
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermBridge).Add(uint8_t(0)).Add(uint8_t(0)).Add(uint8_t(0x12)).Add(uint8_t(0)).Add(uint8_t(0)));
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermBridge).Add(uint8_t(0)).Add(uint8_t(0)).Add(uint8_t(0x13)).Add(uint8_t(0)).Add(uint8_t(0)));
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermBridge).Add(uint8_t(0)).Add(uint8_t(0)).Add(uint8_t(0x19)).Add(uint8_t(0)).Add(uint8_t(0)));
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermBridge).Add(uint8_t(0)).Add(uint8_t(0)).Add(uint8_t(0x1a)).Add(uint8_t(0)).Add(uint8_t(0)));
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermBridge).Add(uint8_t(0)).Add(uint8_t(0)).Add(uint8_t(0x1b)).Add(uint8_t(0)).Add(uint8_t(0)));
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermBridge).Add(uint8_t(0)).Add(uint8_t(0)).Add(uint8_t(0x1c)).Add(uint8_t(0)).Add(uint8_t(0)));
+	AddSendQueue(CEvohomeMsg(CEvohomeMsg::pktreq, GetOpenThermBridgeID(), cmdOpenThermBridge).Add(uint8_t(0)).Add(uint8_t(0)).Add(uint8_t(0x73)).Add(uint8_t(0)).Add(uint8_t(0)));
 }
 
 
@@ -703,6 +723,12 @@ void CEvohomeRadio::ProcessMsg(const char* rawmsg)
 					}
 				}
 			}
+		}
+		if (msg.id[0].GetIDType() == CEvohomeID::devBridge) //if we get a message from the OT Bridge capture it's ID
+		{
+                        if (!m_nOtbID)
+                                m_nOtbID = msg.GetID(0);
+			_log.Log(LOG_STATUS, "evohome: opentherm bridge detected, ID:0x%x", m_nOtbID);
 		}
 		if (msg.id[0].GetIDType() == CEvohomeID::devGateway) //if we just got an echo of a sent packet we don't need to process it
 		{
@@ -1611,8 +1637,8 @@ bool CEvohomeRadio::DecodeOpenThermBridge(CEvohomeMsg& msg)
 {
 	char tag[] = "OPENTHERM_BRIDGE";
 
-	// Only look for responses from the OT Bridge and Filter out messages from other controllers
-	if (msg.GetID(1) != GetControllerID())
+	// Only look for responses from the OT Bridge
+	if (msg.GetID(0) != GetOpenThermBridgeID())
 		return true;
 
 	// All OT messages should have a payload size of 5
@@ -1622,9 +1648,19 @@ bool CEvohomeRadio::DecodeOpenThermBridge(CEvohomeMsg& msg)
 	}
 	// The OT command response is in byte 4 and 5
 	int nOTResponse = msg.payload[3] << 8 | msg.payload[4];
-	float fOTResponse = static_cast<float>(nOTResponse) / 256.0f;
+	// Check if f8.8 field is negative. Bit 15 will be 1 if negative
+	if (nOTResponse & (1 << 15)) {
+		nOTResponse = - (0x10000 - nOTResponse);
+	}
+	float fOTResponse = static_cast<float>(nOTResponse) / 256.0F;
 
 	// The OT commands are as per the OT Specification
+        // 00 (ID.00) = Status
+        if (msg.payload[2] == 0x00) {
+
+                Log(true, LOG_STATUS, "evohome: %s: Master Status %02X Slave Status %02X", tag, msg.payload[3], msg.payload[4]);
+                return true;
+        }
 	// 05 (ID.05) = Fault Code
 	if (msg.payload[2] == 0x05) {
 		SendCustomSensor(0, 5, 255, static_cast<float>(msg.payload[3]), "Application fault flags", "");
@@ -1671,6 +1707,13 @@ bool CEvohomeRadio::DecodeOpenThermBridge(CEvohomeMsg& msg)
 		Log(true, LOG_STATUS, "evohome: %s: DHW Temperature = %.2f C", tag, fOTResponse);
 		return true;
 	}
+        // 1B (ID.27) = Outside Temperature
+        if (msg.payload[2] == 0x1b) {
+                SendTempSensor(27, 255, fOTResponse, "Outside Temperature");
+
+                Log(false, LOG_STATUS, "evohome: %s: Outside Temperature = %.2f C %02X %02X", tag, fOTResponse, msg.payload[3], msg.payload[4]);
+                return true;
+        }
 	// 1C (ID.28) = Return Water Temperature
 	if (msg.payload[2] == 0x1c) {
 		SendTempSensor(28, 255, fOTResponse, "Return Water Temperature");
@@ -1692,9 +1735,9 @@ bool CEvohomeRadio::DecodeOpenThermSetpoint(CEvohomeMsg& msg)
 {
 	char tag[] = "OPENTHERM_SETPOINT";
 
-	// Only look for responses from the OT Bridge and Filter out messages from other controllers
-	if (msg.GetID(1) != GetControllerID())
-		return true;
+        // Only look for responses from the OT Bridge
+        if (msg.GetID(0) != GetOpenThermBridgeID())
+                return true;
 
 	// All OT messages should have a payload size of 3
 	if (msg.payloadsize != 3) {
@@ -1703,7 +1746,7 @@ bool CEvohomeRadio::DecodeOpenThermSetpoint(CEvohomeMsg& msg)
 	}
 
 	// The OT Control Setpoint is in byte 2 and 3
-	float fOTSetpoint = static_cast<float>(msg.payload[1] << 8 | msg.payload[2]) / 100.0f;
+	float fOTSetpoint = static_cast<float>(msg.payload[1] << 8 | msg.payload[2]) / 100.0F;
 
 	SendTempSensor(1, 255, fOTSetpoint, "Control Setpoint");
 	Log(true, LOG_STATUS, "evohome: %s: Boiler Water Temperature = %.2f C", tag, fOTSetpoint);
@@ -1801,6 +1844,10 @@ bool CEvohomeRadio::DecodeDeviceInfo(CEvohomeMsg& msg)
 	if (nDevType == 0x04) { sprintf(sDevType, "ACTUATOR"); }
 	else if (nDevType == 0x01) { sprintf(sDevType, "SENSOR"); }
 	else if (nDevType == 0x05) { sprintf(sDevType, "HOT WATER"); }
+	else if (nDevType == 0x06)
+	{
+		sprintf(sDevType, "REMOTE GW");
+	}
 	else if (nDevType == 0x00)
 	{
 		sprintf(sDevType, "CONTROLLER");
@@ -2019,6 +2066,7 @@ void CEvohomeRadio::Idle_Work()
 					RequestZoneTemp(i);
 				RequestDHWTemp();  // Request DHW temp from controller as workaround for being unable to identify DeviceID
  			        RequestDHWSettings();
+				RequestOpenThermBridge();  //Request OpenTherm information as the controller no longer requests it
  			}
 			if (AllSensors == false) // Check whether individual zone sensors has been activated
 			{

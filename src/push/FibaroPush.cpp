@@ -14,7 +14,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-using namespace boost::placeholders;
+extern CFibaroPush m_fibaropush;
 
 CFibaroPush::CFibaroPush()
 {
@@ -25,7 +25,8 @@ CFibaroPush::CFibaroPush()
 void CFibaroPush::Start()
 {
 	UpdateActive();
-	m_sConnection = m_mainworker.sOnDeviceReceived.connect(boost::bind(&CFibaroPush::OnDeviceReceived, this, _1, _2, _3, _4));
+	ReloadPushLinks(m_PushType);
+	m_sConnection = m_mainworker.sOnDeviceReceived.connect([this](auto id, auto idx, const auto &name, auto rx) { OnDeviceReceived(id, idx, name, rx); });
 }
 
 void CFibaroPush::Stop()
@@ -43,15 +44,22 @@ void CFibaroPush::UpdateActive()
 
 void CFibaroPush::OnDeviceReceived(const int m_HwdID, const uint64_t DeviceRowIdx, const std::string &DeviceName, const unsigned char *pRXCommand)
 {
-	m_DeviceRowIdx = DeviceRowIdx;
 	if (m_bLinkActive)
 	{
-		DoFibaroPush();
+		DoFibaroPush(DeviceRowIdx);
 	}
 }
 
-void CFibaroPush::DoFibaroPush()
+void CFibaroPush::DoFibaroPush(const uint64_t DeviceRowIdx)
 {
+	std::vector<std::vector<std::string>> result;
+	result = m_sql.safe_query("SELECT A.DeviceRowID, A.DelimitedValue, B.ID, B.Type, B.SubType, B.nValue, B.sValue, A.TargetType, A.TargetVariable, A.TargetDeviceID, A.TargetProperty, "
+				  "A.IncludeUnit, B.SwitchType FROM PushLink as A, DeviceStatus as B "
+				  "WHERE (A.PushType==%d AND A.DeviceRowID == '%" PRIu64 "' AND A.Enabled = '1' AND A.DeviceRowID==B.ID)",
+				  PushType::PUSHTYPE_FIBARO, DeviceRowIdx);
+	if (result.empty())
+		return;
+
 	std::string fibaroIP;
 	std::string fibaroUsername;
 	std::string fibaroPassword;
@@ -72,141 +80,132 @@ void CFibaroPush::DoFibaroPush()
 
 	if ((fibaroIP.empty()) || (fibaroUsername.empty()) || (fibaroPassword.empty()))
 		return;
-	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query(
-		"SELECT A.DeviceRowID, A.DelimitedValue, B.ID, B.Type, B.SubType, B.nValue, B.sValue, A.TargetType, A.TargetVariable, A.TargetDeviceID, A.TargetProperty, A.IncludeUnit, B.SwitchType FROM PushLink as A, DeviceStatus as B "
-		"WHERE (A.PushType==%d AND A.DeviceRowID == '%" PRIu64 "' AND A.Enabled = '1' AND A.DeviceRowID==B.ID)",
-		PushType::PUSHTYPE_FIBARO,
-		m_DeviceRowIdx);
-	if (!result.empty())
+	for (const auto &sd : result)
 	{
 		std::string sendValue;
-		for (const auto &sd : result)
-		{
-			int delpos = atoi(sd[1].c_str());
-			int dType = atoi(sd[3].c_str());
-			int dSubType = atoi(sd[4].c_str());
-			int nValue = atoi(sd[5].c_str());
-			std::string sValue = sd[6];
-			int targetType = atoi(sd[7].c_str());
-			std::string targetVariable = sd[8];
-			int targetDeviceID = atoi(sd[9].c_str());
-			std::string targetProperty = sd[10];
-			int includeUnit = atoi(sd[11].c_str());
-			int metertype = atoi(sd[12].c_str());
-			std::string lstatus;
+		int delpos = atoi(sd[1].c_str());
+		int dType = atoi(sd[3].c_str());
+		int dSubType = atoi(sd[4].c_str());
+		int nValue = atoi(sd[5].c_str());
+		std::string sValue = sd[6];
+		int targetType = atoi(sd[7].c_str());
+		std::string targetVariable = sd[8];
+		int targetDeviceID = atoi(sd[9].c_str());
+		std::string targetProperty = sd[10];
+		int includeUnit = atoi(sd[11].c_str());
+		int metertype = atoi(sd[12].c_str());
+		std::string lstatus;
 
-			if ((targetType == 0) || (targetType == 1)) {
-				if (delpos == 0) {
-					int llevel = 0;
-					bool bHaveDimmer = false;
-					bool bHaveGroupCmd = false;
-					int maxDimLevel = 0;
-					GetLightStatus(dType, dSubType, (device::tswitch::type::value)metertype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
-					sendValue = lstatus;
-				}
-				else if (delpos > 0) {
-					std::vector<std::string> strarray;
-					if (sValue.find(';') != std::string::npos)
-					{
-						StringSplit(sValue, ";", strarray);
-						if (int(strarray.size()) >= delpos)
-						{
-							std::string rawsendValue = strarray[delpos - 1];
-							sendValue = ProcessSendValue(rawsendValue, delpos, nValue, includeUnit, dType, dSubType, metertype);
-						}
-					}
-					else
-						sendValue = ProcessSendValue(sValue, delpos, nValue, includeUnit, dType, dSubType, metertype);
-				}
-			}
-			else { // scenes/reboot, only on/off
+		if ((targetType == 0) || (targetType == 1)) {
+			if (delpos == 0) {
 				int llevel = 0;
 				bool bHaveDimmer = false;
 				bool bHaveGroupCmd = false;
 				int maxDimLevel = 0;
-				GetLightStatus(dType, dSubType, device::tswitch::type::OnOff, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
+				GetLightStatus(dType, dSubType, (device::tswitch::type::value)metertype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 				sendValue = lstatus;
 			}
-			if (!sendValue.empty())
+			else if (delpos > 0) {
+				std::vector<std::string> strarray;
+				if (sValue.find(';') != std::string::npos)
+				{
+					StringSplit(sValue, ";", strarray);
+					if (int(strarray.size()) >= delpos)
+					{
+						std::string rawsendValue = strarray[delpos - 1];
+						sendValue = ProcessSendValue(DeviceRowIdx, rawsendValue, delpos, nValue, includeUnit, dType, dSubType, metertype);
+					}
+				}
+				else
+					sendValue = ProcessSendValue(DeviceRowIdx, sValue, delpos, nValue, includeUnit, dType, dSubType, metertype);
+			}
+		}
+		else { // scenes/reboot, only on/off
+			int llevel = 0;
+			bool bHaveDimmer = false;
+			bool bHaveGroupCmd = false;
+			int maxDimLevel = 0;
+			GetLightStatus(dType, dSubType, device::tswitch::type::OnOff, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
+			sendValue = lstatus;
+		}
+		if (sendValue.empty())
+			continue;
+
+		std::string sResult;
+		std::stringstream sPostData;
+		std::stringstream Url;
+		std::vector<std::string> ExtraHeaders;
+
+		Url << "http://";
+
+		if (bIsV4) {
+			// Create basic authentication header
+			std::stringstream sstr;
+			sstr << fibaroUsername << ":" << fibaroPassword;
+			std::string m_AccessToken = base64_encode(sstr.str());
+			ExtraHeaders.push_back("Authorization:Basic " + m_AccessToken);
+		}
+		else {
+			Url << fibaroUsername << ":" << fibaroPassword << "@"; // Add user name in url for earlier than V4
+		}
+
+		Url << fibaroIP << "/";
+
+		sendValue = CURLEncode::URLEncode(sendValue);
+
+		if (targetType == 0) {
+			Url << "api/globalVariables";
+
+			if (bIsV4)
+				Url << "/" << targetVariable;
+
+			sPostData << R"({"name": ")" << targetVariable << R"(", "value": ")" << sendValue << "\"";
+
+			if (bIsV4)
+				sPostData << ", \"invokeScenes\": true";
+
+			sPostData << " }";
+
+			if (fibaroDebugActive) {
+				_log.Log(LOG_NORM, "FibaroLink: sending global variable %s with value: %s", targetVariable.c_str(), sendValue.c_str());
+			}
+			if (!HTTPClient::PUT(Url.str(), sPostData.str(), ExtraHeaders, sResult))
 			{
-				std::string sResult;
-				std::stringstream sPostData;
-				std::stringstream Url;
-				std::vector<std::string> ExtraHeaders;
+				_log.Log(LOG_ERROR, "Error sending data to Fibaro!");
 
-				Url << "http://";
-
-				if (bIsV4) {
-					// Create basic authentication header
-					std::stringstream sstr;
-					sstr << fibaroUsername << ":" << fibaroPassword;
-					std::string m_AccessToken = base64_encode(sstr.str());
-					ExtraHeaders.push_back("Authorization:Basic " + m_AccessToken);
+			}
+		}
+		else if (targetType == 1) {
+			Url << "api/callAction?deviceid=" << targetDeviceID << "&name=setProperty&arg1=" << targetProperty << "&arg2=" << sendValue;
+			if (fibaroDebugActive) {
+				_log.Log(LOG_NORM, "FibaroLink: sending value %s to property %s of virtual device id %d", sendValue.c_str(), targetProperty.c_str(), targetDeviceID);
+			}
+			if (!HTTPClient::GET(Url.str(), ExtraHeaders, sResult))
+			{
+				_log.Log(LOG_ERROR, "Error sending data to Fibaro!");
+			}
+		}
+		else if (targetType == 2) {
+			if (((delpos == 0) && (lstatus == "Off")) || ((delpos == 1) && (lstatus == "On"))) {
+				Url << "api/sceneControl?id=" << targetDeviceID << "&action=start";
+				if (fibaroDebugActive) {
+					_log.Log(LOG_NORM, "FibaroLink: activating scene %d", targetDeviceID);
 				}
-				else {
-					Url << fibaroUsername << ":" << fibaroPassword << "@"; // Add user name in url for earlier than V4
+				if (!HTTPClient::GET(Url.str(), ExtraHeaders, sResult))
+				{
+					_log.Log(LOG_ERROR, "Error sending data to Fibaro!");
 				}
-
-				Url << fibaroIP << "/";
-
-				sendValue = CURLEncode::URLEncode(sendValue);
-
-				if (targetType == 0) {
-					Url << "api/globalVariables";
-
-					if (bIsV4)
-						Url << "/" << targetVariable;
-
-					sPostData << R"({"name": ")" << targetVariable << R"(", "value": ")" << sendValue << "\"";
-
-					if (bIsV4)
-						sPostData << ", \"invokeScenes\": true";
-
-					sPostData << " }";
-
-					if (fibaroDebugActive) {
-						_log.Log(LOG_NORM, "FibaroLink: sending global variable %s with value: %s", targetVariable.c_str(), sendValue.c_str());
-					}
-					if (!HTTPClient::PUT(Url.str(), sPostData.str(), ExtraHeaders, sResult))
-					{
-						_log.Log(LOG_ERROR, "Error sending data to Fibaro!");
-
-					}
+			}
+		}
+		else if (targetType == 3) {
+			if (((delpos == 0) && (lstatus == "Off")) || ((delpos == 1) && (lstatus == "On"))) {
+				Url << "api/settings/reboot";
+				if (fibaroDebugActive) {
+					_log.Log(LOG_NORM, "FibaroLink: reboot");
 				}
-				else if (targetType == 1) {
-					Url << "api/callAction?deviceid=" << targetDeviceID << "&name=setProperty&arg1=" << targetProperty << "&arg2=" << sendValue;
-					if (fibaroDebugActive) {
-						_log.Log(LOG_NORM, "FibaroLink: sending value %s to property %s of virtual device id %d", sendValue.c_str(), targetProperty.c_str(), targetDeviceID);
-					}
-					if (!HTTPClient::GET(Url.str(), ExtraHeaders, sResult))
-					{
-						_log.Log(LOG_ERROR, "Error sending data to Fibaro!");
-					}
-				}
-				else if (targetType == 2) {
-					if (((delpos == 0) && (lstatus == "Off")) || ((delpos == 1) && (lstatus == "On"))) {
-						Url << "api/sceneControl?id=" << targetDeviceID << "&action=start";
-						if (fibaroDebugActive) {
-							_log.Log(LOG_NORM, "FibaroLink: activating scene %d", targetDeviceID);
-						}
-						if (!HTTPClient::GET(Url.str(), ExtraHeaders, sResult))
-						{
-							_log.Log(LOG_ERROR, "Error sending data to Fibaro!");
-						}
-					}
-				}
-				else if (targetType == 3) {
-					if (((delpos == 0) && (lstatus == "Off")) || ((delpos == 1) && (lstatus == "On"))) {
-						Url << "api/settings/reboot";
-						if (fibaroDebugActive) {
-							_log.Log(LOG_NORM, "FibaroLink: reboot");
-						}
-						if (!HTTPClient::POST(Url.str(), sPostData.str(), ExtraHeaders, sResult))
-						{
-							_log.Log(LOG_ERROR, "Error sending data to Fibaro!");
-						}
-					}
+				if (!HTTPClient::POST(Url.str(), sPostData.str(), ExtraHeaders, sResult))
+				{
+					_log.Log(LOG_ERROR, "Error sending data to Fibaro!");
 				}
 			}
 		}
@@ -372,6 +371,7 @@ namespace http {
 					idx.c_str()
 				);
 			}
+			m_fibaropush.ReloadPushLinks(CBasePush::PushType::PUSHTYPE_FIBARO);
 			root["status"] = "OK";
 			root["title"] = "SaveFibaroLink";
 		}
@@ -388,6 +388,7 @@ namespace http {
 			if (idx.empty())
 				return;
 			m_sql.safe_query("DELETE FROM PushLink WHERE (ID=='%q')", idx.c_str());
+			m_fibaropush.ReloadPushLinks(CBasePush::PushType::PUSHTYPE_FIBARO);
 			root["status"] = "OK";
 			root["title"] = "DeleteFibaroLink";
 		}
