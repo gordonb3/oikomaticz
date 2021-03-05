@@ -190,6 +190,7 @@ bool CEvohomeWeb::StartSession()
 	else
 	{
 		_log.Log(LOG_ERROR, "(%s) installation at [%d,%d,%d] does not exist - verify your settings", m_Name.c_str(), m_locationIdx, m_gatewayIdx, m_systemIdx);
+		m_loggedon = false;
 		return false;
 	}
 	if (m_beMoreVerbose)
