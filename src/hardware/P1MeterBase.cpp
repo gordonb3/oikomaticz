@@ -436,9 +436,17 @@ bool P1MeterBase::MatchLine()
 
 	if (ePos > OBIS_MAX_VALUE_LENGTH)
 	{
-		// invalid message: line too long
-		_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - value in line \"%s\" is oversized", m_lbuffer);
-		return false;
+		if (matchtype == device::tmeter::COSEM::OBIS::version)
+		{
+			// Sibelga (Brussels) meters send an invalid version string
+			ePos = 6;
+		}
+		else
+		{
+			// invalid message: line too long
+			_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - value in line \"%s\" is oversized", m_lbuffer);
+			return false;
+		}
 	}
 
 	if (ePos == 0)
@@ -570,8 +578,18 @@ bool P1MeterBase::MatchLine()
 		if ((value[0] == '(') && (ePos == 6))
 		{
 			// Belgian meter
-			sprintf(szVersion, "ESMR %c.%c.%c", value[1], value[2], value[3]);
-			m_p1version = value[1] ^ 0x30;
+			if (value[1] == '2')
+			{
+				// Sibelga meter sends incorrect version string
+				_log.Log(LOG_ERROR, "P1 Smart Meter: Meter appears to be from Sibelga. Guessing version as 5.x");
+				m_p1version = 5;
+				break;
+			}
+			else
+			{
+				sprintf(szVersion, "ESMR %c.%c.%c", value[1], value[2], value[3]);
+				m_p1version = value[1] ^ 0x30;
+			}
 		}
 		else
 		{
