@@ -4850,12 +4850,19 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 			ParseSQLdatetime(lutime, ntime, sLastUpdate, ltime.tm_isdst);
 
 			interval = difftime(now, lutime);
-			StringSplit(result[0][5], ";", parts);
-			nEnergy = static_cast<float>(strtof(parts[0].c_str(), nullptr) * interval / 3600
-							 + strtof(parts[1].c_str(), nullptr)); // Rob: whats happening here... strtof ?
-			StringSplit(sValue, ";", parts);
-			sprintf(sCompValue, "%s;%.1f", parts[0].c_str(), nEnergy);
-			sValue = sCompValue;
+			StringSplit(old_sValue, ";", parts);
+			if (parts.size() == 2)
+			{
+				//we need to use atof here because some users seem to have a illegal sValue in the database that causes std::stof to crash
+				nEnergy = static_cast<float>(atof(parts[0].c_str()) * interval / 3600 + atof(parts[1].c_str()));
+				StringSplit(sValue, ";", parts);
+				if (!parts.empty())
+				{
+					sprintf(sCompValue, "%s;%.1f", parts[0].c_str(), nEnergy);
+					old_sValue = sCompValue;
+				}
+			}
+			sValue = old_sValue.c_str();
 		}
 		//~ use different update queries based on the device type
 		if (devType == pTypeGeneral && subType == sTypeCounterIncremental)
@@ -7912,13 +7919,12 @@ void CSQLHelper::DeleteDateRange(const char *ID, const std::string &fromDate, co
 	if (result.empty())
 		return;
 
-	std::vector<std::string> historyTables =
-	{
-		"Rain", "Wind",  "UV", "Temperature", "Meter", "MultiMeter", "Percentage", "Fan",
+	const std::vector<std::string> historyTables{
+		"Rain",		 "Wind",	  "UV",		 "Temperature",		 "Meter",	   "MultiMeter",	  "Percentage",		 "Fan",
 		"Rain_Calendar", "Wind_Calendar", "UV_Calendar", "Temperature_Calendar", "Meter_Calendar", "MultiMeter_Calendar", "Percentage_Calendar", "Fan_Calendar"
 	};
 
-	for (std::string historyTable : historyTables)
+	for (const auto &historyTable : historyTables)
 	{
 		safe_query("DELETE FROM %q WHERE (DeviceRowID=='%q') AND (Date>='%q') AND (Date<='%q')", historyTable.c_str(), ID, fromDate.c_str(), toDate.c_str() );
 		_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDateRange; delete from %s with idx: %s and Date >= %s and date <= %s " , historyTable.c_str(), std::string(ID).c_str(), fromDate.c_str(), toDate.c_str() );

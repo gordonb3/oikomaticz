@@ -41,10 +41,6 @@ extern MainWorker m_mainworker;
 
 namespace Plugins
 {
-
-	extern std::mutex PluginMutex; // controls access to the message queue
-	extern std::queue<CPluginMessageBase *> PluginMessageQueue;
-
 	std::mutex PythonMutex; // controls access to Python
 
 	void LogPythonException(CPlugin *pPlugin, const std::string &sHandler)
@@ -875,6 +871,35 @@ namespace Plugins
 
 		RequestStart();
 
+		// Flush the message queue (should already be empty)
+		{
+			std::lock_guard<std::mutex> l(m_QueueMutex);
+			while (!m_MessageQueue.empty())
+			{
+				m_MessageQueue.pop_front();
+			}
+		}
+
+		// Start worker thread
+		try
+		{
+			std::lock_guard<std::mutex> l(m_QueueMutex);
+			m_thread = std::make_shared<std::thread>(&CPlugin::Do_Work, this);
+			if (!m_thread)
+			{
+				_log.Log(LOG_ERROR, "Failed start interface worker thread.");
+			}
+			else
+			{
+				SetThreadName(m_thread->native_handle(), m_Name.c_str());
+				_log.Log(LOG_NORM, "%s hardware started.", m_Name.c_str());
+			}
+		}
+		catch (...)
+		{
+			_log.Log(LOG_ERROR, "Exception caught in '%s'.", __func__);
+		}
+
 		//	Add start command to message queue
 		m_bIsStarting = true;
 		MessagePlugin(new InitializeMessage(this));
@@ -882,36 +907,6 @@ namespace Plugins
 		Log(LOG_STATUS, "(%s) Started.", m_Name.c_str());
 
 		return true;
-	}
-
-	void CPlugin::ClearMessageQueue()
-	{
-		// Copy the event queue to a temporary one, then copy back the events for other plugins
-		std::lock_guard<std::mutex> l(PluginMutex);
-		std::queue<CPluginMessageBase *> TempMessageQueue(PluginMessageQueue);
-		while (!PluginMessageQueue.empty())
-			PluginMessageQueue.pop();
-
-		while (!TempMessageQueue.empty())
-		{
-			CPluginMessageBase *FrontMessage = TempMessageQueue.front();
-			TempMessageQueue.pop();
-			if (FrontMessage->m_pPlugin == this)
-			{
-				// log events that will not be processed
-				CCallbackBase *pCallback = dynamic_cast<CCallbackBase *>(FrontMessage);
-				if (pCallback)
-					Log(LOG_ERROR, "(%s) Callback event '%s' (Python call '%s') discarded.", m_Name.c_str(), FrontMessage->Name(), pCallback->PythonName());
-				else
-					Log(LOG_ERROR, "(%s) Non-callback event '%s' discarded.", m_Name.c_str(), FrontMessage->Name());
-			}
-			else
-			{
-				// Message is for a different plugin so requeue it
-				Log(LOG_NORM, "(%s) requeuing '%s' message for '%s'", m_Name.c_str(), FrontMessage->Name(), FrontMessage->Plugin()->m_Name.c_str());
-				PluginMessageQueue.push(FrontMessage);
-			}
-		}
 	}
 
 	bool CPlugin::StopHardware()
@@ -999,14 +994,65 @@ namespace Plugins
 	{
 		Log(LOG_STATUS, "(%s) Entering work loop.", m_Name.c_str());
 		m_LastHeartbeat = mytime(nullptr);
-		int scounter = m_iPollInterval * 2;
-		while (!IsStopRequested(500))
+		while (!IsStopRequested(50) || !m_bIsStopped)
 		{
-			if (!--scounter)
+			time_t Now = time(nullptr);
+			bool bProcessed = true;
+			while (bProcessed)
+			{
+				CPluginMessageBase *Message = nullptr;
+				bProcessed = false;
+
+				// Cycle once through the queue looking for the 1st message that is ready to process
+				{
+					std::lock_guard<std::mutex> l(m_QueueMutex);
+					for (size_t i = 0; i < m_MessageQueue.size(); i++)
+					{
+						CPluginMessageBase *FrontMessage = m_MessageQueue.front();
+						m_MessageQueue.pop_front();
+						if (!FrontMessage->m_Delay || FrontMessage->m_When <= Now)
+						{
+							// Message is ready now or was already ready (this is the case for almost all messages)
+							Message = FrontMessage;
+							break;
+						}
+						// Message is for sometime in the future so requeue it (this happens when the 'Delay' parameter is used on a Send)
+						m_MessageQueue.push_back(FrontMessage);
+					}
+				}
+
+				if (Message)
+				{
+					bProcessed = true;
+					try
+					{
+						const CPlugin *pPlugin = Message->Plugin();
+						if (pPlugin && (pPlugin->m_bDebug & PDM_QUEUE))
+						{
+							_log.Log(LOG_NORM, "(" + pPlugin->m_Name + ") Processing '" + std::string(Message->Name()) + "' message");
+						}
+						Message->Process();
+					}
+					catch (...)
+					{
+						_log.Log(LOG_ERROR, "PluginSystem: Exception processing message.");
+					}
+				}
+				// Free the memory for the message
+				if (Message)
+				{
+					std::lock_guard<std::mutex> l(PythonMutex); // Take mutex to guard access to CPluginTransport::m_pConnection inside the message
+					CPlugin *pPlugin = (CPlugin *)Message->Plugin();
+					pPlugin->RestoreThread();
+					delete Message;
+					pPlugin->ReleaseThread();
+				}
+			}
+
+			if (Now >= (m_LastHeartbeat + m_iPollInterval))
 			{
 				//	Add heartbeat to message queue
 				MessagePlugin(new onHeartbeatCallback(this));
-				scounter = m_iPollInterval * 2;
 				m_LastHeartbeat = mytime(nullptr);
 			}
 
@@ -1168,17 +1214,6 @@ namespace Plugins
 			module_state *pModState = ((struct module_state *)PyModule_GetState(pMod));
 			pModState->pPlugin = this;
 
-			// Start worker thread
-			m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
-			std::string plugin_name = "Plugin_" + m_PluginKey;
-			SetThreadName(m_thread->native_handle(), plugin_name.c_str());
-
-			if (!m_thread)
-			{
-				Log(LOG_ERROR, "(%s) failed start worker thread.", m_PluginKey.c_str());
-				goto Error;
-			}
-
 			//	Add start command to message queue
 			MessagePlugin(new onStartCallback(this));
 
@@ -1289,10 +1324,24 @@ namespace Plugins
 				}
 			}
 
-			m_DeviceDict = PyDict_New();
+			m_DeviceDict = (PyDictObject*)PyDict_New();
 			if (PyDict_SetItemString(pModuleDict, "Devices", (PyObject *)m_DeviceDict) == -1)
 			{
 				Log(LOG_ERROR, "(%s) failed to add Device dictionary.", m_PluginKey.c_str());
+				goto Error;
+			}
+
+			PyBorrowedRef brModule = PyState_FindModule(&DomoticzModuleDef);
+			if (!brModule)
+			{
+				Log(LOG_ERROR, "CPlugin:%s, unable to find module for current interpreter.", __func__);
+				goto Error;
+			}
+
+			module_state *pModState = ((struct module_state *)PyModule_GetState(brModule));
+			if (!pModState)
+			{
+				Log(LOG_ERROR, "CPlugin:%s, unable to obtain module state.", __func__);
 				goto Error;
 			}
 
@@ -1304,24 +1353,30 @@ namespace Plugins
 				// Add device objects into the device dictionary with Unit as the key
 				for (const auto &sd : result)
 				{
-					CDevice *pDevice = (CDevice *)CDevice_new(&CDeviceType, (PyObject *)nullptr, (PyObject *)nullptr);
+					PyNewRef nrArgList = Py_BuildValue("(si)", "", atoi(sd[0].c_str()));
+					if (!nrArgList)
+					{
+						Log(LOG_ERROR, "Building Device argument list failed for Unit %d.", atoi(sd[0].c_str()));
+						goto Error;
+					}
+					PyNewRef pDevice = PyObject_CallObject((PyObject *)pModState->pDeviceClass, nrArgList);
+					if (!pDevice)
+					{
+						Log(LOG_ERROR, "Device object creation failed for Unit %d.", atoi(sd[0].c_str()));
+						goto Error;
+					}
 
-					PyNewRef	pKey = PyLong_FromLong(atoi(sd[0].c_str()));
-					if (PyDict_SetItem((PyObject *)m_DeviceDict, pKey, (PyObject *)pDevice) == -1)
+					PyNewRef pKey = PyLong_FromLong(atoi(sd[0].c_str()));
+					if (PyDict_SetItem((PyObject *)m_DeviceDict, pKey, pDevice) == -1)
 					{
 						Log(LOG_ERROR, "(%s) failed to add unit '%s' to device dictionary.", m_PluginKey.c_str(), sd[0].c_str());
 						goto Error;
 					}
-					pDevice->pPlugin = this;
-					pDevice->PluginKey = PyUnicode_FromString(m_PluginKey.c_str());
-					pDevice->HwdID = m_HwdID;
-					pDevice->Unit = atoi(sd[0].c_str());
 					CDevice_refresh(pDevice);
-					Py_DECREF(pDevice);
 				}
 			}
 
-			m_ImageDict = PyDict_New();
+			m_ImageDict = (PyDictObject *)PyDict_New();
 			if (PyDict_SetItemString(pModuleDict, "Images", (PyObject *)m_ImageDict) == -1)
 			{
 				Log(LOG_ERROR, "(%s) failed to add Image dictionary.", m_PluginKey.c_str());
@@ -1356,6 +1411,7 @@ namespace Plugins
 
 			m_bIsStarted = true;
 			m_bIsStarting = false;
+			m_bIsStopped = false;
 			return true;
 		}
 		catch (...)
@@ -1688,8 +1744,8 @@ namespace Plugins
 		}
 
 		// Add message to queue
-		std::lock_guard<std::mutex> l(PluginMutex);
-		PluginMessageQueue.push(pMessage);
+		std::lock_guard<std::mutex> l(m_QueueMutex);
+		m_MessageQueue.push_back(pMessage);
 	}
 
 	void CPlugin::DeviceAdded(int Unit)
@@ -1791,7 +1847,7 @@ namespace Plugins
 						{
 							PyErr_Clear();
 						}
-						if (m_bDebug & PDM_PYTHON)
+						if (m_bDebug & PDM_PLUGIN)
 						{
 							// See if additional information is available
 							PyNewRef pLocals = PyObject_Dir(pTarget);
@@ -1874,7 +1930,7 @@ namespace Plugins
 				}
 
 				PyBorrowedRef	key;
-				CDevice *pDevice;
+				PyBorrowedRef	pDevice;
 				Py_ssize_t pos = 0;
 				// Sanity check to make sure the reference counbting is all good.
 				while (PyDict_Next((PyObject *)m_DeviceDict, &pos, &key, (PyObject **)&pDevice))
@@ -1891,14 +1947,14 @@ namespace Plugins
 					}
 					else
 					{
-						if (pDevice->ob_base.ob_refcnt > 1)
+						if (pDevice->ob_refcnt > 1)
 						{
-							std::string sName = PyUnicode_AsUTF8(pDevice->Name);
-							_log.Log(LOG_ERROR, "%s: Device '%s' Reference Count not one: %d.", __func__, sName.c_str(), pDevice->ob_base.ob_refcnt);
+							std::string sName = PyUnicode_AsUTF8(((CDevice*)pDevice)->Name);
+							_log.Log(LOG_ERROR, "%s: Device '%s' Reference Count not one: %d.", __func__, sName.c_str(), pDevice->ob_refcnt);
 						}
-						else if (pDevice->ob_base.ob_refcnt < 1)
+						else if (pDevice->ob_refcnt < 1)
 						{
-							_log.Log(LOG_ERROR, "%s: Device Reference Count is less than one: %d.", __func__, pDevice->ob_base.ob_refcnt);
+							_log.Log(LOG_ERROR, "%s: Device Reference Count is less than one: %d.", __func__, pDevice->ob_refcnt);
 						}
 					}
 				}
@@ -1927,13 +1983,24 @@ namespace Plugins
 		{
 			Log(LOG_ERROR, "%s: Unknown execption thrown releasing Interpreter", __func__);
 		}
-		ClearMessageQueue();
+
 		m_PyModule = nullptr;
 		m_DeviceDict = nullptr;
 		m_ImageDict = nullptr;
 		m_SettingsDict = nullptr;
 		m_PyInterpreter = nullptr;
 		m_bIsStarted = false;
+
+		// Flush the message queue (should already be empty)
+		{
+			std::lock_guard<std::mutex> l(m_QueueMutex);
+			while (!m_MessageQueue.empty())
+			{
+				m_MessageQueue.pop_front();
+			}
+		}
+
+		m_bIsStopped = true;
 	}
 
 	bool CPlugin::LoadSettings()
@@ -1941,7 +2008,7 @@ namespace Plugins
 		PyObject *pModuleDict = PyModule_GetDict((PyObject *)m_PyModule); // returns a borrowed referece to the __dict__ object for the module
 		if (m_SettingsDict)
 			Py_XDECREF(m_SettingsDict);
-		m_SettingsDict = PyDict_New();
+		m_SettingsDict = (PyDictObject *)PyDict_New();
 		if (PyDict_SetItemString(pModuleDict, "Settings", (PyObject *)m_SettingsDict) == -1)
 		{
 			Log(LOG_ERROR, "(%s) failed to add Settings dictionary.", m_PluginKey.c_str());

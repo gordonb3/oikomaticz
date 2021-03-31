@@ -10848,10 +10848,10 @@ namespace http {
 								sprintf(szTmp, "%d kWh", 0);
 								root["result"][ii]["CounterToday"] = szTmp;
 							}
-							root["result"][ii]["TypeImg"] = "current";
-							root["result"][ii]["SwitchTypeVal"] = switchtype; //device::tmeter::type::ENERGY
-							root["result"][ii]["EnergyMeterMode"] = options["EnergyMeterMode"];  //for alternate Energy Reading
 						}
+						root["result"][ii]["TypeImg"] = "current";
+						root["result"][ii]["SwitchTypeVal"] = switchtype;		    // device::tmeter::type::ENERGY
+						root["result"][ii]["EnergyMeterMode"] = options["EnergyMeterMode"]; // for alternate Energy Reading
 					}
 					else if (dType == pTypeAirQuality)
 					{
@@ -13189,7 +13189,7 @@ namespace http {
 			{
 				auto options = m_sql.GetDeviceOptions(idx);
 				options["EnergyMeterMode"] = EnergyMeterMode;
-				uint64_t ullidx = std::strtoull(idx.c_str(), nullptr, 10);
+				uint64_t ullidx = std::stoull(idx);
 				m_sql.SetDeviceOptions(ullidx, options);
 			}
 
