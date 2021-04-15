@@ -22,6 +22,7 @@
 #include "evohomeclient/src/evohomeclient/evohomeclient.hpp"
 #include "evohomeclient/src/evohomeclient2/evohomeclient2.hpp"
 #include "evohomeclient/src/common/jsoncppbridge.hpp"
+#include "evohomeclient/src/time/IsoTimeString.hpp"
 
 #define LOGONFAILTRESHOLD 3
 #define MINPOLINTERVAL 10
@@ -498,7 +499,7 @@ bool CEvohomeWeb::SetSetpoint(const char *pdata)
 		std::string szuntil = "";
 		if ((!HeatingZone->jSchedule.isNull()) || evohome::WebAPI::v2->get_zone_schedule(HeatingZone->szZoneId))
 		{
-			szuntil = evohome::WebAPI::v2->get_next_switchpoint(HeatingZone, szsetpoint, RETURN_UTC_TIME);
+			szuntil = evohome::WebAPI::v2->get_next_switchpoint(HeatingZone, szsetpoint, RETURN_LOCAL_TIME).substr(0,-1);
 			_log.Debug(DEBUG_HARDWARE, "(%s) using schedule to restore zone %s to %s degrees until %s", m_Name.c_str(), zoneId.c_str(), szsetpoint.c_str(), szuntil.c_str());
 			pEvo->temperature = (int16_t)(strtod(szsetpoint.c_str(), nullptr) * 100);
 		}
@@ -506,20 +507,14 @@ bool CEvohomeWeb::SetSetpoint(const char *pdata)
 			_log.Log(LOG_ERROR, "(%s) failed to retrieve schedule information for zone %s", m_Name.c_str(), zoneId.c_str());
 
 		if ((m_showSchedule) && (!szuntil.empty()))
-		{
-			pEvo->year = (uint16_t)(atoi(szuntil.substr(0, 4).c_str()));
-			pEvo->month = (uint8_t)(atoi(szuntil.substr(5, 2).c_str()));
-			pEvo->day = (uint8_t)(atoi(szuntil.substr(8, 2).c_str()));
-			pEvo->hrs = (uint8_t)(atoi(szuntil.substr(11, 2).c_str()));
-			pEvo->mins = (uint8_t)(atoi(szuntil.substr(14, 2).c_str()));
-		}
+			CEvohomeDateTime::DecodeISODate(*pEvo, szuntil.c_str());
 		else
 			pEvo->year = 0;
 		return true;
 	}
 
-	int temperature_int = (int)pEvo->temperature / 100;
-	int temperature_frac = (int)pEvo->temperature % 100;
+	int temperature_int = (int)(pEvo->temperature / 100);
+	int temperature_frac = (int)((pEvo->temperature % 100) / 10);
 	std::stringstream s_setpoint;
 	s_setpoint << temperature_int << "." << temperature_frac;
 
@@ -529,8 +524,24 @@ bool CEvohomeWeb::SetSetpoint(const char *pdata)
 	}
 	if ((pEvo->mode) == 2) // temporary override
 	{
-		std::string szISODate(CEvohomeDateTime::GetISODate(pEvo));
-		return evohome::WebAPI::v2->set_temperature(zoneId, s_setpoint.str(), szISODate);
+		std::string szuntil(CEvohomeDateTime::GetISODate(pEvo));
+		std::string szlocaluntil;
+		if (szuntil.empty())
+		{
+			if ((!HeatingZone->jSchedule.isNull()) || evohome::WebAPI::v2->get_zone_schedule(HeatingZone->szZoneId))
+			{
+				std::string szsetpoint;
+				szuntil = evohome::WebAPI::v2->get_next_switchpoint(HeatingZone, szsetpoint, RETURN_UTC_TIME);
+				szlocaluntil = IsoTimeString::utc_to_local(szuntil).substr(0,-1);
+				_log.Debug(DEBUG_HARDWARE, "(%s) using schedule to set end time for temporary override on zone %s to %d.%d degrees until %s", m_Name.c_str(), zoneId.c_str(), temperature_int, temperature_frac, szlocaluntil.c_str());
+			}
+			else
+				_log.Log(LOG_ERROR, "(%s) invalid command setting temporary override for zone %s with no end time or schedule", m_Name.c_str(), zoneId.c_str());
+		}
+		else
+			szlocaluntil = IsoTimeString::utc_to_local(szuntil).substr(0,-1);
+		CEvohomeDateTime::DecodeISODate(*pEvo, szlocaluntil.c_str());
+		return evohome::WebAPI::v2->set_temperature(zoneId, s_setpoint.str(), szuntil);
 	}
 	return false;
 }

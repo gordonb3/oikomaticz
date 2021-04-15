@@ -12374,7 +12374,7 @@ bool MainWorker::SetSetPoint(const std::string& idx, const float TempValue, cons
 	else if (newMode == "TemporaryOverride")
 		nEvoMode = CEvohomeBase::zmTmp;
 
-	//_log.Log(LOG_DEBUG, "Set point %s %f '%s' '%s'", idx.c_str(), TempValue, newMode.c_str(), until.c_str());
+	//_log.Debug(DEBUG_NORM, "Set point %s %f '%s' '%s'", idx.c_str(), TempValue, newMode.c_str(), until.c_str());
 
 	unsigned long ID;
 	std::stringstream s_strid;
