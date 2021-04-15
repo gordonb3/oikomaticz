@@ -150,7 +150,7 @@ void CLogitechMediaServer::UpdateNodeStatus(const LogitechMediaServerNode &Node,
 			//Retrieve devicename instead of playername in case it was renamed...
 			std::string sDevName = node.Name;
 			std::vector<std::vector<std::string> > result;
-			result = m_sql.safe_query("SELECT Name FROM DeviceStatus WHERE DeviceID=='%q'", node.szDevID);
+			result = m_sql.safe_query("SELECT Name FROM DeviceStatus WHERE (HardwareID = %d) AND (DeviceID = '%q')", m_HwdID, node.szDevID);
 			if (result.size() == 1) {
 				std::vector<std::string> sd = result[0];
 				sDevName = sd[0];
@@ -171,8 +171,8 @@ void CLogitechMediaServer::UpdateNodeStatus(const LogitechMediaServerNode &Node,
 				char szLastUpdate[40];
 				sprintf(szLastUpdate, "%04d-%02d-%02d %02d:%02d:%02d", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
 				result = m_sql.safe_query("UPDATE DeviceStatus SET nValue=%d, sValue='%q', "
-							  "LastUpdate='%q' WHERE (HardwareID == %d) AND (DeviceID == "
-							  "'%q') AND (Unit == 1) AND (SwitchType == %d)",
+							  "LastUpdate='%q' WHERE (HardwareID = %d) AND (DeviceID = "
+							  "'%q') AND (Unit = 1) AND (SwitchType = %d)",
 							  int(nStatus), sStatus.c_str(), szLastUpdate, m_HwdID, node.szDevID, device::tswitch::type::Media);
 
 				// 2:	Log the event if the actual status has changed
@@ -191,7 +191,7 @@ void CLogitechMediaServer::UpdateNodeStatus(const LogitechMediaServerNode &Node,
 				if (bUseOnOff)
 				{
 					result = m_sql.safe_query("SELECT StrParam1,StrParam2 FROM DeviceStatus WHERE "
-								  "(HardwareID==%d) AND (ID = '%q') AND (Unit == 1)",
+								  "(HardwareID = %d) AND (ID = '%q') AND (Unit = 1)",
 								  m_HwdID, node.szDevID);
 					if (!result.empty())
 					{
@@ -560,7 +560,7 @@ void CLogitechMediaServer::ReloadNodes()
 {
 	m_nodes.clear();
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT ID,Name,MacAddress FROM WOLNodes WHERE (HardwareID==%d)", m_HwdID);
+	result = m_sql.safe_query("SELECT ID,Name,MacAddress FROM WOLNodes WHERE (HardwareID = %d)", m_HwdID);
 	if (!result.empty())
 	{
 		_log.Log(LOG_STATUS, "Logitech Media Server: %d player-switch(es) found.", (int)result.size());
@@ -577,12 +577,17 @@ void CLogitechMediaServer::ReloadNodes()
 			pnode.LastOK = mytime(nullptr);
 
 			std::vector<std::vector<std::string> > result2;
-			result2 = m_sql.safe_query("SELECT ID,nValue,sValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit == 1)", m_HwdID, pnode.szDevID);
+			result2 = m_sql.safe_query("SELECT ID,nValue,sValue FROM DeviceStatus WHERE (HardwareID = %d) AND (DeviceID = '%q') AND (Unit = 1)", m_HwdID, pnode.szDevID);
 			if (result2.size() == 1)
 			{
 				pnode.ID = atoi(result2[0][0].c_str());
 				pnode.nStatus = (device::tmedia::status::value)atoi(result2[0][1].c_str());
 				pnode.sStatus = result2[0][2];
+			}
+			else
+			{
+				// device does not exist yet
+				pnode.ID = static_cast<int>(m_sql.InsertDevice(m_HwdID, pnode.szDevID, 1, pTypeLighting2, sTypeAC, device::tswitch::type::Media, 0, "Unavailable", pnode.Name, 12, 255, 1));
 			}
 
 			m_nodes.push_back(pnode);
