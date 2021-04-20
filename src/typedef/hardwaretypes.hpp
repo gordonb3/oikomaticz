@@ -129,6 +129,7 @@ enum value {
 	Meteorologisk,	                //121
 	Mercedes,			//122
 	AirconWithMe,			//123
+	TeleinfoMeterTCP,		//124
 	END
 };
 
@@ -263,6 +264,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ Meteorologisk,		"Meteorologisk institutt Norway (Weather Lookup)",		"Meteorologisk"		},
 	{ Mercedes,			"Mercedes ME Connect",						"Mercedes"		},
 	{ AirconWithMe,			"AirconWithMe Wifi Airco module",				"AirconWithMe"		},
+	{ TeleinfoMeterTCP,		"Teleinfo EDF with LAN interface",				"TeleInfo"		},
 	{ 0, nullptr, nullptr }
 };
 

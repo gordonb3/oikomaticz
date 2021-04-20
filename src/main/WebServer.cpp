@@ -1118,9 +1118,9 @@ namespace http {
 					}
 				}
 
-				if (htype == hardware::type::ECODEVICES) {
-					// EcoDevices always have decimals. Chances to have a P1 and a EcoDevice/Teleinfo device on the same
-					// Oikomaticz instance are very low as both are national standards (NL and FR)
+				if (htype == hardware::type::ECODEVICES || htype == hardware::type::TeleinfoMeterTCP) {
+					// EcoDevices and Teleinfo always have decimals. Chances to have a P1 and a EcoDevice/Teleinfo
+					//  device on the same Oikomaticz instance are very low as both are national standards (NL and FR)
 					m_sql.UpdatePreferencesVar("SmartMeterType", 0);
 				}
 			}
@@ -1525,7 +1525,7 @@ namespace http {
 				|| (htype == hardware::type::KMTronicTCP) || (htype == hardware::type::KMTronicUDP) || (htype == hardware::type::SOLARMAXTCP) || (htype == hardware::type::RelayNet) || (htype == hardware::type::SatelIntegra) || (htype == hardware::type::eHouseTCP) || (htype == hardware::type::RFLINKTCP)
 				|| (htype == hardware::type::Comm5TCP || (htype == hardware::type::Comm5SMTCP) || (htype == hardware::type::CurrentCostMeterLAN))
 				|| (htype == hardware::type::NefitEastLAN) || (htype == hardware::type::DenkoviHTTPDevices) || (htype == hardware::type::DenkoviTCPDevices) || (htype == hardware::type::Ec3kMeterTCP) || (htype == hardware::type::MultiFun) || (htype == hardware::type::ZIBLUETCP) || (htype == hardware::type::OnkyoAVTCP)
-				|| (htype == hardware::type::OctoPrint)
+				|| (htype == hardware::type::OctoPrint) || (htype == hardware::type::TeleinfoMeterTCP)
 				) {
 				//Lan
 				if (address.empty())

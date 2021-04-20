@@ -3628,6 +3628,7 @@ bool IsNetworkDevice(const hardware::type::value htype)
 	case hardware::type::TTN_MQTT:
 	case hardware::type::S0SmartMeterTCP:
 	case hardware::type::OctoPrint:
+	case hardware::type::TeleinfoMeterTCP:
 		return true;
 	default:
 		return false;

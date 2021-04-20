@@ -784,7 +784,7 @@ The domoticz object holds all information about your Domoticz system. It has glo
 	- **dumpTable(table,[levelIndicator],[osfile]<sup>3.0.0</sup>))**: *Function*: print table structure and contents to log
 	- **fileExists(path)**: *Function*: Returns `true` if the file (with full path) exists.
 	- **fromBase64(string)**: *Function*: Decode a base64 string
-	- **fromJSON(json, fallback)**: *Function*. Turns a json string to a Lua table. Example: `local t = domoticz.utils.fromJSON('{ "a": 1 }')`. Followed by: `print( t.a )` will print 1. Optional 2nd param fallback will be returned if json is nil or invalid.
+	- **fromJSON(json, fallback, deSerialize)**: *Function*. Turns a json string to a Lua table. Example: `local t = domoticz.utils.fromJSON('{ "a": 1 }')`. Followed by: `print( t.a )` will print 1. Optional 2nd param fallback will be returned if json is nil or invalid. Optional 3rd param deSerialize (boolean) determines if the JSON should be deserialized before converting.
 	- **fromXML(xml, fallback )**: *Function*: Turns a xml string to a Lua table. Example: `local t = domoticz.utils.fromXML('<testtag>What a nice feature!</testtag>') Followed by: `print( t.texttag)` will print What a nice feature! Optional 2nd param fallback will be returned if xml is nil or invalid.
 	- **fuzzyLookup([string|array of strings], parm)**: *Function*: <sup>3.0.14</sup>. Search fuzzy matching string in parm. If parm is string it returns a number (lower is better match). If parm is array of strings it returns the best matching string.
 	- **groupExists(parm)**: *Function*: returns name when entered with a valid group ^3.0.12^ or groupID and return ID when entered with valid groupName or false when not a group, groupID or groupName of an existing group
@@ -1052,7 +1052,9 @@ Note that if you do not find your specific device type here you can always inspe
  - **setPoint**: *Number*.
  - **mode**: *string* .
  - **untilDate**: *string in ISO 8601 format* or n/a .
- - **updateSetPoint(setPoint, mode, until)**: *Function*. Update set point. Mode can be domoticz.EVOHOME_MODE_AUTO, domoticz.EVOHOME_MODE_TEMPORARY_OVERRIDE, domoticz.EVOHOME_MODE_FOLLOW_SCHEDULE or domoticz.EVOHOME_MODE_PERMANENT_OVERRIDE. You can provide an until date (in ISO 8601 format e.g.: `os.date("!%Y-%m-%dT%TZ")`). Supports [command options](#Command_options_.28delay.2C_duration.2C_event_triggering.29).
+ - **updateSetPoint(setPoint, mode, until)**: *Function*. Update set point. Mode can be domoticz.EVOHOME_MODE_AUTO, domoticz.EVOHOME_MODE_TEMPORARY_OVERRIDE, domoticz.EVOHOME_MODE_FOLLOW_SCHEDULE or domoticz.EVOHOME_MODE_PERMANENT_OVERRIDE. You can provide an until date (in ISO 8601 format e.g.: `os.date("!%Y-%m-%dT%TZ")`). 
+When leaving out untilDate for mode domoticz.EVOHOME_MODE_TEMPORARY_OVERRIDE the untilDate will be the next scheduled zone-update time/date.
+Supports [command options](#Command_options_.28delay.2C_duration.2C_event_triggering.29).
 
 #### Gas
  - **counter**: *Number*. Value in m<sup>3</sup>
@@ -1401,15 +1403,17 @@ See table below
 
 {| class="wikitable"
 !width="17%"| option
-!align="center" width="12%"| state changes
-!align="center" width="12%"| update commands
+!align="center" width="10%"| state changes
+!align="center" width="11%"| update commands
 !align="center" width="12%"| user variables
 !align="center" width="12%"| updateSetpoint
-!align="center" width="12%"| snapshot
-!align="center" width="12%"| triggerIFTTT
+!align="center" width="8%"| snapshot
+!align="center" width="10%"| triggerIFTTT
+!align="center" width="12%"| execute ShellCommand
 !align="center" width="12%"| emitEvent
 |-
 | <code>afterAAA()</code><sup>1</sup>
+|align="center"| •
 |align="center"| •
 |align="center"| •
 |align="center"| •
@@ -1426,9 +1430,11 @@ See table below
 |align="center"| •
 |align="center"| •
 |align="center"| •
+|align="center"| •
 |-
 | <code>forAAA()</code>
 |align="center"| •
+|align="center"| n/a
 |align="center"| n/a
 |align="center"| n/a
 |align="center"| n/a
@@ -1443,6 +1449,7 @@ See table below
 |align="center"| •
 |align="center"| •
 |align="center"| n/a
+|align="center"| n/a
 |align="center"| •
 |-
 | <code>silent()</code>
@@ -1453,9 +1460,11 @@ See table below
 |align="center"| n/a
 |align="center"| n/a
 |align="center"| n/a
+|align="center"| n/a
 |-
 | <code>repeatAfterAAA()</code>
 |align="center"| •
+|align="center"| n/a
 |align="center"| n/a
 |align="center"| n/a
 |align="center"| n/a
@@ -1471,6 +1480,7 @@ See table below
 |align="center"| n/a
 |align="center"| n/a
 |align="center"| n/a
+|align="center"| n/a
 |-
 | <code>cancelQueuedCommands()</code>
 |align="center"| •
@@ -1480,8 +1490,10 @@ See table below
 |align="center"| n/a
 |align="center"| n/a
 |align="center"| n/a
+|align="center"| n/a
 
 |}
+
 ```
 
 #### Notes on table
@@ -1623,7 +1635,6 @@ local someTime = domoticz.time.makeTime() -- someTime = new domoticz time object
 		domoticz.time.dateToTimestamp('20201231235904','(%d%d%d%d)(%d%d)(%d%d)(%d%d)(%d%d)(%d%d)'))	            -- > 1609455544
 ```
 
- - **day**: *Number*
  - **day**: *Number*
  - **dayAbbrOfWeek**: *String*. sun,mon,tue,wed,thu,fri or sat
  - **daysAgo**: *Number*
@@ -2482,7 +2493,7 @@ return
 				callback = scriptVar,
 				timeout = timeoutinseconds,
 			})
-		elseif item.isShellCommandResponse and then
+		elseif item.isShellCommandResponse then
 			if item.statusCode == 0 then
 				... -- process result (in item.json, -item.xml, -item.lines or item.data)
 			end

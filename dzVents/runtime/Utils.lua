@@ -200,7 +200,10 @@ end
 function self.round(value, decimals)
 	local nVal = tonumber(value)
 	local nDec = ( decimals == nil and 0 ) or tonumber(decimals)
-	if nVal >= 0 and nDec > 0 then
+	if nVal == nil then
+		self.log(self.toStr(value) .. ' is not a number!', self.LOG_ERROR)
+		return
+	elseif nVal >= 0 and nDec > 0 then
 		return math.floor( (nVal * 10 ^ nDec) + 0.5) / (10 ^ nDec)
 	elseif nVal >=0 then
 		return math.floor(nVal + 0.5)
@@ -282,13 +285,16 @@ function self.isJSON(str, content)
 	local jsonPatternOK = '^%s*%[*%s*{.+}%s*%]*%s*$'
 	local jsonPatternOK2 = '^%s*%[.+%]*%s*$'
 	local ret = ( str:match(jsonPatternOK) == str ) or ( str:match(jsonPatternOK2) == str ) or content:find('application/json')
-	-- self.log('ret ' .. _.str(ret) , self.LOG_FORCE)
 	return ret ~= nil
 end
 
-function self.fromJSON(json, fallback)
+function self.fromJSON(json, fallback, deSerialize)
 
-	if json == nil or json == '' then
+	local deSerializeJSON  = function(j)
+		return j:gsub('\\"','"'):gsub('"{','{'):gsub('"%["','["'):gsub('"%]"','"]'):gsub('}"','}'):gsub('"%[{"','[{"'):gsub('"}%]"','"}]'):gsub('%]"}',']}')
+	end
+
+	if type(json) ~= 'string' or json == '' then
 		return fallback
 	end
 
@@ -302,6 +308,8 @@ function self.fromJSON(json, fallback)
 
 	if self.isJSON(json) then
 
+		if deSerialize then json = deSerializeJSON(json) end
+
 		local parse = function(j)
 			return jsonParser:decode(j)
 		end
@@ -311,9 +319,9 @@ function self.fromJSON(json, fallback)
 		if (ok) then
 			return results
 		end
-		self.log('Error parsing json to LUA table: ' .. _.str(results) , self.LOG_ERROR)
+		self.log('Error parsing json to LUA table: ' .. self.toStr(results) , self.LOG_ERROR)
 	else
-		self.log('Error parsing json to LUA table: (invalid json string) ' .. _.str(json) , self.LOG_ERROR)
+		self.log('Error parsing json to LUA table: (invalid json string) ' .. self.toStr(json) , self.LOG_ERROR)
 	end
 
 	return fallback
@@ -408,9 +416,9 @@ function self.fromXML(xml, fallback)
 		if (ok) then
 			return results
 		end
-		-- self.log('Error parsing xml to Lua table: ' .. _.str(results), self.LOG_ERROR)
+		-- self.log('Error parsing xml to Lua table: ' .. self.toStr(results), self.LOG_ERROR)
 	else
-		self.log('Error parsing xml to LUA table: (invalid xml string) ' .. _.str(xml) , self.LOG_ERROR)
+		self.log('Error parsing xml to LUA table: (invalid xml string) ' .. self.toStr(xml) , self.LOG_ERROR)
 	end
 	return fallback
 
@@ -434,7 +442,7 @@ function self.toXML(luaTable, header)
 		return results
 	end
 
-	self.log('Error converting LUA table to XML: ' .. _.str(results), self.LOG_ERROR)
+	self.log('Error converting LUA table to XML: ' .. self.toStr(results), self.LOG_ERROR)
 	return nil
 
 end
@@ -451,7 +459,7 @@ function self.toJSON(luaTable)
 		return results
 	end
 
-	self.log('Error converting LUA table to json: ' .. _.str(results), self.LOG_ERROR)
+	self.log('Error converting LUA table to json: ' .. self.toStr(results), self.LOG_ERROR)
 	return nil
 
 end

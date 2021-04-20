@@ -123,6 +123,7 @@
 #include "hardware/Tado.h"
 #include "hardware/TeleinfoBase.h"
 #include "hardware/TeleinfoSerial.h"
+#include "hardware/TeleinfoTCP.h"
 #include "hardware/Thermosmart.h"
 #include "hardware/ToonThermostat.h"
 #include "hardware/TTNMQTT.h"
@@ -492,38 +493,16 @@ bool MainWorker::GetSunSettings()
 	SunRiseSet::_tSubRiseSetResults sresult;
 	SunRiseSet::GetSunRiseSet(dLatitude, dLongitude, year, month, day, sresult);
 
-	std::string sunrise;
-	std::string sunset;
-	std::string daylength;
-	std::string sunatsouth;
-	std::string civtwstart;
-	std::string civtwend;
-	std::string nauttwstart;
-	std::string nauttwend;
-	std::string asttwstart;
-	std::string asttwend;
-
-	char szRiseSet[30];
-	sprintf(szRiseSet, "%02d:%02d:00", sresult.SunRiseHour, sresult.SunRiseMin);
-	sunrise = szRiseSet;
-	sprintf(szRiseSet, "%02d:%02d:00", sresult.SunSetHour, sresult.SunSetMin);
-	sunset = szRiseSet;
-	sprintf(szRiseSet, "%02d:%02d:00", sresult.DaylengthHours, sresult.DaylengthMins);
-	daylength = szRiseSet;
-	sprintf(szRiseSet, "%02d:%02d:00", sresult.SunAtSouthHour, sresult.SunAtSouthMin);
-	sunatsouth = szRiseSet;
-	sprintf(szRiseSet, "%02d:%02d:00", sresult.CivilTwilightStartHour, sresult.CivilTwilightStartMin);
-	civtwstart = szRiseSet;
-	sprintf(szRiseSet, "%02d:%02d:00", sresult.CivilTwilightEndHour, sresult.CivilTwilightEndMin);
-	civtwend = szRiseSet;
-	sprintf(szRiseSet, "%02d:%02d:00", sresult.NauticalTwilightStartHour, sresult.NauticalTwilightStartMin);
-	nauttwstart = szRiseSet;
-	sprintf(szRiseSet, "%02d:%02d:00", sresult.NauticalTwilightEndHour, sresult.NauticalTwilightEndMin);
-	nauttwend = szRiseSet;
-	sprintf(szRiseSet, "%02d:%02d:00", sresult.AstronomicalTwilightStartHour, sresult.AstronomicalTwilightStartMin);
-	asttwstart = szRiseSet;
-	sprintf(szRiseSet, "%02d:%02d:00", sresult.AstronomicalTwilightEndHour, sresult.AstronomicalTwilightEndMin);
-	asttwend = szRiseSet;
+	std::string sunrise = std_format("%02d:%02d:00", sresult.SunRiseHour, sresult.SunRiseMin);
+	std::string sunset = std_format("%02d:%02d:00", sresult.SunSetHour, sresult.SunSetMin);
+	std::string daylength = std_format("%02d:%02d:00", sresult.DaylengthHours, sresult.DaylengthMins);
+	std::string sunatsouth = std_format("%02d:%02d:00", sresult.SunAtSouthHour, sresult.SunAtSouthMin);
+	std::string civtwstart = std_format("%02d:%02d:00", sresult.CivilTwilightStartHour, sresult.CivilTwilightStartMin);
+	std::string civtwend = std_format("%02d:%02d:00", sresult.CivilTwilightEndHour, sresult.CivilTwilightEndMin);
+	std::string nauttwstart = std_format("%02d:%02d:00", sresult.NauticalTwilightStartHour, sresult.NauticalTwilightStartMin);
+	std::string nauttwend = std_format("%02d:%02d:00", sresult.NauticalTwilightEndHour, sresult.NauticalTwilightEndMin);
+	std::string asttwstart = std_format("%02d:%02d:00", sresult.AstronomicalTwilightStartHour, sresult.AstronomicalTwilightStartMin);
+	std::string asttwend = std_format("%02d:%02d:00", sresult.AstronomicalTwilightEndHour, sresult.AstronomicalTwilightEndMin);
 
 	m_scheduler.SetSunRiseSetTimers(sunrise, sunset, sunatsouth, civtwstart, civtwend, nauttwstart, nauttwend, asttwstart, asttwend); // Do not change the order
 
@@ -1093,6 +1072,9 @@ bool MainWorker::AddHardwareFromParams(
 	case hardware::type::AirconWithMe:
 		pHardware = new CAirconWithMe(ID, Address, Port, Username, Password);
 		break;
+	case hardware::type::TeleinfoMeterTCP:
+		pHardware = new CTeleinfoTCP(ID, Address, Port, DataTimeout, (Mode2 != 0), Mode3);
+		break;
 	}
 
 	if (pHardware)
@@ -1189,10 +1171,9 @@ bool MainWorker::Start()
 	m_sql.GetPreferencesVar("RemoteSharedPort", rnvalue);
 	if (rnvalue != 0)
 	{
-		char szPort[100];
-		sprintf(szPort, "%d", rnvalue);
+		std::string sPort = std_format("%d", rnvalue);
 		m_sharedserver.sDecodeRXMessage.connect([this](auto hw, auto rx, auto name, auto battery, auto user) { DecodeRXMessage(hw, rx, name, battery, user); });
-		m_sharedserver.StartServer("::", szPort);
+		m_sharedserver.StartServer("::", sPort.c_str());
 
 		LoadSharedUsers();
 	}
@@ -1681,8 +1662,7 @@ uint64_t MainWorker::PerformRealActionFromDomoticzClient(const uint8_t* pRXComma
 
 	switch (devType) {
 	case pTypeLighting1:
-		sprintf(szTmp, "%d", pResponse->LIGHTING1.housecode);
-		ID = szTmp;
+		ID = std_format("%d", pResponse->LIGHTING1.housecode);
 		Unit = pResponse->LIGHTING1.unitcode;
 		break;
 	case pTypeLighting2:
@@ -3039,6 +3019,9 @@ void MainWorker::decode_Rain(const CDomoticzHardwareBase* pHardware, const tRBUF
 			break;
 		case sTypeRAINWU:
 			WriteMessage("subtype       = Weather Underground (Total Rain)");
+			break;
+		case sTypeRAINByRate:
+			WriteMessage("subtype       = DarkSky for example (Only rate, no total, no counter) rate in mm/hour x 10000, so all decimals will fit");
 			break;
 		default:
 			sprintf(szTmp, "ERROR: Unknown Sub type for Packet type= %02X : %02X", pResponse->RAIN.packettype, pResponse->RAIN.subtype);
