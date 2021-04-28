@@ -50,7 +50,7 @@ namespace evohome {
 
 
 
-const uint8_t CEvohomeWeb::m_dczToEvoWebAPIMode[7] = { 0,2,3,4,6,1,5 };
+const uint8_t CEvohomeWeb::m_dczToEvoWebAPIMode[8] = { 0,2,3,4,4,6,1,5 };
 const std::string CEvohomeWeb::weekdays[7] = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 
 
