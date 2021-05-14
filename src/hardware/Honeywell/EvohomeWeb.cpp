@@ -50,7 +50,7 @@ namespace evohome {
 
 
 
-const uint8_t CEvohomeWeb::m_dczToEvoWebAPIMode[8] = { 0,2,3,4,4,6,1,5 };
+const uint8_t CEvohomeWeb::m_dczToEvoWebAPIMode[8] = { 0, 2, 3, 4, 7, 6, 1, 5 };
 const std::string CEvohomeWeb::weekdays[7] = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 
 
@@ -377,10 +377,21 @@ bool CEvohomeWeb::GetStatus()
 
 bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 {
-	std::string sznewmode = GetWebAPIModeName(sysmode);
-	if (evohome::WebAPI::v2->set_system_mode(evohome::WebAPI::tcs2->szSystemId, (int)(m_dczToEvoWebAPIMode[sysmode])))
+	if (sysmode >= (uint8_t)(sizeof(m_dczToEvoWebAPIMode)))
 	{
-		_log.Log(LOG_NORM, "(%s) changed system status to %s", m_Name.c_str(), GetControllerModeName(sysmode));
+		_log.Log(LOG_ERROR, "(%s) invalid system mode, verify your command script", m_Name.c_str());
+		return false;
+	}
+	int newmodeID = (int)(m_dczToEvoWebAPIMode[sysmode]);
+	if (newmodeID > 6)
+	{
+		_log.Log(LOG_ERROR, "(%s) setting system mode '%s' is not supported by web API", m_Name.c_str(), GetControllerModeName(sysmode));
+		return false;
+	}
+	std::string sznewmode = GetWebAPIModeName(sysmode);
+	if (evohome::WebAPI::v2->set_system_mode(evohome::WebAPI::tcs2->szSystemId, newmodeID))
+	{
+		_log.Log(LOG_NORM, "(%s) changed system mode to %s", m_Name.c_str(), GetControllerModeName(sysmode));
 
 		int numZones = static_cast<int>(evohome::WebAPI::tcs2->zones.size());
 		if (sznewmode == "HeatingOff")
@@ -472,7 +483,7 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 		}
 		return true;
 	}
-	_log.Log(LOG_ERROR, "(%s) error changing system status", m_Name.c_str());
+	_log.Log(LOG_ERROR, "(%s) error changing system mode", m_Name.c_str());
 	m_loggedon = false;
 	return false;
 }

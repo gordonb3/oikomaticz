@@ -70,7 +70,7 @@ class CEvohomeWeb : public CEvohomeBase
 	unsigned int m_lastAccessTimer;
 
 	// translation maps
-	static const uint8_t m_dczToEvoWebAPIMode[7];
+	static const uint8_t m_dczToEvoWebAPIMode[8];
 	static const std::string weekdays[7];
 
 	// evohome data
