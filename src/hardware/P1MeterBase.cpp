@@ -15,8 +15,7 @@
 #define CRC16_ARC	0x8005
 #define CRC16_ARC_REFL	0xA001
 
-#define CUSTOM_IMAGE_ID 19	// row index inside 'switch_icons.txt'
-
+#define CUSTOM_IMAGE_ID 19		// row index inside 'switch_icons.txt'
 #define OBIS_MAX_VALUE_LENGTH 20	// the maximum number of characters that a value can have
 
 P1MeterBase::P1MeterBase()
@@ -110,6 +109,13 @@ bool P1MeterBase::MatchLine()
 				//    active power usage (all phases):		1-0:1.7.0
 				//    active power delivery (all phases):	1-0:2.7.0
 
+				// FIXME
+				// Nordic meters also keep track of reactive power for billing
+				//    reactive electricity used (all phases):		1-0:3.8.n
+				//    reactive electricity delivered (all phases):	1-0:4.8.n
+				//    reactive power usage (all phases):		1-0:3.7.0
+				//    reactive power delivery (all phases):		1-0:4.7.0
+
 				if (m_lbuffer[4] == '1')
 				{
 					// electric power usage totals
@@ -165,6 +171,11 @@ bool P1MeterBase::MatchLine()
 					return true;
 			}
 			else
+				// FIXME
+				// Nordic meters also keep track of reactive power for billing
+				//    reactive power usage L1-L3:	1-0:23.7.0	1-0:43.7.0	1-0:63.7.0
+				//    reactive power delivery L1-L3:	1-0:24.7.0	1-0:44.7.0	1-0:64.7.0
+
 				return true;
 
 		}

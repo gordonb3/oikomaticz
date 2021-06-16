@@ -96,10 +96,6 @@ uint16_t GetUInt16FromString(const std::string& inStr)
 	return xID;
 }
 
-#ifdef _DEBUG
-#define DEBUG_ZWAVE_INT
-#endif
-
 const char* cclassStr(uint8 cc)
 {
 	switch (cc) {
@@ -685,11 +681,11 @@ void COpenZWave::OnZWaveNotification(OpenZWave::Notification const* _notificatio
 			if (!m_bNodeReplaced) {
 				// Log(LOG_STATUS, "OpenZWave: Comparing node id (%d) with node te be replaced (%d)", _nodeID, m_NodeToBeReplaced);
 				if (_nodeID==m_NodeToBeReplaced) {
-					Log(LOG_STATUS,"OpenZWave: Node replaced");
+					Log(LOG_STATUS, "OpenZWave: Node replaced");
 					m_bNodeReplaced=true;
 				}
 			} else {
-				Log(LOG_STATUS,"OpenZWave: Node Alive");
+				Log(LOG_STATUS, "OpenZWave: Node Alive");
 			}
 
 			bool bWasDead = (nodeInfo->eState == NSTATE_DEAD);
@@ -1651,11 +1647,8 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 
 	if (commandclass == COMMAND_CLASS_CONFIGURATION)
 	{
-#ifdef _DEBUG
-		Log(LOG_STATUS, "OpenZWave: Value_Added: Node: %d (0x%02x), CommandClass: %s, Label: %s, Instance: %d, Index: %d, Id: 0x%llX", static_cast<int>(NodeID), static_cast<int>(NodeID), cclassStr(commandclass), vLabel.c_str(), vOrgInstance, vOrgIndex, vID.GetId());
-#else
-		Debug(DEBUG_HARDWARE, "OpenZWave: Value_Added: Node: %d (0x%02x), CommandClass: %s, Label: %s, Instance: %d, Index: %d, Id: 0x%llX", static_cast<int>(NodeID), static_cast<int>(NodeID), cclassStr(commandclass), vLabel.c_str(), vInstance, vIndex, vID.GetId());
-#endif
+		Debug(DEBUG_RECEIVED, "OpenZWave: Value_Added: Node: %d (0x%02x), CommandClass: %s, Label: %s, Instance: %d, Index: %d, Id: 0x%llX", static_cast<int>(NodeID), static_cast<int>(NodeID),
+		      cclassStr(commandclass), vLabel.c_str(), vOrgInstance, vOrgIndex, vID.GetId());
 		return;
 	}
 
@@ -1941,6 +1934,11 @@ void COpenZWave::AddValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 		{
 			_device.devType = ZDTYPE_SENSOR_WATER;
 			_device.scaleMultiply = 0.00378541f; //(divide the volume value by 264, 172)
+		}
+		else if (vOrgIndex == ValueID_Index_Meter::Electric_Pulse)
+		{
+			_device.custom_label = _device.label;
+			_device.devType = ZDTYPE_SENSOR_CUSTOM;
 		}
 		else
 		{
@@ -2664,7 +2662,8 @@ void COpenZWave::UpdateValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 		else
 		{
 			//normal
-			Debug(DEBUG_HARDWARE, "OpenZWave: Value_Changed: (Not handling non-user genre: %d!) Node: %d (0x%02x), CommandClass: %s, Label: %s, Instance: %d, Index: %d", vGenre, NodeID, NodeID, cclassStr(commandclass), vLabel.c_str(), vID.GetInstance(), vID.GetIndex());
+			Debug(DEBUG_RECEIVED, "OpenZWave: Value_Changed: (Not handling non-user genre: %d!) Node: %d (0x%02x), CommandClass: %s, Label: %s, Instance: %d, Index: %d", vGenre, NodeID, NodeID,
+			      cclassStr(commandclass), vLabel.c_str(), vID.GetInstance(), vID.GetIndex());
 		}
 		return;
 	}
@@ -2690,9 +2689,8 @@ void COpenZWave::UpdateValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 	std::string path = sstr.str();
 	std::string path_plus = path + ".";
 
-#ifdef DEBUG_ZWAVE_INT
-	Log(LOG_NORM, "OpenZWave: Value_Changed: Node: %d (0x%02x), CommandClass: %s, Label: %s, Instance: %d, Index: %d", NodeID, NodeID, cclassStr(commandclass), vLabel.c_str(), vID.GetInstance(), vID.GetIndex());
-#endif
+	Debug(DEBUG_RECEIVED, "OpenZWave: Value_Changed: Node: %d (0x%02x), CommandClass: %s, Label: %s, Instance: %d, Index: %d", NodeID, NodeID, cclassStr(commandclass), vLabel.c_str(),
+	      vID.GetInstance(), vID.GetIndex());
 
 	//ignore the following command classes as they are not used in Oikomaticz at the moment
 	if (
@@ -2981,12 +2979,12 @@ void COpenZWave::UpdateValue(NodeInfo* pNode, const OpenZWave::ValueID& vID)
 				}
 			}
 			/*
-			Log(LOG_STATUS, "------------------------------------");
-			Log(LOG_STATUS, "Label: %s", vLabel.c_str());
-			Log(LOG_STATUS, "vOrgIndex: %d (0x%02x)", vOrgIndex, vOrgIndex);
-			Log(LOG_STATUS, "vOrgInstance: %d (0x%02x)", vOrgInstance, vOrgInstance);
-			Log(LOG_STATUS, "Value: %d (0x%02x)", intValue, intValue);
-			Log(LOG_STATUS, "------------------------------------");
+			Log(LOG_STATUS, "OpenZWave: ------------------------------------");
+			Log(LOG_STATUS, "OpenZWave: Label: %s", vLabel.c_str());
+			Log(LOG_STATUS, "OpenZWave: vOrgIndex: %d (0x%02x)", vOrgIndex, vOrgIndex);
+			Log(LOG_STATUS, "OpenZWave: vOrgInstance: %d (0x%02x)", vOrgInstance, vOrgInstance);
+			Log(LOG_STATUS, "OpenZWave: Value: %d (0x%02x)", intValue, intValue);
+			Log(LOG_STATUS, "OpenZWave: ------------------------------------");
 			*/
 
 			if (vOrgIndex == ValueID_Index_Alarm::Type_v1)

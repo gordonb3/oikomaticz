@@ -234,7 +234,7 @@ endif(TELLDUS_LIBRARIES)
 # GPIO support
 #
 if(WITH_GPIO)
-  if(EXISTS /sys/class/gpio)
+  if(EXISTS /sys/class/gpio OR FORCE_WITH_GPIO)
     message(STATUS "GPIO is available")
     add_definitions(-DWITH_GPIO)
   else()
