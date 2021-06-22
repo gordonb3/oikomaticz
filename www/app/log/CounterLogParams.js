@@ -202,7 +202,7 @@ define(['app', 'log/Chart'], function (app) {
                                             + '<td><b>' + Highcharts.numberFormat(point.y) + '</b></td>'
                                             + '<td><b>' + (deviceUnit ? '&nbsp;' + deviceUnit : '') + '</b></td>'
                                             + '<td>' + (point.point.options.trend ?
-                                                '<img src="/images/' + point.point.options.trend + '.png" alt="' + point.point.options.trend + '">' : '') + '</td>'
+                                                '<img src="./images/' + point.point.options.trend + '.png" alt="' + point.point.options.trend + '">' : '') + '</td>'
                                             + '</tr>';
                                     }, '')
                                 + '</table>';
