@@ -3311,8 +3311,12 @@ void MainWorker::decode_Temp(const CDomoticzHardwareBase* pHardware, const tRBUF
 	}
 	else if ((pHardware->HwdType == hardware::type::EnOceanESP2) || (pHardware->HwdType == hardware::type::EnOceanESP3))
 	{
+		// WARNING
+		// battery_level & rssi fields fields are used here to transmit ID_BYTE0 value from EnOcean device
+		// Set BatteryLevel to 255 (Unknown) and rssi to 12 (Not available)
 		BatteryLevel = 255;
 		SignalLevel = 12;
+		// Set Unit = ID_BYTE0
 		Unit = (pResponse->TEMP.rssi << 4) | pResponse->TEMP.battery_level;
 	}
 
@@ -3518,6 +3522,9 @@ void MainWorker::decode_Hum(const CDomoticzHardwareBase* pHardware, const tRBUF*
 			break;
 		case sTypeHUM2:
 			WriteMessage("subtype       = HUM2 - LaCrosse WS2300");
+			break;
+		case sTypeHUM3:
+			WriteMessage("subtype       = HUM3 - Inovalley S80 plant humidity sensor");
 			break;
 		default:
 			sprintf(szTmp, "ERROR: Unknown Sub type for Packet type= %02X:%02X", pResponse->HUM.packettype, pResponse->HUM.subtype);
@@ -9137,8 +9144,12 @@ void MainWorker::decode_RFXSensor(const CDomoticzHardwareBase* pHardware, const 
 
 	if ((pHardware->HwdType == hardware::type::EnOceanESP2) || (pHardware->HwdType == hardware::type::EnOceanESP3))
 	{
+		// WARNING
+		// filler & rssi fields fields are used here to transmit ID_BYTE0 value from EnOcean device
+		// Set BatteryLevel to 255 (Unknown) and rssi to 12 (Not available)
 		BatteryLevel = 255;
 		SignalLevel = 12;
+		// Set Unit = ID_BYTE0
 		Unit = (pResponse->RFXSENSOR.rssi << 4) | pResponse->RFXSENSOR.filler;
 	}
 
@@ -13162,7 +13173,7 @@ void MainWorker::SetInternalSecStatus()
 	//Update Oikomaticz Security Device
 	RBUF tsen;
 	memset(&tsen, 0, sizeof(RBUF));
-	tsen.SECURITY1.packetlength = sizeof(tsen.TEMP) - 1;
+	tsen.SECURITY1.packetlength = sizeof(tsen.SECURITY1) - 1;
 	tsen.SECURITY1.packettype = pTypeSecurity1;
 	tsen.SECURITY1.subtype = sTypeDomoticzSecurity;
 	tsen.SECURITY1.battery_level = 9;
