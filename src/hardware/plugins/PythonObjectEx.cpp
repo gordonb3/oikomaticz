@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 //
-//	Domoticz Plugin System - Dnpwwo, 2016
+//	Domoticz Plugin System - Dnpwwo, 2021
 //
 #ifdef ENABLE_PYTHON
 
@@ -127,28 +127,21 @@ namespace Plugins {
 
 	PyObject *CDeviceEx_refresh(CDeviceEx *self)
 	{
-		PyBorrowedRef pModule = PyState_FindModule(&DomoticzExModuleDef);
-		if (!pModule)
-		{
-			_log.Log(LOG_ERROR, "(%s) DomoticzEx module not found in interpreter.", __func__);
-			return 0;
-		}
-
-		module_state *pModState = ((struct module_state *)PyModule_GetState(pModule));
+		module_state *pModState = CPlugin::FindModule();
 		if (!pModState)
 		{
-			_log.Log(LOG_ERROR, "(%s) unable to obtain module state.", __func__);
-			return 0;
+			_log.Log(LOG_ERROR, "(%s) Unable to obtain module state.", __func__);
+			Py_RETURN_NONE;
 		}
 
 		if (!pModState->pPlugin)
 		{
 			_log.Log(LOG_ERROR, "(%s) illegal operation, Plugin has not started yet.", __func__);
-			return 0;
+			Py_RETURN_NONE;
 		}
 
 		// Populate the unit dictionary if there are any
-		std::string DeviceID = PyUnicode_AsUTF8(self->DeviceID);
+		std::string DeviceID = PyBorrowedRef(self->DeviceID);
 		std::vector<std::vector<std::string>> result;
 		result = m_sql.safe_query("SELECT Name, Unit FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%s')", pModState->pPlugin->m_HwdID, DeviceID.c_str());
 		if (!result.empty())
@@ -201,6 +194,33 @@ namespace Plugins {
 	{
 		PyObject *pRetVal = PyUnicode_FromFormat("DeviceID: '%U', Units: %d", self->DeviceID, PyDict_Size((PyObject*)self->m_UnitDict));
 		return pRetVal;
+	}
+
+	bool CDeviceEx::isInstance(PyObject *pObject)
+	{
+		PyBorrowedRef brModule = PyState_FindModule(&DomoticzExModuleDef);
+		if (brModule)
+		{
+			module_state *pModState = ((struct module_state *)PyModule_GetState(brModule));
+			if (pModState)
+			{
+				int isDevice = PyObject_IsInstance(pObject, (PyObject *)pModState->pDeviceClass);
+				if (isDevice == -1)
+				{
+					_log.Log(LOG_ERROR, "%s: Error determining type of Python object", __func__);
+					if (PyErr_Occurred())
+					{
+						PyErr_Clear();
+					}
+				}
+				else if (isDevice)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	void CUnitEx_dealloc(CUnitEx *self)
@@ -422,7 +442,7 @@ namespace Plugins {
 				if (pModState)
 				{
 					pPlugin = pModState->pPlugin;
-					_log.Log(LOG_ERROR, R"(Expected: myVar = DomoticzEx.Unit(Name="myDevice", DeviceID="", Unit=0, TypeName="", Type=0, Subtype=0, Switchtype=0, Image=0, Options={}, Used=1))");
+					_log.Log(LOG_ERROR, R"(Expected: myVar = DomoticzEx.Unit(Name="myDevice", DeviceID="", Unit=0, TypeName="", Type=0, Subtype=0, Switchtype=0, Image=0, Options={}, Used=1, Description=""))");
 					LogPythonException(pPlugin, __func__);
 				}
 			}
@@ -441,24 +461,17 @@ namespace Plugins {
 
 	PyObject *CUnitEx_refresh(CUnitEx *self)
 	{
-		PyBorrowedRef pModule = PyState_FindModule(&DomoticzExModuleDef);
-		if (!pModule)
-		{
-			_log.Log(LOG_ERROR, "(%s) DomoticzEx module not found in interpreter.", __func__);
-			return 0;
-		}
-
-		module_state *pModState = ((struct module_state *)PyModule_GetState(pModule));
+		module_state *pModState = CPlugin::FindModule();
 		if (!pModState)
 		{
-			_log.Log(LOG_ERROR, "(%s) unable to obtain module state.", __func__);
-			return 0;
+			_log.Log(LOG_ERROR, "(%s) Unable to obtain module state.", __func__);
+			Py_RETURN_NONE;
 		}
 
 		if (!pModState->pPlugin)
 		{
 			_log.Log(LOG_ERROR, "(%s) illegal operation, Plugin has not started yet.", __func__);
-			return 0;
+			Py_RETURN_NONE;
 		}
 
 		if ((pModState->pPlugin) && (pModState->pPlugin->m_HwdID != -1) && (self->Unit != -1))
@@ -468,7 +481,7 @@ namespace Plugins {
 			// load associated devices to make them available to python
 			std::vector<std::vector<std::string>> result;
 			result = m_sql.safe_query("SELECT Unit, ID, Name, nValue, sValue, Type, SubType, SwitchType, LastLevel, CustomImage, SignalLevel, BatteryLevel, LastUpdate, Options, "
-						  "Description, Color, Used FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%s') AND (Unit==%d) ORDER BY Unit ASC",
+						  "Description, Color, Used, AddjValue, AddjMulti FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%s') AND (Unit==%d) ORDER BY Unit ASC",
 						  pModState->pPlugin->m_HwdID, sDevice.c_str(), self->Unit);
 			if (!result.empty())
 			{
@@ -519,6 +532,8 @@ namespace Plugins {
 					Py_XDECREF(self->Color);
 					self->Color = PyUnicode_FromString(_tColor(std::string(sd[15])).toJSONString().c_str()); // Parse the color to detect incorrectly formatted color data
 					self->Used = atoi(sd[16].c_str());
+					self->Adjustment = static_cast<float>(atof(sd[17].c_str()));
+					self->Multiplier = static_cast<float>(atof(sd[18].c_str()));
 				}
 			}
 		}
@@ -532,14 +547,7 @@ namespace Plugins {
 
 	PyObject *CUnitEx_insert(CUnitEx *self)
 	{
-		PyBorrowedRef pModule = PyState_FindModule(&DomoticzExModuleDef);
-		if (!pModule)
-		{
-			_log.Log(LOG_ERROR, "(%s) Oikomaticz module not found in interpreter.", __func__);
-			Py_RETURN_NONE;
-		}
-
-		module_state *pModState = ((struct module_state *)PyModule_GetState(pModule));
+		module_state *pModState = CPlugin::FindModule();
 		if (!pModState)
 		{
 			_log.Log(LOG_ERROR, "(%s) Unable to obtain module state.", __func__);
@@ -548,9 +556,9 @@ namespace Plugins {
 
 		if (pModState->pPlugin)
 		{
-			std::string sName = PyUnicode_AsUTF8(self->Name);
+			std::string sName = PyBorrowedRef(self->Name);
 			CDeviceEx *pDevice = (CDeviceEx *)self->Parent;
-			std::string sDeviceID = PyUnicode_AsUTF8(pDevice->DeviceID);
+			std::string sDeviceID = PyBorrowedRef(pDevice->DeviceID);
 			if (self->ID == -1)
 			{
 				if (pModState->pPlugin->m_bDebug & PDM_DEVICE)
@@ -568,32 +576,50 @@ namespace Plugins {
 					result = m_sql.safe_query("SELECT Name FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%s') AND (Unit==%d)", pModState->pPlugin->m_HwdID, sDeviceID.c_str(), self->Unit);
 					if (result.empty())
 					{
-						std::string sValue = PyUnicode_AsUTF8(self->sValue);
-						std::string sColor = _tColor(std::string(PyUnicode_AsUTF8(self->Color))).toJSONString(); // Parse the color to detect incorrectly formatted color data
+						std::string sValue = PyBorrowedRef(self->sValue);
+						std::string sColor = _tColor(std::string(PyBorrowedRef(self->Color))).toJSONString(); // Parse the color to detect incorrectly formatted color data
 						std::string sLongName = sName;
-						std::string sDescription = PyUnicode_AsUTF8(self->Description);
+						std::string sDescription = PyBorrowedRef(self->Description);
+						std::string sOptionValue = "";
+
+						// Support weird legacy 'custom' options
 						if ((self->SubType == sTypeCustom) && (PyDict_Size(self->Options) > 0))
 						{
 							PyBorrowedRef pValueDict = PyDict_GetItemString(self->Options, "Custom");
-							std::string sOptionValue;
-							if (!pValueDict)
-								sOptionValue = "";
-							else
-								sOptionValue = PyUnicode_AsUTF8(pValueDict);
-
-							m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, "
-									 "nValue, sValue, CustomImage, Description, Color, Options) "
-									 "VALUES (%d, '%q', %d, %d, %d, %d, %d, 12, 255, '%q', 0, '%q', %d, '%q', '%q', '%q')",
-									 pModState->pPlugin->m_HwdID, sDeviceID.c_str(), self->Unit, self->Type, self->SubType, self->SwitchType, self->Used,
-									 sLongName.c_str(), sValue.c_str(), self->Image, sDescription.c_str(), sColor.c_str(), sOptionValue.c_str());
+							if (pValueDict)
+								sOptionValue = (std::string)pValueDict;
 						}
-						else
+
+						std::string sSQL = "INSERT INTO DeviceStatus "
+								   "(HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, CustomImage, Description, Color, Options, LastUpdate) "
+								   "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+
+						std::vector<std::string> vValues;
+						// Keys
+						vValues.push_back(std::to_string(pModState->pPlugin->m_HwdID));
+						vValues.push_back(sDeviceID);
+						vValues.push_back(std::to_string(self->Unit));
+						// Values
+						vValues.push_back(std::to_string(self->Type));
+						vValues.push_back(std::to_string(self->SubType));
+						vValues.push_back(std::to_string(self->SwitchType));
+						vValues.push_back(std::to_string(self->Used));
+						vValues.push_back(std::to_string(self->SignalLevel));
+						vValues.push_back(std::to_string(self->BatteryLevel));
+						vValues.push_back(sName);
+						vValues.push_back(std::to_string(self->nValue));
+						vValues.push_back(sValue);
+						vValues.push_back(std::to_string(self->Image));
+						vValues.push_back(sDescription);
+						vValues.push_back(sColor);
+						vValues.push_back(sOptionValue);
+						vValues.push_back(TimeToString(nullptr, TF_DateTime));
+
+						// Handle any data we get back (this method allows for any special characters in the strings such as ' and ")
+						if (!m_sql.execute_sql(sSQL, &vValues, true))
 						{
-							m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, "
-									 "nValue, sValue, CustomImage, Description, Color) "
-									 "VALUES (%d, '%q', %d, %d, %d, %d, %d, 12, 255, '%q', 0, '%q', %d, '%q', '%q')",
-									 pModState->pPlugin->m_HwdID, sDeviceID.c_str(), self->Unit, self->Type, self->SubType, self->SwitchType, self->Used,
-									 sLongName.c_str(), sValue.c_str(), self->Image, sDescription.c_str(), sColor.c_str());
+							pModState->pPlugin->Log(LOG_ERROR, "Creation of 'UnitEx' failed to insert a DeviceStatus record for key %d/%s/%d",
+										pModState->pPlugin->m_HwdID, sDeviceID.c_str(), self->Unit);
 						}
 
 						result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%s') AND (Unit==%d)", pModState->pPlugin->m_HwdID, sDeviceID.c_str(), self->Unit);
@@ -656,8 +682,8 @@ namespace Plugins {
 					}
 					else
 					{
-						pModState->pPlugin->Log(LOG_ERROR, "(%s) Unit creation failed, Hardware/Unit combination (%d:%d) already exists in Oikomaticz.",
-									pModState->pPlugin->m_Name.c_str(), pModState->pPlugin->m_HwdID, self->Unit);
+						pModState->pPlugin->Log(LOG_ERROR, "(%s) Unit creation failed, Hardware/DeviceID/Unit combination (%d/%s/%d) already exists in Oikomaticz.",
+									pModState->pPlugin->m_Name.c_str(), pModState->pPlugin->m_HwdID, sDeviceID.c_str(), self->Unit);
 					}
 				}
 			}
@@ -676,14 +702,7 @@ namespace Plugins {
 
 	PyObject *CUnitEx_update(CUnitEx *self, PyObject *args, PyObject *kwds)
 	{
-		PyBorrowedRef pModule = PyState_FindModule(&DomoticzExModuleDef);
-		if (!pModule)
-		{
-			_log.Log(LOG_ERROR, "(%s) Oikomaticz module not found in interpreter.", __func__);
-			Py_RETURN_NONE;
-		}
-
-		module_state *pModState = ((struct module_state *)PyModule_GetState(pModule));
+		module_state *pModState = CPlugin::FindModule();
 		if (!pModState)
 		{
 			_log.Log(LOG_ERROR, "(%s) Unable to obtain module state.", __func__);
@@ -695,22 +714,21 @@ namespace Plugins {
 			pModState->pPlugin->SetHeartbeatReceived();
 
 			char *TypeName = nullptr;
-			int SuppressTriggers = false;
 
-			static char *kwlist[] = { "TypeName", "SuppressTriggers", nullptr };
+			static char *kwlist[] = { "TypeName", nullptr };
 
 			// Try to extract parameters needed to update device settings
-			if (!PyArg_ParseTupleAndKeywords(args, kwds, "|sp", kwlist, &SuppressTriggers))
+			if (!PyArg_ParseTupleAndKeywords(args, kwds, "|s", kwlist, &TypeName))
 			{
 				pModState->pPlugin->Log(LOG_ERROR,
-					 "(%s) Failed to parse parameters: 'SuppressTriggers' expected.", __func__);
+					 "(%s) Failed to parse parameters: 'TypeName' expected.", __func__);
 				LogPythonException(pModState->pPlugin, __func__);
 				Py_INCREF(Py_None);
 				return Py_None;
 			}
 
 			CDeviceEx *pDevice = (CDeviceEx *)self->Parent;
-			std::string sDeviceID = PyUnicode_AsUTF8(pDevice->DeviceID);
+			std::string sDeviceID = PyBorrowedRef(pDevice->DeviceID);
 			std::string sID = std::to_string(self->ID);
 
 			// Build representations of changeable fields (these may not be of the right type so be defensive)
@@ -763,25 +781,65 @@ namespace Plugins {
 				}
 			}
 
-			// Do an atomic update of non-key fields
+			// Need to look up current nValue and sValue and only do triggers if one has changed
+			bool nValueChanged = false;
+			bool sValueChanged = false;
+			std::vector<std::vector<std::string>> result;
+
 			Py_BEGIN_ALLOW_THREADS
-			m_sql.safe_query("UPDATE DeviceStatus SET Name='%s', Description='%s', Used=%d, Type=%d, SubType=%d, SwitchType=%d, CustomImage=%d, Color='%s', SignalLevel=%d, BatteryLevel=%d, Options='%s', LastUpdate='%s' WHERE (HardwareID==%d) AND (DeviceID=='%s') AND (Unit==%d)",
-								sName.c_str(), sDescription.c_str(), self->Used, iType, iSubType, iSwitchType, self->Image, sColor.c_str(), self->SignalLevel,
-								self->BatteryLevel, sOptionValue.c_str(), TimeToString(nullptr, TF_DateTime).c_str(), pModState->pPlugin->m_HwdID, sDeviceID.c_str(), self->Unit);
+
+			result = m_sql.safe_query("SELECT ID, nValue, sValue, StrParam1, StrParam2 FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%s') AND (Unit==%d)", pModState->pPlugin->m_HwdID, sDeviceID.c_str(), self->Unit);
+			if (!result.empty())
+			{
+				int oldnValue = atoi(result[0][1].c_str());
+				std::string oldsValue = result[0][2];
+
+				if ((nValue != oldnValue) && (int((float(nValue) + self->Adjustment) * self->Multiplier) != oldnValue))
+				{
+					nValueChanged = true;
+					// Apply adjustment to nValue if it changed
+					nValue = int((float(nValue) + self->Adjustment) * self->Multiplier);
+				}
+				if (sValue != oldsValue)
+				{
+					sValueChanged = true;
+				}
+			}
+
+			// Do an atomic update (do not change this to individual field updates!!!!!!!)
+			std::string sSQL = "UPDATE DeviceStatus "
+							   "SET Name=?, Description=?, Used=?, Type=?, SubType=?, SwitchType=?, nValue=?, sValue=?, CustomImage=?, Color=?, SignalLevel=?, BatteryLevel=?, Options=?, LastUpdate=? "
+							   "WHERE (HardwareID==?) AND (DeviceID==?) AND (Unit==?);";
+			std::vector<std::string> vValues;
+			vValues.push_back(sName);
+			vValues.push_back(sDescription);
+			vValues.push_back(std::to_string(self->Used));
+			vValues.push_back(std::to_string(iType));
+			vValues.push_back(std::to_string(iSubType));
+			vValues.push_back(std::to_string(iSwitchType));
+			vValues.push_back(std::to_string(nValue));
+			vValues.push_back(sValue);
+			vValues.push_back(std::to_string(self->Image));
+			vValues.push_back(sColor);
+			vValues.push_back(std::to_string(self->SignalLevel));
+			vValues.push_back(std::to_string(self->BatteryLevel));
+			vValues.push_back(sOptionValue);
+			vValues.push_back(TimeToString(nullptr, TF_DateTime));
+			// Keys
+			vValues.push_back(std::to_string(pModState->pPlugin->m_HwdID));
+			vValues.push_back(sDeviceID);
+			vValues.push_back(std::to_string(self->Unit));
+
+			// Handle any data we get back (this method allows for any special characters in the strings such as ' and ")
+			if (!m_sql.execute_sql(sSQL, &vValues, true))
+			{
+				pModState->pPlugin->Log(LOG_ERROR, "Update to 'UnitEx' failed to update any DeviceStatus records for key %d/%s/%d", pModState->pPlugin->m_HwdID, sDeviceID.c_str(), self->Unit);
+			}
 			Py_END_ALLOW_THREADS
 
-			// Suppress Triggers updates non-key fields only (specifically NOT nValue or sValue)
-			if (!SuppressTriggers)
+			// Only trigger notifications if values changed
+			if (nValueChanged || sValueChanged)
 			{
-				uint64_t DevRowIdx;
-				if (pModState->pPlugin->m_bDebug & PDM_DEVICE)
-				{
-					pModState->pPlugin->Log(LOG_NORM, "(%s) Updating device from %d:'%s' to have values %d:'%s'.", sName.c_str(), self->nValue, PyUnicode_AsUTF8(self->sValue), nValue, sValue.c_str());
-				}
-				Py_BEGIN_ALLOW_THREADS
-				DevRowIdx = m_sql.UpdateValue(pModState->pPlugin->m_HwdID, sDeviceID.c_str(), (const unsigned char)self->Unit, (const unsigned char)iType, (const unsigned char)iSubType, self->SignalLevel, self->BatteryLevel, nValue, sValue.c_str(), sName, true);
-				Py_END_ALLOW_THREADS
-
 				// if this is an internal Security Panel then there are some extra updates required if state has changed
 				if ((self->Type == pTypeSecurity1) && (self->SubType == sTypeDomoticzSecurity) && (self->nValue != nValue))
 				{
@@ -808,8 +866,15 @@ namespace Plugins {
 					}
 				}
 
-				// Notify MQTT and various push mechanisms and notifications
+				// Notify Event system, MQTT and various push mechanisms and notifications
 				Py_BEGIN_ALLOW_THREADS
+				uint64_t	DevRowIdx = std::stoull(result[0][0]);
+				m_mainworker.m_eventsystem.ProcessDevice(pModState->pPlugin->m_HwdID, DevRowIdx, self->Unit, iType, iSubType, self->SignalLevel, self->BatteryLevel, nValue, sValue.c_str());
+				if (nValueChanged)
+				{
+					// Handle On & Off actions if they are defined (HandleOnOffAction just returns if they are blank)
+					m_sql.HandleOnOffAction(nValue, result[0][3], result[0][4]);
+				}
 				m_mainworker.sOnDeviceReceived(pModState->pPlugin->m_HwdID, self->ID, pModState->pPlugin->m_Name, NULL);
 				m_notifications.CheckAndHandleNotification(DevRowIdx, pModState->pPlugin->m_HwdID, sDeviceID, sName, self->Unit, iType, iSubType, nValue, sValue);
 				m_mainworker.CheckSceneCode(DevRowIdx, (const unsigned char)self->Type, (const unsigned char)self->SubType, nValue, sValue.c_str(), "Python");
@@ -828,14 +893,7 @@ namespace Plugins {
 
 	PyObject *CUnitEx_delete(CUnitEx *self)
 	{
-		PyBorrowedRef pModule = PyState_FindModule(&DomoticzExModuleDef);
-		if (!pModule)
-		{
-			_log.Log(LOG_ERROR, "(%s) Oikomaticz module not found in interpreter.", __func__);
-			Py_RETURN_NONE;
-		}
-
-		module_state *pModState = ((struct module_state *)PyModule_GetState(pModule));
+		module_state *pModState = CPlugin::FindModule();
 		if (!pModState)
 		{
 			_log.Log(LOG_ERROR, "(%s) Unable to obtain module state.", __func__);
@@ -844,7 +902,7 @@ namespace Plugins {
 
 		if (!pModState->pPlugin)
 		{
-			std::string sName = PyUnicode_AsUTF8(self->Name);
+			std::string sName = PyBorrowedRef(self->Name);
 			if (self->ID != -1)
 			{
 				if (pModState->pPlugin->m_bDebug & PDM_DEVICE)
@@ -880,18 +938,11 @@ namespace Plugins {
 
 	PyObject *CUnitEx_touch(CUnitEx *self)
 	{
-		PyBorrowedRef pModule = PyState_FindModule(&DomoticzExModuleDef);
-		if (!pModule)
-		{
-			_log.Log(LOG_ERROR, "(%s) DomoticzEx module not found in interpreter.", __func__);
-			return 0;
-		}
-
-		module_state *pModState = ((struct module_state *)PyModule_GetState(pModule));
+		module_state *pModState = CPlugin::FindModule();
 		if (!pModState)
 		{
-			_log.Log(LOG_ERROR, "(%s) unable to obtain module state.", __func__);
-			return 0;
+			_log.Log(LOG_ERROR, "(%s) Unable to obtain module state.", __func__);
+			Py_RETURN_NONE;
 		}
 
 		if (!pModState->pPlugin)
@@ -919,6 +970,33 @@ namespace Plugins {
 	{
 		PyObject *pRetVal = PyUnicode_FromFormat("Unit: %d, Name: '%U', nValue: %d, sValue: '%U'", self->Unit, self->Name, self->nValue, self->sValue);
 		return pRetVal;
+	}
+
+	bool CUnitEx::isInstance(PyObject *pObject)
+	{
+		PyBorrowedRef brModule = PyState_FindModule(&DomoticzExModuleDef);
+		if (brModule)
+		{
+			module_state *pModState = ((struct module_state *)PyModule_GetState(brModule));
+			if (pModState)
+			{
+				int isUnit = PyObject_IsInstance(pObject, (PyObject *)pModState->pUnitClass);
+				if (isUnit == -1)
+				{
+					_log.Log(LOG_ERROR, "%s: Error determining type of Python object", __func__);
+					if (PyErr_Occurred())
+					{
+						PyErr_Clear();
+					}
+				}
+				else if (isUnit)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 } // namespace Plugins
 #endif

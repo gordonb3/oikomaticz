@@ -3083,8 +3083,20 @@ void MainWorker::decode_Wind(const CDomoticzHardwareBase* pHardware, const tRBUF
 	uint8_t SignalLevel = pResponse->WIND.rssi;
 	uint8_t BatteryLevel = get_BateryLevel(pHardware->HwdType, pResponse->WIND.subtype == sTypeWIND3, pResponse->WIND.battery_level & 0x0F);
 
+	float AddjValue = 0.0F; //Temp adjustment
+	float AddjMulti = 1.0F; //Wind Speed/Gust adjustment
+	m_sql.GetAddjustment(pHardware->m_HwdID, ID.c_str(), Unit, devType, subType, AddjValue, AddjMulti);
+
+	float AddjValue2 = 0.0F; //Wind direction adjustment
+	float AddjMulti2 = 1.0F;
+	m_sql.GetAddjustment2(pHardware->m_HwdID, ID.c_str(), Unit, devType, subType, AddjValue2, AddjMulti2);
+
 	double dDirection;
 	dDirection = (double)(pResponse->WIND.directionh * 256) + pResponse->WIND.directionl;
+
+	//Apply user defined offset
+	dDirection = std::fmod(dDirection + AddjValue2, 360.0);
+
 	dDirection = m_wind_calculator[windID].AddValueAndReturnAvarage(dDirection);
 
 	std::string strDirection;
@@ -3128,9 +3140,7 @@ void MainWorker::decode_Wind(const CDomoticzHardwareBase* pHardware, const tRBUF
 	int intSpeed = (pResponse->WIND.av_speedh * 256) + pResponse->WIND.av_speedl;
 	int intGust = (pResponse->WIND.gusth * 256) + pResponse->WIND.gustl;
 
-	float AddjValue = 0.0F;
-	float AddjMulti = 1.0F;
-	m_sql.GetAddjustment(pHardware->m_HwdID, ID.c_str(), Unit, devType, subType, AddjValue, AddjMulti);
+	//Apply user defind multiplication
 	intSpeed = int(float(intSpeed) * AddjMulti);
 	intGust = int(float(intGust) * AddjMulti);
 
@@ -10953,6 +10963,10 @@ void MainWorker::decode_Solar(const CDomoticzHardwareBase* pHardware, const tRBU
 	gdevice.intval1 = (pResponse->SOLAR.id1 * 256) + pResponse->SOLAR.id2;
 	gdevice.id = (uint8_t)gdevice.intval1;
 	gdevice.floatval1 = float((pResponse->SOLAR.solarhigh * 256) + float(pResponse->SOLAR.solarlow)) / 100.F;
+
+	if (gdevice.floatval1 > 1361)
+		return; // https://en.wikipedia.org/wiki/Solar_irradiance
+
 	gdevice.rssi = SignalLevel;
 	gdevice.battery_level = BatteryLevel;
 	decode_General(pHardware, pResponse, procResult);
@@ -11210,6 +11224,16 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 	if (pHardware == nullptr)
 		return false;
 
+	std::string deviceID = sd[1];
+	int Unit = atoi(sd[2].c_str());
+	int dType = atoi(sd[3].c_str());
+	int dSubType = atoi(sd[4].c_str());
+	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
+	if (pHardware->HwdType == hardware::type::ZIBLUEUSB || pHardware->HwdType == hardware::type::ZIBLUETCP)
+	{
+		CZiBlueBase::ConvertToGeneralSwitchType(deviceID, dType, dSubType);
+	}
+
 	m_szLastSwitchUser = User;
 
 	if (pHardware->HwdType == hardware::type::DomoticzInternal)
@@ -11231,10 +11255,6 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		}
 	}
 
-	uint8_t Unit = atoi(sd[2].c_str());
-	uint8_t dType = atoi(sd[3].c_str());
-	uint8_t dSubType = atoi(sd[4].c_str());
-	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 	std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10]);
 
 	//when asking for Toggle, just switch to the opposite value
@@ -12316,16 +12336,28 @@ bool MainWorker::SwitchLight(const uint64_t idx, const std::string& switchcmd, c
 		return false;
 
 	std::vector<std::string> sd = result[0];
-
-	//uint8_t dType = atoi(sd[3].c_str());
-	//uint8_t dSubType = atoi(sd[4].c_str());
+	std::string hwdid = sd[0];
+	std::string devid = sd[1];
+	int dtype = atoi(sd[3].c_str());
+	int subtype = atoi(sd[4].c_str());
 	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 	int iOnDelay = atoi(sd[6].c_str());
 	int nValue = atoi(sd[7].c_str());
 	std::string sValue = sd[8];
 	std::string devName = sd[9];
 	//std::string sOptions = sd[10].c_str();
-
+	// ----------- If needed convert to GeneralSwitch type (for o.a. RFlink) -----------
+	CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(atoi(hwdid.c_str()));
+	if (pBaseHardware != nullptr)
+	{
+		if (pBaseHardware->HwdType == hardware::type::ZIBLUEUSB || pBaseHardware->HwdType == hardware::type::ZIBLUETCP)
+		{
+			ConvertToGeneralSwitchType(devid, dtype, subtype);
+			sd[1] = devid;
+			sd[3] = std::to_string(dtype);
+			sd[4] = std::to_string(subtype);
+		}
+	}
 	bool bIsOn = IsLightSwitchOn(switchcmd);
 	if (ooc)//Only on change
 	{

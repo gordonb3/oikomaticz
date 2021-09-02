@@ -22,6 +22,7 @@ namespace Plugins {
 	class CPluginTransport;
 	class PyNewRef;
 	class PyBorrowedRef;
+	struct module_state;
 
 	enum PluginDebugMask
 	{
@@ -43,7 +44,7 @@ namespace Plugins {
 		int				m_iPollInterval;
 
 		PyThreadState*	m_PyInterpreter;
-		PyObject*		m_PyModule;
+		PyObject*		m_PyModule;			// plugin module itself
 
 		std::string		m_Version;
 		std::string		m_Author;
@@ -69,8 +70,13 @@ namespace Plugins {
 	  CPlugin(int HwdID, const std::string &Name, const std::string &PluginKey);
 	  ~CPlugin() override;
 
+	  static module_state *FindModule();
+	  static CPlugin*	FindPlugin();
+
 	  bool StartHardware() override;
 	  bool StopHardware() override;
+
+	  void LogTraceback(PyTracebackObject *pTraceback);
 
 	  int PollInterval(int Interval = -1);
 	  PyObject*	PythonModule() { return m_PyModule; };
@@ -134,16 +140,6 @@ namespace Plugins {
 	protected:
 	  bool SendMessageImplementation(uint64_t Idx, const std::string &Name, const std::string &Subject, const std::string &Text, const std::string &ExtraData, int Priority,
 					 const std::string &Sound, bool bFromNotification) override;
-	};
-
-	//
-	//	Holds per plugin state details, specifically plugin object, read using PyModule_GetState(PyObject *module)
-	//
-	struct module_state {
-		CPlugin* pPlugin;
-		PyObject* error;
-		PyTypeObject *pDeviceClass;
-		PyTypeObject *pUnitClass;
 	};
 
 	//
@@ -267,6 +263,18 @@ namespace Plugins {
 				Py_XDECREF(m_pObject);
 			}
 		};
+	};
+
+	//
+	//	Holds per plugin state details, specifically plugin object, read using PyModule_GetState(PyObject *module)
+	//
+	struct module_state
+	{
+		CPlugin *pPlugin;
+		PyBorrowedRef lastCallback; // last callback called
+		PyObject *error;
+		PyTypeObject *pDeviceClass;
+		PyTypeObject *pUnitClass;
 	};
 } // namespace Plugins
 #endif // ENABLE_PYTHON

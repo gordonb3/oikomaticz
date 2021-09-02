@@ -13,6 +13,8 @@ namespace Plugins {
 		PyObject*		DeviceID;
 		int				TimedOut;
 		PyDictObject*	m_UnitDict;
+
+		static bool isInstance(PyObject *pObject);
 	};
 
 	void CDeviceEx_dealloc(CDeviceEx *self);
@@ -87,7 +89,9 @@ namespace Plugins {
 		PyObject*	Name;
 		PyObject*	LastUpdate;
 		int			nValue;
-		int			SignalLevel;
+		float		Adjustment;
+		float		Multiplier;
+		int SignalLevel;
 		int			BatteryLevel;
 		PyObject*	sValue;
 		int			Image;
@@ -96,6 +100,8 @@ namespace Plugins {
 		PyObject*	Description;
 		PyObject*	Color;
 		PyObject*	Parent;
+
+		static bool isInstance(PyObject*	pObject);
 	};
 
 	void CUnitEx_dealloc(CUnitEx *self);
@@ -126,6 +132,8 @@ namespace Plugins {
 		{ "Used", T_INT, offsetof(CUnitEx, Used), 0, "Numeric device Used flag" },
 		{ "Description", T_OBJECT, offsetof(CUnitEx, Description), 0, "Description" },
 		{ "Color", T_OBJECT, offsetof(CUnitEx, Color), 0, "Color JSON dictionary" },
+		{ "Adjustment", T_FLOAT, offsetof(CUnitEx, Adjustment), 0, "nValue adjusted by this vale on update" },
+		{ "Multiplier", T_FLOAT, offsetof(CUnitEx, Multiplier), 0, "nValue multiplied by this vale on update" },
 		{ "Parent", T_OBJECT, offsetof(CUnitEx, Parent), READONLY, "Parent device" },
 		{ nullptr } /* Sentinel */
 	};

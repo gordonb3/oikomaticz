@@ -412,6 +412,7 @@ static const _tEEPTable _EEPTable[] = {
     { RORG_VLD, 0x01, 0x14, "D2-01-14", "Type 0x14", "SwitchesDimmers.14"},
     { RORG_VLD, 0x01, 0x15, "D2-01-15", "Type 0x15", "SwitchesDimmers.15"},
     { RORG_VLD, 0x01, 0x16, "D2-01-16", "Type 0x16", "SwitchesDimmers.16"},
+    { RORG_VLD, 0x01, 0x17, "D2-01-17", "Type 0x17", "SwitchesDimmers.17"},
 
     // D2-02, Sensors for Temperature, Illumination, Occupancy And Smoke
     { RORG_VLD, 0x02, 0x00, "D2-02-00", "Type 0x00", "TempHumIllumOccupSmoke.00"},
@@ -454,7 +455,8 @@ static const _tEEPTable _EEPTable[] = {
 
     // D2-06, Multisensor Window / Door Handle and Sensors
     { RORG_VLD, 0x06, 0x01, "D2-06-01", "Alarm, Position Sensor, Vacation Mode, Optional Sensors", "WindowDoorHandle.01"},
-    { RORG_VLD, 0x06, 0x10, "D2-06-10", "Sensor for intrusion detection at windows.", "WindowDoorHandle.10"},
+    { RORG_VLD, 0x06, 0x10, "D2-06-10", "Sensor for intrusion detection at windows", "WindowDoorHandle.10"},
+    { RORG_VLD, 0x06, 0x11, "D2-06-11", "Intrusion detection system for windows with tilt detection and PIR sensitivity adjustment", "WindowDoorHandle.11"},
     { RORG_VLD, 0x06, 0x20, "D2-06-20", "Electric Window Drive Controller", "WindowDoorHandle.20"},
     { RORG_VLD, 0x06, 0x40, "D2-06-40", "Lockable Window Handle with Status Reporting", "WindowDoorHandle.40"},
     { RORG_VLD, 0x06, 0x50, "D2-06-50", "Window Sash and Hardware Position Sensor", "WindowDoorHandle.50"},
@@ -523,6 +525,7 @@ static const _tEEPTable _EEPTable[] = {
     { RORG_VLD, 0x14, 0x53, "D2-14-53", "Leak Detector", "MultiFunction.53"},
     { RORG_VLD, 0x14, 0x54, "D2-14-54", "Leak Detector with Temperature and Humidity Sensing", "MultiFunction.54"},
     { RORG_VLD, 0x14, 0x55, "D2-14-55", "Power Use Monitor", "MultiFunction.55"},
+    { RORG_VLD, 0x14, 0x56, "D2-14-56", "Light Intensity, CCT and PPFD Sensor", "MultiFunction.56"},
 
     // D2-15, People Activity
     { RORG_VLD, 0x15, 0x00, "D2-15-00", "People Activity Counter", "PeopleActivity.15"},
@@ -646,6 +649,16 @@ uint32_t CEnOceanEEP::GetINodeID(const uint8_t ID3, const uint8_t ID2, const uin
 	return (uint32_t) ((ID3 << 24) | (ID2 << 16) | (ID1 << 8) | ID0);
 }
 
+uint32_t CEnOceanEEP::GetINodeID(const std::string &nodeID)
+{
+    std::stringstream s_strid;
+    s_strid << std::hex << std::uppercase << nodeID;
+    uint32_t iNodeID;
+    s_strid >> iNodeID;
+
+	return iNodeID;
+}
+
 std::string CEnOceanEEP::GetNodeID(const uint8_t ID3, const uint8_t ID2, const uint8_t ID1, const uint8_t ID0)
 {
 	char szNodeID[10];
@@ -664,18 +677,22 @@ std::string CEnOceanEEP::GetNodeID(const uint32_t iNodeID)
 
 float CEnOceanEEP::GetDeviceValue(const uint32_t rawValue, const uint32_t rangeMin, const uint32_t rangeMax, const float scaleMin, const float scaleMax)
 {
-	if (rangeMax == rangeMin)
-		return 0.0F;
+	if (rangeMax == rangeMin) // Should never happend
+		return (scaleMax + scaleMin) / 2.0F;
 
-	uint32_t rawValueInt;
+    if (rangeMin > rangeMax)
+        return GetDeviceValue(rawValue, rangeMax, rangeMin, scaleMax, scaleMin);
 
-	if (rawValue < rangeMin)
-		rawValueInt = rangeMin;
-	else if (rawValue > rangeMax)
-		rawValueInt = rangeMax;
-	else
-		rawValueInt = rawValue;
+    uint32_t validRawValue;
 
-	float multiplyer = (scaleMax - scaleMin) / (rangeMax - rangeMin);
-	return multiplyer * (rawValueInt - rangeMin) + scaleMin;
+    if (rawValue < rangeMin)
+        validRawValue = rangeMin;
+    else if (rawValue > rangeMax)
+        validRawValue = rangeMax;
+    else
+        validRawValue = rawValue;
+
+ 	float multiplyer = (scaleMax - scaleMin) / ((float) (rangeMax - rangeMin));
+
+ 	return multiplyer * ((float) (validRawValue - rangeMin)) + scaleMin;
 }
