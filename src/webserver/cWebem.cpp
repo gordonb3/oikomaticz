@@ -862,12 +862,6 @@ namespace http {
 				request_path = m_webRoot + "/";
 			}
 
-			// If path ends in slash (i.e. is a directory) then add "index.html".
-			if (request_path[request_path.size() - 1] == '/')
-			{
-				request_path += "index.html";
-			}
-
 			if (!m_webRoot.empty())
 			{
 				// remove web root if present otherwise
@@ -882,10 +876,6 @@ namespace http {
 				}
 			}
 
-			if (request_path.find("/acttheme/") == 0)
-			{
-				request_path = m_actTheme + request_path.substr(9);
-			}
 			return request_path;
 		}
 
@@ -2140,12 +2130,28 @@ namespace http {
 					// do normal handling
 					try
 					{
-						std::string uri = myWebem->ExtractRequestPath(requestCopy.uri);
-						if (uri.find("/images/") == 0)
+						if (myWebem->m_actTheme.find("default") == std::string::npos)
 						{
-							std::string theme_images_path = myWebem->m_actTheme + uri;
-							if (file_exist((doc_root_ + theme_images_path).c_str()))
-								requestCopy.uri = myWebem->GetWebRoot() + theme_images_path;
+							// A theme is being used (not default) so some theme specific processing might be neccessary
+							std::string uri = myWebem->ExtractRequestPath(requestCopy.uri);
+							if (uri.find("/images/") == 0)
+							{
+								std::string theme_images_path = myWebem->m_actTheme + uri;
+								if (file_exist((doc_root_ + theme_images_path).c_str()))
+								{
+									requestCopy.uri = myWebem->GetWebRoot() + theme_images_path;
+									_log.Debug(DEBUG_WEBSERVER, "[web:%s] modified images request to (%s).", uri.c_str(), requestCopy.uri.c_str());
+								}
+							}
+							else if (uri.find("/styles/") == 0)
+							{
+								std::string theme_styles_path = myWebem->m_actTheme + uri.substr(15);
+								if (file_exist((doc_root_ + theme_styles_path).c_str()))
+								{
+									requestCopy.uri = myWebem->GetWebRoot() + theme_styles_path;
+									_log.Debug(DEBUG_WEBSERVER, "[web:%s] modified request to (%s).", uri.c_str(), requestCopy.uri.c_str());
+								}
+							}
 						}
 
 						request_handler::handle_request(requestCopy, rep, mInfo);

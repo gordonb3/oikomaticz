@@ -39,7 +39,7 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 2
-#define DOMOTICZ_DB_VERSION 148
+#define DOMOTICZ_DB_VERSION 149
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
@@ -2456,6 +2456,35 @@ bool CSQLHelper::OpenDatabase()
 			//Two more files to remove
 			std::remove(std::string(szWWWFolder + "/js/domoticzblocks.js.gz").c_str());
 			std::remove(std::string(szWWWFolder + "/js/domoticzblocks_messages_en.js.gz").c_str());
+
+			// Check for selector action url's that are UrlEncoded and convert to non-encoded url's
+			std::vector<std::vector<std::string>> result;
+
+			// Get all selector devices
+			result = safe_query("SELECT ID, Options FROM DeviceStatus WHERE (SwitchType=%d)", device::tswitch::type::Selector);
+			for (const auto &sd : result)
+			{
+				std::string idx = sd[0];
+				std::string sOptions = sd[1];
+				if (!sOptions.empty())
+				{
+					std::map<std::string, std::string> options = BuildDeviceOptions(sOptions, true);
+					std::string levelActions = options["LevelActions"];
+
+					if (!levelActions.empty())
+					{
+						std::string laLower(levelActions);
+						stdlower(laLower);
+
+						if (laLower.find("http%3a//") != std::string::npos || laLower.find("https%3a//") != std::string::npos)
+						{
+							options["LevelActions"] = CURLEncode::URLDecode(levelActions);
+							uint64_t ullidx = std::stoull(idx);
+							SetDeviceOptions(ullidx, options);
+						}
+					}
+				}
+			}
 		}
 		if (dbversion < 129)
 		{
@@ -2855,9 +2884,68 @@ bool CSQLHelper::OpenDatabase()
 		}
 		if (dbversion < 148)
 		{
-			if(!DoesColumnExistsInTable("LogLevel", "Hardware"))
+			if (!DoesColumnExistsInTable("LogLevel", "Hardware"))
 			{
 				query("ALTER TABLE Hardware ADD COLUMN [LogLevel] INTEGER DEFAULT 7"); // LOG_NORM + LOG_STATUS + LOG_ERROR
+			}
+		}
+		if (dbversion < 149)
+		{
+			// Patch for MQTT: adding default in/ouput topics
+			std::stringstream szQuery;
+			std::vector<std::vector<std::string>> result;
+			szQuery << "SELECT ID, Extra FROM Hardware WHERE([Type]==" << hardware::type::MQTT << ")";
+			result = query(szQuery.str());
+			if (!result.empty())
+			{
+				for (const auto &sd : result)
+				{
+					std::string ID = sd.at(0);
+					std::string Options = sd.at(1);
+
+					std::vector<std::string> strarray;
+					StringSplit(Options, ";", strarray);
+
+					if (strarray.size()==4)
+						continue;
+
+					if (strarray.empty())
+					{
+						strarray.push_back("");
+						strarray.push_back("domoticz/in");
+						strarray.push_back("domoticz/out");
+					}
+					else if (strarray.size() == 1)
+					{
+						strarray.push_back("domoticz/in");
+						strarray.push_back("domoticz/out");
+						strarray.push_back("");
+					}
+					else if (strarray.size() == 2)
+					{
+						if (strarray[1].empty())
+							strarray[1] = "domoticz/in";
+						strarray.push_back("domoticz/out;");
+					}
+					else if (strarray.size() == 2)
+					{
+						if (strarray[1].empty())
+							strarray[1] = "domoticz/in";
+						if (strarray[2].empty())
+							strarray[2] = "domoticz/out";
+					}
+					strarray.push_back("");
+					Options.clear();
+					int iIndex = 0;
+					for (const auto ittOptions : strarray)
+					{
+						if (iIndex > 0)
+							Options += ";";
+						Options += ittOptions;
+						iIndex++;
+					}
+					safe_query("UPDATE Hardware SET Extra='%q' WHERE (ID=%s)", Options.c_str(), ID.c_str());
+				}
 			}
 		}
 	}
@@ -2923,7 +3011,7 @@ bool CSQLHelper::OpenDatabase()
 								std::string desc = sd[2];
 								stdreplace(desc, "Away", "Within proximity");
 								safe_query("UPDATE DeviceStatus SET DeviceID='%08X', Type=%d, SubType=%d, SwitchType=%d, Name='%s' WHERE (ID=%s)",
-									x, pTypeGeneralSwitch, sSwitchGeneralContact, int(device::tswitch::type::Proximity), desc.c_str(),
+									x, pTypeGeneralSwitch, sSwitchGeneralContact, int(device::tswitch::type::Contact), desc.c_str(),
 									sd[0].c_str());
 							}
 						}
@@ -3471,7 +3559,7 @@ bool CSQLHelper::SwitchLightFromTasker(uint64_t idx, const std::string& switchcm
 }
 
 #ifndef WIN32
-void CSQLHelper::ManageExecuteScriptTimeout(int pid, int timeout, bool *stillRunning, bool *timeoutOccurred)
+void CSQLHelper::ManageExecuteScriptTimeout(std::string szCommand, int pid, int timeout, bool *stillRunning, bool *timeoutOccurred)
 {
 
 	auto start = std::chrono::system_clock::now();
@@ -3483,7 +3571,7 @@ void CSQLHelper::ManageExecuteScriptTimeout(int pid, int timeout, bool *stillRun
 
 	if (*stillRunning)
 	{
-		_log.Log(LOG_ERROR,"dzVents script command running longer than specified timeout(%d seconds), cancelling...", timeout);
+		_log.Log(LOG_ERROR,"dzVents script command running longer than specified timeout(%d seconds), cancelling...(%s)", timeout, szCommand.c_str());
 		kill (pid,SIGKILL);
 		*timeoutOccurred=true;
 	}
@@ -3653,7 +3741,7 @@ void CSQLHelper::PerformThreadedAction(const _tTaskItem tItem)
 		{
 			if (timeout > 0)
 			{
-				T = std::make_shared<std::thread>(&CSQLHelper::ManageExecuteScriptTimeout, this, pid, timeout, &stillRunning, &timeoutOccurred);
+				T = std::make_shared<std::thread>(&CSQLHelper::ManageExecuteScriptTimeout, this, command, pid, timeout, &stillRunning, &timeoutOccurred);
 			}
 			waitpid(pid, &exitcode, 0);
 			stillRunning = false;
@@ -5167,9 +5255,16 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 				((bIsLightSwitchOn) && (llevel != 0) && (llevel != 255))
 				|| (switchtype == device::tswitch::type::BlindsPercentage)
 				|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
+				|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
+				|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
 				)
 			{
-				if (switchtype == device::tswitch::type::BlindsPercentage || switchtype == device::tswitch::type::BlindsPercentageInverted)
+				if (
+					switchtype == device::tswitch::type::BlindsPercentage
+					|| switchtype == device::tswitch::type::BlindsPercentageInverted
+					|| switchtype == device::tswitch::type::BlindsPercentageWithStop
+					|| switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop
+					)
 				{
 					if (nValue == light2_sOn)
 						llevel = 100;

@@ -866,7 +866,12 @@ void CScheduler::CheckSchedules()
 
 							GetLightStatus(dType, dSubType, switchtype, 0, "", lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 							int ilevel = maxDimLevel;
-							if ((switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageInverted))
+							if (
+								(switchtype == device::tswitch::type::BlindsPercentage)
+								|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
+								|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
+								|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
+								)
 							{
 								if (item.timerCmd == device::ttimer::command::ON)
 								{

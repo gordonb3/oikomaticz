@@ -194,7 +194,6 @@ extern bool g_bUseUpdater;
 extern http::server::_eWebCompressionMode g_wwwCompressMode;
 extern http::server::CWebServerHelper m_webservers;
 extern bool g_bUseEventTrigger;
-extern std::string szRandomUUID;
 
 CFibaroPush m_fibaropush;
 CGooglePubSubPush m_googlepubsubpush;
@@ -759,7 +758,7 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case hardware::type::MQTT:
 		//LAN
-		pHardware = new MQTT(ID, Address, Port, Username, Password, Extra, Mode2, Mode1, std::string("Domoticz") + szRandomUUID, Mode3 != 0);
+		pHardware = new MQTT(ID, Address, Port, Username, Password, Extra, Mode2, Mode1, std::string("Domoticz") + GenerateUUID() + std::to_string(ID), Mode3 != 0);
 		break;
 	case hardware::type::eHouseTCP:
 		//eHouse LAN, WiFi,Pro and other via eHousePRO gateway
@@ -11313,6 +11312,8 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 #endif
 		return true;
 	}
+	if (pHardware->HwdType == hardware::type::MQTT)
+		return ((MQTT *)m_hardwaredevices[hindex])->SendSwitchCommand(sd[1], sd[9], Unit, switchcmd, level, color);
 
 	switch (dType)
 	{
@@ -11378,7 +11379,13 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		else if (switchtype == device::tswitch::type::X10Siren) {
 			level = 15;
 		}
-		else if ((switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageInverted)) {
+		else if (
+			(switchtype == device::tswitch::type::BlindsPercentage)
+			|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
+			|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
+			|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
+			)
+		{
 			if (lcmd.LIGHTING2.cmnd == light2_sSetLevel)
 			{
 				if (level == 15)
@@ -11402,28 +11409,20 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 			level = (level > 15) ? 15 : level;
 
 		lcmd.LIGHTING2.level = (uint8_t)level;
-		//Special Teach-In for EnOcean Dimmers
+
 		if ((pHardware->HwdType == hardware::type::EnOceanESP2) && (IsTesting) && (switchtype == device::tswitch::type::Dimmer))
-		{
+		{ // Special Teach-In for EnOcean ESP2 dimmers
 			CEnOceanESP2* pEnocean = reinterpret_cast<CEnOceanESP2*>(pHardware);
 			pEnocean->SendDimmerTeachIn((const char*)&lcmd, sizeof(lcmd.LIGHTING1));
 		}
-		else if ((pHardware->HwdType == hardware::type::EnOceanESP3) && (IsTesting) && (switchtype == device::tswitch::type::Dimmer))
-		{
-			CEnOceanESP3* pEnocean = reinterpret_cast<CEnOceanESP3*>(pHardware);
-			pEnocean->SendDimmerTeachIn((const char*)&lcmd, sizeof(lcmd.LIGHTING1));
-		}
-		else
-		{
-			if (switchtype != device::tswitch::type::Motion) //dont send actual motion off command
-			{
-				if (!WriteToHardware(HardwareID, (const char*)&lcmd, sizeof(lcmd.LIGHTING2)))
-					return false;
-			}
+		else if (switchtype != device::tswitch::type::Motion)
+		{ // Don't send actual motion off command
+			if (!WriteToHardware(HardwareID, (const char*)&lcmd, sizeof(lcmd.LIGHTING2)))
+				return false;
 		}
 
-		if (!IsTesting) {
-			//send to internal for now (later we use the ACK)
+		if (!IsTesting)
+		{ //send to internal for now (later we use the ACK)
 			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1, User.c_str());
 		}
 		return true;
@@ -12201,6 +12200,8 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		else if (
 				(switchtype == device::tswitch::type::BlindsPercentage)
 				|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
+				|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
+				|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
 				|| (switchtype == device::tswitch::type::VenetianBlindsUS)
 				|| (switchtype == device::tswitch::type::VenetianBlindsEU)
 				)
@@ -12480,6 +12481,10 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 	if (hindex == -1)
 		return false;
 
+	CDomoticzHardwareBase *pHardware = GetHardware(HardwareID);
+	if (pHardware == nullptr)
+		return false;
+
 	unsigned long ID;
 	std::stringstream s_strid;
 	s_strid << std::hex << sd[1];
@@ -12494,9 +12499,6 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 	uint8_t dSubType = atoi(sd[4].c_str());
 	//device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 
-	CDomoticzHardwareBase* pHardware = GetHardware(HardwareID);
-	if (pHardware == nullptr)
-		return false;
 	//
 	//	For plugins all the specific logic below is irrelevent
 	//	so just send the full details to the plugin so that it can take appropriate action
@@ -12525,7 +12527,8 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 		(pHardware->HwdType == hardware::type::Netatmo) ||
 		(pHardware->HwdType == hardware::type::NefitEastLAN) ||
 		(pHardware->HwdType == hardware::type::IntergasInComfortLAN2RF) ||
-		(pHardware->HwdType == hardware::type::OpenWebNetTCP)
+		(pHardware->HwdType == hardware::type::OpenWebNetTCP) ||
+		(pHardware->HwdType == hardware::type::MQTT)
 		)
 	{
 		if (pHardware->HwdType == hardware::type::OpenThermGateway)
@@ -12601,6 +12604,11 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 		{
 			COpenWebNetTCP* pGateway = reinterpret_cast<COpenWebNetTCP*>(pHardware);
 			return pGateway->SetSetpoint(ID, TempValue);
+		}
+		else if (pHardware->HwdType == hardware::type::MQTT)
+		{
+			MQTT *pGateway = reinterpret_cast<MQTT*>(pHardware);
+			return pGateway->SetSetpoint(sd[1], TempValue);
 		}
 	}
 	else
@@ -13054,11 +13062,16 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd, const st
 			int ilevel = maxDimLevel - 1; // Why -1?
 
 			if (
-				((switchtype == device::tswitch::type::Dimmer) ||
-				(switchtype == device::tswitch::type::BlindsPercentage) ||
-					(switchtype == device::tswitch::type::BlindsPercentageInverted) ||
-					(switchtype == device::tswitch::type::Selector)
-					) && (maxDimLevel != 0))
+				(
+					(switchtype == device::tswitch::type::Dimmer)
+					|| (switchtype == device::tswitch::type::BlindsPercentage)
+					|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
+					|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
+					|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
+					|| (switchtype == device::tswitch::type::Selector)
+				)
+				&& (maxDimLevel != 0)
+			   )
 			{
 				if (lstatus == "On")
 				{

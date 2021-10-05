@@ -198,24 +198,27 @@ namespace Plugins {
 
 	bool CDeviceEx::isInstance(PyObject *pObject)
 	{
-		PyBorrowedRef brModule = PyState_FindModule(&DomoticzExModuleDef);
-		if (brModule)
+		if (pObject)
 		{
-			module_state *pModState = ((struct module_state *)PyModule_GetState(brModule));
-			if (pModState)
+			PyBorrowedRef brModule = PyState_FindModule(&DomoticzExModuleDef);
+			if (brModule)
 			{
-				int isDevice = PyObject_IsInstance(pObject, (PyObject *)pModState->pDeviceClass);
-				if (isDevice == -1)
+				module_state* pModState = ((struct module_state*)PyModule_GetState(brModule));
+				if (pModState)
 				{
-					_log.Log(LOG_ERROR, "%s: Error determining type of Python object", __func__);
-					if (PyErr_Occurred())
+					int isDevice = PyObject_IsInstance(pObject, (PyObject*)pModState->pDeviceClass);
+					if (isDevice == -1)
 					{
-						PyErr_Clear();
+						_log.Log(LOG_ERROR, "%s: Error determining type of Python object", __func__);
+						if (PyErr_Occurred())
+						{
+							PyErr_Clear();
+						}
 					}
-				}
-				else if (isDevice)
-				{
-					return true;
+					else if (isDevice)
+					{
+						return true;
+					}
 				}
 			}
 		}
@@ -267,8 +270,8 @@ namespace Plugins {
 					return nullptr;
 				}
 				self->nValue = 0;
-				self->SignalLevel = 0;
-				self->BatteryLevel = 0;
+				self->SignalLevel = 12;
+				self->BatteryLevel = 255;
 				self->sValue = PyUnicode_FromString("");
 				if (self->sValue == nullptr)
 				{
@@ -557,6 +560,11 @@ namespace Plugins {
 		if (pModState->pPlugin)
 		{
 			std::string sName = PyBorrowedRef(self->Name);
+			if (!(CDeviceEx*)self->Parent)
+			{
+				_log.Log(LOG_ERROR, "(%s) Unit is not associated with a Device.", __func__);
+				Py_RETURN_NONE;
+			}
 			CDeviceEx *pDevice = (CDeviceEx *)self->Parent;
 			std::string sDeviceID = PyBorrowedRef(pDevice->DeviceID);
 			if (self->ID == -1)
@@ -583,12 +591,38 @@ namespace Plugins {
 						std::string sOptionValue = "";
 
 						// Support weird legacy 'custom' options
-						if ((self->SubType == sTypeCustom) && (PyDict_Size(self->Options) > 0))
+						//if ((self->SubType == sTypeCustom) && (PyDict_Size(self->Options) > 0))
+						//{
+						//	PyBorrowedRef pValueDict = PyDict_GetItemString(self->Options, "Custom");
+						//	if (pValueDict)
+						//		sOptionValue = (std::string)pValueDict;
+						//}
+
+						if (PyDict_Size(self->Options) > 0)
 						{
-							PyBorrowedRef pValueDict = PyDict_GetItemString(self->Options, "Custom");
-							if (pValueDict)
-								sOptionValue = (std::string)pValueDict;
+							if (self->SubType != sTypeCustom)
+							{
+								PyBorrowedRef	pKeyDict, pValueDict;
+								Py_ssize_t pos = 0;
+								std::map<std::string, std::string> mpOptions;
+								while (PyDict_Next(self->Options, &pos, &pKeyDict, &pValueDict))
+								{
+									std::string sOptionName = pKeyDict;
+									std::string sOptionValue = pValueDict;
+									mpOptions.insert(std::pair<std::string, std::string>(sOptionName, sOptionValue));
+								}
+								sOptionValue = m_sql.FormatDeviceOptions(mpOptions);
+							}
+							else
+							{
+								PyBorrowedRef pValue = PyDict_GetItemString(self->Options, "Custom");
+								if (pValue)
+								{
+									sOptionValue = (std::string)pValue;
+								}
+							}
 						}
+
 
 						std::string sSQL = "INSERT INTO DeviceStatus "
 								   "(HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, CustomImage, Description, Color, Options, LastUpdate) "
@@ -714,17 +748,16 @@ namespace Plugins {
 			pModState->pPlugin->SetHeartbeatReceived();
 
 			char *TypeName = nullptr;
+			int bWriteLog = false;
 
-			static char *kwlist[] = { "TypeName", nullptr };
+			static char *kwlist[] = { "Log", "TypeName", nullptr };
 
 			// Try to extract parameters needed to update device settings
-			if (!PyArg_ParseTupleAndKeywords(args, kwds, "|s", kwlist, &TypeName))
+			if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ps", kwlist, &bWriteLog, &TypeName))
 			{
-				pModState->pPlugin->Log(LOG_ERROR,
-					 "(%s) Failed to parse parameters: 'TypeName' expected.", __func__);
+				pModState->pPlugin->Log(LOG_ERROR, "(%s) Failed to parse parameters: 'Log' and/or 'TypeName' expected.", __func__);
 				LogPythonException(pModState->pPlugin, __func__);
-				Py_INCREF(Py_None);
-				return Py_None;
+				Py_RETURN_NONE;
 			}
 
 			CDeviceEx *pDevice = (CDeviceEx *)self->Parent;
@@ -784,6 +817,8 @@ namespace Plugins {
 			// Need to look up current nValue and sValue and only do triggers if one has changed
 			bool nValueChanged = false;
 			bool sValueChanged = false;
+			std::string	sOnAction;
+			std::string	sOffAction;
 			std::vector<std::vector<std::string>> result;
 
 			Py_BEGIN_ALLOW_THREADS
@@ -794,21 +829,21 @@ namespace Plugins {
 				int oldnValue = atoi(result[0][1].c_str());
 				std::string oldsValue = result[0][2];
 
-				if ((nValue != oldnValue) && (int((float(nValue) + self->Adjustment) * self->Multiplier) != oldnValue))
+				if (nValue != oldnValue)
 				{
 					nValueChanged = true;
-					// Apply adjustment to nValue if it changed
-					nValue = int((float(nValue) + self->Adjustment) * self->Multiplier);
 				}
 				if (sValue != oldsValue)
 				{
 					sValueChanged = true;
 				}
+				sOnAction = result[0][3];
+				sOffAction = result[0][4];
 			}
 
 			// Do an atomic update (do not change this to individual field updates!!!!!!!)
 			std::string sSQL = "UPDATE DeviceStatus "
-							   "SET Name=?, Description=?, Used=?, Type=?, SubType=?, SwitchType=?, nValue=?, sValue=?, CustomImage=?, Color=?, SignalLevel=?, BatteryLevel=?, Options=?, LastUpdate=? "
+							   "SET Name=?, Description=?, Used=?, Type=?, SubType=?, SwitchType=?, nValue=?, sValue=?, LastLevel=?, CustomImage=?, Color=?, SignalLevel=?, BatteryLevel=?, Options=?, LastUpdate=? "
 							   "WHERE (HardwareID==?) AND (DeviceID==?) AND (Unit==?);";
 			std::vector<std::string> vValues;
 			vValues.push_back(sName);
@@ -819,6 +854,7 @@ namespace Plugins {
 			vValues.push_back(std::to_string(iSwitchType));
 			vValues.push_back(std::to_string(nValue));
 			vValues.push_back(sValue);
+			vValues.push_back(std::to_string(self->LastLevel));
 			vValues.push_back(std::to_string(self->Image));
 			vValues.push_back(sColor);
 			vValues.push_back(std::to_string(self->SignalLevel));
@@ -870,14 +906,55 @@ namespace Plugins {
 				Py_BEGIN_ALLOW_THREADS
 				uint64_t	DevRowIdx = std::stoull(result[0][0]);
 				m_mainworker.m_eventsystem.ProcessDevice(pModState->pPlugin->m_HwdID, DevRowIdx, self->Unit, iType, iSubType, self->SignalLevel, self->BatteryLevel, nValue, sValue.c_str());
-				if (nValueChanged)
+
+				// Standard on/off action handling  If a device has these then make sure they are handled.
+				if (self->SwitchType == device::tswitch::type::Selector)
+				{
+					sOnAction = GetSelectorSwitchLevelAction(m_sql.BuildDeviceOptions(sOptionValue, true), atoi(sValue.c_str()));
+					sOffAction = GetSelectorSwitchLevelAction(m_sql.BuildDeviceOptions(sOptionValue, true), 0);
+				}
+				if (sOnAction.length() || sOffAction.length())
 				{
 					// Handle On & Off actions if they are defined (HandleOnOffAction just returns if they are blank)
-					m_sql.HandleOnOffAction(nValue, result[0][3], result[0][4]);
+					m_sql.HandleOnOffAction(nValue, sOnAction, sOffAction);
 				}
+
 				m_mainworker.sOnDeviceReceived(pModState->pPlugin->m_HwdID, self->ID, pModState->pPlugin->m_Name, NULL);
-				m_notifications.CheckAndHandleNotification(DevRowIdx, pModState->pPlugin->m_HwdID, sDeviceID, sName, self->Unit, iType, iSubType, nValue, sValue);
+
+				// Notifications
+				if (!IsLightOrSwitch(iType, iSubType))
+				{
+					m_notifications.CheckAndHandleNotification(DevRowIdx, pModState->pPlugin->m_HwdID, sDeviceID, sName, self->Unit, iType, iSubType, nValue, sValue);
+				}
+				else
+				{
+					std::string lstatus;
+					int llevel;
+					bool bHaveDimmer;
+					int maxDimLevel;
+					bool bHaveGroupCmd;
+					GetLightStatus(iType, iSubType, (device::tswitch::type::value)iSwitchType, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
+					if (self->SwitchType == device::tswitch::type::Selector)
+						m_notifications.CheckAndHandleSwitchNotification(DevRowIdx, sDeviceID, (IsLightSwitchOn(lstatus)) ? notification::type::SWITCH_ON : notification::type::SWITCH_OFF, llevel);
+					else
+						m_notifications.CheckAndHandleSwitchNotification(DevRowIdx, sDeviceID, (IsLightSwitchOn(lstatus)) ? notification::type::SWITCH_ON : notification::type::SWITCH_OFF);
+				}
 				m_mainworker.CheckSceneCode(DevRowIdx, (const unsigned char)self->Type, (const unsigned char)self->SubType, nValue, sValue.c_str(), "Python");
+
+				// Write a log entry if requested
+				if (bWriteLog)
+				{
+					std::string sSQL = "INSERT INTO LightingLog (DeviceRowID, nValue, sValue, Date) VALUES (?,?,?,?)";
+					std::vector<std::string> vValues;
+					vValues.push_back(result[0][0]);
+					vValues.push_back(std::to_string(nValue));
+					vValues.push_back(sValue);
+					vValues.push_back(TimeToString(nullptr, TF_DateTime));
+					if (!m_sql.execute_sql(sSQL, &vValues, true))
+					{
+						pModState->pPlugin->Log(LOG_ERROR, "%s: Insert into 'LightingLog' failed ", __func__);
+					}
+				}
 				Py_END_ALLOW_THREADS
 			}
 
@@ -968,30 +1045,33 @@ namespace Plugins {
 
 	PyObject *CUnitEx_str(CUnitEx *self)
 	{
-		PyObject *pRetVal = PyUnicode_FromFormat("Unit: %d, Name: '%U', nValue: %d, sValue: '%U'", self->Unit, self->Name, self->nValue, self->sValue);
+		PyObject *pRetVal = PyUnicode_FromFormat("Unit: %d, Name: '%U', nValue: %d, sValue: '%U', LastUpdate: %U", self->Unit, self->Name, self->nValue, self->sValue, self->LastUpdate);
 		return pRetVal;
 	}
 
 	bool CUnitEx::isInstance(PyObject *pObject)
 	{
-		PyBorrowedRef brModule = PyState_FindModule(&DomoticzExModuleDef);
-		if (brModule)
+		if (pObject)
 		{
-			module_state *pModState = ((struct module_state *)PyModule_GetState(brModule));
-			if (pModState)
+			PyBorrowedRef brModule = PyState_FindModule(&DomoticzExModuleDef);
+			if (brModule)
 			{
-				int isUnit = PyObject_IsInstance(pObject, (PyObject *)pModState->pUnitClass);
-				if (isUnit == -1)
+				module_state* pModState = ((struct module_state*)PyModule_GetState(brModule));
+				if (pModState)
 				{
-					_log.Log(LOG_ERROR, "%s: Error determining type of Python object", __func__);
-					if (PyErr_Occurred())
+					int isUnit = PyObject_IsInstance(pObject, (PyObject*)pModState->pUnitClass);
+					if (isUnit == -1)
 					{
-						PyErr_Clear();
+						_log.Log(LOG_ERROR, "%s: Error determining type of Python object", __func__);
+						if (PyErr_Occurred())
+						{
+							PyErr_Clear();
+						}
 					}
-				}
-				else if (isUnit)
-				{
-					return true;
+					else if (isUnit)
+					{
+						return true;
+					}
 				}
 			}
 		}

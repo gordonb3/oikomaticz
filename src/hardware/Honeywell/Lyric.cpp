@@ -358,7 +358,7 @@ void Lyric::GetThermostatData()
 			}
 			std::string desc = kWithinFenceDesc;
 			stdreplace(desc, "{name}", locationName);
-			SendOnOffSensor(10 * devNr + 6, device::tswitch::type::Proximity, bWithinFence, desc);
+			SendOnOffSensor(10 * devNr + 6, device::tswitch::type::Contact, bWithinFence, desc);
 		}
 	}
 }

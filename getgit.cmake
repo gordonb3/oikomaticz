@@ -4,88 +4,77 @@
 # the git.cmake module is part of the standard distribution
 find_package(Git)
 if(NOT GIT_FOUND)
-  message(FATAL_ERROR "Git not found!.")
+  MESSAGE(FATAL_ERROR "Git not found!.")
 endif()
 
-macro(Gitversion_GET_REVISION dir variable)
-  execute_process(COMMAND ${GIT_EXECUTABLE} --git-dir ./.git rev-list HEAD --count
+MACRO(History_GET_REVISION variable)
+  IF(EXISTS ${CMAKE_SOURCE_DIR}/History.txt)
+    MESSAGE(STATUS "Read ProjectRevision from History.txt")
+    CMAKE_POLICY(SET CMP0007 NEW)
+    FILE(STRINGS ${CMAKE_SOURCE_DIR}/History.txt AppVersionContent)
+    LIST(GET AppVersionContent 0 AppVersionContent)
+    STRING(REPLACE " " ";" AppVersionContent ${AppVersionContent})
+    LIST(GET AppVersionContent 1 AppVersionContent)
+    STRING(REPLACE "." ";" AppVersionContent ${AppVersionContent})
+    LIST(GET AppVersionContent 1 ${variable})
+  ELSE(EXISTS ${CMAKE_SOURCE_DIR}/History.txt)
+    MESSAGE(STATUS "Failed to get ProjectRevision from History.txt, set it to 0")
+    set (${variable} 0)
+  ENDIF(EXISTS ${CMAKE_SOURCE_DIR}/History.txt)
+ENDMACRO(History_GET_REVISION)
+
+MACRO(Gitversion_GET_REVISION dir variable)
+  EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} --git-dir ./.git rev-list HEAD --count
     WORKING_DIRECTORY ${dir}
     OUTPUT_VARIABLE ${variable}
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-endmacro(Gitversion_GET_REVISION)
+ENDMACRO(Gitversion_GET_REVISION)
 
-macro(Gitversion_GET_HASH dir variable)
-  execute_process(COMMAND ${GIT_EXECUTABLE} --git-dir ./.git rev-parse --short HEAD
+MACRO(Gitversion_GET_HASH dir variable)
+  EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} --git-dir ./.git rev-parse --short HEAD
     WORKING_DIRECTORY ${dir}
     OUTPUT_VARIABLE ${variable}
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-endmacro(Gitversion_GET_HASH)
+ENDMACRO(Gitversion_GET_HASH)
 
-macro(Gitversion_GET_DATE dir variable)
-  execute_process(COMMAND ${GIT_EXECUTABLE} --git-dir ./.git show -s --format=%ct
+MACRO(Gitversion_GET_DATE dir variable)
+  EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} --git-dir ./.git show -s --format=%ct
     WORKING_DIRECTORY ${dir}
     OUTPUT_VARIABLE ${variable}
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-endmacro(Gitversion_GET_DATE)
+ENDMACRO(Gitversion_GET_DATE)
 
-macro(Gitversion_CHECK_DIRTY dir variable)
-  execute_process(COMMAND ${GIT_EXECUTABLE} --git-dir ./.git diff-index -m --name-only HEAD
+MACRO(Gitversion_CHECK_DIRTY dir variable)
+  EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} --git-dir ./.git diff-index -m --ignore-submodules --name-only HEAD
     WORKING_DIRECTORY ${dir}
     OUTPUT_VARIABLE ${variable}
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-endmacro(Gitversion_CHECK_DIRTY)
+ENDMACRO(Gitversion_CHECK_DIRTY)
 
-if(NOT REVISION)
-  Gitversion_GET_REVISION("${SOURCE_DIR}" ProjectRevision)
-  if(NOT ProjectRevision)
-    message(STATUS "Failed to get ProjectRevision from git, set it to 0")
-    set(ProjectRevision 0)
-  else(NOT ProjectRevision)
-    math(EXPR ProjectRevision "${ProjectRevision}+2107")
-    string(SUBSTRING ${ProjectRevision} 0 2 MINORVERSION)
-    string(SUBSTRING ${ProjectRevision} 2 3 REVISION)
-  endif(NOT ProjectRevision)
-endif()
-
+Gitversion_GET_REVISION("${SOURCE_DIR}" ProjectRevision)
+IF(NOT ProjectRevision)
+  History_GET_REVISION(ProjectRevision)
+ELSE(NOT ProjectRevision)
+  MATH(EXPR ProjectRevision "${ProjectRevision}+2107")
+ENDIF(NOT ProjectRevision)
 Gitversion_GET_HASH("${SOURCE_DIR}" ProjectHash)
-if(NOT ProjectHash)
-  message(STATUS "Failed to get ProjectHash from git, set it to 0")
-  set(ProjectHash 0)
-endif(NOT ProjectHash)
-
+IF(NOT ProjectHash)
+  MESSAGE(STATUS "Failed to get ProjectHash from git, set it to 0")
+  set (ProjectHash 0)
+ENDIF(NOT ProjectHash)
 Gitversion_GET_DATE("${SOURCE_DIR}" ProjectDate)
-if(NOT ProjectDate)
-  message(STATUS "Failed to get ProjectDate from git, set it to 0")
-  set(ProjectDate 0)
-endif(NOT ProjectDate)
-
+IF(NOT ProjectDate)
+  MESSAGE(STATUS "Failed to get ProjectDate from git, set it to 0")
+  set (ProjectDate 0)
+ENDIF(NOT ProjectDate)
 Gitversion_CHECK_DIRTY("${SOURCE_DIR}" ProjectDirty)
-if(ProjectDirty)
-  message(STATUS "domoticz has been modified locally: adding \"-modified\" to hash")
-  set(ProjectHash "${ProjectHash}-modified")
-endif(ProjectDirty)
+IF(ProjectDirty)
+  MESSAGE(STATUS "domoticz has been modified locally: adding \"-modified\" to hash")
+  set (ProjectHash "${ProjectHash}-modified")
+ENDIF(ProjectDirty)
 
 # write a file with the APPVERSION define
-set(FileContent "#pragma once\n")
-if(MAJORVERSION)
-  string(APPEND FileContent "#define VERSION_STRING \"${MAJORVERSION}.\"\n")
-endif(MAJORVERSION)
-if(MINORVERSION)
-  string(APPEND FileContent "#define APPVERSION \"${MINORVERSION}.${REVISION}\"\n")
-else(MINORVERSION)
-  message(STATUS "MINORVERSION is not set")
-  string(APPEND FileContent "#define APPVERSION ${ProjectRevision}\n")
-endif(MINORVERSION)
-string(APPEND FileContent "#define APPHASH \"${ProjectHash}\"\n#define APPDATE ${ProjectDate}\n")
-file(WRITE ${SOURCE_DIR}/appversion.h.txt ${FileContent})
-message(STATUS "writing ${SOURCE_DIR}/appversion.h.txt")
-
-# if ProjectDate is 0, create appversion.h.txt from a copy of appversion.default
-if(NOT ProjectDate AND EXISTS ${SOURCE_DIR}/appversion.default)
-  message(STATUS "ProjectDate is 0 and appversion.default exists, copy it")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        ${SOURCE_DIR}/appversion.default ${SOURCE_DIR}/appversion.h.txt)
-endif(NOT ProjectDate AND EXISTS ${SOURCE_DIR}/appversion.default)
+file(WRITE ${SOURCE_DIR}/appversion.h.txt "#define APPVERSION ${ProjectRevision}\n#define APPHASH \"${ProjectHash}\"\n#define APPDATE ${ProjectDate}\n")
 
 # copy the file to the final header only if the version changes
 # reduces needless rebuilds
