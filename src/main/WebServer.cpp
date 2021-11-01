@@ -377,6 +377,8 @@ namespace http
 			RegisterCommandCode(
 				"getlanguage", [this](auto &&session, auto &&req, auto &&root) { Cmd_GetLanguage(session, req, root); }, true);
 			RegisterCommandCode(
+				"getlanguages", [this](auto &&session, auto &&req, auto &&root) { Cmd_GetLanguages(session, req, root); }, true);
+			RegisterCommandCode(
 				"getthemes", [this](auto &&session, auto &&req, auto &&root) { Cmd_GetThemes(session, req, root); }, true);
 			RegisterCommandCode(
 				"gettitle", [this](auto &&session, auto &&req, auto &&root) { Cmd_GetTitle(session, req, root); }, true);
@@ -902,6 +904,16 @@ namespace http
 				root["title"] = "GetLanguage";
 				root["language"] = sValue;
 			}
+		}
+
+		void CWebServer::Cmd_GetLanguages(WebEmSession &session, const request &req, Json::Value &root)
+		{
+			root["title"] = "GetLanguages";
+			for (auto &lang : guiLanguage)
+			{
+				root["result"][lang.first] = lang.second;
+			}
+			root["status"] = "OK";
 		}
 
 		void CWebServer::Cmd_GetThemes(WebEmSession &session, const request &req, Json::Value &root)
@@ -13332,11 +13344,22 @@ namespace http
 						for (const auto &sd : result)
 						{
 							root["result"][ii]["d"] = sd[4].substr(0, 16);
-							if ((dType == pTypeRego6XXTemp) || (dType == pTypeTEMP) || (dType == pTypeTEMP_HUM) || (dType == pTypeTEMP_HUM_BARO) ||
-							    (dType == pTypeTEMP_BARO) || ((dType == pTypeWIND) && (dSubType == sTypeWIND4)) || ((dType == pTypeUV) && (dSubType == sTypeUV3)) ||
-							    (dType == pTypeThermostat1) || (dType == pTypeRadiator1) || ((dType == pTypeRFXSensor) && (dSubType == sTypeRFXSensorTemp)) ||
-							    ((dType == pTypeGeneral) && (dSubType == sTypeSystemTemp)) || ((dType == pTypeGeneral) && (dSubType == sTypeBaro)) ||
-							    ((dType == pTypeThermostat) && (dSubType == sTypeThermSetpoint)) || (dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater))
+							if (dType == pTypeRego6XXTemp
+                                || dType == pTypeTEMP
+                                || dType == pTypeTEMP_HUM
+                                || dType == pTypeTEMP_HUM_BARO
+                                || dType == pTypeTEMP_BARO
+                                || dType == pTypeWIND && dSubType == sTypeWIND4
+                                || dType == pTypeUV && dSubType == sTypeUV3
+                                || dType == pTypeThermostat1
+                                || dType == pTypeRadiator1
+                                || dType == pTypeRFXSensor && dSubType == sTypeRFXSensorTemp
+                                || dType == pTypeGeneral && dSubType == sTypeSystemTemp
+                                || dType == pTypeGeneral && dSubType == sTypeBaro
+                                || dType == pTypeThermostat && dSubType == sTypeThermSetpoint
+                                || dType == pTypeEvohomeZone
+                                || dType == pTypeEvohomeWater
+                            )
 							{
 								double tvalue = ConvertTemperature(atof(sd[0].c_str()), tempsign);
 								root["result"][ii]["te"] = tvalue;

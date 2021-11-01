@@ -11,6 +11,8 @@ class MQTT : public MySensorsBase, mosqdz::mosquittodz
 	{
 		std::string config;
 
+		bool bEnabled_by_default = true;
+
 		std::string component_type;
 		std::string object_id;
 		std::string unique_id;
@@ -57,12 +59,16 @@ class MQTT : public MySensorsBase, mosqdz::mosquittodz
 		int min_mireds = 154;
 		int max_mireds = 500;
 
+		//Select
+		std::vector<std::string> select_options;
+
 		//Climate
 		std::string mode_command_topic;
 		std::string mode_state_topic;
 		std::string mode_state_template;
 		std::vector<std::string> climate_modes;
 		std::string temperature_command_topic;
+		std::string temperature_command_template;
 		std::string temperature_state_topic;
 		std::string temperature_state_template;
 		std::string temperature_unit = "C";
@@ -128,6 +134,7 @@ class MQTT : public MySensorsBase, mosqdz::mosquittodz
 	void handle_auto_discovery_camera(_tMQTTASensor* pSensor, const struct mosquitto_message* message);
 	void handle_auto_discovery_cover(_tMQTTASensor* pSensor, const struct mosquitto_message* message);
 	void handle_auto_discovery_climate(_tMQTTASensor* pSensor, const struct mosquitto_message* message);
+	void handle_auto_discovery_select (_tMQTTASensor* pSensor, const struct mosquitto_message* message);
 	void handle_auto_discovery_scene(_tMQTTASensor* pSensor, const struct mosquitto_message* message);
 	_tMQTTASensor* get_auto_discovery_sensor_unit(const _tMQTTASensor* pSensor, const std::string& szMeasurementUnit);
 	_tMQTTASensor* get_auto_discovery_sensor_unit(const _tMQTTASensor* pSensor, const uint8_t devType, const int subType = -1, const int devUnit = -1);
@@ -178,8 +185,10 @@ class MQTT : public MySensorsBase, mosqdz::mosquittodz
 	void SubscribeTopic(const std::string &szTopic, const int qos = 0);
 	void InsertUpdateSwitch(_tMQTTASensor* pSensor);
 	void CleanValueTemplate(std::string &szValueTemplate);
-	std::string GetValueTemplateKey(const std::string &szValueTemplate);
+	std::string GetValueTemplateKey(const std::string& szValueTemplate);
+	std::string GetValueFromTemplate(Json::Value root, const std::string& szValueTemplate);
 	void GuessSensorTypeValue(const _tMQTTASensor* pSensor, uint8_t& devType, uint8_t& subType, std::string& szOptions, int& nValue, std::string& sValue);
+	void ApplySignalLevelDevice(const _tMQTTASensor* pSensor);
 	virtual void SendHeartbeat();
 	void WriteInt(const std::string &sendStr) override;
 	std::shared_ptr<std::thread> m_thread;
