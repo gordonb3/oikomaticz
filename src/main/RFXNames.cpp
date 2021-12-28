@@ -1310,6 +1310,9 @@ void GetLightStatus(
 		case Color_LedOn:
 			lstatus = "On";
 			break;
+		case Color_LedNight:
+			lstatus = "Night";
+			break;
 		case Color_SetBrightnessLevel:
 			sprintf(szTmp, "Set Level: %d %%", llevel);
 			if (sValue != "0")

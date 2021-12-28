@@ -3989,7 +3989,11 @@ int CEventSystem::calculateDimLevel(int deviceID, int percentageLevel)
 
 		if (maxDimLevel != 0)
 		{
-			if ((switchtype == device::tswitch::type::Dimmer) || (switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageInverted))
+			if (
+				(switchtype == device::tswitch::type::Dimmer)
+				|| (switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageInverted)
+				|| (switchtype == device::tswitch::type::BlindsPercentageWithStop) || (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
+				)
 			{
 				float fLevel = (maxDimLevel / 100.0F) * percentageLevel;
 				if (fLevel > 100)

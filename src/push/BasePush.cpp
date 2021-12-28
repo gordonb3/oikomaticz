@@ -575,7 +575,7 @@ std::string CBasePush::ProcessSendValue(const uint64_t DeviceRowIdx, const std::
 				sprintf(szData, "%g", vis * 0.3937007874015748F);
 			}
 		}
-		else if (vType == "Status")
+		else if ((vType == "Status") || (vType == "Alert"))
 		{
 			sprintf(szData, "%d", nValue);
 		}
@@ -598,7 +598,7 @@ std::string CBasePush::ProcessSendValue(const uint64_t DeviceRowIdx, const std::
 
 			sprintf(szData, "%d", level);
 		}
-		else if ((vType == "Current 1") || (vType == "Current 2") || (vType == "Current 3"))
+		else if ((vType == "Current") || (vType == "Current 1") || (vType == "Current 2") || (vType == "Current 3"))
 		{
 			strcpy(szData, rawsendValue.c_str());
 		}
@@ -784,11 +784,11 @@ std::string CBasePush::getUnit(const int devType, const int devSubType, const in
 	{
 		strcpy(szData, "dB");
 	}
-	else if (vType == "Status")
+	else if ((vType == "Status") || (vType == "Alert"))
 	{
 		strcpy(szData, "");
 	}
-	else if ((vType == "Current 1") || (vType == "Current 2") || (vType == "Current 3"))
+	else if ((vType == "Current") || (vType == "Current 1") || (vType == "Current 2") || (vType == "Current 3"))
 	{
 		strcpy(szData, "");
 	}

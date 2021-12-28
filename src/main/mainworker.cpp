@@ -913,7 +913,7 @@ bool MainWorker::AddHardwareFromParams(
 		pHardware = new CNetatmo(ID, Username, Password);
 		break;
 	case hardware::type::Daikin:
-		pHardware = new CDaikin(ID, Address, Port, Username, Password);
+		pHardware = new CDaikin(ID, Address, Port, Username, Password, Mode1);
 		break;
 	case hardware::type::SBFSpot:
 		pHardware = new CSBFSpot(ID, Username);
@@ -11313,7 +11313,14 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		return true;
 	}
 	if (pHardware->HwdType == hardware::type::MQTT)
-		return ((MQTT *)m_hardwaredevices[hindex])->SendSwitchCommand(sd[1], sd[9], Unit, switchcmd, level, color);
+	{
+		// Special case when color is passed from timer or scene
+		if ((switchcmd == "Set Level") && (color.mode != ColorModeNone))
+		{
+			switchcmd = "Set Color";
+		}
+		return ((MQTT*)m_hardwaredevices[hindex])->SendSwitchCommand(sd[1], sd[9], Unit, switchcmd, level, color);
+	}
 
 	switch (dType)
 	{

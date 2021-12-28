@@ -928,9 +928,9 @@ namespace Plugins {
 					bool bHaveGroupCmd;
 					GetLightStatus(iType, iSubType, (device::tswitch::type::value)iSwitchType, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 					if (self->SwitchType == device::tswitch::type::Selector)
-						m_notifications.CheckAndHandleSwitchNotification(DevRowIdx, sDeviceID, (IsLightSwitchOn(lstatus)) ? notification::type::SWITCH_ON : notification::type::SWITCH_OFF, llevel);
+						m_notifications.CheckAndHandleSwitchNotification(DevRowIdx, sName, (IsLightSwitchOn(lstatus)) ? notification::type::SWITCH_ON : notification::type::SWITCH_OFF, llevel);
 					else
-						m_notifications.CheckAndHandleSwitchNotification(DevRowIdx, sDeviceID, (IsLightSwitchOn(lstatus)) ? notification::type::SWITCH_ON : notification::type::SWITCH_OFF);
+						m_notifications.CheckAndHandleSwitchNotification(DevRowIdx, sName, (IsLightSwitchOn(lstatus)) ? notification::type::SWITCH_ON : notification::type::SWITCH_OFF);
 				}
 				m_mainworker.CheckSceneCode(DevRowIdx, (const unsigned char)self->Type, (const unsigned char)self->SubType, nValue, sValue.c_str(), "Python");
 
