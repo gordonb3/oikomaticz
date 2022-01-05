@@ -64,7 +64,7 @@ class CToonThermostat : public CDomoticzHardwareBase
 
 	bool m_bDoLogin;
 	P1Power	m_p1power;
-	P1Gas	m_p1gas;
+	P1BusDevice	m_p1gas;
 	time_t m_lastSharedSendElectra;
 	time_t m_lastSharedSendGas;
 	unsigned long m_lastgasusage;

@@ -1,3 +1,5 @@
+#define DEBUG_FROM_FILE
+
 #include "stdafx.h"
 #include "P1MeterSerial.h"
 #include "main/Logger.h"
@@ -48,11 +50,11 @@ bool P1MeterSerial::StartHardware()
 	RequestStart();
 
 #ifdef DEBUG_FROM_FILE
-	FILE *fIn=fopen("E:\\meter.txt","rb+");
-	BYTE buffer[1400];
-	int ret=fread((BYTE*)&buffer,1,sizeof(buffer),fIn);
+	FILE *fIn=fopen("/tmp/P1data.txt","rb+");
+	uint8_t buffer[1400];
+	int ret=fread(&buffer,1,sizeof(buffer),fIn);
 	fclose(fIn);
-	ParseData((const BYTE*)&buffer, ret, 1);
+	ParseP1Data((const uint8_t*)buffer, ret, false, 1);
 #endif
 
 	//Try to open the Serial Port

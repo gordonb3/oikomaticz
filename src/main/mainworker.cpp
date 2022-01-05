@@ -2227,8 +2227,8 @@ void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase *pHardware, const 
 		case pTypeP1Power:
 			decode_P1MeterPower(pHardware, reinterpret_cast<const tRBUF*>(pRXCommand), procResult);
 			break;
-		case pTypeP1Gas:
-			decode_P1MeterGas(pHardware, reinterpret_cast<const tRBUF*>(pRXCommand), procResult);
+		case pTypeP1BusDevice:
+			decode_P1MeterBusDevice(pHardware, reinterpret_cast<const tRBUF*>(pRXCommand), procResult);
 			break;
 		case pTypeUsage:
 			decode_Usage(pHardware, reinterpret_cast<const tRBUF*>(pRXCommand), procResult);
@@ -9596,24 +9596,24 @@ void MainWorker::decode_P1MeterPower(const CDomoticzHardwareBase* pHardware, con
 	procResult.DeviceRowIdx = DevRowIdx;
 }
 
-void MainWorker::decode_P1MeterGas(const CDomoticzHardwareBase* pHardware, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult)
+void MainWorker::decode_P1MeterBusDevice(const CDomoticzHardwareBase* pHardware, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult)
 {
 	char szTmp[200];
-	const _tP1Gas* p1Gas = reinterpret_cast<const _tP1Gas*>(pResponse);
-	if (p1Gas->len != sizeof(_tP1Gas) - 1)
+	const _tP1BusDevice* pMeter = reinterpret_cast<const _tP1BusDevice*>(pResponse);
+	if (pMeter->len != sizeof(_tP1BusDevice) - 1)
 		return;
 
-	uint8_t devType = p1Gas->type;
-	uint8_t subType = p1Gas->subtype;
+	uint8_t devType = pMeter->type;
+	uint8_t subType = pMeter->subtype;
 	std::string ID;
-	sprintf(szTmp, "%d", p1Gas->ID);
+	sprintf(szTmp, "%d", pMeter->ID);
 	ID = szTmp;
 	uint8_t Unit = subType;
 	uint8_t cmnd = 0;
 	uint8_t SignalLevel = 12;
 	uint8_t BatteryLevel = 255;
 
-	sprintf(szTmp, "%u", p1Gas->gasusage);
+	sprintf(szTmp, "%u", pMeter->usage);
 	uint64_t DevRowIdx = m_sql.UpdateValue(pHardware->m_HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
 	if (DevRowIdx == (uint64_t)-1)
 		return;
@@ -9621,16 +9621,28 @@ void MainWorker::decode_P1MeterGas(const CDomoticzHardwareBase* pHardware, const
 	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
 	{
 		WriteMessageStart();
-		switch (p1Gas->subtype)
+		switch (pMeter->subtype)
 		{
 		case sTypeP1Gas:
 			WriteMessage("subtype       = P1 Smart Meter Gas");
 
-			sprintf(szTmp, "gasusage = %.3f m3", float(p1Gas->gasusage) / 1000.0F);
+			sprintf(szTmp, "gasusage = %.3f m3", float(pMeter->usage) / 1000.0F);
+			WriteMessage(szTmp);
+			break;
+		case sTypeP1Water:
+			WriteMessage("subtype       = P1 Smart Meter Water");
+
+			sprintf(szTmp, "waterusage = %.3f m3", float(pMeter->usage) / 1000.0F);
+			WriteMessage(szTmp);
+			break;
+		case sTypeP1CityHeat:
+			WriteMessage("subtype       = P1 Smart Meter City Heat");
+
+			sprintf(szTmp, "heatusage = %.3f GJ", float(pMeter->usage) / 1000.0F);
 			WriteMessage(szTmp);
 			break;
 		default:
-			sprintf(szTmp, "ERROR: Unknown Sub type for Packet type= %02X:%02X", p1Gas->type, p1Gas->subtype);
+			sprintf(szTmp, "ERROR: Unknown Sub type for Packet type= %02X:%02X", pMeter->type, pMeter->subtype);
 			WriteMessage(szTmp);
 			break;
 		}
@@ -11079,25 +11091,16 @@ bool MainWorker::GetSensorData(const uint64_t idx, int& nValue, std::string& sVa
 		nValue = 0;
 		sValue = ssvalue.str();
 	}
-	else if ((devType == pTypeP1Gas) && (subType == sTypeP1Gas))
+	else if (devType == pTypeP1BusDevice)
 	{
-		float GasDivider = 1000.0F;
-		//get lowest value of today
-		time_t now = mytime(nullptr);
-		struct tm tm1;
-		localtime_r(&now, &tm1);
+		float UsageDivider = 1000.0F;	// FIXME: is this really the same for all supported devices? [ sTypeP1Gas, sTypeP1Water, sTypeP1CityHeat ]
 
-		struct tm ltime;
-		ltime.tm_isdst = tm1.tm_isdst;
-		ltime.tm_hour = 0;
-		ltime.tm_min = 0;
-		ltime.tm_sec = 0;
-		ltime.tm_year = tm1.tm_year;
-		ltime.tm_mon = tm1.tm_mon;
-		ltime.tm_mday = tm1.tm_mday;
-
+		//get today's date in ISO format
+		time_t atime;
+		struct tm middayTime;
+		getNoon(atime, middayTime);
 		char szDate[40];
-		sprintf(szDate, "%04d-%02d-%02d", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday);
+		sprintf(szDate, "%04d-%02d-%02d", middayTime.tm_year + 1900, middayTime.tm_mon + 1, middayTime.tm_mday);
 
 		std::vector<std::vector<std::string> > result2;
 		strcpy(szTmp, "0");
@@ -11105,10 +11108,10 @@ bool MainWorker::GetSensorData(const uint64_t idx, int& nValue, std::string& sVa
 		if (!result2.empty())
 		{
 			std::vector<std::string> sd2 = result2[0];
-			unsigned long long total_min_gas = std::strtoull(sd2[0].c_str(), nullptr, 10);
-			unsigned long long gasactual = std::strtoull(sValue.c_str(), nullptr, 10);
-			unsigned long long total_real_gas = gasactual - total_min_gas;
-			float musage = float(total_real_gas) / GasDivider;
+			unsigned long long total_min_usage = std::strtoull(sd2[0].c_str(), nullptr, 10);
+			unsigned long long actual_usage = std::strtoull(sValue.c_str(), nullptr, 10);
+			unsigned long long total_today_usage = actual_usage - total_min_usage;
+			float musage = float(total_today_usage) / UsageDivider;
 			sprintf(szTmp, "%.03f", musage);
 		}
 		else
@@ -11175,6 +11178,7 @@ bool MainWorker::GetSensorData(const uint64_t idx, int& nValue, std::string& sVa
 				sprintf(szTmp, "%.03f", musage);
 				break;
 			case device::tmeter::type::GAS:
+			case device::tmeter::type::CITYHEAT:
 				musage = float(total_real) / GasDivider;
 				sprintf(szTmp, "%.03f", musage);
 				break;

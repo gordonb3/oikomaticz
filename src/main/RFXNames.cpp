@@ -203,7 +203,7 @@ const char* RFX_Type_Desc(const unsigned char i, const unsigned char snum)
 		{ pTypeRFXSensor, "RFXSensor", "unknown" },
 		{ pTypeRFXMeter, "RFXMeter", "counter" },
 		{ pTypeP1Power, "P1 Smart Meter", "counter" },
-		{ pTypeP1Gas, "P1 Smart Meter", "counter" },
+		{ pTypeP1BusDevice, "P1 Smart Meter", "counter" },
 		{ pTypeYouLess, "YouLess Meter", "counter" },
 		{ pTypeFS20, "FS20", "lightbulb" },
 		{ pTypeRego6XXTemp, "Temp", "temperature" },
@@ -435,7 +435,9 @@ const char* RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeRFXMeter, sTypeRFXMeterCount, "RFXMeter counter" },
 
 		{ pTypeP1Power, sTypeP1Power, "Energy" },
-		{ pTypeP1Gas, sTypeP1Gas, "Gas" },
+		{ pTypeP1BusDevice, sTypeP1Gas, "Gas" },
+		{ pTypeP1BusDevice, sTypeP1Water, "Water" },
+		{ pTypeP1BusDevice, sTypeP1CityHeat, "City Heat" },
 
 		{ pTypeYouLess, sTypeYouLess, "YouLess counter" },
 

@@ -210,7 +210,7 @@ const char *RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 		{ pTypeRFXMeter, sTypeRFXMeterCount, "Counter" },
 
 		{ pTypeP1Power, sTypeP1Power, "Usage 1,Usage 2,Delivery 1,Delivery 2,Usage current,Delivery current" },
-		{ pTypeP1Gas, sTypeP1Gas, "Gas usage" },
+		{ pTypeP1BusDevice, sTypeP1Gas, "Gas usage" },
 
 		{ pTypeYouLess, sTypeYouLess, "Usage,Usage current" },
 

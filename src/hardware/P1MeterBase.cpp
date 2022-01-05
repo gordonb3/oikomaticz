@@ -37,14 +37,25 @@ void P1MeterBase::Init()
 	m_power.len = sizeof(P1Power) - 1;
 	m_power.type = pTypeP1Power;
 	m_power.subtype = sTypeP1Power;
-	m_power.ID = 1;
+	m_power.ID = sTypeP1Power;
 
 	memset(&m_gas, 0, sizeof(m_gas));
-	m_gas.len = sizeof(P1Gas) - 1;
-	m_gas.type = pTypeP1Gas;
+	m_gas.len = sizeof(P1BusDevice) - 1;
+	m_gas.type = pTypeP1BusDevice;
 	m_gas.subtype = sTypeP1Gas;
-	m_gas.ID = 1;
-	m_gas.gasusage = 0;
+	m_gas.ID = sTypeP1Gas;
+
+	memset(&m_water, 0, sizeof(m_water));
+	m_water.len = sizeof(P1BusDevice) - 1;
+	m_water.type = pTypeP1BusDevice;
+	m_water.subtype = sTypeP1Water;
+	m_water.ID = sTypeP1Water;
+
+	memset(&m_thermal, 0, sizeof(m_thermal));
+	m_thermal.len = sizeof(P1BusDevice) - 1;
+	m_thermal.type = pTypeP1BusDevice;
+	m_thermal.subtype = sTypeP1CityHeat;
+	m_thermal.ID = sTypeP1CityHeat;
 
 	memset(&m_phasedata, 0, sizeof(m_phasedata));
 
@@ -63,12 +74,9 @@ void P1MeterBase::Init()
 	m_lastUpdateTime = 0;
 	m_lastTariff = 0;
 
-	m_lastgasusage = 0;
-	m_lastSharedSendGas = 0;
-	m_gasmbuschannel = 0;
-	m_gastimestamp = "";
-	m_gasclockskew = 0;
-	m_gasoktime = 0;
+	memset(&m_privgas, 0, sizeof(m_privgas));
+	memset(&m_privwater, 0, sizeof(m_privwater));
+	memset(&m_privthermal, 0, sizeof(m_privthermal));
 
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query("SELECT nValue FROM DeviceStatus WHERE (HardwareID=%d) AND (Type=%d) AND (SubType=%d) AND (DeviceID='000000FF')",
@@ -79,6 +87,7 @@ void P1MeterBase::Init()
 	}
 
 	m_isencrypteddata = false;
+	m_mbusonly = true;
 }
 
 // returns false if an error is detected
@@ -210,17 +219,24 @@ bool P1MeterBase::MatchLine()
 			else
 				return true;
 		}
-		else if (m_gasmbuschannel == 0)	// get gas meter channel only once
+		else if (m_lbuffer[7] == '1')
 		{
 			// Try to match OBIS ID (n = m-bus channel):
 			//    device type:		0-n:24.1.0
+
+			if (m_lbuffer[2] == m_privgas.channel)	// get gas meter channel only once
+				return true;
+			if (m_lbuffer[2] == m_privwater.channel)
+				return true;
+			if (m_lbuffer[2] == m_privthermal.channel)
+				return true;
 
 			if (strncmp("24.1.0",(const char*)&m_lbuffer + 4,6) == 0)
 				matchtype = device::tmeter::COSEM::OBIS::mBusDeviceType;
 			else
 				return true;
 		}
-		else if (m_lbuffer[2] == m_gasmbuschannel)
+		else if (m_lbuffer[2] == m_privgas.channel)
 		{
 			// Try to match OBIS IDs (n = m-bus channel):
 			//    DSMR4+ gas usage (NLD):				0-n:24.2.1
@@ -235,6 +251,30 @@ bool P1MeterBase::MatchLine()
 			}
 			else if ((m_p1version < 4) && (strncmp("24.3.0",(const char*)&m_lbuffer + 4,6) == 0))
 				matchtype = device::tmeter::COSEM::OBIS::gasTimestampDSMR2;
+			else
+				return true;
+		}
+		else if (m_lbuffer[2] == m_privwater.channel)
+		{
+			// Try to match OBIS IDs (n = m-bus channel):
+			//    DSMR4+ utility usage:				0-n:24.2.1
+
+			if (strncmp("24.2.1",(const char*)&m_lbuffer + 4,6) == 0)
+			{
+				matchtype = device::tmeter::COSEM::OBIS::waterUsage;
+			}
+			else
+				return true;
+		}
+		else if (m_lbuffer[2] == m_privthermal.channel)
+		{
+			// Try to match OBIS IDs (n = m-bus channel):
+			//    DSMR4+ utility usage:				0-n:24.2.1
+
+			if (strncmp("24.2.1",(const char*)&m_lbuffer + 4,6) == 0)
+			{
+				matchtype = device::tmeter::COSEM::OBIS::thermalUsage;
+			}
 			else
 				return true;
 		}
@@ -271,6 +311,7 @@ bool P1MeterBase::MatchLine()
 	if (matchtype == device::tmeter::COSEM::OBIS::endOfTelegram)
 	{
 		m_lexclmarkfound = 1;
+		m_lastUpdateTime = m_receivetime;
 
 		if (m_p1version == 0) // meter did not report its DSMR version
 		{
@@ -278,66 +319,72 @@ bool P1MeterBase::MatchLine()
 			m_p1version = 2;
 		}
 
-		if (m_phasecount == 1)		// single phase meter: L1 power is the same as total power
-			m_phasecount = 0;	// disable further processing of individual phase instantaneous power entries
-
-		m_lastUpdateTime = m_receivetime;
-		sDecodeRXMessage(this, (const unsigned char *)&m_power, "Power", 255, nullptr);
-
-		if ((m_currentTariff != m_lastTariff) && (m_power.powerusage2 > 0))
+		if (!m_mbusonly)	// only send electricity data if the attached meter actually registers it
 		{
-			m_lastTariff = m_currentTariff;
-			int sstate = (m_currentTariff == 1) ? gswitch_sOn : gswitch_sOff;
-			UpsertSwitch(255, device::tswitch::type::OnOff, sstate, "Power Tariff Low");
-		}
+			if (m_phasecount == 1)		// single phase meter: L1 power is the same as total power
+				m_phasecount = 0;	// disable further processing of individual phase instantaneous power entries
 
-		if (m_phasedata.voltage[0])
-		{
-			std::string defaultname = "Voltage L1";
-			for (int i=0; i<=m_phasecount; )
+			sDecodeRXMessage(this, (const unsigned char *)&m_power, "Power", 255, nullptr);
+
+			if ((m_currentTariff != m_lastTariff) && (m_power.powerusage2 > 0))
 			{
-				i++;
-				defaultname[9] = i | 0x30;
-				SendVoltageSensor(0, i, 255, m_phasedata.voltage[i], defaultname);
+				m_lastTariff = m_currentTariff;
+				int sstate = (m_currentTariff == 1) ? gswitch_sOn : gswitch_sOff;
+				UpsertSwitch(255, device::tswitch::type::OnOff, sstate, "Power Tariff Low");
+			}
+
+			if (m_phasedata.voltage[0])
+			{
+				std::string defaultname = "Voltage L1";
+				for (int i=0; i<=m_phasecount; )
+				{
+					i++;
+					defaultname[9] = i | 0x30;
+					SendVoltageSensor(0, i, 255, m_phasedata.voltage[i], defaultname);
+				}
+			}
+
+			if (m_phasedata.ampere[0] > 0)
+			{
+				SendCurrentSensor(0, 255, m_phasedata.ampere[1], m_phasedata.ampere[2], m_phasedata.ampere[3], "Current");
+			}
+
+			if (m_phasedata.instpwruse[0] && (m_phasecount > 0))
+			{
+				std::string defaultname = "Usage L1";
+				for (int i=1; i<=m_phasecount; i++)
+				{
+					defaultname[7] = i | 0x30;
+					SendWattMeter(0, i, 255, m_phasedata.instpwruse[i], defaultname);
+				}
+			}
+
+			if (m_phasedata.instpwrdel[0] && (m_phasecount > 0))
+			{
+				std::string defaultname = "Delivery L1";
+				for (int i=1; i<=m_phasecount; i++)
+				{
+					defaultname[10] = i | 0x30;
+					SendWattMeter(0, i+3, 255, m_phasedata.instpwrdel[i], defaultname);
+				}
 			}
 		}
 
-		if (m_phasedata.ampere[0] > 0)
-		{
-			SendCurrentSensor(0, 255, m_phasedata.ampere[1], m_phasedata.ampere[2], m_phasedata.ampere[3], "Current");
-		}
+		// M-Bus data is only updated once every 5 minutes but this appears to be relative to when the meter was booted
+		// to track when this happens we only update our logs when the value changes and we use the datetime value that
+		// is supplied by the meter itself as a reference rather than our own time.
 
-		if (m_phasedata.instpwruse[0] && (m_phasecount > 0))
+		if ((m_gas.usage > 0) && ((m_gas.usage != m_privgas.lastusage) || (difftime(m_receivetime, m_privgas.lastsubmittime) >= 300)))
 		{
-			std::string defaultname = "Usage L1";
-			for (int i=1; i<=m_phasecount; i++)
-			{
-				defaultname[7] = i | 0x30;
-				SendWattMeter(0, i, 255, m_phasedata.instpwruse[i], defaultname);
-			}
-		}
-
-		if (m_phasedata.instpwrdel[0] && (m_phasecount > 0))
-		{
-			std::string defaultname = "Delivery L1";
-			for (int i=1; i<=m_phasecount; i++)
-			{
-				defaultname[10] = i | 0x30;
-				SendWattMeter(0, i+3, 255, m_phasedata.instpwrdel[i], defaultname);
-			}
-		}
-
-		if ((m_gas.gasusage > 0) && ((m_gas.gasusage != m_lastgasusage) || (difftime(m_receivetime, m_lastSharedSendGas) >= 300)))
-		{
-			//only update gas when there is a new value, or 5 minutes are passed
-			if (m_gasclockskew >= 300)
+			// only update gas when there is a new value, or 5 minutes are passed
+			if (m_privgas.clockskew >= 300)
 			{
 				// just accept it - we cannot sync to our clock
-				m_lastSharedSendGas = m_receivetime;
-				m_lastgasusage = m_gas.gasusage;
+				m_privgas.lastsubmittime = m_receivetime;
+				m_privgas.lastusage = m_gas.usage;
 				sDecodeRXMessage(this, (const unsigned char *)&m_gas, "Gas", 255, nullptr);
 			}
-			else if (m_receivetime >= m_gasoktime)
+			else if (m_receivetime >= m_privgas.nextmetertime)
 			{
 				struct tm ltime;
 				localtime_r(&m_receivetime, &ltime);
@@ -345,38 +392,106 @@ bool P1MeterBase::MatchLine()
 				sprintf(myts, "%02d%02d%02d%02d%02d%02dW", ltime.tm_year % 100, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
 				if (ltime.tm_isdst)
 					myts[12] = 'S';
-				if ((m_gastimestamp.length() > 13) || (strncmp((const char*)&myts, m_gastimestamp.c_str(), m_gastimestamp.length()) >= 0))
+				if (strncmp((const char*)&myts, m_privgas.timestring, 13) >= 0)
 				{
-					m_lastSharedSendGas = m_receivetime;
-					m_lastgasusage = m_gas.gasusage;
-					m_gasoktime += 300;
+					m_privgas.lastsubmittime = m_receivetime;
+					m_privgas.lastusage = m_gas.usage;
+					m_privgas.nextmetertime += 300;
 					sDecodeRXMessage(this, (const unsigned char *)&m_gas, "Gas", 255, nullptr);
 				}
-				else // gas clock is ahead
+				else // clock is ahead
 				{
-					struct tm gastm;
-					gastm.tm_year = atoi(m_gastimestamp.substr(0, 2).c_str()) + 100;
-					gastm.tm_mon = atoi(m_gastimestamp.substr(2, 2).c_str()) - 1;
-					gastm.tm_mday = atoi(m_gastimestamp.substr(4, 2).c_str());
-					gastm.tm_hour = atoi(m_gastimestamp.substr(6, 2).c_str());
-					gastm.tm_min = atoi(m_gastimestamp.substr(8, 2).c_str());
-					gastm.tm_sec = atoi(m_gastimestamp.substr(10, 2).c_str());
-					if (m_gastimestamp.length() == 12)
-						gastm.tm_isdst = -1;
-					else if (m_gastimestamp[12] == 'W')
-						gastm.tm_isdst = 0;
-					else
-						gastm.tm_isdst = 1;
-
-					time_t gtime = mktime(&gastm);
-					m_gasclockskew = difftime(gtime, m_receivetime);
-					if (m_gasclockskew >= 300)
+					time_t gtime = ParseP1datetime(m_privgas.timestring);
+					m_privgas.clockskew = difftime(gtime, m_receivetime);
+					if (m_privgas.clockskew >= 300)
 					{
 						_log.Log(LOG_ERROR, "P1 Smart Meter: Unable to synchronize to the gas meter clock because it is more than 5 minutes ahead of my time");
 					}
 					else {
-						m_gasoktime = gtime;
-						_log.Log(LOG_STATUS, "P1 Smart Meter: Gas meter clock is %i seconds ahead - wait for my clock to catch up", (int)m_gasclockskew);
+						m_privgas.nextmetertime = gtime;
+						_log.Log(LOG_STATUS, "P1 Smart Meter: Gas meter clock is %i seconds ahead - wait for my clock to catch up", (int)m_privgas.clockskew);
+					}
+				}
+			}
+		}
+
+		if ((m_water.usage > 0) && ((m_water.usage != m_privwater.lastusage) || (difftime(m_receivetime, m_privwater.lastsubmittime) >= 300)))
+		{
+			// only update water when there is a new value, or 5 minutes are passed
+			if (m_privwater.clockskew >= 300)
+			{
+				// just accept it - we cannot sync to our clock
+				m_privwater.lastsubmittime = m_receivetime;
+				m_privwater.lastusage = m_water.usage;
+				sDecodeRXMessage(this, (const unsigned char *)&m_water, "Water", 255, nullptr);
+			}
+			else if (m_receivetime >= m_privwater.nextmetertime)
+			{
+				struct tm ltime;
+				localtime_r(&m_receivetime, &ltime);
+				char myts[80];
+				sprintf(myts, "%02d%02d%02d%02d%02d%02dW", ltime.tm_year % 100, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
+				if (ltime.tm_isdst)
+					myts[12] = 'S';
+				if (strncmp((const char*)&myts, m_privwater.timestring, 13) >= 0)
+				{
+					m_privwater.lastsubmittime = m_receivetime;
+					m_privwater.lastusage = m_water.usage;
+					m_privwater.nextmetertime += 300;
+					sDecodeRXMessage(this, (const unsigned char *)&m_water, "Water", 255, nullptr);
+				}
+				else // clock is ahead
+				{
+					time_t gtime = ParseP1datetime(m_privwater.timestring);
+					m_privwater.clockskew = difftime(gtime, m_receivetime);
+					if (m_privwater.clockskew >= 300)
+					{
+						_log.Log(LOG_ERROR, "P1 Smart Meter: Unable to synchronize to the water meter clock because it is more than 5 minutes ahead of my time");
+					}
+					else {
+						m_privwater.nextmetertime = gtime;
+						_log.Log(LOG_STATUS, "P1 Smart Meter: Water meter clock is %i seconds ahead - wait for my clock to catch up", (int)m_privwater.clockskew);
+					}
+				}
+			}
+		}
+
+		if ((m_thermal.usage > 0) && ((m_thermal.usage != m_privthermal.lastusage) || (difftime(m_receivetime, m_privthermal.lastsubmittime) >= 300)))
+		{
+			// only update thermal when there is a new value, or 5 minutes are passed
+			if (m_privthermal.clockskew >= 300)
+			{
+				// just accept it - we cannot sync to our clock
+				m_privthermal.lastsubmittime = m_receivetime;
+				m_privthermal.lastusage = m_thermal.usage;
+				sDecodeRXMessage(this, (const unsigned char *)&m_thermal, "City Heat", 255, nullptr);
+			}
+			else if (m_receivetime >= m_privthermal.nextmetertime)
+			{
+				struct tm ltime;
+				localtime_r(&m_receivetime, &ltime);
+				char myts[80];
+				sprintf(myts, "%02d%02d%02d%02d%02d%02dW", ltime.tm_year % 100, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
+				if (ltime.tm_isdst)
+					myts[12] = 'S';
+				if (strncmp((const char*)&myts, m_privthermal.timestring, 13) >= 0)
+				{
+					m_privthermal.lastsubmittime = m_receivetime;
+					m_privthermal.lastusage = m_thermal.usage;
+					m_privthermal.nextmetertime += 300;
+					sDecodeRXMessage(this, (const unsigned char *)&m_thermal, "Gas", 255, nullptr);
+				}
+				else // clock is ahead
+				{
+					time_t gtime = ParseP1datetime(m_privthermal.timestring);
+					m_privthermal.clockskew = difftime(gtime, m_receivetime);
+					if (m_privthermal.clockskew >= 300)
+					{
+						_log.Log(LOG_ERROR, "P1 Smart Meter: Unable to synchronize to the thermal meter clock because it is more than 5 minutes ahead of my time");
+					}
+					else {
+						m_privthermal.nextmetertime = gtime;
+						_log.Log(LOG_STATUS, "P1 Smart Meter: CityHeat meter clock is %i seconds ahead - wait for my clock to catch up", (int)m_privthermal.clockskew);
 					}
 				}
 			}
@@ -394,6 +509,7 @@ bool P1MeterBase::MatchLine()
 	{
 	case device::tmeter::COSEM::OBIS::electricityUsed:
 	case device::tmeter::COSEM::OBIS::electricityDelivered:
+		m_mbusonly = false;
 		if (m_lbuffer[9] != '(')
 			return true; // no support for tariff id >= 10
 		tariff_id = m_lbuffer[8] ^ 0x30;
@@ -421,6 +537,8 @@ bool P1MeterBase::MatchLine()
 		}
 		break;
 	case device::tmeter::COSEM::OBIS::gasUsageDSMR4:
+	case device::tmeter::COSEM::OBIS::waterUsage:
+	case device::tmeter::COSEM::OBIS::thermalUsage:
 		vString = (const char*)&m_lbuffer + 26;
 		break;
 	case device::tmeter::COSEM::OBIS::gasTimestampDSMR2:
@@ -558,30 +676,62 @@ bool P1MeterBase::MatchLine()
 		}
 		break;
 	case device::tmeter::COSEM::OBIS::gasUsageDSMR4:
-		m_gas.gasusage = (unsigned long)(strtod(value, &validate)*1000.0f);
+		m_gas.usage = (unsigned long)(strtod(value, &validate)*1000.0f);
 		// need to get timestamp from this line as well
 		vString = (const char*)&m_lbuffer + 11;
 		ePos = vString.find_first_of("*)");
-		if ((ePos == std::string::npos) || (ePos > OBIS_MAX_VALUE_LENGTH))
+		if ((ePos == std::string::npos) || (ePos > 13))
 			return false;
-		strcpy(value, vString.substr(0, ePos).c_str());
-		m_gastimestamp = std::string(value);
+		strcpy(m_privgas.timestring, vString.substr(0, ePos).c_str());
+		break;
+	case device::tmeter::COSEM::OBIS::waterUsage:
+		m_water.usage = (unsigned long)(strtod(value, &validate)*1000.0f);
+		// need to get timestamp from this line as well
+		vString = (const char*)&m_lbuffer + 11;
+		ePos = vString.find_first_of("*)");
+		if ((ePos == std::string::npos) || (ePos > 13))
+			return false;
+		strcpy(m_privwater.timestring, vString.substr(0, ePos).c_str());
+		break;
+	case device::tmeter::COSEM::OBIS::thermalUsage:
+		m_thermal.usage = (unsigned long)(strtod(value, &validate)*1000.0f);
+		// need to get timestamp from this line as well
+		vString = (const char*)&m_lbuffer + 11;
+		ePos = vString.find_first_of("*)");
+		if ((ePos == std::string::npos) || (ePos > 13))
+			return false;
+		strcpy(m_privthermal.timestring, vString.substr(0, ePos).c_str());
 		break;
 	case device::tmeter::COSEM::OBIS::gasTimestampDSMR2:
-		m_gastimestamp = std::string(value);
+		if (ePos > 13)
+		{
+			_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - invalid gas timestamp value in line \"%s\"", m_lbuffer);
+			return false;
+		}
+		strcpy(m_privgas.timestring, value);
 		m_linecount = 17;
 		break;
 	case device::tmeter::COSEM::OBIS::gasUsageDSMR2:
 		temp_usage = (unsigned long)(strtod(value, &validate)*1000.0f);
-		if (!m_gas.gasusage || ((temp_usage - m_gas.gasusage) < 20000))
-			m_gas.gasusage = temp_usage;
+		if (!m_gas.usage || ((temp_usage - m_gas.usage) < 20000))
+			m_gas.usage = temp_usage;
 		break;
 	case device::tmeter::COSEM::OBIS::mBusDeviceType:
 		temp_usage = (unsigned long)(strtod(value, &validate));
 		if (temp_usage == 3)
 		{
-			m_gasmbuschannel = (char)m_lbuffer[2];
-			_log.Log(LOG_STATUS, "P1 Smart Meter: Found gas meter on M-Bus channel %c", m_gasmbuschannel);
+			m_privgas.channel = (char)m_lbuffer[2];
+			_log.Log(LOG_STATUS, "P1 Smart Meter: Found gas meter on M-Bus channel %c", m_privgas.channel);
+		}
+		else if (temp_usage == 4)
+		{
+			m_privthermal.channel = (char)m_lbuffer[2];
+			_log.Log(LOG_STATUS, "P1 Smart Meter: Found thermal meter on M-Bus channel %c", m_privthermal.channel);
+		}
+		else if (temp_usage == 7)
+		{
+			m_privwater.channel = (char)m_lbuffer[2];
+			_log.Log(LOG_STATUS, "P1 Smart Meter: Found water meter on M-Bus channel %c", m_privwater.channel);
 		}
 		break;
 	case device::tmeter::COSEM::OBIS::version:
@@ -991,14 +1141,14 @@ bool P1MeterBase::SetOptions(const bool disable_crc, const unsigned int ratelimi
 	if (gasmbuschannel > 0)
 	{
 		unsigned char cmbuschannel = static_cast<unsigned char>(gasmbuschannel) | 0x30;
-		if (cmbuschannel != m_gasmbuschannel)
+		if (cmbuschannel != m_privgas.channel)
 		{
 			_log.Log(LOG_STATUS, "P1 Smart Meter: Gas meter M-Bus channel %c manually set by user", cmbuschannel);
-			m_gasmbuschannel = cmbuschannel;
+			m_privgas.channel = cmbuschannel;
 		}
 	}
 	else
-		m_gasmbuschannel = 0;
+		m_privgas.channel = 0;
 
 	m_bDisableCRC = disable_crc;
 	m_ratelimit = ratelimit;
@@ -1042,7 +1192,24 @@ bool P1MeterBase::ImportKey(std::string szhexencoded)
 	return true;
 }
 
+time_t P1MeterBase::ParseP1datetime(const std::string &szP1datetime)
+{
+	struct tm gastm;
+	gastm.tm_year = atoi(szP1datetime.substr(0, 2).c_str()) + 100;
+	gastm.tm_mon = atoi(szP1datetime.substr(2, 2).c_str()) - 1;
+	gastm.tm_mday = atoi(szP1datetime.substr(4, 2).c_str());
+	gastm.tm_hour = atoi(szP1datetime.substr(6, 2).c_str());
+	gastm.tm_min = atoi(szP1datetime.substr(8, 2).c_str());
+	gastm.tm_sec = atoi(szP1datetime.substr(10, 2).c_str());
+	if (szP1datetime.length() == 12)
+		gastm.tm_isdst = -1;
+	else if (szP1datetime[12] == 'W')
+		gastm.tm_isdst = 0;
+	else
+		gastm.tm_isdst = 1;
 
+	return mktime(&gastm);
+}
 
 //Webserver helpers
 namespace http {

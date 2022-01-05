@@ -37,8 +37,8 @@ void CYouLess::Init()
 	m_p1power.subtype = sTypeP1Power;
 	m_p1power.ID = 1;
 
-	m_p1gas.len = sizeof(P1Gas) - 1;
-	m_p1gas.type = pTypeP1Gas;
+	m_p1gas.len = sizeof(P1BusDevice) - 1;
+	m_p1gas.type = pTypeP1BusDevice;
 	m_p1gas.subtype = sTypeP1Gas;
 	m_p1gas.ID = 1;
 
@@ -147,14 +147,14 @@ bool CYouLess::GetP1Details()
 		}
 		sDecodeRXMessage(this, (const unsigned char *)&m_p1power, "Power", 255, nullptr);
 
-		m_p1gas.gasusage = (unsigned long)(root["gas"].asDouble() * 1000);
+		m_p1gas.usage = (unsigned long)(root["gas"].asDouble() * 1000);
 		time_t atime = mytime(nullptr);
 		if (
-			(m_p1gas.gasusage != m_lastgasusage) ||
+			(m_p1gas.usage != m_lastgasusage) ||
 			(difftime(atime, m_lastSharedSendGas) >= 300)
 			)
 		{
-			m_lastgasusage = m_p1gas.gasusage;
+			m_lastgasusage = m_p1gas.usage;
 			m_lastSharedSendGas = atime;
 			sDecodeRXMessage(this, (const unsigned char *)&m_p1gas, "Gas", 255, nullptr);
 		}

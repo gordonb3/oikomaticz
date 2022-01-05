@@ -42,7 +42,7 @@ const auto warningsType = dictionary{
 	{ 0x0008, "No return sensor" },			   //
 	{ 0x0010, "No room sensor 2" },			   //
 	{ 0x0020, "Open flap" },			   //
-	{ 0x0040, "Thermal protection has tripped" },	   //
+	{ 0x0040, "CityHeat protection has tripped" },	   //
 };
 
 constexpr std::array<std::pair<int, const char *>, 10> devicesType{

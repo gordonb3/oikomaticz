@@ -3187,6 +3187,10 @@ bool CSQLHelper::OpenDatabase()
 	{
 		UpdatePreferencesVar("CostWater", 16473);
 	}
+	if ((!GetPreferencesVar("CostCityHeat", nValue)) || (nValue == 0))
+	{
+		UpdatePreferencesVar("CostCityHeat", 437600);
+	}
 	if (!GetPreferencesVar("UseEmailInNotifications", nValue))
 	{
 		UpdatePreferencesVar("UseEmailInNotifications", 1);
@@ -4485,7 +4489,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 		break;
 	case pTypeUsage:
 	case pTypeLux:
-	case pTypeP1Gas:
+	case pTypeP1BusDevice:
 		DeviceRowIdx = UpdateValue(HardwareID, ID, 1, SensorType, SensorSubType, 12, 255, 0, "0", devname);
 		break;
 	case pTypeP1Power:
@@ -6425,7 +6429,7 @@ void CSQLHelper::UpdateMeter()
 	result = safe_query(
 		"SELECT ID,Name,HardwareID,DeviceID,Unit,Type,SubType,nValue,sValue,LastUpdate,Options FROM DeviceStatus WHERE ("
 		"Type=%d OR " //pTypeRFXMeter
-		"Type=%d OR " //pTypeP1Gas
+		"Type=%d OR " //pTypeP1BusDevice
 		"Type=%d OR " //pTypeYouLess
 		"Type=%d OR " //pTypeENERGY
 		"Type=%d OR " //pTypePOWER
@@ -6449,7 +6453,7 @@ void CSQLHelper::UpdateMeter()
 		"(Type=%d AND SubType=%d)"	 //pTypeGeneral,sTypeKwh
 		")",
 		pTypeRFXMeter,
-		pTypeP1Gas,
+		pTypeP1BusDevice,
 		pTypeYouLess,
 		pTypeENERGY,
 		pTypePOWER,
@@ -6506,7 +6510,7 @@ void CSQLHelper::UpdateMeter()
 			ParseSQLdatetime(checktime, ntime, sLastUpdate, tm1.tm_isdst);
 
 			//Check for timeout, if timeout then dont add value
-			if (dType != pTypeP1Gas)
+			if (dType != pTypeP1BusDevice)
 			{
 				if (difftime(now, checktime) >= SensorTimeOut * 60)
 					continue;
@@ -7125,16 +7129,26 @@ void CSQLHelper::AddCalendarUpdateMeter()
 		device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[6].c_str());
 		device::tmeter::type::value metertype = (device::tmeter::type::value)switchtype;
 
-		float tGasDivider = GasDivider;
-
 		if (devType == pTypeP1Power)
 		{
 			metertype = device::tmeter::type::ENERGY;
 		}
-		else if (devType == pTypeP1Gas)
+		else if (devType == pTypeP1BusDevice)
 		{
-			metertype = device::tmeter::type::GAS;
-			tGasDivider = 1000.0F;
+			if (subType == sTypeP1Gas)
+			{
+				metertype = device::tmeter::type::GAS;
+				GasDivider = 1000.0F;
+			}
+			else if (subType == sTypeP1Water)
+			{
+				metertype = device::tmeter::type::WATER;
+				WaterDivider = 1000.0F;
+			}
+			else if (subType == sTypeP1CityHeat)
+			{
+				metertype = device::tmeter::type::CITYHEAT;
+			}
 		}
 		else if ((devType == pTypeRego6XXValue) && (subType == sTypeRego6XXCounter))
 		{
@@ -7215,7 +7229,8 @@ void CSQLHelper::AddCalendarUpdateMeter()
 						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, notification::type::TODAYENERGY, musage);
 					break;
 				case device::tmeter::type::GAS:
-					musage = float(total_real) / tGasDivider;
+				case device::tmeter::type::CITYHEAT:
+					musage = float(total_real) / GasDivider;
 					if (musage != 0)
 						m_notifications.CheckAndHandleNotification(ID, devname, devType, subType, notification::type::TODAYGAS, musage);
 					break;
@@ -9592,6 +9607,7 @@ float CSQLHelper::GetCounterDivider(const int metertype, const int dType, const 
 			}
 			break;
 		case device::tmeter::type::GAS:
+		case device::tmeter::type::CITYHEAT:
 			if (GetPreferencesVar("MeterDividerGas", tValue))
 			{
 				divider = float(tValue);
@@ -9604,7 +9620,7 @@ float CSQLHelper::GetCounterDivider(const int metertype, const int dType, const 
 			}
 			break;
 		}
-		if (dType == pTypeP1Gas)
+		if (dType == pTypeP1BusDevice)
 			divider = 1000;
 		else if ((dType == pTypeENERGY) || (dType == pTypePOWER))
 			divider *= 100.0F;

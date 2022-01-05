@@ -451,6 +451,12 @@ define(['app'], function (app) {
 					if (typeof data.CostWater != 'undefined') {
 						$("#rfxmetertable #CostWater").val(data.CostWater);
 					}
+					if (typeof data.CityHeatDivider != 'undefined') {
+						$("#rfxmetertable #CityHeatDivider").val(data.CityHeatDivider);
+					}
+					if (typeof data.CostCityHeat != 'undefined') {
+						$("#rfxmetertable #CostCityHeat").val(data.CostCityHeat);
+					}
 					if (typeof data.RandomTimerFrame != 'undefined') {
 						$("#randomtable #RandomSpread").val(data.RandomTimerFrame);
 					}

@@ -957,7 +957,7 @@ void CEventSystem::GetCurrentMeasurementStates()
 				}
 			}
 			break;
-		case pTypeP1Gas:
+		case pTypeP1BusDevice:
 		{
 			float GasDivider = 1000.0F;
 			//get lowest value of today

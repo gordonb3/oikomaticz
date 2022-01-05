@@ -143,6 +143,8 @@ define(function () {
                     return 'W';
                 } else if (this.SubType === 'Gas' || this.SubType === 'Water') {
                     return 'm3'
+                } else if (this.SubType === 'CityHeat') {
+                    return 'GJ';
                 } else if (this.SubType === 'Visibility') {
                     return this.SwitchTypeVal === 1 ? 'mi' : 'km';
                 } else if (this.SubType === 'Solar Radiation') {

@@ -700,10 +700,10 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 	}
 	else if (pDevice->devType == ZDTYPE_SENSOR_GAS)
 	{
-		P1Gas	m_p1gas;
-		m_p1gas.type = pTypeP1Gas;
+		P1BusDevice	m_p1gas;
+		m_p1gas.type = pTypeP1BusDevice;
 		m_p1gas.subtype = sTypeP1Gas;
-		m_p1gas.gasusage = (unsigned long)(pDevice->floatValue * 1000);
+		m_p1gas.usage = (unsigned long)(pDevice->floatValue * 1000);
 		m_p1gas.ID = lID;
 		sDecodeRXMessage(this, (const unsigned char *)&m_p1gas, (!pDevice->label.empty()) ? pDevice->label.c_str() : "Gas", BatLevel, nullptr);
 	}

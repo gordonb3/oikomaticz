@@ -12,6 +12,7 @@ namespace type {
 		COUNTER,		//3
 		ENERGY_GENERATED,	//4
 		TIME,			//5
+		CITYHEAT,		//6
 		END
 	};
 
@@ -22,12 +23,13 @@ namespace type {
 	{
 		static const STR_TABLE_SINGLE Table[] =
 		{
-			{ ENERGY,		"Energy" },
+			{ ENERGY,		"Electric Energy" },
 			{ GAS,			"Gas" },
 			{ WATER,		"Water" },
 			{ COUNTER,		"Counter" },
-			{ ENERGY_GENERATED,	"Energy Generated" },
+			{ ENERGY_GENERATED,	"Electric Energy Generated" },
 			{ TIME,			"Time" },
+			{ CITYHEAT,		"CityHeat Energy" },
 			{ 0, nullptr }
 		};
 		return findTableIDSingle1(Table, mType);
@@ -65,7 +67,9 @@ namespace OBIS { // Object identification system
 		gasTimestampDSMR2,		//10
 		gasUsageDSMR2,			//11
 		gasUsageDSMR4,			//12
-		endOfTelegram			//13
+		endOfTelegram,			//13
+		waterUsage,			//14
+		thermalUsage			//15
 	};
 
 }; // namespace OBIS {

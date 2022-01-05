@@ -240,8 +240,10 @@
 #define mModeP1Norm 0x00
 #define mModeP1Double 0x01
 
-#define pTypeP1Gas 0xFB
+#define pTypeP1BusDevice 0xFB
 #define sTypeP1Gas 0x02
+#define sTypeP1Water 0x03
+#define sTypeP1CityHeat 0x04
 
 #define pTypeYouLess 0xFC
 #define sTypeYouLess 0x01
@@ -606,12 +608,12 @@ typedef struct _tP1Power
 	}
 } P1Power;
 
-typedef struct _tP1Gas
+typedef struct _tP1BusDevice
 {
-	uint8_t len = sizeof(_tP1Gas) - 1;
-	uint8_t type = pTypeP1Gas;
+	uint8_t len = sizeof(_tP1BusDevice) - 1;
+	uint8_t type = pTypeP1BusDevice;
 	uint8_t subtype = sTypeP1Gas;
-	uint32_t gasusage = 0;
+	uint32_t usage = 0;
 	int32_t ID = 1;
 
 	template <class Archive> void serialize(Archive &ar)
@@ -619,10 +621,10 @@ typedef struct _tP1Gas
 		ar &cereal::make_nvp("len", len);
 		ar &cereal::make_nvp("type", type);
 		ar &cereal::make_nvp("subtype", subtype);
-		ar &cereal::make_nvp("gasusage", gasusage);
+		ar &cereal::make_nvp("usage", usage);
 		ar &cereal::make_nvp("ID", ID);
 	}
-} P1Gas;
+} P1BusDevice;
 
 typedef struct _tEVOHOME1
 {

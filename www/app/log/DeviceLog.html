@@ -25,6 +25,7 @@
     <device-counter-log ng-if="::vm.isCounterLog() && vm.isCounterDevice()" device="::vm.device" subtype="'counter'"></device-counter-log>
     <device-counter-log ng-if="::vm.isCounterLog() && vm.isEnergyGeneratedDevice()" device="::vm.device" subtype="'energy-generated'"></device-counter-log>
     <device-counter-log ng-if="::vm.isCounterLog() && vm.isTimeDevice()" device="::vm.device" subtype="'time'"></device-counter-log>
+    <device-counter-log ng-if="::vm.isCounterLog() && vm.isCityHeatDevice()" device="::vm.device" subtype="'cityheat'"></device-counter-log>
 
     <div class="js-device-log-content"></div>
 </div>

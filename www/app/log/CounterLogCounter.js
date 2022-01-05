@@ -405,6 +405,85 @@ define(['app', 'lodash', 'log/Chart', 'log/CounterLogParams', 'log/CounterLogCou
             }
         });
 
+        counterLogSubtypeRegistry.register('cityheat', {
+            chartParamsDayTemplate: {
+
+            },
+            chartParamsWeekTemplate: {
+                highchartTemplate: {
+                    plotOptions: {
+                        column: {
+                            dataLabels: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+            },
+            chartParamsMonthYearTemplate: {
+
+            },
+            chartParamsCompareTemplate: function (ctrl) {
+                return counterLogParams.chartParamsCompareTemplate(ctrl, chart.valueUnits.cityheat(chart.valueMultipliers.m1));
+            },
+            yAxesDay: function (deviceTypeIndex) {
+                return [
+                    {
+                        title: {
+                            text: $.t('City Heat') + ' (' + chart.valueUnits.cityheat(chart.valueMultipliers.m1) + ')'
+                        }
+                    }
+                ];
+            },
+            yAxesWeek: function (deviceTypeIndex) {
+                return [
+                    {
+                        title: {
+                            text: $.t('City Heat') + ' (' + chart.valueUnits.cityheat(chart.valueMultipliers.m1) + ')'
+                        }
+                    }
+                ];
+            },
+            yAxesMonthYear: function (deviceTypeIndex) {
+                return [
+                    {
+                        title: {
+                            text: $.t('City Heat') + ' (' + chart.valueUnits.cityheat(chart.valueMultipliers.m1) + ')'
+                        }
+                    }
+                ];
+            },
+            yAxesCompare: function (deviceTypeIndex) {
+                return [
+                    {
+                        title: {
+                            text: $.t('City Heat') + ' (' + chart.valueUnits.cityheat(chart.valueMultipliers.m1) + ')'
+                        }
+                    }
+                ];
+            },
+            daySeriesSuppliers: function (deviceTypeIndex) {
+                return []
+                    .concat(counterLogCounterSeriesSuppliers.counterSeriesSuppliers(deviceTypeIndex, chart.valueMultipliers.m1));
+            },
+            weekSeriesSuppliers: function (deviceTypeIndex) {
+                return []
+                    .concat(counterLogCounterSeriesSuppliers.counterSeriesSuppliers(deviceTypeIndex, chart.valueMultipliers.m1));
+            },
+            monthYearSeriesSuppliers: function (deviceTypeIndex) {
+                return []
+                    .concat(counterLogCounterSeriesSuppliers.counterSeriesSuppliers(deviceTypeIndex, chart.valueMultipliers.m1))
+                    .concat(counterLogCounterSeriesSuppliers.counterTrendlineSeriesSuppliers(deviceTypeIndex, chart.valueMultipliers.m1))
+                    .concat(counterLogCounterSeriesSuppliers.counterPreviousSeriesSupplier(deviceTypeIndex, chart.valueMultipliers.m1));
+            },
+            extendDataRequestCompare: function (dataRequest) {
+                return dataRequest;
+            },
+            compareSeriesSuppliers: function (ctrl) {
+                return counterLogSeriesSupplier.counterCompareSeriesSuppliers(ctrl);
+            }
+        });
+
         return {
             template: ''
         };

@@ -13,6 +13,7 @@ define(['app', 'log/Chart', 'log/TextLog', 'log/TemperatureLog', 'log/LightLog',
         vm.isEnergyUsedDevice = isEnergyUsedDevice;
         vm.isGasDevice = isGasDevice;
         vm.isWaterDevice = isWaterDevice;
+        vm.isCityHeatDevice = isCityHeatDevice;
         vm.isCounterDevice = isCounterDevice;
         vm.isEnergyGeneratedDevice = isEnergyGeneratedDevice;
         vm.isTimeDevice = isTimeDevice;
@@ -128,6 +129,10 @@ define(['app', 'log/Chart', 'log/TextLog', 'log/TemperatureLog', 'log/LightLog',
             return vm.device.SwitchTypeVal === chart.deviceTypes.Water;
         }
 
+        function isCityHeatDevice() {
+            return vm.device.SwitchTypeVal === chart.deviceTypes.CityHeat;
+        }
+
         function isCounterDevice() {
             return vm.device.SwitchTypeVal === chart.deviceTypes.Counter;
         }
@@ -159,7 +164,7 @@ define(['app', 'log/Chart', 'log/TextLog', 'log/TemperatureLog', 'log/LightLog',
             }
 
             return isTemperatureLog()
-                || ((isInstantAndCounterLog() || isCounterLog() || isP1EnergyLog()) && [0, 1, 2, 3, 4].includes(vm.device.SwitchTypeVal));
+                || ((isInstantAndCounterLog() || isCounterLog() || isP1EnergyLog()) && [0, 1, 2, 3, 4, 6].includes(vm.device.SwitchTypeVal));
         }
     });
 });

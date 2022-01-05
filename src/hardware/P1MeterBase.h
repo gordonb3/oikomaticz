@@ -23,14 +23,17 @@ class P1MeterBase : public CDomoticzHardwareBase
 
 	bool CheckCRC();
 	void UpsertSwitch(int NodeID, const device::tswitch::type::value switchtype, int switchstate, const char* defaultname);
+	time_t ParseP1datetime(const std::string &szP1datetime);
 
 	// Luxembourgian Smarty encrypted telegram support
 	bool ImportKey(std::string szhexencoded);
 	void ParseP1EncryptedData(const uint8_t *pData, int Len, bool disable_crc);
 
-      public:
+      private:
 	P1Power	m_power;
-	P1Gas	m_gas;
+	P1BusDevice m_gas;
+	P1BusDevice m_water;
+	P1BusDevice m_thermal;
 
       protected:
 	bool m_bDisableCRC;
@@ -63,13 +66,21 @@ class P1MeterBase : public CDomoticzHardwareBase
 	unsigned char m_CRfound;
 	float m_currentTariff;
 	float m_lastTariff;
+	bool m_mbusonly;
 
-	unsigned char m_gasmbuschannel;
-	unsigned long m_lastgasusage;
-	std::string m_gastimestamp;
-	time_t m_lastSharedSendGas;
-	time_t m_gasoktime;
-	double m_gasclockskew;
+	typedef struct _mbusdata
+	{
+		unsigned char channel;
+		unsigned long lastusage;
+		time_t lastsubmittime;
+		time_t nextmetertime;
+		double clockskew;
+		char timestring[16];
+	} mbusdata;
+
+	mbusdata m_privgas;
+	mbusdata m_privwater;
+	mbusdata m_privthermal;
 
 
 	// Luxembourgian Smarty encrypted telegram support

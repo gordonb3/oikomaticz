@@ -99,8 +99,8 @@ CToonThermostat::CToonThermostat(const int ID, const std::string &Username, cons
 	m_p1power.subtype = sTypeP1Power;
 	m_p1power.ID = 1;
 
-	m_p1gas.len = sizeof(_tP1Gas) - 1;
-	m_p1gas.type = pTypeP1Gas;
+	m_p1gas.len = sizeof(_tP1BusDevice) - 1;
+	m_p1gas.type = pTypeP1BusDevice;
 	m_p1gas.subtype = sTypeP1Gas;
 	m_p1gas.ID = 1;
 
@@ -721,15 +721,15 @@ bool CToonThermostat::ParseGasUsage(const Json::Value &root)
 		return false;
 	time_t atime = mytime(nullptr);
 
-	m_p1gas.gasusage = (unsigned long)(root["gasUsage"]["meterReading"].asFloat());
+	m_p1gas.usage = (unsigned long)(root["gasUsage"]["meterReading"].asFloat());
 
 	// Send GAS if the value changed, or at least every 5 minutes
-	if ((m_p1gas.gasusage != m_lastgasusage) || (difftime(atime, m_lastSharedSendGas) >= 300))
+	if ((m_p1gas.usage != m_lastgasusage) || (difftime(atime, m_lastSharedSendGas) >= 300))
 	{
-		if (m_p1gas.gasusage != 0)
+		if (m_p1gas.usage != 0)
 		{
 			m_lastSharedSendGas = atime;
-			m_lastgasusage = m_p1gas.gasusage;
+			m_lastgasusage = m_p1gas.usage;
 			sDecodeRXMessage(this, (const unsigned char *)&m_p1gas, nullptr, 255, nullptr);
 		}
 	}

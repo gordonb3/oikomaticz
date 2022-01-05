@@ -370,7 +370,7 @@ namespace Plugins {
 		else if (sTypeName == "Percentage")				SubType = sTypePercentage;
 		else if (sTypeName == "Gas")
 		{
-			Type = pTypeP1Gas;
+			Type = pTypeP1BusDevice;
 			SubType = sTypeP1Gas;
 		}
 		else if (sTypeName == "Voltage")				SubType = sTypeVoltage;

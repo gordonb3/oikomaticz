@@ -120,7 +120,7 @@ void S0MeterBase::ReloadLastTotals()
 		}
 		else if (metertype == device::tmeter::type::GAS)
 		{
-			hardware_type = pTypeP1Gas;
+			hardware_type = pTypeP1BusDevice;
 		}
 		else
 		{
@@ -219,11 +219,11 @@ void S0MeterBase::SendMeter(unsigned char ID, double musage, double mtotal)
 	}
 	else if (meterype == device::tmeter::type::GAS)
 	{
-		_tP1Gas m_p1gas;
-		m_p1gas.len = sizeof(_tP1Gas) - 1;
-		m_p1gas.type = pTypeP1Gas;
+		_tP1BusDevice m_p1gas;
+		m_p1gas.len = sizeof(_tP1BusDevice) - 1;
+		m_p1gas.type = pTypeP1BusDevice;
 		m_p1gas.subtype = sTypeP1Gas;
-		m_p1gas.gasusage = (unsigned long)(mtotal * 1000.0);
+		m_p1gas.usage = (unsigned long)(mtotal * 1000.0);
 		m_p1gas.ID = ID;
 		sDecodeRXMessage(this, (const unsigned char *)&m_p1gas, nullptr, 255, nullptr);
 	}

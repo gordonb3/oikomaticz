@@ -80,7 +80,7 @@ namespace http {
 			{ 1004, pTypeGeneral, sTypeCustom },		   // Custom Sensor
 			{ 13, pTypeGeneral, sTypeDistance },		   // Distance
 			{ 18, pTypeGeneral, sTypeKwh },			   // Electric (Instant+Counter)
-			{ 3, pTypeP1Gas, sTypeP1Gas },			   // Gas
+			{ 3, pTypeP1BusDevice, sTypeP1Gas },		   // Gas
 			{ 81, pTypeHUM, sTypeHUM1 },			   // Humidity
 			{ 16, pTypeGeneral, sTypeLeafWetness },		   // Leaf Wetness
 			{ 246, pTypeLux, sTypeLux },			   // Lux

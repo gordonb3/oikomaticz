@@ -37,7 +37,7 @@ class CYouLess : public CDomoticzHardwareBase
 	bool m_bCheckP1;
 	bool m_bHaveP1OrS0;
 	P1Power	m_p1power;
-	P1Gas	m_p1gas;
+	P1BusDevice	m_p1gas;
 	unsigned long m_lastgasusage;
 	time_t m_lastSharedSendGas;
 };

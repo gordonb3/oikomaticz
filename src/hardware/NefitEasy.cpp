@@ -762,7 +762,7 @@ bool CNefitEasy::GetGasUsage()
 	{
 
 	}
-	m_p1gas.gasusage = gusage;
+	m_p1gas.usage = gusage;
 	sDecodeRXMessage(this, (const unsigned char *)&m_p1gas, "Gas", 255, nullptr);
 	return true;
 }

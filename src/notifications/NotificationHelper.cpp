@@ -389,7 +389,7 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 		case pTypeUsage:
 			return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, notification::type::USAGE, fValue);
 			break;
-		case pTypeP1Gas:
+		case pTypeP1BusDevice:
 			// ignore, notification is done day by day in SQLHelper
 			return false;
 		case pTypeGeneral:

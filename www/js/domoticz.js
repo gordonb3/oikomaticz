@@ -5346,6 +5346,8 @@ function GetGraphUnit(uname) {
 		return 'kWh';
 	if (uname == $.t('Gas'))
 		return 'm3';
+	if (uname == $.t('City Heat'))
+		return 'GJ';
 	if (uname == $.t('Past') + ' ' + $.t('Gas'))
 		return 'm3';
 	if (uname == $.t('Water'))

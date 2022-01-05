@@ -46,5 +46,5 @@ class CNefitEasy : public CDomoticzHardwareBase
 	std::shared_ptr<std::thread> m_thread;
 
 	uint32_t m_lastgasusage;
-	P1Gas m_p1gas;
+	P1BusDevice m_p1gas;
 };

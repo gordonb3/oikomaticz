@@ -53,6 +53,8 @@ define(['app', 'report/helpers'], function (app, reportHelpers) {
                 return costs.CostGas / 10000;
             } else if (switchTypeVal === 2) {
                 return costs.CostWater / 10000;
+            } else if (switchTypeVal === 6) {
+                return costs.CostCityHeat / 10000;
             }
         }
 
@@ -249,7 +251,7 @@ define(['app', 'report/helpers'], function (app, reportHelpers) {
             }
 
             var chartName = vm.device.SwitchTypeVal === 4 ? 'Generated' : 'Usage';
-            var yAxisName = ['Energy', 'Gas', 'Water', valueQuantity, 'Energy'][vm.device.SwitchTypeVal];
+            var yAxisName = ['Energy', 'Gas', 'Water', valueQuantity, 'Energy', 'Time', 'Energy'][vm.device.SwitchTypeVal];
 
             series.push({
                 name: $.t(chartName),

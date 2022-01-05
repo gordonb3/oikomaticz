@@ -7,6 +7,7 @@ define(['app'], function (app) {
         Counter: 3,
         EnergyGenerated: 4,
         Time: 5,
+	CityHeat: 6,
         fromIndex: function (switchTypeVal) {
             if (switchTypeVal === this.EnergyUsed) {
                 return 'EnergyUsed';
@@ -20,6 +21,8 @@ define(['app'], function (app) {
                 return 'EnergyGenerated';
             } else if (switchTypeVal === this.Time) {
                 return 'Time';
+            } else if (switchTypeVal === this.CityHeat) {
+                return 'CityHeat';
             }
         }
     };
@@ -29,7 +32,9 @@ define(['app'], function (app) {
         Gas: 'gas',
         Water: 'water',
         Counter: 'counter',
-        EnergyGenerated: 'energy'
+        EnergyGenerated: 'energy',
+        Time: 'time',
+        CityHeat: 'cityheat'
     };
 
     const deviceCounterName = {
@@ -37,7 +42,9 @@ define(['app'], function (app) {
         Gas: 'Gas',
         Water: 'Water',
         Counter: 'Counter',
-        EnergyGenerated: 'Generated'
+        EnergyGenerated: 'Generated',
+        Time: 'Hours',
+        CityHeat: 'City Heat'
     };
 
     const valueMultipliers = {
@@ -57,6 +64,7 @@ define(['app'], function (app) {
         kW: 'kW',
         m3: 'm³',
         liter: 'liter',
+	GJ: 'GJ',
         energy: function (multiplier) {
             if (multiplier === valueMultipliers.m1) {
                 return valueUnits.Wh;
@@ -87,6 +95,12 @@ define(['app'], function (app) {
             }
             if (multiplier === valueMultipliers.m1000) {
                 return valueUnits.m3;
+            }
+            return '';
+        },
+        cityheat: function (multiplier) {
+            if (multiplier === valueMultipliers.m1) {
+                return valueUnits.GJ;
             }
             return '';
         }

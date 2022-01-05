@@ -3173,6 +3173,8 @@ namespace http
 				root["CostGas"] = nValue;
 				m_sql.GetPreferencesVar("CostWater", nValue);
 				root["CostWater"] = nValue;
+				m_sql.GetPreferencesVar("CostCityHeat", nValue);
+				root["CostCityHeat"] = nValue;
 
 				int tValue = 1000;
 				if (m_sql.GetPreferencesVar("MeterDividerWater", tValue))
@@ -5682,7 +5684,7 @@ namespace http
 					root["result"][ii]["ptag"] = notification::type::Description(notification::type::TODAYENERGY, 1);
 					ii++;
 				}
-				if (dType == pTypeP1Gas)
+				if ((dType == pTypeP1BusDevice) && (dSubType == sTypeP1Gas))
 				{
 					root["result"][ii]["val"] = notification::type::TODAYGAS;
 					root["result"][ii]["text"] = notification::type::Description(notification::type::TODAYGAS, 0);
@@ -7657,6 +7659,8 @@ namespace http
 				m_sql.UpdatePreferencesVar("CostGas", int(CostGas * 10000.0F)); cntSettings++;
 				float CostWater = static_cast<float>(atof(request::findValue(&req, "CostWater").c_str()));
 				m_sql.UpdatePreferencesVar("CostWater", int(CostWater * 10000.0F)); cntSettings++;
+				float CostCityHeat = static_cast<float>(atof(request::findValue(&req, "CostCityHeat").c_str()));
+				m_sql.UpdatePreferencesVar("CostCityHeat", int(CostCityHeat * 10000.0F)); cntSettings++;
 
 				int EnergyDivider = atoi(request::findValue(&req, "EnergyDivider").c_str());
 				if (EnergyDivider < 1)
@@ -8607,7 +8611,7 @@ namespace http
 							    (!((dType == pTypeGeneral) && (dSubType == sTypeDistance))) && (!((dType == pTypeGeneral) && (dSubType == sTypeCounterIncremental))) &&
 							    (!((dType == pTypeGeneral) && (dSubType == sTypeManagedCounter))) && (!((dType == pTypeGeneral) && (dSubType == sTypeKwh))) &&
 							    (dType != pTypeCURRENT) && (dType != pTypeCURRENTENERGY) && (dType != pTypeENERGY) && (dType != pTypePOWER) && (dType != pTypeP1Power) &&
-							    (dType != pTypeP1Gas) && (dType != pTypeYouLess) && (dType != pTypeAirQuality) && (dType != pTypeLux) && (dType != pTypeUsage) &&
+							    (dType != pTypeP1BusDevice) && (dType != pTypeYouLess) && (dType != pTypeAirQuality) && (dType != pTypeLux) && (dType != pTypeUsage) &&
 							    (!((dType == pTypeRego6XXValue) && (dSubType == sTypeRego6XXCounter))) &&
 							    (!((dType == pTypeThermostat) && (dSubType == sTypeThermSetpoint))) && (dType != pTypeWEIGHT) &&
 							    (!((dType == pTypeRadiator1) && (dSubType == sTypeSmartwares))))
@@ -8748,7 +8752,7 @@ namespace http
 						if ((dType == pTypeTEMP) || (dType == pTypeTEMP_BARO) || (dType == pTypeTEMP_HUM) || (dType == pTypeTEMP_HUM_BARO) || (dType == pTypeBARO) ||
 						    (dType == pTypeHUM) || (dType == pTypeWIND) || (dType == pTypeRAIN) || (dType == pTypeUV) || (dType == pTypeCURRENT) ||
 						    (dType == pTypeCURRENTENERGY) || (dType == pTypeENERGY) || (dType == pTypeRFXMeter) || (dType == pTypeAirQuality) || (dType == pTypeRFXSensor) ||
-						    (dType == pTypeP1Power) || (dType == pTypeP1Gas))
+						    (dType == pTypeP1Power) || (dType == pTypeP1BusDevice))
 						{
 							root["result"][ii]["ID"] = is_number(sd[1]) ? std_format("%04X", (unsigned int)atoi(sd[1].c_str())) : sd[1];
 						}
@@ -10112,9 +10116,15 @@ namespace http
 							}
 						}
 					}
-					else if (dType == pTypeP1Gas)
+					else if (dType == pTypeP1BusDevice)
 					{
-						root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::GAS;
+
+						if (dSubType == sTypeP1Water)
+							root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::WATER;
+						else if (dSubType == sTypeP1CityHeat)
+							root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::CITYHEAT;
+						else
+							root["result"][ii]["SwitchTypeVal"] = device::tmeter::type::GAS;
 
 						// get lowest value of today
 						time_t now = mytime(nullptr);
@@ -10133,24 +10143,27 @@ namespace http
 						{
 							std::vector<std::string> sd2 = result2[0];
 
-							uint64_t total_min_gas = std::stoull(sd2[0]);
-							uint64_t gasactual;
+							uint64_t total_min_usage = std::stoull(sd2[0]);
+							uint64_t usage;
 							try
 							{
-								gasactual = std::stoull(sValue);
+								usage = std::stoull(sValue);
 							}
 							catch (std::invalid_argument e)
 							{
 								_log.Log(LOG_ERROR, "Gas - invalid value: '%s'", sValue.c_str());
 								continue;
 							}
-							uint64_t total_real_gas = gasactual - total_min_gas;
+							uint64_t total_today_usage = usage - total_min_usage;
 
-							double musage = double(gasactual) / divider;
+							double musage = double(usage) / divider;
 							sprintf(szTmp, "%.03f", musage);
 							root["result"][ii]["Counter"] = szTmp;
-							musage = double(total_real_gas) / divider;
-							sprintf(szTmp, "%.03f m3", musage);
+							musage = double(total_today_usage) / divider;
+							if (dSubType == sTypeP1CityHeat)
+								sprintf(szTmp, "%.03f GJ", musage);
+							else
+								sprintf(szTmp, "%.03f m3", musage);
 							root["result"][ii]["CounterToday"] = szTmp;
 							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
 							sprintf(szTmp, "%.03f", atof(sValue.c_str()) / divider);
@@ -10160,7 +10173,10 @@ namespace http
 						{
 							sprintf(szTmp, "%.03f", 0.0F);
 							root["result"][ii]["Counter"] = szTmp;
-							sprintf(szTmp, "%.03f m3", 0.0F);
+							if (dSubType == sTypeP1CityHeat)
+								sprintf(szTmp, "%.03f GJ", 0.0F);
+							else
+								sprintf(szTmp, "%.03f m3", 0.0F);
 							root["result"][ii]["CounterToday"] = szTmp;
 							sprintf(szTmp, "%.03f", atof(sValue.c_str()) / divider);
 							root["result"][ii]["Data"] = szTmp;
@@ -12786,6 +12802,11 @@ namespace http
 					sprintf(szTmp, "%.4f", (float)(nValue) / 10000.0F);
 					root["CostWater"] = szTmp;
 				}
+				else if (Key == "CostCityHeat")
+				{
+					sprintf(szTmp, "%.4f", (float)(nValue) / 10000.0F);
+					root["CostCityHeat"] = szTmp;
+				}
 				else if (Key == "ActiveTimerPlan")
 				{
 					root["ActiveTimerPlan"] = nValue;
@@ -13249,7 +13270,7 @@ namespace http
 			{
 				metertype = device::tmeter::type::ENERGY;
 			}
-			else if (dType == pTypeP1Gas)
+			else if (dType == pTypeP1BusDevice)
 				metertype = device::tmeter::type::GAS;
 			else if ((dType == pTypeRego6XXValue) && (dSubType == sTypeRego6XXCounter))
 				metertype = device::tmeter::type::COUNTER;
@@ -15871,7 +15892,7 @@ namespace http
 					}
 					else
 					{
-						if (dType == pTypeP1Gas)
+						if (dType == pTypeP1BusDevice)
 						{
 							// Add last counter value
 							sprintf(szTmp, "%.3f", atof(sValue.c_str()) / 1000.0);
