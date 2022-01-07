@@ -24,12 +24,12 @@ bool RAVEn::StartHardware()
     //Try to open the Serial Port
     try
     {
-        Log(LOG_STATUS, "RAVEn: Using serial port: %s", device_.c_str());
+        Log(LOG_STATUS, "Using serial port: %s", device_.c_str());
         open(device_, 115200);
     }
     catch (boost::exception & e)
     {
-        Log(LOG_ERROR, "RAVEn: Error opening serial port!");
+        Log(LOG_ERROR, "Error opening serial port!");
 #ifdef _DEBUG
         Log(LOG_ERROR, "-----------------\n%s\n-----------------", boost::diagnostic_information(e).c_str());
 #else
@@ -39,7 +39,7 @@ bool RAVEn::StartHardware()
     }
     catch (...)
     {
-        Log(LOG_ERROR, "RAVEn: Error opening serial port!!!");
+        Log(LOG_ERROR, "Error opening serial port!!!");
         return false;
     }
     setReadCallback([this](auto d, auto l) { readCallback(d, l); });
@@ -94,7 +94,7 @@ void RAVEn::readCallback(const char *indata, size_t inlen)
     if (!endPtr)
     {
 #ifdef _DEBUG
-        Log(LOG_ERROR, "RAVEn: Not enough data received (%d): %s", len, m_buffer);
+        Log(LOG_ERROR, "Not enough data received (%d): %s", len, m_buffer);
 #endif
         return;
     }
@@ -125,7 +125,7 @@ void RAVEn::readCallback(const char *indata, size_t inlen)
     if(updated)
         SendKwhMeter(m_HwdID, 1, 255, m_currUsage, m_totalUsage, "Power Meter");
     else
-        Log(LOG_ERROR, "RAVEn: Unknown node");
+        Log(LOG_ERROR, "Unknown node");
 }
 
 bool RAVEn::WriteToHardware(const char *pdata, const unsigned char length)

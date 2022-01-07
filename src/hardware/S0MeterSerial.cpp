@@ -36,7 +36,7 @@ bool S0MeterSerial::StartHardware()
 	// Try to open the Serial Port
 	try
 	{
-		Log(LOG_STATUS, "S0 Meter: Using serial port: %s", m_szSerialPort.c_str());
+		Log(LOG_STATUS, "Using serial port: %s", m_szSerialPort.c_str());
 #ifndef WIN32
 		openOnlyBaud(m_szSerialPort, m_iBaudRate, boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::even), boost::asio::serial_port_base::character_size(7));
 #else
@@ -45,7 +45,7 @@ bool S0MeterSerial::StartHardware()
 	}
 	catch (boost::exception &e)
 	{
-		Log(LOG_ERROR, "S0 Meter: Error opening serial port!");
+		Log(LOG_ERROR, "Error opening serial port!");
 #ifdef _DEBUG
 		Log(LOG_ERROR, "-----------------\n%s\n-----------------", boost::diagnostic_information(e).c_str());
 #else
@@ -55,7 +55,7 @@ bool S0MeterSerial::StartHardware()
 	}
 	catch (...)
 	{
-		Log(LOG_ERROR, "S0 Meter: Error opening serial port!!!");
+		Log(LOG_ERROR, "Error opening serial port!!!");
 		return false;
 	}
 	m_bIsStarted = true;
@@ -85,7 +85,7 @@ bool S0MeterSerial::StartHardware()
 
 	StartHeartbeatThread();
 
-	Log(LOG_STATUS, "S0 Meter: Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 
 	return true;
 }
@@ -95,7 +95,7 @@ bool S0MeterSerial::StopHardware()
 	terminate();
 	m_bIsStarted = false;
 	StopHeartbeatThread();
-	Log(LOG_STATUS, "S0 Meter: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 	return true;
 }
 

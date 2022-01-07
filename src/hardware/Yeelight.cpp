@@ -90,7 +90,7 @@ bool Yeelight::StopHardware()
 
 void Yeelight::Do_Work()
 {
-	Log(LOG_STATUS, "YeeLight Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 
 	try
 	{
@@ -112,10 +112,10 @@ void Yeelight::Do_Work()
 	}
 	catch (const std::exception &e)
 	{
-		Log(LOG_ERROR, "YeeLight: Exception: %s", e.what());
+		Log(LOG_ERROR, "Exception: %s", e.what());
 	}
 
-	Log(LOG_STATUS, "YeeLight stopped");
+	Log(LOG_STATUS, "stopped");
 }
 
 
@@ -126,7 +126,7 @@ void Yeelight::InsertUpdateSwitch(const std::string &nodeID, const std::string &
 	StringSplit(Location, ".", ipaddress);
 	if (ipaddress.size() != 4)
 	{
-		Log(LOG_STATUS, "YeeLight: Invalid location received! (No IP Address)");
+		Log(LOG_STATUS, "Invalid location received! (No IP Address)");
 		return;
 	}
 	uint32_t sID = (uint32_t)(atoi(ipaddress[0].c_str()) << 24) | (uint32_t)(atoi(ipaddress[1].c_str()) << 16) | (atoi(ipaddress[2].c_str()) << 8) | atoi(ipaddress[3].c_str());
@@ -144,7 +144,7 @@ void Yeelight::InsertUpdateSwitch(const std::string &nodeID, const std::string &
 	}
 	if (result.empty())
 	{
-		Log(LOG_STATUS, "YeeLight: New Light Found (%s/%s)", Location.c_str(), lightName.c_str());
+		Log(LOG_STATUS, "New Light Found (%s/%s)", Location.c_str(), lightName.c_str());
 		int value = atoi(yeelightBright.c_str());
 		int cmd = Color_LedOn;
 		int level = 100;
@@ -168,7 +168,7 @@ void Yeelight::InsertUpdateSwitch(const std::string &nodeID, const std::string &
 		std::string sIdx = result[0][3];
 		if (sTypeOld != YeeType)
 		{
-			Log(LOG_STATUS, "YeeLight: Updating SubType of light (%s/%s) from %u to %u", Location.c_str(), lightName.c_str(), sTypeOld, YeeType);
+			Log(LOG_STATUS, "Updating SubType of light (%s/%s) from %u to %u", Location.c_str(), lightName.c_str(), sTypeOld, YeeType);
 			m_sql.UpdateDeviceValue("SubType", (int)YeeType, sIdx);
 		}
 
@@ -200,7 +200,7 @@ void Yeelight::InsertUpdateSwitch(const std::string &nodeID, const std::string &
 
 bool Yeelight::WriteToHardware(const char *pdata, const unsigned char length)
 {
-	//Log(LOG_STATUS, "YeeLight: WriteToHardware...............................");
+	//Log(LOG_STATUS, "WriteToHardware...............................");
 	const _tColorSwitch *pLed = reinterpret_cast<const _tColorSwitch*>(pdata);
 	uint8_t command = pLed->command;
 	std::vector<std::vector<std::string> > result;
@@ -313,7 +313,7 @@ bool Yeelight::WriteToHardware(const char *pdata, const unsigned char length)
 			}
 			else
 			{
-				Log(LOG_STATUS, "YeeLight: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", pLed->color.mode, szTmp);
+				Log(LOG_STATUS, "SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", pLed->color.mode, szTmp);
 			}
 			// Send brigthness command
 			ss.str("");
@@ -352,16 +352,16 @@ bool Yeelight::WriteToHardware(const char *pdata, const unsigned char length)
 		case Color_DiscoMode:
 			sendOnFirst = true;
 			// simulate strobe effect - at time of writing, minimum timing allowed by Yeelight is 50ms
-			Log(LOG_STATUS, "Yeelight: Disco Mode - simulate strobe effect, if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", szTmp);
+			Log(LOG_STATUS, "Disco Mode - simulate strobe effect, if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", szTmp);
 			message = R"({"id":1,"method":"start_cf","params":[ 50, 0, ")";
 			message += "50, 2, 5000, 100, ";
 			message += "50, 2, 5000, 1\"]}\r\n";
 			break;
 		case Color_DiscoSpeedFasterLong:
-			Log(LOG_STATUS, "Yeelight: Exclude Lamp - This command is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", szTmp);
+			Log(LOG_STATUS, "Exclude Lamp - This command is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", szTmp);
 			break;
 		default:
-			Log(LOG_STATUS, "YeeLight: Unhandled WriteToHardware command: %d - if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", command, szTmp);
+			Log(LOG_STATUS, "Unhandled WriteToHardware command: %d - if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", command, szTmp);
 			break;
 		}
 
@@ -395,7 +395,7 @@ bool Yeelight::WriteToHardware(const char *pdata, const unsigned char length)
 	}
 	catch (const std::exception &e)
 	{
-		Log(LOG_ERROR, "YeeLight: Exception: %s (IP: %s)", e.what(), szTmp);
+		Log(LOG_ERROR, "Exception: %s (IP: %s)", e.what(), szTmp);
 		return false;
 	}
 
@@ -429,7 +429,7 @@ void Yeelight::udp_server::start_send()
 	}
 	catch (const std::exception &e)
 	{
-		_log.Log(LOG_ERROR, "YeeLight: Exception: %s", e.what());
+		_log.Log(LOG_ERROR, "Yeelight: Exception: %s", e.what());
 	}
 }
 
@@ -452,7 +452,7 @@ void Yeelight::udp_server::start_receive()
 	}
 	catch (const std::exception &e)
 	{
-		_log.Log(LOG_ERROR, "YeeLight: Exception: %s", e.what());
+		_log.Log(LOG_ERROR, "Yeelight: Exception: %s", e.what());
 	}
 }
 
@@ -473,7 +473,7 @@ bool YeeLightGetTag(const std::string &InputString, const std::string &Tag, std:
 bool Yeelight::udp_server::HandleIncoming(const std::string &szData, std::vector<std::string> &receivedip)
 {
 	const std::string &receivedString(szData);
-	//_log.Log(LOG_STATUS, receivedString.c_str());
+	//Log(LOG_STATUS, receivedString.c_str());
 #ifdef DEBUG_YeeLightW
 	SaveString2Disk(receivedString, "E:\\YeeLight_receive.txt");
 #endif
@@ -495,12 +495,12 @@ bool Yeelight::udp_server::HandleIncoming(const std::string &szData, std::vector
 	{
 		if (std::strcmp(ip.c_str(), yeelightLocation.c_str()) == 0)
 		{
-			//_log.Log(LOG_STATUS, "Already received: %s", yeelightLocation.c_str());
+			//Log(LOG_STATUS, "Already received: %s", yeelightLocation.c_str());
 			return false;
 		}
 	}
 	receivedip.push_back(yeelightLocation);
-	//_log.Log(LOG_STATUS, "Location: %s", yeelightLocation.c_str());
+	//Log(LOG_STATUS, "Location: %s", yeelightLocation.c_str());
 	std::string yeelightId;
 	if (!YeeLightGetTag(szData, "id: ", yeelightId))
 		return false;

@@ -71,11 +71,11 @@ m_UserName(Username)
 	if (m_poll_interval < 1)
 	{
 		m_poll_interval = HUE_DEFAULT_POLL_INTERVAL;
-		Log(LOG_STATUS, "Philips Hue: Using default poll interval of %d secs.", m_poll_interval);
+		Log(LOG_STATUS, "Using default poll interval of %d secs.", m_poll_interval);
 	}
 	else
 	{
-		Log(LOG_STATUS, "Philips Hue: Using poll interval of %d secs.", m_poll_interval);
+		Log(LOG_STATUS, "Using poll interval of %d secs.", m_poll_interval);
 	}
 
 	Init();
@@ -116,7 +116,7 @@ void CPhilipsHue::Do_Work()
 	int msec_counter = 0;
 	int sec_counter = m_poll_interval - 1;
 
-	Log(LOG_STATUS,"Philips Hue: Worker started...");
+	Log(LOG_STATUS,"Worker started...");
 
 	while (!IsStopRequested(500))
 	{
@@ -132,7 +132,7 @@ void CPhilipsHue::Do_Work()
 			}
 		}
 	}
-	Log(LOG_STATUS,"Philips Hue: Worker stopped...");
+	Log(LOG_STATUS,"Worker stopped...");
 }
 
 bool CPhilipsHue::WriteToHardware(const char *pdata, const unsigned char /*length*/)
@@ -258,7 +258,7 @@ bool CPhilipsHue::WriteToHardware(const char *pdata, const unsigned char /*lengt
 				svalue3 = round(cSat);
 			}
 			else{
-				Log(LOG_STATUS, "Philips Hue: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum", pLed->color.mode);
+				Log(LOG_STATUS, "SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum", pLed->color.mode);
 			}
 			float fvalue = (254.0F / 100.0F) * float(pLed->value);
 			if (fvalue > 254.0F)
@@ -327,7 +327,7 @@ bool CPhilipsHue::SwitchLight(const int nodeID, const std::string &LCmd, const i
 	}
 	else
 	{
-		Log(LOG_ERROR, "Philips Hue: Invalid light command received!");
+		Log(LOG_ERROR, "Invalid light command received!");
 		return false;
 	}
 
@@ -390,7 +390,7 @@ bool CPhilipsHue::SwitchLight(const int nodeID, const std::string &LCmd, const i
 		result = m_sql.safe_query("SELECT MacAddress FROM WOLNodes WHERE (HardwareID==%d) AND (ID==%d)", m_HwdID, nodeID - 2000);
 		if (result.empty())
 		{
-			Log(LOG_ERROR, "Philips Hue: Scene not found!");
+			Log(LOG_ERROR, "Scene not found!");
 			return false;
 		}
 		sPostData.clear();
@@ -404,7 +404,7 @@ bool CPhilipsHue::SwitchLight(const int nodeID, const std::string &LCmd, const i
 	std::string sURL = sstr2.str();
 	if (!HTTPClient::PUT(sURL, sPostData.str(), ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "Philips Hue: Error connecting to Hue bridge (Switch Light/Scene), (Check IPAddress/Username)");
+		Log(LOG_ERROR, "Error connecting to Hue bridge (Switch Light/Scene), (Check IPAddress/Username)");
 		return false;
 	}
 
@@ -413,14 +413,14 @@ bool CPhilipsHue::SwitchLight(const int nodeID, const std::string &LCmd, const i
 	bool ret = ParseJSon(sResult, root);
 	if (!ret)
 	{
-		Log(LOG_ERROR, "Philips Hue: Invalid data received (Switch Light/Scene), or invalid IPAddress/Username!");
+		Log(LOG_ERROR, "Invalid data received (Switch Light/Scene), or invalid IPAddress/Username!");
 		return false;
 	}
 
 	if (sResult.find("error") != std::string::npos)
 	{
 		//We had an error
-		Log(LOG_ERROR, "Philips Hue: Error received: %s", root[0]["error"]["description"].asString().c_str());
+		Log(LOG_ERROR, "Error received: %s", root[0]["error"]["description"].asString().c_str());
 		return false;
 	}
 	return true;
@@ -521,13 +521,13 @@ void CPhilipsHue::InsertUpdateLamp(const int NodeID, const _eHueLightType LType,
 				if (curName != Name)
 				{
 					//Update device name
-					Log(LOG_STATUS, "Philips Hue: Updating Name of light '%s' from %s to %s", szID, curName.c_str(), Name.c_str());
+					Log(LOG_STATUS, "Updating Name of light '%s' from %s to %s", szID, curName.c_str(), Name.c_str());
 					m_sql.UpdateDeviceName(sID, Name);
 				}
 			}
 			if (sTypeOld != sType)
 			{
-				Log(LOG_STATUS, "Philips Hue: Updating SubType of light '%s' from %u to %u", szID, sTypeOld, sType);
+				Log(LOG_STATUS, "Updating SubType of light '%s' from %u to %u", szID, sTypeOld, sType);
 				m_sql.UpdateDeviceValue("SubType", (int)sType, sID);
 			}
 		}
@@ -608,7 +608,7 @@ void CPhilipsHue::InsertUpdateLamp(const int NodeID, const _eHueLightType LType,
 				if (curName != Name)
 				{
 					//Update device name
-					Log(LOG_STATUS, "Philips Hue: Updating Name of scene '%s' from %s to %s", szID, curName.c_str(), Name.c_str());
+					Log(LOG_STATUS, "Updating Name of scene '%s' from %s to %s", szID, curName.c_str(), Name.c_str());
 					m_sql.UpdateDeviceName(sID, Name);
 				}
 			}
@@ -662,7 +662,7 @@ void CPhilipsHue::InsertUpdateLamp(const int NodeID, const _eHueLightType LType,
 				if (curName != Name)
 				{
 					//Update device name
-					Log(LOG_STATUS, "Philips Hue: Updating Name of light/switch '%s' from %s to %s", szID, curName.c_str(), Name.c_str());
+					Log(LOG_STATUS, "Updating Name of light/switch '%s' from %s to %s", szID, curName.c_str(), Name.c_str());
 					m_sql.UpdateDeviceName(sID, Name);
 				}
 			}
@@ -672,7 +672,7 @@ void CPhilipsHue::InsertUpdateLamp(const int NodeID, const _eHueLightType LType,
 		}
 		else
  		{
- 			Log(LOG_STATUS, "Philips Hue: adding device '%s'", Name.c_str());
+ 			Log(LOG_STATUS, "adding device '%s'", Name.c_str());
  		}
 
 		//Change command to SetLevel for dimmer type switch
@@ -713,7 +713,7 @@ bool CPhilipsHue::GetStates()
 	std::vector<std::string> ExtraHeaders;
 	if (!HTTPClient::GET(sURL, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "Philips Hue: Error getting Light States, (Check IPAddress/Username)");
+		Log(LOG_ERROR, "Error getting Light States, (Check IPAddress/Username)");
 		return false;
 	}
 #endif
@@ -726,21 +726,21 @@ bool CPhilipsHue::GetStates()
 	bool ret = ParseJSon(sResult, root);
 	if ((!ret) || (!root.isObject()))
 	{
-		Log(LOG_ERROR, "Philips Hue: Invalid data received, or invalid IPAddress/Username!");
+		Log(LOG_ERROR, "Invalid data received, or invalid IPAddress/Username!");
 		return false;
 	}
 
 	if (sResult.find("\"error\":") != std::string::npos)
 	{
 		//We had an error
-		Log(LOG_ERROR, "Philips Hue: Error received: %s", root[0]["error"]["description"].asString().c_str());
+		Log(LOG_ERROR, "Error received: %s", root[0]["error"]["description"].asString().c_str());
 		return false;
 	}
 
 
 	if (!GetLights(root))
 	{
-		//Log(LOG_ERROR, "Philips Hue: No Lights found!");
+		//Log(LOG_ERROR, "No Lights found!");
 		return false;
 	}
 
@@ -921,14 +921,14 @@ bool CPhilipsHue::GetGroups(const Json::Value &root)
 	bool ret = ParseJSon(sResult, root2);
 	if ((!ret) || (!root2.isObject()))
 	{
-		Log(LOG_ERROR, "Philips Hue: Invalid data received, or invalid IPAddress/Username!");
+		Log(LOG_ERROR, "Invalid data received, or invalid IPAddress/Username!");
 		return false;
 	}
 
 	if (sResult.find("\"error\":") != std::string::npos)
 	{
 		//We had an error
-		Log(LOG_ERROR, "Philips Hue: Error received: %s", root2[0]["error"]["description"].asString().c_str());
+		Log(LOG_ERROR, "Error received: %s", root2[0]["error"]["description"].asString().c_str());
 		return false;
 	}
 
@@ -1037,7 +1037,7 @@ bool CPhilipsHue::GetScenes(const Json::Value &root)
 					result = m_sql.safe_query("SELECT ID FROM WOLNodes WHERE (HardwareID==%d) AND (MacAddress=='%q')", m_HwdID, hscene.id.c_str());
 					if (result.empty())
 					{
-						Log(LOG_ERROR, "Philips Hue: Problem adding new Scene!!");
+						Log(LOG_ERROR, "Problem adding new Scene!!");
 						return false;
 					}
 					sID = atoi(result[0][0].c_str());

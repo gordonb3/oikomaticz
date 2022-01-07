@@ -224,7 +224,7 @@ void CMeteorologisk::GetMeterDetails()
 	bool ret = ParseJSon(sResult, root);
 	if ((!ret) || (!root.isObject()))
 	{
-		Log(LOG_ERROR, "Meteorologisk: Invalid data received! Check Location, use Latitude, Longitude Coordinates (xx.yyyy,xx.yyyyy)!");
+		Log(LOG_ERROR, "Invalid data received! Check Location, use Latitude, Longitude Coordinates (xx.yyyy,xx.yyyyy)!");
 		Debug(DEBUG_NORM, "Meteorologisk: Received invalid JSON data .%s.", sResult.c_str());
 		return;
 	}

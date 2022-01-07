@@ -75,7 +75,7 @@ bool CTeleinfoSerial::StartHardware()
 	//Try to open the Serial Port
 	try
 	{
-		Log(LOG_STATUS, "(%s) Teleinfo device uses serial port: %s at %i bauds", m_Name.c_str(), m_szSerialPort.c_str(), m_iBaudRate);
+		Log(LOG_STATUS, "Teleinfo device uses serial port: %s at %i bauds", m_szSerialPort.c_str(), m_iBaudRate);
 		open(m_szSerialPort, m_iBaudRate, m_iOptParity, m_iOptCsize);
 	}
 	catch (boost::exception & e)
@@ -104,9 +104,9 @@ bool CTeleinfoSerial::StartHardware()
 	sOnConnected(this);
 
 	if (m_bDisableCRC)
-		Log(LOG_STATUS, "(%s) CRC checks on incoming data are disabled", m_Name.c_str());
+		Log(LOG_STATUS, "CRC checks on incoming data are disabled");
 	else
-		Log(LOG_STATUS, "(%s) CRC checks will be performed on incoming data", m_Name.c_str());
+		Log(LOG_STATUS, "CRC checks will be performed on incoming data");
 
 	return true;
 }
@@ -131,7 +131,7 @@ void CTeleinfoSerial::readCallback(const char *data, size_t len)
 {
 	if (!m_bEnableReceive)
 	{
-		Log(LOG_ERROR, "(%s) Receiving is not enabled", m_Name.c_str());
+		Log(LOG_ERROR, "Receiving is not enabled");
 		return;
 	}
 	ParseTeleinfoData(data, static_cast<int>(len));

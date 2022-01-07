@@ -315,7 +315,7 @@ bool P1MeterBase::MatchLine()
 
 		if (m_p1version == 0) // meter did not report its DSMR version
 		{
-			_log.Log(LOG_STATUS, "P1 Smart Meter: Meter does not report its version - using DSMR 2.2 compatibility");
+			_log.Log(LOG_STATUS, "Meter does not report its version - using DSMR 2.2 compatibility");
 			m_p1version = 2;
 		}
 
@@ -405,11 +405,11 @@ bool P1MeterBase::MatchLine()
 					m_privgas.clockskew = difftime(gtime, m_receivetime);
 					if (m_privgas.clockskew >= 300)
 					{
-						_log.Log(LOG_ERROR, "P1 Smart Meter: Unable to synchronize to the gas meter clock because it is more than 5 minutes ahead of my time");
+						_log.Log(LOG_ERROR, "Unable to synchronize to the gas meter clock because it is more than 5 minutes ahead of my time");
 					}
 					else {
 						m_privgas.nextmetertime = gtime;
-						_log.Log(LOG_STATUS, "P1 Smart Meter: Gas meter clock is %i seconds ahead - wait for my clock to catch up", (int)m_privgas.clockskew);
+						_log.Log(LOG_STATUS, "Gas meter clock is %i seconds ahead - wait for my clock to catch up", (int)m_privgas.clockskew);
 					}
 				}
 			}
@@ -446,11 +446,11 @@ bool P1MeterBase::MatchLine()
 					m_privwater.clockskew = difftime(gtime, m_receivetime);
 					if (m_privwater.clockskew >= 300)
 					{
-						_log.Log(LOG_ERROR, "P1 Smart Meter: Unable to synchronize to the water meter clock because it is more than 5 minutes ahead of my time");
+						_log.Log(LOG_ERROR, "Unable to synchronize to the water meter clock because it is more than 5 minutes ahead of my time");
 					}
 					else {
 						m_privwater.nextmetertime = gtime;
-						_log.Log(LOG_STATUS, "P1 Smart Meter: Water meter clock is %i seconds ahead - wait for my clock to catch up", (int)m_privwater.clockskew);
+						_log.Log(LOG_STATUS, "Water meter clock is %i seconds ahead - wait for my clock to catch up", (int)m_privwater.clockskew);
 					}
 				}
 			}
@@ -487,11 +487,11 @@ bool P1MeterBase::MatchLine()
 					m_privthermal.clockskew = difftime(gtime, m_receivetime);
 					if (m_privthermal.clockskew >= 300)
 					{
-						_log.Log(LOG_ERROR, "P1 Smart Meter: Unable to synchronize to the thermal meter clock because it is more than 5 minutes ahead of my time");
+						_log.Log(LOG_ERROR, "Unable to synchronize to the thermal meter clock because it is more than 5 minutes ahead of my time");
 					}
 					else {
 						m_privthermal.nextmetertime = gtime;
-						_log.Log(LOG_STATUS, "P1 Smart Meter: CityHeat meter clock is %i seconds ahead - wait for my clock to catch up", (int)m_privthermal.clockskew);
+						_log.Log(LOG_STATUS, "CityHeat meter clock is %i seconds ahead - wait for my clock to catch up", (int)m_privthermal.clockskew);
 					}
 				}
 			}
@@ -559,7 +559,7 @@ bool P1MeterBase::MatchLine()
 	if (ePos == std::string::npos)
 	{
 		// invalid message: value not delimited
-		_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - value is not delimited in line \"%s\"", m_lbuffer);
+		_log.Log(LOG_NORM, "Dismiss incoming - value is not delimited in line \"%s\"", m_lbuffer);
 		return false;
 	}
 
@@ -573,7 +573,7 @@ bool P1MeterBase::MatchLine()
 		else
 		{
 			// invalid message: line too long
-			_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - value in line \"%s\" is oversized", m_lbuffer);
+			_log.Log(LOG_NORM, "Dismiss incoming - value in line \"%s\" is oversized", m_lbuffer);
 			return false;
 		}
 	}
@@ -581,7 +581,7 @@ bool P1MeterBase::MatchLine()
 	if (ePos == 0)
 	{
 		// invalid message: value is empty
-		_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - value in line \"%s\" is empty", m_lbuffer);
+		_log.Log(LOG_NORM, "Dismiss incoming - value in line \"%s\" is empty", m_lbuffer);
 		return false;
 	}
 
@@ -705,7 +705,7 @@ bool P1MeterBase::MatchLine()
 	case device::tmeter::COSEM::OBIS::gasTimestampDSMR2:
 		if (ePos > 13)
 		{
-			_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - invalid gas timestamp value in line \"%s\"", m_lbuffer);
+			_log.Log(LOG_NORM, "Dismiss incoming - invalid gas timestamp value in line \"%s\"", m_lbuffer);
 			return false;
 		}
 		strcpy(m_privgas.timestring, value);
@@ -721,17 +721,17 @@ bool P1MeterBase::MatchLine()
 		if (temp_usage == 3)
 		{
 			m_privgas.channel = (char)m_lbuffer[2];
-			_log.Log(LOG_STATUS, "P1 Smart Meter: Found gas meter on M-Bus channel %c", m_privgas.channel);
+			_log.Log(LOG_STATUS, "Found gas meter on M-Bus channel %c", m_privgas.channel);
 		}
 		else if (temp_usage == 4)
 		{
 			m_privthermal.channel = (char)m_lbuffer[2];
-			_log.Log(LOG_STATUS, "P1 Smart Meter: Found thermal meter on M-Bus channel %c", m_privthermal.channel);
+			_log.Log(LOG_STATUS, "Found thermal meter on M-Bus channel %c", m_privthermal.channel);
 		}
 		else if (temp_usage == 7)
 		{
 			m_privwater.channel = (char)m_lbuffer[2];
-			_log.Log(LOG_STATUS, "P1 Smart Meter: Found water meter on M-Bus channel %c", m_privwater.channel);
+			_log.Log(LOG_STATUS, "Found water meter on M-Bus channel %c", m_privwater.channel);
 		}
 		break;
 	case device::tmeter::COSEM::OBIS::version:
@@ -742,7 +742,7 @@ bool P1MeterBase::MatchLine()
 			if (value[1] == '2')
 			{
 				// Sibelga meter sends incorrect version string
-				_log.Log(LOG_ERROR, "P1 Smart Meter: Meter appears to be from Sibelga. Guessing version as 5.x");
+				_log.Log(LOG_ERROR, "Meter appears to be from Sibelga. Guessing version as 5.x");
 				m_p1version = 5;
 				break;
 			}
@@ -760,7 +760,7 @@ bool P1MeterBase::MatchLine()
 			if (m_p1version < 5)
 				szVersion[0]='D';
 		}
-		_log.Log(LOG_STATUS, "P1 Smart Meter: Meter reports as %s", szVersion);
+		_log.Log(LOG_STATUS, "Meter reports as %s", szVersion);
 		if (m_p1version > 9)
 			m_p1version = 0;
 		break;
@@ -783,7 +783,7 @@ bool P1MeterBase::CheckCRC()
 	{
 		if (m_p1version == 0)
 		{
-			_log.Log(LOG_STATUS, "P1 Smart Meter: Meter is pre DSMR 4.0 and does not send a CRC checksum - using DSMR 2.2 compatibility");
+			_log.Log(LOG_STATUS, "Meter is pre DSMR 4.0 and does not send a CRC checksum - using DSMR 2.2 compatibility");
 			m_p1version = 2;
 		}
 		// always return true with pre DSMRv4 format message
@@ -793,13 +793,13 @@ bool P1MeterBase::CheckCRC()
 	if (m_lbuffer[5] != 0)
 	{
 		// trailing characters after CRC
-		_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - CRC value in message has trailing characters");
+		_log.Log(LOG_NORM, "Dismiss incoming - CRC value in message has trailing characters");
 		return false;
 	}
 
 	if (!m_CRfound)
 	{
-		_log.Log(LOG_NORM, "P1 Smart Meter: You appear to have middle ware that changes the message content - skipping CRC validation");
+		_log.Log(LOG_NORM, "You appear to have middle ware that changes the message content - skipping CRC validation");
 		return true;
 	}
 
@@ -828,7 +828,7 @@ bool P1MeterBase::CheckCRC()
 	if (crc == m_crc16)
 		return true;
 
-	_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - CRC failed");
+	_log.Log(LOG_NORM, "Dismiss incoming - CRC failed");
 	return false;
 }
 
@@ -863,7 +863,7 @@ void P1MeterBase::ParseP1Data(const unsigned char *pData, const int Len, const b
 
 		if ((m_lbuffer[0] == 0x21) && !m_lexclmarkfound && (m_linecount > 0))
 		{
-			_log.Log(LOG_STATUS, "P1 Smart Meter: WARNING: got new datagram but buffer still contains unprocessed data from previous datagram.");
+			_log.Log(LOG_NORM, "WARNING: got new datagram but buffer still contains unprocessed data from previous datagram.");
 			m_lbuffer[m_lbufferpos] = 0;
 			if (disable_crc || CheckCRC())
 			{
@@ -964,7 +964,7 @@ void P1MeterBase::ParseP1PlaintextData(const unsigned char *pData, const int Len
 		{
 			// 400 is an arbitrary chosen number to differentiate between full datagrams and single line commits
 			// the objective is that we only want to display this log line once for any datagram
-			_log.Log(LOG_NORM, "P1 Smart Meter: Dismiss incoming - datagram oversized");
+			_log.Log(LOG_NORM, "Dismiss incoming - datagram oversized");
 		}
 		m_linecount = 0;
 		return;
@@ -1074,7 +1074,7 @@ void P1MeterBase::ParseP1EncryptedData(const unsigned char *pData, const int Len
 		}
 		catch (const std::exception& e)
 		{
-			_log.Log(LOG_ERROR, "P1 Smart Meter: Error decrypting payload (%s)", e.what());
+			_log.Log(LOG_ERROR, "Error decrypting payload (%s)", e.what());
 		}
 
 
@@ -1143,7 +1143,7 @@ bool P1MeterBase::SetOptions(const bool disable_crc, const unsigned int ratelimi
 		unsigned char cmbuschannel = static_cast<unsigned char>(gasmbuschannel) | 0x30;
 		if (cmbuschannel != m_privgas.channel)
 		{
-			_log.Log(LOG_STATUS, "P1 Smart Meter: Gas meter M-Bus channel %c manually set by user", cmbuschannel);
+			_log.Log(LOG_STATUS, "Gas meter M-Bus channel %c manually set by user", cmbuschannel);
 			m_privgas.channel = cmbuschannel;
 		}
 	}
@@ -1186,7 +1186,7 @@ bool P1MeterBase::ImportKey(std::string szhexencoded)
 	}
 	if (!validkey)
 	{
-		_log.Log(LOG_ERROR, "P1 Smart Meter: Invalid decryption key in hardware settings");
+		_log.Log(LOG_ERROR, "Invalid decryption key in hardware settings");
 		return false;
 	}
 	return true;

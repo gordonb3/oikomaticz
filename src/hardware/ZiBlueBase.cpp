@@ -243,7 +243,7 @@ bool CZiBlueBase::WriteToHardware(const char *pdata, const unsigned char length)
 	std::string switchtype = GetGeneralZiBlueFromInt(ziblue_switches, pSwitch->subtype);
 	if (switchtype.empty())
 	{
-		Log(LOG_ERROR, "ZiBlue: trying to send unknown switch type: %d", pSwitch->subtype);
+		Log(LOG_ERROR, "trying to send unknown switch type: %d", pSwitch->subtype);
 		return false;
 	}
 	else if (switchtype == "JAMMING")
@@ -257,7 +257,7 @@ bool CZiBlueBase::WriteToHardware(const char *pdata, const unsigned char length)
 		std::string switchcmnd = GetGeneralZiBlueFromInt(ziBlueswitchcommands, pSwitch->cmnd);
 		if (switchcmnd.empty())
 		{
-			Log(LOG_ERROR, "ZiBlue: trying to send unknown switch command: %d", pSwitch->cmnd);
+			Log(LOG_ERROR, "trying to send unknown switch command: %d", pSwitch->cmnd);
 			return false;
 		}
 		// check setlevel command
@@ -391,7 +391,7 @@ bool CZiBlueBase::WriteToHardware(const char *pdata, const unsigned char length)
 		}
 		else
 		{
-			Log(LOG_ERROR, "ZiBlue: unsupported switch protocol");
+			Log(LOG_ERROR, "unsupported switch protocol");
 			return false;
 		}
 		switch (pSwitch->cmnd)
@@ -428,7 +428,7 @@ bool CZiBlueBase::WriteToHardware(const char *pdata, const unsigned char length)
 		WriteInt((const uint8_t *)&oFrame, sizeof(_tOutgoingFrame));
 		return true;
 	}
-	Log(LOG_ERROR, "ZiBlue: Switch is not General Type: %d", pSwitch->type);
+	Log(LOG_ERROR, "Switch is not General Type: %d", pSwitch->type);
 	return false;
 }
 
@@ -437,7 +437,7 @@ bool CZiBlueBase::SendSwitchInt(const int ID, const int switchunit, const int Ba
 	int intswitchtype = GetGeneralZiBlueFromString(ziblue_switches, switchType);
 	if (intswitchtype == -1)
 	{
-		Log(LOG_ERROR, "ZiBlue: Unhandled switch type: %s", switchType.c_str());
+		Log(LOG_ERROR, "Unhandled switch type: %s", switchType.c_str());
 		return false;
 	}
 
@@ -451,13 +451,13 @@ bool CZiBlueBase::SendSwitchInt(const int ID, const int switchunit, const int Ba
 			cmnd = gswitch_sSetLevel;
 			std::string str2 = switchcmd.substr(10);
 			svalue = atoi(str2.c_str());
-			Log(LOG_STATUS, "ZiBlue: %d level: %d", cmnd, svalue);
+			Log(LOG_STATUS, "%d level: %d", cmnd, svalue);
 		}
 	}
 
 	if (cmnd == -1)
 	{
-		Log(LOG_ERROR, "ZiBlue: Unhandled switch command: %s", switchcmd.c_str());
+		Log(LOG_ERROR, "Unhandled switch command: %s", switchcmd.c_str());
 		return false;
 	}
 
@@ -593,9 +593,9 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 		uint8_t Delay = pData[11];
 		uint8_t Multiply = pData[12];
 		uint32_t Time = (uint32_t)(pData[16] << 24) + (uint32_t)(pData[15] << 16) + (uint32_t)(pData[14] << 8) + (uint32_t)pData[13];
-		Log(LOG_NORM, "ZiBlue frameType: %d, frequency: %d kHz", FrameType, frequency);
-		Log(LOG_NORM, "ZiBlue rfLevel: %d dBm, floorNoise: %d dBm, PulseElementSize: %d", RFLevel, FloorNoise, PulseElementSize);
-		Log(LOG_NORM, "ZiBlue number: %d, Repeats: %d, Delay: %d, Multiply: %d", number, Repeats, Delay, Multiply);
+		Log(LOG_NORM, "frameType: %d, frequency: %d kHz", FrameType, frequency);
+		Log(LOG_NORM, "rfLevel: %d dBm, floorNoise: %d dBm, PulseElementSize: %d", RFLevel, FloorNoise, PulseElementSize);
+		Log(LOG_NORM, "number: %d, Repeats: %d, Delay: %d, Multiply: %d", number, Repeats, Delay, Multiply);
 	}
 	else if (FrameType == 0)
 	{
@@ -603,9 +603,9 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 		int dlen = len - 8;
 		REGULAR_INCOMING_RF_TO_BINARY_USB_FRAME_HEADER *pIncomming = (REGULAR_INCOMING_RF_TO_BINARY_USB_FRAME_HEADER *)data;
 #ifdef DEBUG_ZIBLUE
-		Log(LOG_NORM, "ZiBlue frameType: %d, cluster: %d, dataFlag: %d (%s MHz)", pIncomming->frameType, pIncomming->cluster, pIncomming->dataFlag, (pIncomming->dataFlag == 0) ? "433" : "868");
-		Log(LOG_NORM, "ZiBlue rfLevel: %d dBm, floorNoise:: %d dBm, rfQuality: %d", pIncomming->rfLevel, pIncomming->floorNoise, pIncomming->rfQuality);
-		Log(LOG_NORM, "ZiBlue protocol: %d (%s), infoType: %d", pIncomming->protocol, szZiBlueProtocol(pIncomming->protocol), pIncomming->infoType);
+		Log(LOG_NORM, "frameType: %d, cluster: %d, dataFlag: %d (%s MHz)", pIncomming->frameType, pIncomming->cluster, pIncomming->dataFlag, (pIncomming->dataFlag == 0) ? "433" : "868");
+		Log(LOG_NORM, "rfLevel: %d dBm, floorNoise:: %d dBm, rfQuality: %d", pIncomming->rfLevel, pIncomming->floorNoise, pIncomming->rfQuality);
+		Log(LOG_NORM, "protocol: %d (%s), infoType: %d", pIncomming->protocol, szZiBlueProtocol(pIncomming->protocol), pIncomming->infoType);
 #endif
 		switch (pIncomming->infoType)
 		{
@@ -647,7 +647,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 						SendSwitchInt(houseCode, dev, 255, std::string(szProtocol), switchCmd, 0, std::string(szProtocol) );
 					}
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue subtype: %d (%s), houseCode: %c, dev: %d", pSen->subtype, switchCmd.c_str(), (uint8_t)('A' + houseCode), dev + 1);
+					Log(LOG_NORM, "subtype: %d (%s), houseCode: %c, dev: %d", pSen->subtype, switchCmd.c_str(), (uint8_t)('A' + houseCode), dev + 1);
 #endif
 				}
 				break;
@@ -692,7 +692,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 						SendSwitchInt(DevID, 1, 255, std::string(szProtocol), switchCmd, 0, std::string(szProtocol));
 					}
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue subtype: %d (%s), DevID: %04X", pSen->subtype, switchCmd.c_str(), DevID);
+					Log(LOG_NORM, "subtype: %d (%s), DevID: %04X", pSen->subtype, switchCmd.c_str(), DevID);
 #endif
 				}
 				break;
@@ -703,7 +703,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					INCOMING_RF_INFOS_TYPE2 *pSen = (INCOMING_RF_INFOS_TYPE2 *)(data + 8);
 					int DevID = (pSen->idMsb << 16) + pSen->idLsb;
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue DevID: %04X", DevID);
+					Log(LOG_NORM, "DevID: %04X", DevID);
 #endif
 					if (pSen->subtype == 0)
 					{
@@ -715,7 +715,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 						if (Supervisor_Frame_Flag != 0)
 							return false;
 #ifdef DEBUG_ZIBLUE
-						Log(LOG_NORM, "ZiBlue Tamper_Flag: %d, Alarm_Flag: %d, LowBat_Flag: %d, Supervisor_Frame_Flag:%d", Tamper_Flag, Alarm_Flag, LowBat_Flag,
+						Log(LOG_NORM, "Tamper_Flag: %d, Alarm_Flag: %d, LowBat_Flag: %d, Supervisor_Frame_Flag:%d", Tamper_Flag, Alarm_Flag, LowBat_Flag,
 						    Supervisor_Frame_Flag);
 #endif
 					}
@@ -724,7 +724,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 						// remote control (CodeSecure device)
 						uint16_t Key_Id = pSen->qualifier; // values : 0x08, 0x10, 0x20, 0x40. (Nota : D0:7 of the id always set to 0)
 #ifdef DEBUG_ZIBLUE
-						Log(LOG_NORM, "ZiBlue Key_Id: %04X", Key_Id);
+						Log(LOG_NORM, "Key_Id: %04X", Key_Id);
 #endif
 						const char *szProtocol = szZiBlueProtocol(pIncomming->protocol);
 						std::string switchCmd;
@@ -756,7 +756,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 				{
 					INCOMING_RF_INFOS_TYPE3 *pSen = (INCOMING_RF_INFOS_TYPE3 *)(data + 8);
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue subtype: %d, idLSB: %04X, idMSB: %04X, qualifier: %04X", pSen->subtype, pSen->idLsb, pSen->idMsb,
+					Log(LOG_NORM, "subtype: %d, idLSB: %04X, idMSB: %04X, qualifier: %04X", pSen->subtype, pSen->idLsb, pSen->idMsb,
 						pSen->qualifier);
 #endif
 					std::string cmd = "UNKNOWN";
@@ -783,7 +783,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					uint16_t random = pSen->idChannel & 0xFF80;
 					uint16_t channel = pSen->idChannel & 0x007F;
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, random: %X, channel: %d, temp: %.1f, hygro: %d", pSen->subtype, pSen->idPHY, pSen->idChannel, pSen->qualifier,
+					Log(LOG_NORM, "subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, random: %X, channel: %d, temp: %.1f, hygro: %d", pSen->subtype, pSen->idPHY, pSen->idChannel, pSen->qualifier,
 					    random, channel, float(pSen->temp) / 10.0f, pSen->hygro);
 #endif
 					if (pSen->hygro > 0)
@@ -800,7 +800,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					uint16_t random = pSen->idChannel & 0xFF80;
 					uint16_t channel = pSen->idChannel & 0x007F;
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, random: %X, channel: %d,temp: %.1f, hygro: %d, pressure: %d", pSen->subtype, pSen->idPHY, pSen->idChannel,
+					Log(LOG_NORM, "subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, random: %X, channel: %d,temp: %.1f, hygro: %d, pressure: %d", pSen->subtype, pSen->idPHY, pSen->idChannel,
 					    pSen->qualifier, random, channel, float(pSen->temp) / 10.0f, pSen->hygro, pSen->pressure);
 #endif
 					SendTempHumBaroSensor(pSen->idPHY ^ pSen->idChannel, (pSen->qualifier & 0x01) ? 0 : 100, float(pSen->temp) / 10.0F, pSen->hygro, pSen->pressure, 0,
@@ -815,7 +815,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					uint16_t random = pSen->idChannel & 0xFF80;
 					uint16_t channel = pSen->idChannel & 0x007F;
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, speed: %.1f, direction: %d", pSen->subtype, pSen->idPHY, pSen->idChannel,
+					Log(LOG_NORM, "subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, speed: %.1f, direction: %d", pSen->subtype, pSen->idPHY, pSen->idChannel,
 					    pSen->qualifier, float(pSen->speed), pSen->direction);
 #endif
 					SendWind(pSen->idPHY ^ pSen->idChannel, (pSen->qualifier & 0x01) ? 0 : 100, pSen->direction, float(pSen->speed),
@@ -830,7 +830,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					uint16_t random = pSen->idChannel & 0xFF80;
 					uint16_t channel = pSen->idChannel & 0x007F;
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, uv: %.1f", pSen->subtype, pSen->idPHY, pSen->idChannel,
+					Log(LOG_NORM, "subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, uv: %.1f", pSen->subtype, pSen->idPHY, pSen->idChannel,
 					    pSen->qualifier, float(pSen->light)/10);
 #endif
 					SendSolarRadiationSensor(pSen->idPHY ^ pSen->idChannel, (pSen->qualifier & 0x01) ? 0 : 100, float(pSen->light)/10, "UV Index");
@@ -844,7 +844,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					uint16_t random = pSen->idChannel & 0xFFF0;
 					uint16_t channel = pSen->idChannel & 0x000F;
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, power: %d, p1: %d, p2: %d, p3: %d", pSen->subtype, pSen->idPHY, pSen->idChannel,
+					Log(LOG_NORM, "subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, power: %d, p1: %d, p2: %d, p3: %d", pSen->subtype, pSen->idPHY, pSen->idChannel,
 					    pSen->qualifier, pSen->power, pSen->powerI1, pSen->powerI2, pSen->powerI3);
 #endif
 					SendWattMeter(pSen->idPHY ^ pSen->idChannel, 0, (pSen->qualifier & 0x01) ? 0 : 100, float(pSen->power) / 10, "Power");
@@ -867,7 +867,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					uint16_t channel = pSen->idChannel & 0x007F;
 					int totalRain = pSen->totalRainLsb + (int(pSen->totalRainMsb) << 16);
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, rain: %d, totalRain: %d", pSen->subtype, pSen->idPHY, pSen->idChannel,
+					Log(LOG_NORM, "subtype: %d, idPHY: %04X, idChannel: %04X, qualifier: %04X, rain: %d, totalRain: %d", pSen->subtype, pSen->idPHY, pSen->idChannel,
 					    pSen->qualifier, pSen->rain, totalRain);
 #endif
 					SendRainRateSensor(pSen->idPHY ^ pSen->idChannel, (pSen->qualifier & 0x01) ? 0 : 100, float(pSen->rain) / 100, "RainRate");
@@ -896,7 +896,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					int state = pSen->mode & 0xFF;
 #ifdef DEBUG_ZIBLUE
 					Log(LOG_NORM,
-					    "ZiBlue subtype: %d, id: %04X, qualifier: %04X, tamperFlag: %d, alarmFlag: %d, lowBatteryFlag: %d,"
+					    "subtype: %d, id: %04X, qualifier: %04X, tamperFlag: %d, alarmFlag: %d, lowBatteryFlag: %d,"
 					    "testAssocFlag: %d, domesticFrameFlag: %d, x2variant: %d, function: %d, state: %d",
 					    pSen->subtype, DevID, pSen->qualifier, Tamper_Flag, Anomaly_Flag, LowBat_Flag, TestAssoc_Flag,
 						DomesticFrame_Flag, x2dVariant, function, state);
@@ -916,7 +916,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					int DomesticFrame_Flag = (pSen->qualifier & 0x20) != 0;
 					int x2dVariant = (pSen->qualifier & 0xC0) >> 6;
 #ifdef DEBUG_ZIBLUE
-					Log(LOG_NORM, "ZiBlue subtype: %d, id: %04X, qualifier: %04X, tamperFlag: %d, alarmFlag: %d, lowBatteryFlag: %d,"
+					Log(LOG_NORM, "subtype: %d, id: %04X, qualifier: %04X, tamperFlag: %d, alarmFlag: %d, lowBatteryFlag: %d,"
 						"testAssocFlag: %d, domesticFrameFlag: %d, x2variant: %d", pSen->subtype, id, pSen->qualifier,
 						Tamper_Flag, Alarm_Flag, LowBat_Flag, TestAssoc_Flag, DomesticFrame_Flag, x2dVariant);
 #endif
@@ -925,7 +925,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 			case INFOS_TYPE12:
 				// deprecated // Used by  DIGIMAX TS10 protocol
 #ifdef DEBUG_ZIBLUE
-				Log(LOG_NORM, "ZiBlue: DEPRECATED DIGIMAX TS10 protocol");
+				Log(LOG_NORM, "DEPRECATED DIGIMAX TS10 protocol");
 #endif
 				break;
 			case INFOS_TYPE13:
@@ -935,7 +935,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					INCOMING_RF_INFOS_TYPE13 *pSen = (INCOMING_RF_INFOS_TYPE13 *)(data + 8);
 #ifdef DEBUG_ZIBLUE
 					Log(LOG_NORM,
-					    "ZiBlue subtype: %d, idLsb: %04X, idMsb: %04X, qualifier: %04X, infos: %04X, counter1Lsb: %d, counter1Msb: %d, counter2Lsb: %d, counter2Msb: %d, apparentPower: "
+					    "subtype: %d, idLsb: %04X, idMsb: %04X, qualifier: %04X, infos: %04X, counter1Lsb: %d, counter1Msb: %d, counter2Lsb: %d, counter2Msb: %d, apparentPower: "
 					    "%d",
 					    pSen->subtype, pSen->idLsb, pSen->idMsb, pSen->qualifier, pSen->infos, pSen->counter1Lsb, pSen->counter1Msb, pSen->counter2Lsb, pSen->counter2Msb,
 					    pSen->apparentPower);
@@ -985,7 +985,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					}
 #ifdef DEBUG_ZIBLUE
 					Log(LOG_NORM,
-					    "ZiBlue subtype: %d, idLsb: %04X, idMsb: %04X, qualifier: %04X",
+					    "subtype: %d, idLsb: %04X, idMsb: %04X, qualifier: %04X",
 					    pSen->subtype, pSen->idLsb, pSen->idMsb, pSen->qualifier);
 #endif
 				}
@@ -999,7 +999,7 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 					char batteryLevel = (pSen->infos & 0xFF00) >> 8;
 #ifdef DEBUG_ZIBLUE
 					Log(LOG_NORM,
-					    "ZiBlue subtype: %d, idLsb: %04X, idMsb: %04X, qualifier: %04X, MID: %04X, battery: %04X, additionalData: %d",
+					    "subtype: %d, idLsb: %04X, idMsb: %04X, qualifier: %04X, MID: %04X, battery: %04X, additionalData: %d",
 					    pSen->subtype, pSen->idLsb, pSen->idMsb, pSen->qualifier, mid, batteryLevel, pSen->additionalData);
 #endif
 				}
@@ -1008,10 +1008,10 @@ bool CZiBlueBase::ParseBinary(const uint8_t SDQ, const uint8_t *data, size_t len
 	}
 	else
 	{
-		Log(LOG_ERROR, "ZiBlue: Unknown Frametype received: %d", FrameType);
+		Log(LOG_ERROR, "Unknown Frametype received: %d", FrameType);
 	}
 #ifdef DEBUG_ZIBLUE
-	Log(LOG_NORM, "ZiBlue: ----------------");
+	Log(LOG_NORM, "----------------");
 #endif
 	return true;
 }

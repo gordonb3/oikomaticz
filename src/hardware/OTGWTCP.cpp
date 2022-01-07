@@ -44,7 +44,7 @@ bool OTGWTCP::StopHardware()
 
 void OTGWTCP::OnConnect()
 {
-	Log(LOG_STATUS,"OTGW: connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+	Log(LOG_STATUS,"connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 	m_bIsStarted=true;
 	m_bufferpos=0;
 	sOnConnected(this);
@@ -53,7 +53,7 @@ void OTGWTCP::OnConnect()
 
 void OTGWTCP::OnDisconnect()
 {
-	Log(LOG_STATUS,"OTGW: disconnected");
+	Log(LOG_STATUS,"disconnected");
 }
 
 void OTGWTCP::Do_Work()
@@ -85,7 +85,7 @@ void OTGWTCP::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS,"OTGW: TCP/IP Worker stopped...");
+	Log(LOG_STATUS,"TCP/IP Worker stopped...");
 }
 
 void OTGWTCP::OnData(const unsigned char *pData, size_t length)
@@ -103,17 +103,17 @@ void OTGWTCP::OnError(const boost::system::error_code& error)
 		(error == boost::asio::error::timed_out)
 		)
 	{
-		Log(LOG_ERROR, "OTGW: Can not connect to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+		Log(LOG_ERROR, "Can not connect to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 	}
 	else if (
 		(error == boost::asio::error::eof) ||
 		(error == boost::asio::error::connection_reset)
 		)
 	{
-		Log(LOG_STATUS, "OTGW: Connection reset!");
+		Log(LOG_STATUS, "Connection reset!");
 	}
 	else
-		Log(LOG_ERROR, "OTGW: %s", error.message().c_str());
+		Log(LOG_ERROR, "%s", error.message().c_str());
 }
 
 bool OTGWTCP::WriteInt(const unsigned char *pData, const unsigned char Len)

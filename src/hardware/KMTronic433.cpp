@@ -71,7 +71,7 @@ void KMTronic433::Do_Work()
 		{
 			if (m_retrycntr == 0)
 			{
-				Log(LOG_STATUS, "KMTronic: retrying in %d seconds...", RETRY_DELAY);
+				Log(LOG_STATUS, "retrying in %d seconds...", RETRY_DELAY);
 			}
 			m_retrycntr++;
 			if (m_retrycntr >= RETRY_DELAY)
@@ -86,7 +86,7 @@ void KMTronic433::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS, "KMTronic: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 bool KMTronic433::OpenSerialDevice()
@@ -94,7 +94,7 @@ bool KMTronic433::OpenSerialDevice()
 	//Try to open the Serial Port
 	try
 	{
-		Log(LOG_STATUS, "KMTronic: Using serial port: %s", m_szSerialPort.c_str());
+		Log(LOG_STATUS, "Using serial port: %s", m_szSerialPort.c_str());
 #ifndef WIN32
 		openOnlyBaud(
 			m_szSerialPort,
@@ -113,7 +113,7 @@ bool KMTronic433::OpenSerialDevice()
 	}
 	catch (boost::exception & e)
 	{
-		Log(LOG_ERROR, "KMTronic: Error opening serial port!");
+		Log(LOG_ERROR, "Error opening serial port!");
 #ifdef _DEBUG
 		Log(LOG_ERROR, "-----------------\n%s\n-----------------", boost::diagnostic_information(e).c_str());
 #else
@@ -123,7 +123,7 @@ bool KMTronic433::OpenSerialDevice()
 	}
 	catch (...)
 	{
-		Log(LOG_ERROR, "KMTronic: Error opening serial port!!!");
+		Log(LOG_ERROR, "Error opening serial port!!!");
 		return false;
 	}
 	m_bIsStarted = true;

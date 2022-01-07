@@ -130,17 +130,17 @@ bool CMercApi::RefreshLogin()
 	bool bSuccess = false;
 	std::string szLastUpdate = TimeToString(nullptr, TF_DateTime);
 
-	m_pBase->Debug(DEBUG_NORM, "MercApi: Refreshing login credentials.");
+	m_pBase->Debug(DEBUG_NORM, "Refreshing login credentials.");
 	m_authenticating = true;
 
 	if (GetAuthToken("", "", true))
 	{
-		m_pBase->Log(LOG_NORM, "MercApi: Login credentials Refresh successful.");
+		m_pBase->Log(LOG_NORM, "Login credentials Refresh successful.");
 		bSuccess = true;
 	}
 	else
 	{
-		m_pBase->Log(LOG_ERROR, "MercApi: Failed to refresh login credentials.");
+		m_pBase->Log(LOG_ERROR, "Failed to refresh login credentials.");
 		m_accesstoken = "";
 		if (!m_refreshtoken.empty())
 		{
@@ -474,11 +474,11 @@ bool CMercApi::GetData(const std::string &datatype, Json::Value &reply)
 
 	if (!SendToApi(Get, _sUrl, "", _sResponse, *(new std::vector<std::string>()), reply, true))
 	{
-		m_pBase->Log(LOG_ERROR, "MercApi: Failed to get data %s.", datatype.c_str());
+		m_pBase->Log(LOG_ERROR, "Failed to get data %s.", datatype.c_str());
 		return false;
 	}
 
-	m_pBase->Debug(DEBUG_NORM, "MercApi: Get data %s received reply: %s", datatype.c_str(), _sResponse.c_str());
+	m_pBase->Debug(DEBUG_NORM, "Get data %s received reply: %s", datatype.c_str(), _sResponse.c_str());
 
 	return true;
 }
@@ -492,11 +492,11 @@ bool CMercApi::GetResourceData(const std::string &datatype, Json::Value &reply)
 
 	if (!SendToApi(Get, _sUrl, "", _sResponse, *(new std::vector<std::string>()), reply, true, (MERC_APITIMEOUT / 2)))
 	{
-		m_pBase->Log(LOG_ERROR, "MercApi: Failed to get resource data %s.", datatype.c_str());
+		m_pBase->Log(LOG_ERROR, "Failed to get resource data %s.", datatype.c_str());
 		return false;
 	}
 
-	m_pBase->Debug(DEBUG_NORM, "MercApi: Get resource data %s received reply: %s", datatype.c_str(), _sResponse.c_str());
+	m_pBase->Debug(DEBUG_NORM, "Get resource data %s received reply: %s", datatype.c_str(), _sResponse.c_str());
 
 	return true;
 }
@@ -531,7 +531,7 @@ bool CMercApi::IsAwake()
 	else
 	{
 		is_awake = true;
-		m_pBase->Debug(DEBUG_NORM, "MercApi: Awake state checked. We are awake.");
+		m_pBase->Debug(DEBUG_NORM, "Awake state checked. We are awake.");
 	}
 
 	return(is_awake);
@@ -599,13 +599,13 @@ bool CMercApi::ProcessAvailableResources(Json::Value& jsondata)
 		}
 		else
 		{
-			m_pBase->Debug(DEBUG_NORM, "MercApi: Found %d resource fields but none called name!",cnt);
+			m_pBase->Debug(DEBUG_NORM, "Found %d resource fields but none called name!",cnt);
 		}
 	}
 	catch(const std::exception& e)
 	{
 		std::string what = e.what();
-		m_pBase->Log(LOG_ERROR, "MercApi: Crashed during processing of resources: %s", what.c_str());
+		m_pBase->Log(LOG_ERROR, "Crashed during processing of resources: %s", what.c_str());
 	}
 
 	return bProcessed;
@@ -693,12 +693,12 @@ bool CMercApi::SendCommand(const std::string &command, Json::Value &reply, const
 
 	if (!SendToApi(Post, _sUrl, sPostData, _sResponse, *(new std::vector<std::string>()), reply, true))
 	{
-		m_pBase->Log(LOG_ERROR, "MercApi: Failed to send command %s.", command.c_str());
+		m_pBase->Log(LOG_ERROR, "Failed to send command %s.", command.c_str());
 		return false;
 	}
 
-	//m_pBase->Log(LOG_NORM, "MercApi: Command %s received reply: %s", command.c_str(), _sResponse.c_str());
-	m_pBase->Debug(DEBUG_NORM, "MercApi: Command %s received reply: %s", command.c_str(), _sResponse.c_str());
+	//m_pBase->Log(LOG_NORM, "Command %s received reply: %s", command.c_str(), _sResponse.c_str());
+	m_pBase->Debug(DEBUG_NORM, "Command %s received reply: %s", command.c_str(), _sResponse.c_str());
 	*/
 	return true;
 }
@@ -752,31 +752,31 @@ bool CMercApi::GetAuthToken(const std::string &username, const std::string &pass
 
 	if (!SendToApi(Post, _sUrl, sPostData, _sResponse, _vExtraHeaders, _jsRoot, false))
 	{
-		m_pBase->Log(LOG_ERROR, "MercApi: Failed to get token.");
+		m_pBase->Log(LOG_ERROR, "Failed to get token.");
 		return false;
 	}
 
 	if(!_jsRoot["error"].empty())
 	{
-		m_pBase->Log(LOG_ERROR, "MercApi: Received error response (%s).", _jsRoot["error"].asString().c_str());
+		m_pBase->Log(LOG_ERROR, "Received error response (%s).", _jsRoot["error"].asString().c_str());
 		return false;
 	}
 
 	m_accesstoken = _jsRoot["access_token"].asString();
 	if (m_accesstoken.empty())
 	{
-		m_pBase->Log(LOG_ERROR, "MercApi: Received access token is zero length.");
+		m_pBase->Log(LOG_ERROR, "Received access token is zero length.");
 		return false;
 	}
 
 	m_refreshtoken = _jsRoot["refresh_token"].asString();
 	if (m_refreshtoken.empty())
 	{
-		m_pBase->Log(LOG_ERROR, "MercApi: Received refresh token is zero length.");
+		m_pBase->Log(LOG_ERROR, "Received refresh token is zero length.");
 		return false;
 	}
-	m_pBase->Log(LOG_STATUS, "MercApi: Received new refresh token %s .", m_refreshtoken.c_str());
-	m_pBase->Debug(DEBUG_NORM, "MercApi: Received access token from API.");
+	m_pBase->Log(LOG_STATUS, "Received new refresh token %s .", m_refreshtoken.c_str());
+	m_pBase->Debug(DEBUG_NORM, "Received access token from API.");
 
 	return true;
 }
@@ -857,7 +857,7 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 		// Debug response
 		for (auto &_vResponseHeader : _vResponseHeaders)
 			_ssResponseHeaderString << _vResponseHeader;
-		m_pBase->Debug(DEBUG_RECEIVED, "MercApi: Performed request to Api: (%d)\n%s\nResponse headers: %s", m_httpresultcode, sResponse.c_str(), _ssResponseHeaderString.str().c_str());
+		m_pBase->Debug(DEBUG_RECEIVED, "Performed request to Api: (%d)\n%s\nResponse headers: %s", m_httpresultcode, sResponse.c_str(), _ssResponseHeaderString.str().c_str());
 
 		switch(m_httpresultcode)
 		{

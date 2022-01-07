@@ -486,7 +486,7 @@ bool XiaomiGateway::WriteToHardware(const char *pdata, const unsigned char lengt
 			}
 			else
 			{
-				Log(LOG_STATUS, "XiaomiGateway: SetRGBColour - Color mode '%d' is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum", xcmd->color.mode);
+				Log(LOG_STATUS, "SetRGBColour - Color mode '%d' is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum", xcmd->color.mode);
 			}
 		}
 		else if ((xcmd->command == Color_SetBrightnessLevel) || (xcmd->command == Color_SetBrightUp) || (xcmd->command == Color_SetBrightDown))
@@ -517,17 +517,17 @@ bool XiaomiGateway::WriteToHardware(const char *pdata, const unsigned char lengt
 		}
 		else
 		{
-			Log(LOG_ERROR, "XiaomiGateway: Unknown command %d", xcmd->command);
+			Log(LOG_ERROR, "Unknown command %d", xcmd->command);
 		}
 	}
 	if (!message.empty())
 	{
-		Debug(DEBUG_HARDWARE, "XiaomiGateway: message: '%s'", message.c_str());
+		Debug(DEBUG_HARDWARE, "message: '%s'", message.c_str());
 		result = SendMessageToGateway(message);
 		if (result == false)
 		{
 			// Retry, send the message again
-			Log(LOG_STATUS, "XiaomiGateway: SendMessageToGateway failed on first attempt, will try again");
+			Log(LOG_STATUS, "SendMessageToGateway failed on first attempt, will try again");
 			sleep_milliseconds(100);
 			result = SendMessageToGateway(message);
 		}
@@ -550,7 +550,7 @@ bool XiaomiGateway::SendMessageToGateway(const std::string &controlmessage)
 	std::array<char, 512> recv_buffer_;
 	memset(&recv_buffer_[0], 0, sizeof(recv_buffer_));
 #ifdef _DEBUG
-	Log(LOG_STATUS, "XiaomiGateway: request to %s - %s", m_GatewayIp.c_str(), message.c_str());
+	Log(LOG_STATUS, "request to %s - %s", m_GatewayIp.c_str(), message.c_str());
 #endif
 	while (socket_.available() > 0)
 	{
@@ -569,14 +569,14 @@ bool XiaomiGateway::SendMessageToGateway(const std::string &controlmessage)
 				std::string error = root2["error"].asString();
 				if (!error.empty())
 				{
-					Log(LOG_ERROR, "XiaomiGateway: unable to write command - %s", error.c_str());
+					Log(LOG_ERROR, "unable to write command - %s", error.c_str());
 					result = false;
 				}
 			}
 		}
 
 #ifdef _DEBUG
-		Log(LOG_STATUS, "XiaomiGateway: response %s", receivedString.c_str());
+		Log(LOG_STATUS, "response %s", receivedString.c_str());
 #endif
 	}
 	socket_.close();
@@ -642,7 +642,7 @@ void XiaomiGateway::InsertUpdateRGBGateway(const std::string &nodeid, const std:
 {
 	if (nodeid.length() < 12)
 	{
-		Log(LOG_ERROR, "XiaomiGateway: Node ID %s is too short", nodeid.c_str());
+		Log(LOG_ERROR, "Node ID %s is too short", nodeid.c_str());
 		return;
 	}
 	std::string str = nodeid.substr(4, 8);
@@ -666,7 +666,7 @@ void XiaomiGateway::InsertUpdateRGBGateway(const std::string &nodeid, const std:
 
 	if (result.empty())
 	{
-		Log(LOG_STATUS, "XiaomiGateway: New Gateway Found (%s/%s)", str.c_str(), Name.c_str());
+		Log(LOG_STATUS, "New Gateway Found (%s/%s)", str.c_str(), Name.c_str());
 		// int value = atoi(brightness.c_str());
 		// int value = hue; // atoi(hue.c_str());
 		int cmd = Color_LedOn;
@@ -774,7 +774,7 @@ void XiaomiGateway::InsertUpdateSwitch(const std::string &nodeid, const std::str
 				  xcmd.unitcode);
 	if (result.empty())
 	{
-		Log(LOG_STATUS, "XiaomiGateway: New %s Found (%s)", Name.c_str(), nodeid.c_str());
+		Log(LOG_STATUS, "New %s Found (%s)", Name.c_str(), nodeid.c_str());
 		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&xcmd, nullptr, battery, m_Name.c_str());
 		if (customimage == 0)
 		{
@@ -1123,12 +1123,12 @@ std::string XiaomiGateway::GetGatewayKey()
 		sprintf(&gatewaykey[i * 2], "%02X", ciphertext[i]);
 	}
 #ifdef _DEBUG
-	Log(LOG_STATUS, "XiaomiGateway: GetGatewayKey Password - %s", m_GatewayPassword.c_str());
-	Log(LOG_STATUS, "XiaomiGateway: GetGatewayKey key - %s", gatewaykey);
+	Log(LOG_STATUS, "GetGatewayKey Password - %s", m_GatewayPassword.c_str());
+	Log(LOG_STATUS, "GetGatewayKey key - %s", gatewaykey);
 #endif
 	return gatewaykey;
 #else
-	Log(LOG_ERROR, "XiaomiGateway: GetGatewayKey NO SSL AVAILABLE");
+	Log(LOG_ERROR, "GetGatewayKey NO SSL AVAILABLE");
 	return std::string("");
 #endif
 }
@@ -1137,7 +1137,7 @@ unsigned int XiaomiGateway::GetShortID(const std::string &nodeid)
 {
 	if (nodeid.length() < 12)
 	{
-		Log(LOG_ERROR, "XiaomiGateway: Node ID %s is too short", nodeid.c_str());
+		Log(LOG_ERROR, "Node ID %s is too short", nodeid.c_str());
 		return -1;
 	}
 	std::string str;

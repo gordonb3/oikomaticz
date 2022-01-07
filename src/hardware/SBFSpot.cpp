@@ -47,7 +47,7 @@ void CSBFSpot::Init()
 	infile.open(m_SBFConfigFile.c_str());
 	if (!infile.is_open())
 	{
-		Log(LOG_ERROR,"SBFSpot: Could not open configuration file!");
+		Log(LOG_ERROR,"Could not open configuration file!");
 		return;
 	}
 	while (!infile.eof())
@@ -90,7 +90,7 @@ void CSBFSpot::Init()
 	infile.close();
 	if ((m_SBFDataPath.empty()) || (m_SBFDateFormat.empty()) || (m_SBFTimeFormat.empty()))
 	{
-		Log(LOG_ERROR,"SBFSpot: Could not find OutputPath in configuration file!");
+		Log(LOG_ERROR,"Could not find OutputPath in configuration file!");
 	}
 }
 
@@ -125,7 +125,7 @@ void CSBFSpot::Do_Work()
 {
 	int LastMinute=-1;
 
-	Log(LOG_STATUS,"SBFSpot: Worker started...");
+	Log(LOG_STATUS,"Worker started...");
 	while (!IsStopRequested(1000))
 	{
 		time_t atime = mytime(nullptr);
@@ -140,7 +140,7 @@ void CSBFSpot::Do_Work()
 			mytime(&m_LastHeartbeat);
 		}
 	}
-	Log(LOG_STATUS,"SBFSpot: Worker stopped...");
+	Log(LOG_STATUS,"Worker stopped...");
 }
 
 bool CSBFSpot::WriteToHardware(const char *pdata, const unsigned char length)
@@ -437,12 +437,12 @@ void CSBFSpot::GetMeterDetails()
 {
 	if (m_SBFDataPath.empty())
 	{
-		Log(LOG_ERROR, "SBFSpot: Data path empty!");
+		Log(LOG_ERROR, "Data path empty!");
 		return;
 	}
 	if (m_SBFPlantName.empty())
 	{
-		Log(LOG_ERROR, "SBFSpot: Plant name empty!");
+		Log(LOG_ERROR, "Plant name empty!");
 		return;
 	}
 
@@ -479,7 +479,7 @@ void CSBFSpot::GetMeterDetails()
 	{
 		if ((ActHourMin > sunRise) && (ActHourMin < sunSet))
 		{
-			Log(LOG_ERROR, "SBFSpot: Could not open spot file: %s", szLogFile);
+			Log(LOG_ERROR, "Could not open spot file: %s", szLogFile);
 		}
 		return;
 	}
@@ -532,7 +532,7 @@ void CSBFSpot::GetMeterDetails()
 
 	if (szLastLines.empty())
 	{
-		Log(LOG_ERROR, "SBFSpot: No data record found in spot file!");
+		Log(LOG_ERROR, "No data record found in spot file!");
 		return;
 	}
 
@@ -552,12 +552,12 @@ void CSBFSpot::GetMeterDetails()
 
 		if (results[1].empty())
 		{
-			Log(LOG_ERROR, "SBFSpot: No data record found in spot file!");
+			Log(LOG_ERROR, "No data record found in spot file!");
 			return;
 		}
 		if ((results[28] != "OK") && (results[28] != "Ok"))
 		{
-			Log(LOG_ERROR, "SBFSpot: Invalid field [28] should be OK!");
+			Log(LOG_ERROR, "Invalid field [28] should be OK!");
 			return;
 		}
 
@@ -618,7 +618,7 @@ void CSBFSpot::GetMeterDetails()
 		{
 			if (kWhCounter < (int)(LastTotal * 100) / 100)
 			{
-				Log(LOG_ERROR, "SBFSpot: Actual KwH counter (%f) less then last Counter (%f)!", kWhCounter, LastTotal);
+				Log(LOG_ERROR, "Actual KwH counter (%f) less then last Counter (%f)!", kWhCounter, LastTotal);
 				return;
 			}
 		}

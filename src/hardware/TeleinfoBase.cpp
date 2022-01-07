@@ -117,7 +117,7 @@ void CTeleinfoBase::ProcessTeleinfo(const std::string& name, int rank, Teleinfo&
 	// We need to limit the number of Teleinfo devices per hardware because of the subID in sensors. i
 	if ((rank < 1) || (rank > 4))
 	{
-		Log(LOG_ERROR, "(%s) TeleinfoBase: Invalid rank passed to function (%i), must be between 1 and 4", m_Name.c_str(), rank);
+		Log(LOG_ERROR, "Invalid rank passed to function (%i), must be between 1 and 4", rank);
 		return;
 	}
 	rank = rank - 1;		// Now it is 0 to 3
@@ -175,7 +175,7 @@ void CTeleinfoBase::ProcessTeleinfo(const std::string& name, int rank, Teleinfo&
 	// Process only if maximum time between updates (5mn) has been reached (or power consumption changed => removed)
 	// If it did not, then alerts and intensity have not changed either
 #ifdef DEBUG_TeleinfoBase
-	Log(LOG_NORM, "(%s) TeleinfoBase called. Power changed: %s, last update %.f sec", m_Name.c_str(), (teleinfo.pAlertPAPP != teleinfo.PAPP) ? "true" : "false", difftime(atime, teleinfo.last));
+	Log(LOG_NORM, "TeleinfoBase called. Power changed: %s, last update %.f sec", (teleinfo.pAlertPAPP != teleinfo.PAPP) ? "true" : "false", difftime(atime, teleinfo.last));
 #endif
 	// 1.6 version: if ((teleinfo.pAlertPAPP != teleinfo.PAPP) || (difftime(atime, teleinfo.last) >= 290))
 
@@ -445,7 +445,7 @@ bool CTeleinfoBase::isCheckSumOk(const std::string& sLine, int& isMode1)
 		if (isMode1 != (int)true)// This will evaluate to false when isMode still equals to 255 at second run
 		{
 			isMode1 = true;
-			Log(LOG_STATUS, "(%s) Teleinfo CRC check mode set to 1", m_Name.c_str());
+			Log(LOG_STATUS, "CRC check mode set to 1");
 		}
 	}
 	else if (mode2 == checksum)
@@ -454,16 +454,16 @@ bool CTeleinfoBase::isCheckSumOk(const std::string& sLine, int& isMode1)
 		if (isMode1 != false)	 // if this is first run, will still be at 255
 		{
 			isMode1 = false;
-			Log(LOG_STATUS, "(%s) TeleinfoCRC check mode set to 2", m_Name.c_str());
+			Log(LOG_STATUS, "CRC check mode set to 2");
 		}
 	}
 	else						 // Don't send an error on the first run as the line is probably truncated, wait for mode to be initialised
 		if (isMode1 != 255)
-			Log(LOG_ERROR, "(%s) CRC check failed on Teleinfo line '%s' using both modes 1 and 2. Line skipped.", m_Name.c_str(), sLine.c_str());
+			Log(LOG_ERROR, "CRC check failed on Teleinfo line '%s' using both modes 1 and 2. Line skipped.", sLine.c_str());
 
 	if (line_ok)
 	{
-		Debug(DEBUG_HARDWARE, "(%s) CRC check passed on Teleinfo line '%s'. Line processed", m_Name.c_str(), sLine.c_str());
+		Debug(DEBUG_HARDWARE, "CRC check passed on Teleinfo line '%s'. Line processed", sLine.c_str());
 	}
 
 	return line_ok;

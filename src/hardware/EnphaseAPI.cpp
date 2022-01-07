@@ -92,7 +92,7 @@ bool EnphaseAPI::StopHardware()
 
 void EnphaseAPI::Do_Work()
 {
-	Log(LOG_STATUS, "EnphaseAPI Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 	int sec_counter = Enphase_request_INTERVAL - 5;
 
 	while (!IsStopRequested(1000))
@@ -114,7 +114,7 @@ void EnphaseAPI::Do_Work()
 			}
 		}
 	}
-	Log(LOG_STATUS, "EnphaseAPI Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 bool EnphaseAPI::WriteToHardware(const char* /*pdata*/, const unsigned char /*length*/)

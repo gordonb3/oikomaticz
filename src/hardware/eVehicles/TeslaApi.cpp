@@ -295,12 +295,12 @@ bool CTeslaApi::GetData(const std::string &datatype, Json::Value &reply)
 
 	if (!SendToApi(Get, _sUrl, "", _sResponse, *(new std::vector<std::string>()), reply, true))
 	{
-		m_pBase->Log(LOG_ERROR, "TeslaApi: Failed to get data %s.", datatype.c_str());
+		m_pBase->Log(LOG_ERROR, "Failed to get data %s.", datatype.c_str());
 		return false;
 	}
 
-	//m_pBase->Log(LOG_NORM, "TeslaApi: Get data %s received reply: %s", datatype.c_str(), _sResponse.c_str());
-	m_pBase->Debug(DEBUG_NORM, "TeslaApi: Get data %s received reply: %s", datatype.c_str(), _sResponse.c_str());
+	//m_pBase->Log(LOG_NORM, "Get data %s received reply: %s", datatype.c_str(), _sResponse.c_str());
+	m_pBase->Debug(DEBUG_NORM, "Get data %s received reply: %s", datatype.c_str(), _sResponse.c_str());
 
 	return true;
 }
@@ -316,11 +316,11 @@ bool CTeslaApi::FindCarInAccount()
 
 	if (!SendToApi(Get, _sUrl, "", _sResponse, *(new std::vector<std::string>()), _jsRoot, true))
 	{
-		m_pBase->Log(LOG_ERROR, "TeslaApi: Failed to get car from account.");
+		m_pBase->Log(LOG_ERROR, "Failed to get car from account.");
 		return false;
 	}
 
-	m_pBase->Debug(DEBUG_NORM, "TeslaApi: Received %d vehicles from API: %s", _jsRoot["count"].asInt(), _sResponse.c_str());
+	m_pBase->Debug(DEBUG_NORM, "Received %d vehicles from API: %s", _jsRoot["count"].asInt(), _sResponse.c_str());
 	for (int i = 0; i < _jsRoot["count"].asInt(); i++)
 	{
 		if (_jsRoot["response"][i]["vin"].asString() == m_VIN)
@@ -352,7 +352,7 @@ bool CTeslaApi::IsAwake()
 		nr_retry++;
 		if (nr_retry == 4)
 		{
-			m_pBase->Log(LOG_ERROR, "TeslaApi: Failed to get awake state.");
+			m_pBase->Log(LOG_ERROR, "Failed to get awake state.");
 			return false;
 		}
 	}
@@ -440,12 +440,12 @@ bool CTeslaApi::SendCommand(const std::string &command, Json::Value &reply, cons
 
 	if (!SendToApi(Post, _sUrl, sPostData, _sResponse, *(new std::vector<std::string>()), reply, true))
 	{
-		m_pBase->Log(LOG_ERROR, "TeslaApi: Failed to send command %s.", command.c_str());
+		m_pBase->Log(LOG_ERROR, "Failed to send command %s.", command.c_str());
 		return false;
 	}
 
-	//m_pBase->Log(LOG_NORM, "TeslaApi: Command %s received reply: %s", command.c_str(), _sResponse.c_str());
-	m_pBase->Debug(DEBUG_NORM, "TeslaApi: Command %s received reply: %s", command.c_str(), _sResponse.c_str());
+	//m_pBase->Log(LOG_NORM, "Command %s received reply: %s", command.c_str(), _sResponse.c_str());
+	m_pBase->Debug(DEBUG_NORM, "Command %s received reply: %s", command.c_str(), _sResponse.c_str());
 
 	return true;
 }
@@ -514,11 +514,11 @@ bool CTeslaApi::GetAuthToken(const std::string &username, const std::string &pas
 	m_refreshtoken = _jsRoot["refresh_token"].asString();
 	if (m_refreshtoken.empty())
 	{
-		m_pBase->Log(LOG_ERROR, "TeslaApi: Received refresh token is zero length.");
+		m_pBase->Log(LOG_ERROR, "Received refresh token is zero length.");
 		return false;
 	}
 
-	m_pBase->Debug(DEBUG_NORM, "TeslaApi: Received access token from API.");
+	m_pBase->Debug(DEBUG_NORM, "Received access token from API.");
 
 	return true;
 }
@@ -573,12 +573,12 @@ bool CTeslaApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, con
 				{
 					if ((_vResponseHeader.find("HTTP") != std::string::npos) && (_vResponseHeader.find("401") != std::string::npos))
 					{
-						m_pBase->Log(LOG_ERROR, "TeslaApi: Access token no longer valid. Clearing token.");
+						m_pBase->Log(LOG_ERROR, "Access token no longer valid. Clearing token.");
 						m_authtoken = "";
 					}
 					_ssResponseHeaderString << _vResponseHeader;
 				}
-				m_pBase->Debug(DEBUG_NORM, "TeslaApi: Failed to perform POST request to Api: %s; Response headers: %s", sResponse.c_str(), _ssResponseHeaderString.str().c_str());
+				m_pBase->Debug(DEBUG_NORM, "Failed to perform POST request to Api: %s; Response headers: %s", sResponse.c_str(), _ssResponseHeaderString.str().c_str());
 				return false;
 			}
 			break;
@@ -590,12 +590,12 @@ bool CTeslaApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, con
 				{
 					if ((_vResponseHeader.find("HTTP") != std::string::npos) && (_vResponseHeader.find("401") != std::string::npos))
 					{
-						m_pBase->Log(LOG_ERROR, "TeslaApi: Access token no longer valid. Clearing token.");
+						m_pBase->Log(LOG_ERROR, "Access token no longer valid. Clearing token.");
 						m_authtoken = "";
 					}
 					_ssResponseHeaderString << _vResponseHeader;
 				}
-				m_pBase->Debug(DEBUG_NORM, "TeslaApi: Failed to perform GET request to Api: %s; Response headers: %s", sResponse.c_str(), _ssResponseHeaderString.str().c_str());
+				m_pBase->Debug(DEBUG_NORM, "Failed to perform GET request to Api: %s; Response headers: %s", sResponse.c_str(), _ssResponseHeaderString.str().c_str());
 
 				return false;
 			}

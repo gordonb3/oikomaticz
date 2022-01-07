@@ -63,20 +63,20 @@ void CZiBlueSerial::Do_Work()
 								{
 									time_t atime = mytime(nullptr);
 									//Send ping (keep alive)
-									//Log(LOG_STATUS, "ZiBlue: t1=%d t3=%d", atime,
+									//Log(LOG_STATUS, "t1=%d t3=%d", atime,
 				   m_LastReceivedTime); if (atime - m_LastReceivedTime > 50) {
 										//Receive Timeout
-										//Log(LOG_STATUS, "ZiBlue: ping50...");
+										//Log(LOG_STATUS, "ping50...");
 										write("10;PING;\n");
 										m_retrycntr = 0;
 										m_LastReceivedTime = atime;
 									} else {
 										if (atime - m_LastReceivedTime > 25) {
-										   //Log(LOG_STATUS, "ZiBlue: ping25...");
+										   //Log(LOG_STATUS, "ping25...");
 										   write("10;PING;\n");
 										}
 										//else {
-											//Log(LOG_STATUS, "ZiBlue: ping0...");
+											//Log(LOG_STATUS, "ping0...");
 										//}
 									}
 								}
@@ -88,7 +88,7 @@ void CZiBlueSerial::Do_Work()
 		{
 			if (m_retrycntr == 0)
 			{
-				Log(LOG_STATUS, "ZiBlue: serial retrying in %d seconds...", ZiBlue_RETRY_DELAY);
+				Log(LOG_STATUS, "serial retrying in %d seconds...", ZiBlue_RETRY_DELAY);
 			}
 			m_retrycntr++;
 			if (m_retrycntr / 5 >= ZiBlue_RETRY_DELAY)
@@ -101,7 +101,7 @@ void CZiBlueSerial::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS, "ZiBlue: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 bool CZiBlueSerial::OpenSerialDevice()
@@ -110,11 +110,11 @@ bool CZiBlueSerial::OpenSerialDevice()
 	try
 	{
 		open(m_szSerialPort, 115200);
-		Log(LOG_STATUS, "ZiBlue: Using serial port: %s", m_szSerialPort.c_str());
+		Log(LOG_STATUS, "Using serial port: %s", m_szSerialPort.c_str());
 	}
 	catch (boost::exception &e)
 	{
-		Log(LOG_ERROR, "EZiBlue: rror opening serial port!");
+		Log(LOG_ERROR, "Error opening serial port!");
 #ifdef _DEBUG
 		Log(LOG_ERROR, "-----------------\n%s\n----------------", boost::diagnostic_information(e).c_str());
 #else
@@ -124,7 +124,7 @@ bool CZiBlueSerial::OpenSerialDevice()
 	}
 	catch (...)
 	{
-		Log(LOG_ERROR, "ZiBlue: Error opening serial port!!!");
+		Log(LOG_ERROR, "Error opening serial port!!!");
 		return false;
 	}
 	m_bIsStarted = true;

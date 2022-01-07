@@ -71,7 +71,7 @@ void CVoltCraftCO20::Do_Work()
 			GetSensorDetails();
 		}
 	}
-	Log(LOG_STATUS, "Voltcraft CO-20: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 bool CVoltCraftCO20::WriteToHardware(const char *pdata, const unsigned char length)
@@ -103,7 +103,7 @@ static int read_one_sensor(struct usb_device *dev, uint16_t &value)
 	ret = usb_get_driver_np(devh, 0 /*intrf*/, driver_name, sizeof(driver_name));
 	if (!ret)
 	{
-		_log.Log(LOG_ERROR, "Voltcraft CO-20: Warning: device is claimed by driver %s, trying to unbind it.", driver_name);
+		_log.Log(LOG_ERROR, "Warning: device is claimed by driver %s, trying to unbind it.", driver_name);
 		ret = usb_detach_kernel_driver_np(devh, 0 /*intrf*/);
 		if (ret)
 		{
@@ -118,7 +118,7 @@ static int read_one_sensor(struct usb_device *dev, uint16_t &value)
 	ret = usb_claim_interface(devh, 0 /*intrf*/);
 	if (ret)
 	{
-		_log.Log(LOG_ERROR, "Voltcraft CO-20: usb_claim_interface() failed with error %d=%s", ret, strerror(-ret));
+		_log.Log(LOG_ERROR, "usb_claim_interface() failed with error %d=%s", ret, strerror(-ret));
 		ret = -3;
 		goto out;
 	}
@@ -127,7 +127,7 @@ static int read_one_sensor(struct usb_device *dev, uint16_t &value)
 	ret = usb_interrupt_write(devh, 0x0002 /*endpoint*/, usb_io_buf, 0x10 /*len*/, 1000 /*msec*/);
 	if (ret < 0)
 	{
-		_log.Log(LOG_ERROR, "Voltcraft CO-20: Failed to usb_interrupt_write() the initial buffer, ret = %d", ret);
+		_log.Log(LOG_ERROR, " Failed to usb_interrupt_write() the initial buffer, ret = %d", ret);
 		ret = -4;
 		goto out_unlock;
 	}
@@ -136,7 +136,7 @@ static int read_one_sensor(struct usb_device *dev, uint16_t &value)
 	ret = usb_interrupt_read(devh, 0x0081 /*endpoint*/, usb_io_buf, 0x10 /*len*/, 1000 /*msec*/);
 	if (ret < 0)
 	{
-		_log.Log(LOG_ERROR, "Voltcraft CO-20: Failed to usb_interrupt_read() #1");
+		_log.Log(LOG_ERROR, "Failed to usb_interrupt_read() #1");
 		ret = -5;
 		goto out_unlock;
 	}
@@ -206,7 +206,7 @@ void CVoltCraftCO20::GetSensorDetails()
 		{
 			if (voc == 3000)
 			{
-				Log(LOG_ERROR, "Voltcraft CO-20: Sensor data out of range!!");
+				Log(LOG_ERROR, "Sensor data out of range!!");
 				return;
 			}
 			SendAirQualitySensor(1, 1, 255, voc, "Air Quality");

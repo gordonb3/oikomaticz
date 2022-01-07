@@ -79,7 +79,7 @@ bool CHttpPoller::StopHardware()
 void CHttpPoller::Do_Work()
 {
 	int sec_counter = 300 - 5;
-	Log(LOG_STATUS, "Http: Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 	while (!IsStopRequested(1000))
 	{
 		sec_counter++;
@@ -90,7 +90,7 @@ void CHttpPoller::Do_Work()
 			GetScript();
 		}
 	}
-	Log(LOG_STATUS,"Http: Worker stopped...");
+	Log(LOG_STATUS,"Worker stopped...");
 }
 
 void CHttpPoller::GetScript()

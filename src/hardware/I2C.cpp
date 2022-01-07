@@ -154,7 +154,7 @@ I2C::I2C(const int ID, const _eI2CType DevType, const std::string &Address, cons
 	, m_ActI2CBus(SerialPort)
 	, m_invert_data((bool)Mode1)
 {
-	Log(LOG_STATUS, "I2C  Start HW witf ID: %d Name: %s Address: %d Port: %s Invert:%d ", ID, szI2CTypeNames[m_dev_type], m_i2c_addr, m_ActI2CBus.c_str(), m_invert_data);
+	Log(LOG_STATUS, "Start HW witf ID: %d Name: %s Address: %d Port: %s Invert:%d ", ID, szI2CTypeNames[m_dev_type], m_i2c_addr, m_ActI2CBus.c_str(), m_invert_data);
 	m_HwdID = ID;
 	if (m_ActI2CBus.empty())
 	{ // if empty option then autodetect i2c bus
@@ -480,12 +480,12 @@ void I2C::MCP23017_ReadChipDetails()
 
 	if (rc < 0)
 	{
-		Log(LOG_NORM, "I2C::MCP23017_ReadChipDetails. %s. Failed to read from I2C device at address: 0x%x", szI2CTypeNames[m_dev_type], m_i2c_addr);
+		Log(LOG_NORM, "MCP23017_ReadChipDetails. %s. Failed to read from I2C device at address: 0x%x", szI2CTypeNames[m_dev_type], m_i2c_addr);
 		return; // read from i2c failed
 	}
 	if (data.word == 0xFFFF)
 	{ // if oidir port is 0xFFFF means the chip has been reset
-		Log(LOG_NORM, "I2C::MCP23017_ReadChipDetails, Cur_iodir: 0xFFFF, call MCP23017_Init");
+		Log(LOG_NORM, "MCP23017_ReadChipDetails, Cur_iodir: 0xFFFF, call MCP23017_Init");
 		MCP23017_Init(); // initialize gpio pins with switch status from db
 	}
 #endif
@@ -513,14 +513,14 @@ int I2C::MCP23017_WritePin(uint8_t pin_number, uint8_t value)
 	rc = I2CReadReg16(fd, MCP23x17_GPIOA, &cur_data); // get current gio port value
 	if (rc < 0)
 	{
-		Log(LOG_NORM, "I2C::MCP23017_WritePin. %s. Failed to read from I2C device at address: 0x%x", szI2CTypeNames[m_dev_type], m_i2c_addr);
+		Log(LOG_NORM, "MCP23017_WritePin. %s. Failed to read from I2C device at address: 0x%x", szI2CTypeNames[m_dev_type], m_i2c_addr);
 		close(fd);
 		return -2; // read from i2c failed
 	}
 	rc = I2CReadReg16(fd, MCP23x17_IODIRA, &cur_iodir); // get current iodir port value
 	if (rc < 0)
 	{ // read from i2c failed
-		Log(LOG_NORM, "I2C::MCP23017_WritePin. %s. Failed to read from I2C device at address: 0x%x", szI2CTypeNames[m_dev_type], m_i2c_addr);
+		Log(LOG_NORM, "MCP23017_WritePin. %s. Failed to read from I2C device at address: 0x%x", szI2CTypeNames[m_dev_type], m_i2c_addr);
 		close(fd);
 		return -2; // read from i2c failed
 	}
@@ -535,13 +535,13 @@ int I2C::MCP23017_WritePin(uint8_t pin_number, uint8_t value)
 	{ // if value change write new value
 		if (I2CWriteReg16(fd, MCP23x17_GPIOA, new_data) < 0)
 		{
-			Log(LOG_ERROR, "I2C::MCP23017_WritePin. %s: Failed to write to I2C device at address: 0x%x", szI2CTypeNames[m_dev_type], m_i2c_addr);
+			Log(LOG_ERROR, "MCP23017_WritePin. %s: Failed to write to I2C device at address: 0x%x", szI2CTypeNames[m_dev_type], m_i2c_addr);
 			close(fd);
 			return -3;
 		}
 		if (I2CWriteReg16(fd, MCP23x17_IODIRA, cur_iodir.word) < 0)
 		{ // write to iodir register, set gpio pin as output
-			Log(LOG_ERROR, "I2C::MCP23017_WritePin. %s: Failed to write to I2C device at address: 0x%x", szI2CTypeNames[m_dev_type], m_i2c_addr);
+			Log(LOG_ERROR, "MCP23017_WritePin. %s: Failed to write to I2C device at address: 0x%x", szI2CTypeNames[m_dev_type], m_i2c_addr);
 			close(fd);
 			return -3; // write to i2c failed
 		}

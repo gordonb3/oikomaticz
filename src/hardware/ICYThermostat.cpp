@@ -68,7 +68,7 @@ bool CICYThermostat::StopHardware()
 void CICYThermostat::Do_Work()
 {
 	int sec_counter = ICY_POLL_INTERVAL - 5;
-	Log(LOG_STATUS, "ICYThermostat: Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 	while (!IsStopRequested(1000))
 	{
 		sec_counter++;
@@ -81,7 +81,7 @@ void CICYThermostat::Do_Work()
 			GetMeterDetails();
 		}
 	}
-	Log(LOG_STATUS, "ICYThermostat: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 bool CICYThermostat::WriteToHardware(const char * /*pdata*/, const unsigned char /*length*/)
@@ -122,7 +122,7 @@ bool CICYThermostat::GetSerialAndToken()
 
 	if (!HTTPClient::POST(sURL, szPostdata, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "ICYThermostat:  Error login!");
+		Log(LOG_ERROR, "Error login!");
 		return false;
 	}
 	if (sResult.find("BadLogin") != std::string::npos)
@@ -134,7 +134,7 @@ bool CICYThermostat::GetSerialAndToken()
 			sResult = "";
 			if (!HTTPClient::POST(sURL, szPostdata, ExtraHeaders, sResult))
 			{
-				Log(LOG_ERROR, "ICYThermostat:  Error login!");
+				Log(LOG_ERROR, "Error login!");
 				return false;
 			}
 			if (sResult.find("BadLogin") != std::string::npos)
@@ -146,25 +146,25 @@ bool CICYThermostat::GetSerialAndToken()
 					sResult = "";
 					if (!HTTPClient::POST(sURL, szPostdata, ExtraHeaders, sResult))
 					{
-						Log(LOG_ERROR, "ICYThermostat:  Error login!");
+						Log(LOG_ERROR, "Error login!");
 						return false;
 					}
 					if (sResult.find("BadLogin") != std::string::npos)
 					{
-						Log(LOG_ERROR, "ICYThermostat: Error login! (Check username/password)");
+						Log(LOG_ERROR, "Error login! (Check username/password)");
 						return false;
 					}
 				}
 				else
 				{
-					Log(LOG_ERROR, "ICYThermostat: Error login! (Check username/password)");
+					Log(LOG_ERROR, "Error login! (Check username/password)");
 					return false;
 				}
 			}
 		}
 		else
 		{
-			Log(LOG_ERROR, "ICYThermostat: Error login! (Check username/password)");
+			Log(LOG_ERROR, "Error login! (Check username/password)");
 			return false;
 		}
 	}
@@ -174,18 +174,18 @@ bool CICYThermostat::GetSerialAndToken()
 	bool ret = ParseJSon(sResult, root);
 	if ((!ret) || (!root.isObject()))
 	{
-		Log(LOG_ERROR, "ICYThermostat: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	if (root["serialthermostat1"].empty() == true)
 	{
-		Log(LOG_ERROR, "ICYThermostat: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	m_SerialNumber = root["serialthermostat1"].asString();
 	if (root["token"].empty() == true)
 	{
-		Log(LOG_ERROR, "ICYThermostat: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	m_Token = root["token"].asString();
@@ -229,7 +229,7 @@ void CICYThermostat::GetMeterDetails()
 
 	if (!HTTPClient::GET(sURL, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "ICYThermostat: Error getting data!");
+		Log(LOG_ERROR, "Error getting data!");
 		return;
 	}
 
@@ -238,18 +238,18 @@ void CICYThermostat::GetMeterDetails()
 	bool ret = ParseJSon(sResult, root);
 	if ((!ret) || (!root.isObject()))
 	{
-		Log(LOG_ERROR, "ICYThermostat: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		return;
 	}
 	if (root["temperature1"].empty() == true)
 	{
-		Log(LOG_ERROR, "ICYThermostat: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		return;
 	}
 	SendSetPointSensor(1, root["temperature1"].asFloat(), "Room Setpoint");
 	if (root["temperature2"].empty() == true)
 	{
-		Log(LOG_ERROR, "ICYThermostat: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		return;
 	}
 	SendTempSensor(1, 255, root["temperature2"].asFloat(), "Room Temperature");
@@ -283,7 +283,7 @@ void CICYThermostat::SetSetpoint(const int idx, const float temp)
 
 		if (!HTTPClient::POST(sURL, szPostdata, ExtraHeaders, sResult))
 		{
-			Log(LOG_ERROR, "ICYThermostat: Error setting SetPoint temperature!");
+			Log(LOG_ERROR, "Error setting SetPoint temperature!");
 		}
 		else
 		{

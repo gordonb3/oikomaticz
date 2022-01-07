@@ -71,7 +71,7 @@ void CTE923::Do_Work()
 			GetSensorDetails();
 		}
 	}
-	Log(LOG_STATUS,"TE923: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 bool CTE923::WriteToHardware(const char *pdata, const unsigned char length)
@@ -102,7 +102,7 @@ void CTE923::GetSensorDetails()
 		}
 		if (!_te923tool2.GetData(&data, &dev))
 		{
-			Log(LOG_ERROR, "TE923: Could not read weather data!");
+			Log(LOG_ERROR, "Could not read weather data!");
 			return;
 		}
 		_te923tool2.CloseDevice();
@@ -117,12 +117,12 @@ void CTE923::GetSensorDetails()
 
 	if (data._press != 0)
 	{
-		Log(LOG_ERROR, "TE923: No Barometric pressure in weather station, reading skipped!");
+		Log(LOG_ERROR, "No Barometric pressure in weather station, reading skipped!");
 		return;
 	}
 	if ((data.press < 800) || (data.press > 1200))
 	{
-		Log(LOG_ERROR, "TE923: Invalid weather station data received (baro)!");
+		Log(LOG_ERROR, "Invalid weather station data received (baro)!");
 		return;
 	}
 
@@ -133,7 +133,7 @@ void CTE923::GetSensorDetails()
 		{
 			if ((data.t[ii] < -60) || (data.t[ii] > 60))
 			{
-				Log(LOG_ERROR, "TE923: Invalid weather station data received (temp)!");
+				Log(LOG_ERROR, "Invalid weather station data received (temp)!");
 				return;
 			}
 		}

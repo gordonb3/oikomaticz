@@ -127,7 +127,7 @@ void CDenkoviUSBDevices::Do_Work()
 
 	int msec_counter = 0;
 
-	Log(LOG_STATUS, "Denkovi: Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 
 	while (!IsStopRequested(100))
 	{
@@ -143,7 +143,7 @@ void CDenkoviUSBDevices::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS, "Denkovi: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 bool CDenkoviUSBDevices::WriteToHardware(const char *pdata, const unsigned char /*length*/)
@@ -180,7 +180,7 @@ bool CDenkoviUSBDevices::WriteToHardware(const char *pdata, const unsigned char 
 		return true;
 	}
 	}
-	Log(LOG_ERROR, "Denkovi: Unknown Device!");
+	Log(LOG_ERROR, "Unknown Device!");
 	return false;
 }
 

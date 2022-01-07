@@ -72,7 +72,7 @@ bool FritzboxTCP::StopHardware()
 
 void FritzboxTCP::OnConnect()
 {
-	Log(LOG_STATUS,"Fritzbox: connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+	Log(LOG_STATUS,"connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 	m_bIsStarted=true;
 	m_bufferpos=0;
 
@@ -81,7 +81,7 @@ void FritzboxTCP::OnConnect()
 
 void FritzboxTCP::OnDisconnect()
 {
-	Log(LOG_STATUS,"Fritzbox: disconnected");
+	Log(LOG_STATUS,"disconnected");
 }
 
 void FritzboxTCP::Do_Work()
@@ -98,7 +98,7 @@ void FritzboxTCP::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS,"Fritzbox: TCP/IP Worker stopped...");
+	Log(LOG_STATUS,"TCP/IP Worker stopped...");
 }
 
 void FritzboxTCP::OnData(const unsigned char *pData, size_t length)
@@ -116,17 +116,17 @@ void FritzboxTCP::OnError(const boost::system::error_code& error)
 		(error == boost::asio::error::timed_out)
 		)
 	{
-		Log(LOG_ERROR, "Fritzbox: Can not connect to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+		Log(LOG_ERROR, "Can not connect to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 	}
 	else if (
 		(error == boost::asio::error::eof) ||
 		(error == boost::asio::error::connection_reset)
 		)
 	{
-		Log(LOG_STATUS, "Fritzbox: Connection reset!");
+		Log(LOG_STATUS, "Connection reset!");
 	}
 	else
-		Log(LOG_ERROR, "Fritzbox: %s", error.message().c_str());
+		Log(LOG_ERROR, "%s", error.message().c_str());
 }
 
 bool FritzboxTCP::WriteToHardware(const char *pdata, const unsigned char length)

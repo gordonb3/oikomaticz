@@ -43,7 +43,7 @@ bool CZiBlueTCP::StopHardware()
 
 void CZiBlueTCP::OnConnect()
 {
-	Log(LOG_STATUS, "ZiBlue: connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+	Log(LOG_STATUS, "connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 	m_bIsStarted = true;
 	m_rfbufferpos = 0;
 	m_LastReceivedTime = mytime(nullptr);
@@ -53,13 +53,13 @@ void CZiBlueTCP::OnConnect()
 
 void CZiBlueTCP::OnDisconnect()
 {
-	Log(LOG_STATUS, "ZiBlue: disconnected");
+	Log(LOG_STATUS, "disconnected");
 }
 
 void CZiBlueTCP::Do_Work()
 {
 	int sec_counter = 0;
-	Log(LOG_STATUS, "ZiBlue: trying to connect to %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+	Log(LOG_STATUS, "trying to connect to %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 	connect(m_szIPAddress, m_usIPPort);
 	while (!IsStopRequested(1000))
 	{
@@ -72,7 +72,7 @@ void CZiBlueTCP::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS, "ZiBlue: TCP/IP Worker stopped...");
+	Log(LOG_STATUS, "TCP/IP Worker stopped...");
 }
 
 void CZiBlueTCP::OnData(const unsigned char *pData, size_t length)
@@ -85,14 +85,14 @@ void CZiBlueTCP::OnError(const boost::system::error_code &error)
 	if ((error == boost::asio::error::address_in_use) || (error == boost::asio::error::connection_refused) || (error == boost::asio::error::access_denied) ||
 	    (error == boost::asio::error::host_unreachable) || (error == boost::asio::error::timed_out))
 	{
-		Log(LOG_ERROR, "ZiBlue: Can not connect to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+		Log(LOG_ERROR, "Can not connect to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 	}
 	else if ((error == boost::asio::error::eof) || (error == boost::asio::error::connection_reset))
 	{
-		Log(LOG_STATUS, "ZiBlue: Connection reset!");
+		Log(LOG_STATUS, "Connection reset!");
 	}
 	else
-		Log(LOG_ERROR, "ZiBlue: %s", error.message().c_str());
+		Log(LOG_ERROR, "%s", error.message().c_str());
 }
 
 bool CZiBlueTCP::WriteInt(const std::string &sendString)

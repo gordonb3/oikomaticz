@@ -267,7 +267,7 @@ void CSysfsGpio::Do_Work()
 
 				if (!result.empty())
 				{
-					Log(LOG_STATUS, "Sysfs GPIO: Update master devices");
+					Log(LOG_STATUS, "Update master devices");
 					UpdateDomoticzInputs(true);
 				}
 			}
@@ -294,7 +294,7 @@ void CSysfsGpio::Do_Work()
 		}
 	}
 
-	Log(LOG_STATUS, "Sysfs GPIO: Worker stopped");
+	Log(LOG_STATUS, "Worker stopped");
 }
 
 void CSysfsGpio::EdgeDetectThread()
@@ -342,7 +342,7 @@ void CSysfsGpio::EdgeDetectThread()
 		}
 	}
 
-	Log(LOG_STATUS, "Sysfs GPIO: Edge detection started");
+	Log(LOG_STATUS, "Edge detection started");
 
 	while (!IsStopRequested(0)) /* detect gpio state changes */
 	{
@@ -407,7 +407,7 @@ void CSysfsGpio::EdgeDetectThread()
 		}
 	}
 
-	Log(LOG_STATUS, "Sysfs GPIO: Edge detection stopped");
+	Log(LOG_STATUS, "Edge detection stopped");
 }
 
 void CSysfsGpio::Init()
@@ -468,7 +468,7 @@ void CSysfsGpio::Init()
 
 	UpdateDomoticzInputs(false); /* Make sure database inputs are in sync with actual hardware */
 
-	Log(LOG_STATUS, "Sysfs GPIO: Startup - polling:%s interrupts:%s debounce:%dmsec inputs:%d outputs:%d", m_polling_enabled ? "yes" : "no", m_interrupts_enabled ? "yes" : "no", m_debounce_msec, input_count,
+	Log(LOG_STATUS, "Startup - polling:%s interrupts:%s debounce:%dmsec inputs:%d outputs:%d", m_polling_enabled ? "yes" : "no", m_interrupts_enabled ? "yes" : "no", m_debounce_msec, input_count,
 	    output_count);
 
 	if (m_interrupts_enabled)
@@ -732,7 +732,7 @@ void CSysfsGpio::UpdateDomoticzInputs(bool forceUpdate)
 
 					if (log_db_change)
 					{
-						Log(LOG_STATUS, "Sysfs GPIO: gpio%d new state = %s", s.pin_number, state ? "on" : "off");
+						Log(LOG_STATUS, "gpio%d new state = %s", s.pin_number, state ? "on" : "off");
 					}
 				}
 			}

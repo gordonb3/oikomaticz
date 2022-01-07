@@ -9,13 +9,13 @@
 
 #include <boost/exception/diagnostic_information.hpp>
 
-#include "../main/Logger.h"
-#include "../main/Helper.h"
-#include "../main/RFXtrx.h"
-#include "../main/SQLHelper.h"
-#include "../main/localtime_r.h"
+#include "main/Logger.h"
+#include "main/Helper.h"
+#include "main/RFXtrx.h"
+#include "main/SQLHelper.h"
+#include "main/localtime_r.h"
 
-#include "hardwaretypes.h"
+#include "hardware/hardwaretypes.h"
 #include "EnOceanESP3.h"
 #include "EnOceanEepProfil.h"
 
@@ -396,7 +396,7 @@ void CEnOceanESP3::TeachInNode(const uint32_t nodeID, const uint16_t manID,
 	const uint8_t RORG, const uint8_t func, const uint8_t type,
 	const TeachinMode teachin_mode)
 {
-	Log(LOG_NORM, "EnOcean Teach-in Node: HwdID %u Node %08X Manufacturer %03X (%s) %sEEP %02X-%02X-%02X (%s)",
+	Log(LOG_NORM, "Teach-in Node: HwdID %u Node %08X Manufacturer %03X (%s) %sEEP %02X-%02X-%02X (%s)",
 		m_HwdID, nodeID, manID, GetManufacturerName(manID),
 		(teachin_mode == GENERIC_NODE) ? "Generic " : ((teachin_mode == VIRTUAL_NODE) ? "Virtual " : ""),
 		RORG, func, type, GetEEPLabel(RORG, func, type));
@@ -470,7 +470,7 @@ void CEnOceanESP3::Do_Work()
 	uint32_t msec_counter = 0;
 	uint32_t sec_counter = 0;
 
-	Log(LOG_STATUS, "EnOcean ESP3 worker started...");
+	Log(LOG_STATUS, "ESP3 worker started...");
 
 	while (!IsStopRequested(200))
 	{ // Loop each 200 ms, until task stop has been requested
@@ -485,7 +485,7 @@ void CEnOceanESP3::Do_Work()
 		if (!isOpen())
 		{ // ESP3 controller is not open
 			if (m_retrycntr == 0)
-				Log(LOG_STATUS, "EnOcean ESP3: Retrying to open in %d seconds...", ESP3_CONTROLLER_RETRY_DELAY);
+				Log(LOG_STATUS, "Retrying to open in %d seconds...", ESP3_CONTROLLER_RETRY_DELAY);
 
 			m_retrycntr++;
 			if (m_retrycntr / 5 >= ESP3_CONTROLLER_RETRY_DELAY)
@@ -500,7 +500,7 @@ void CEnOceanESP3::Do_Work()
 			std::vector<std::string>::iterator it = m_sendqueue.begin();
 			std::string sBytes = *it;
 
-			Debug(DEBUG_HARDWARE, "EnOcean ESP3 Send: %s", DumpESP3Packet(sBytes).c_str());
+			Debug(DEBUG_HARDWARE, "Send: %s", DumpESP3Packet(sBytes).c_str());
 
 			// Write telegram to ESP3 hardware
 			write(sBytes.c_str(), sBytes.size());
@@ -511,12 +511,12 @@ void CEnOceanESP3::Do_Work()
 	}
 	// Close ESP3 hardware
 	terminate();
-	Log(LOG_STATUS, "EnOcean ESP3 worker stopped...");
+	Log(LOG_STATUS, "ESP3 worker stopped...");
 }
 
 #ifdef ENABLE_ESP3_TESTS
 static const std::vector<uint8_t> ESP3TestsCases[] =
-{	
+{
 #ifdef READCALLBACK_TESTS
 // Junk data
 	{ 0x00, 0x01 },
@@ -1481,11 +1481,11 @@ bool CEnOceanESP3::OpenSerialDevice()
 	try
 	{
 		open(m_szSerialPort, 57600); // ECP3 open with 57600
-		Log(LOG_STATUS, "EnOcean ESP3 Using serial port %s", m_szSerialPort.c_str());
+		Log(LOG_STATUS, "Using serial port %s", m_szSerialPort.c_str());
 	}
 	catch (boost::exception & e)
 	{
-		Log(LOG_ERROR, "EnOcean ESP3: Error opening serial port!");
+		Log(LOG_ERROR, "Error opening serial port!");
 #ifdef _DEBUG
 		Log(LOG_ERROR, "-----------------\n%s\n----------------", boost::diagnostic_information(e).c_str());
 #else
@@ -1495,7 +1495,7 @@ bool CEnOceanESP3::OpenSerialDevice()
 	}
 	catch ( ... )
 	{
-		Log(LOG_ERROR, "EnOcean ESP3: Error opening serial port!");
+		Log(LOG_ERROR, "Error opening serial port!");
 		return false;
 	}
 	m_bIsStarted = true;
@@ -1508,14 +1508,14 @@ bool CEnOceanESP3::OpenSerialDevice()
 	sOnConnected(this);
 
 #ifdef ENABLE_ESP3_TESTS
-	Debug(DEBUG_NORM, "------------ EnOcean ESP3 tests begin ---------------------------");
+	Debug(DEBUG_NORM, "------------ ESP3 tests begin ---------------------------");
 	m_sql.AllowNewHardwareTimer(1);
 
 	for (const auto &itt : ESP3TestsCases)
 		ReadCallback((const char *)itt.data(), itt.size());
 
 	m_sql.AllowNewHardwareTimer(0);
-	Debug(DEBUG_NORM, "------------ EnOcean ESP3 tests end -----------------------------");
+	Debug(DEBUG_NORM, "------------ ESP3 tests end -----------------------------");
 #endif
 
 	uint8_t cmd;
@@ -1523,13 +1523,13 @@ bool CEnOceanESP3::OpenSerialDevice()
 	// Request BASE_ID
 	m_id_base = 0;
 	cmd = CO_RD_IDBASE;
-	Debug(DEBUG_HARDWARE, "EnOcean ESP3: Request base ID");
+	Debug(DEBUG_HARDWARE, "Request base ID");
 	SendESP3PacketQueued(PACKET_COMMON_COMMAND, &cmd, 1, nullptr, 0);
 
 	// Request base version
 	m_id_chip = 0;
 	cmd = CO_RD_VERSION;
-	Debug(DEBUG_HARDWARE, "EnOcean ESP3: Request base version");
+	Debug(DEBUG_HARDWARE, "Request base version");
 	SendESP3PacketQueued(PACKET_COMMON_COMMAND, &cmd, 1, nullptr, 0);
 
 	return true;
@@ -1663,7 +1663,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char length
 		}
 		if (tsen->LIGHTING2.unitcode >= 10)
 		{
-			Log(LOG_ERROR, "EnOcean ESP3: Node %08X, double press not supported", nodeID);
+			Log(LOG_ERROR, "Node %08X, double press not supported", nodeID);
 			return false;
 		}
 
@@ -1741,7 +1741,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char length
 			buf[5] = tsen->LIGHTING2.id4;
 			buf[6] = 0x30; // Press button
 
-			Debug(DEBUG_NORM, "EnOcean ESP3 Node %08X, virtual switch, set to %s",
+			Debug(DEBUG_NORM, "Node %08X, virtual switch, set to %s",
 				nodeID, CO ? "On" : "Off");
 
 			SendESP3PacketQueued(PACKET_RADIO_ERP1, buf, 7, nullptr, 0);
@@ -1776,7 +1776,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char length
 				buf[1] = (RockerID << 6) | (CO << 5) | (EB << 4);
 				buf[9] = 0x30;
 
-				Debug(DEBUG_NORM, "EnOcean ESP3 Node %08X, virtual dimmer, set to %s",
+				Debug(DEBUG_NORM, "Node %08X, virtual dimmer, set to %s",
 					nodeID, CO ? "On" : "Off");
 
 				SendESP3PacketQueued(PACKET_RADIO_ERP1, buf, 10, nullptr, 0);
@@ -1798,14 +1798,14 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char length
 				else
 					buf[4] = 0x09; // Dim On
 
-				Debug(DEBUG_NORM, "EnOcean ESP3 Node %08X, virtual dimmer, dimm %s, level %d%%",
+				Debug(DEBUG_NORM, "Node %08X, virtual dimmer, dimm %s, level %d%%",
 					nodeID, (iLevel == 0 || orgcmd == light2_sOff) ? "Off" : "On", iLevel);
 
 				SendESP3PacketQueued(PACKET_RADIO_ERP1, buf, 10, nullptr, 0);
 			}
 			return true;
 		}
-		Log(LOG_ERROR, "EnOcean ESP3: Node %08X (virtual), switch type not supported (%d)", nodeID, switchtype);
+		Log(LOG_ERROR, "Node %08X (virtual), switch type not supported (%d)", nodeID, switchtype);
 		return false;
 	}
 	if ((pNode->RORG == RORG_VLD || pNode->RORG == 0x00)
@@ -1821,7 +1821,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char length
 
 		if (tsen->LIGHTING2.unitcode > 0x1D)
 		{
-			Log(LOG_ERROR, "EnOcean ESP3: Node %08X, channel %d not supported", nodeID, (int) tsen->LIGHTING2.unitcode);
+			Log(LOG_ERROR, "Node %08X, channel %d not supported", nodeID, (int) tsen->LIGHTING2.unitcode);
 			return false;
 		}
 
@@ -1849,7 +1849,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char length
 		// Could be replaced by :
 		// sendVld(m_id_chip, nodeID, D20100_CMD1, 1,0, tsen->LIGHTING2.unitcode - 1, (tsen->LIGHTING2.cmnd == light2_sOn) ? 0x64 : 0x00 , END_ARG_DATA);
 
-		Debug(DEBUG_NORM, "EnOcean ESP3: Send switch %s to Node %08X",
+		Debug(DEBUG_NORM, "Send switch %s to Node %08X",
 			(tsen->LIGHTING2.cmnd == light2_sOn) ? "On" : "Off", nodeID);
 
 		SendESP3PacketQueued(PACKET_RADIO_ERP1, buf, 9, optbuf, 7);

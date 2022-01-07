@@ -185,7 +185,7 @@ bool OnkyoAVTCP::StopHardware()
 
 void OnkyoAVTCP::OnConnect()
 {
-	Log(LOG_STATUS,"OnkyoAVTCP: connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+	Log(LOG_STATUS, "connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 	m_bIsStarted = true;
 
 	SendPacket("NRIQSTN");
@@ -194,7 +194,7 @@ void OnkyoAVTCP::OnConnect()
 
 void OnkyoAVTCP::OnDisconnect()
 {
-	Log(LOG_STATUS,"OnkyoAVTCP: disconnected");
+	Log(LOG_STATUS, "disconnected");
 }
 
 void OnkyoAVTCP::Do_Work()
@@ -212,7 +212,7 @@ void OnkyoAVTCP::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS,"OnkyoAVTCP: TCP/IP Worker stopped...");
+	Log(LOG_STATUS, "TCP/IP Worker stopped...");
 }
 
 void OnkyoAVTCP::OnData(const unsigned char *pData, size_t length)
@@ -225,14 +225,14 @@ void OnkyoAVTCP::OnError(const boost::system::error_code &error)
 	if ((error == boost::asio::error::address_in_use) || (error == boost::asio::error::connection_refused) || (error == boost::asio::error::access_denied) ||
 	    (error == boost::asio::error::host_unreachable) || (error == boost::asio::error::timed_out))
 	{
-		Log(LOG_ERROR, "OnkyoAVTCP: Can not connect to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+		Log(LOG_ERROR, "Can not connect to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 	}
 	else if ((error == boost::asio::error::eof) || (error == boost::asio::error::connection_reset))
 	{
-		Log(LOG_STATUS, "OnkyoAVTCP: Connection reset!");
+		Log(LOG_STATUS, "Connection reset!");
 	}
 	else
-		Log(LOG_ERROR, "OnkyoAVTCP: %s", error.message().c_str());
+		Log(LOG_ERROR, "%s", error.message().c_str());
 }
 
 bool OnkyoAVTCP::WriteToHardware(const char *pdata, const unsigned char /*length*/)
@@ -262,7 +262,7 @@ bool OnkyoAVTCP::WriteToHardware(const char *pdata, const unsigned char /*length
 					result = m_sql.safe_query("SELECT Options FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%08X')", m_HwdID, ID);
 					if (result.empty())
 					{
-						Log(LOG_ERROR, "OnkyoAVTCP: No device with ID %08X", ID);
+						Log(LOG_ERROR, "No device with ID %08X", ID);
 						return false;
 					}
 					std::string val = GetSelectorSwitchLevelAction(m_sql.BuildDeviceOptions(result[0][0]), level);
@@ -307,7 +307,7 @@ bool OnkyoAVTCP::SendPacket(const char *pdata)
 		return false;
 	}
 
-	Log(LOG_NORM, "OnkyoAVTCP: Send %s", pdata);
+	Log(LOG_NORM, "Send %s", pdata);
 	size_t length = strlen(pdata);
 
 	struct eiscp_packet *pPkt = (struct eiscp_packet *)malloc(sizeof(*pPkt) + length);
@@ -470,7 +470,7 @@ bool OnkyoAVTCP::ReceiveXML(const char *pData, int Len)
 	doc.Parse(pData);
 	if (doc.Error())
 	{
-		Log(LOG_ERROR, "OnkyoAVTCP: Failed to parse NRIQSTN result: %s", doc.ErrorDesc());
+		Log(LOG_ERROR, "Failed to parse NRIQSTN result: %s", doc.ErrorDesc());
 		// XX: Fallback, add defaults anyway? */
 		return false;
 	}
@@ -583,7 +583,7 @@ void OnkyoAVTCP::ReceiveMessage(const char *pData, int Len)
 		ReceiveXML(pData, Len);
 		return;
 	}
-	Log(LOG_NORM, "OnkyoAVTCP: Packet received: %d %.*s", Len, Len - 1, pData);
+	Log(LOG_NORM, "Packet received: %d %.*s", Len, Len - 1, pData);
 
 	int i = 0;
 	for (const auto &text : text_types)
@@ -624,7 +624,7 @@ void OnkyoAVTCP::ParseData(const unsigned char *pData, int Len)
 			free(m_pPartialPkt);
 			m_pPartialPkt = nullptr;
 			m_PPktLen = 0;
-			Log(LOG_ERROR, "OnkyoAVTCP: Failed to prepend previous data");
+			Log(LOG_ERROR, "Failed to prepend previous data");
 			// We'll attempt to resync
 		}
 		else

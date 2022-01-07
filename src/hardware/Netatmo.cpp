@@ -126,7 +126,7 @@ void CNetatmo::Do_Work()
 	int sec_counter = 600 - 5;
 	bool bFirstTimeWS = true;
 	bool bFirstTimeTH = true;
-	Log(LOG_STATUS, "Netatmo: Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 	while (!IsStopRequested(1000))
 	{
 		sec_counter++;
@@ -176,7 +176,7 @@ void CNetatmo::Do_Work()
 			}
 		}
 	}
-	Log(LOG_STATUS, "Netatmo: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 bool CNetatmo::Login()
@@ -212,7 +212,7 @@ bool CNetatmo::Login()
 	bool ret = HTTPClient::POST(httpUrl, httpData, ExtraHeaders, sResult);
 	if (!ret)
 	{
-		Log(LOG_ERROR, "Netatmo: Error connecting to Server...");
+		Log(LOG_ERROR, "Error connecting to Server...");
 		return false;
 	}
 
@@ -220,13 +220,13 @@ bool CNetatmo::Login()
 	ret = ParseJSon(sResult, root);
 	if ((!ret) || (!root.isObject()))
 	{
-		Log(LOG_ERROR, "Netatmo: Invalid/no data received...");
+		Log(LOG_ERROR, "Invalid/no data received...");
 		return false;
 	}
 
 	if (root["access_token"].empty() || root["expires_in"].empty() || root["refresh_token"].empty())
 	{
-		Log(LOG_ERROR, "Netatmo: No access granted, check username/password...");
+		Log(LOG_ERROR, "No access granted, check username/password...");
 		return false;
 	}
 
@@ -274,7 +274,7 @@ bool CNetatmo::RefreshToken(const bool bForce)
 	bool ret = HTTPClient::POST(httpUrl, httpData, ExtraHeaders, sResult);
 	if (!ret)
 	{
-		Log(LOG_ERROR, "Netatmo: Error connecting to Server...");
+		Log(LOG_ERROR, "Error connecting to Server...");
 		return false;
 	}
 
@@ -282,7 +282,7 @@ bool CNetatmo::RefreshToken(const bool bForce)
 	ret = ParseJSon(sResult, root);
 	if ((!ret) || (!root.isObject()))
 	{
-		Log(LOG_ERROR, "Netatmo: Invalid/no data received...");
+		Log(LOG_ERROR, "Invalid/no data received...");
 		//Force login next time
 		m_isLogged = false;
 		return false;
@@ -291,7 +291,7 @@ bool CNetatmo::RefreshToken(const bool bForce)
 	if (root["access_token"].empty() || root["expires_in"].empty() || root["refresh_token"].empty())
 	{
 		//Force login next time
-		Log(LOG_ERROR, "Netatmo: No access granted, forcing login again...");
+		Log(LOG_ERROR, "No access granted, forcing login again...");
 		m_isLogged = false;
 		return false;
 	}
@@ -398,20 +398,20 @@ bool CNetatmo::ParseDashboard(const Json::Value &root, const int DevIdx, const i
 		{
 			tNetatmoLastUpdate = root["time_utc"].asUInt();
 		}
-		Debug(DEBUG_HARDWARE, "Netatmo: Module [%s] last update = %s", name.c_str(), ctime(&tNetatmoLastUpdate));
+		Debug(DEBUG_HARDWARE, "Module [%s] last update = %s", name.c_str(), ctime(&tNetatmoLastUpdate));
 		// check if Netatmo data was updated in the past 10 mins (+1 min for sync time lags)... if not means sensors failed to send to cloud
 		if (tNetatmoLastUpdate > (tNow - 660))
 		{
 			if (!m_bNetatmoRefreshed[ID])
 			{
-				Log(LOG_STATUS, "Netatmo: cloud data for module [%s] is now updated again", name.c_str());
+				Log(LOG_STATUS, "cloud data for module [%s] is now updated again", name.c_str());
 				m_bNetatmoRefreshed[ID] = true;
 			}
 		}
 		else
 		{
 			if (m_bNetatmoRefreshed[ID])
-				Log(LOG_ERROR, "Netatmo: cloud data for module [%s] no longer updated (module possibly disconnected)", name.c_str());
+				Log(LOG_ERROR, "cloud data for module [%s] no longer updated (module possibly disconnected)", name.c_str());
 			m_bNetatmoRefreshed[ID] = false;
 			return false;
 		}
@@ -798,7 +798,7 @@ bool CNetatmo::ParseNetatmoGetResponse(const std::string &sResult, const _eNetat
 	bool ret = ParseJSon(sResult, root);
 	if ((!ret) || (!root.isObject()))
 	{
-		Log(LOG_STATUS, "Netatmo: Invalid data received...");
+		Log(LOG_STATUS, "Invalid data received...");
 		return false;
 	}
 	bool bHaveDevices = true;
@@ -819,7 +819,7 @@ bool CNetatmo::ParseNetatmoGetResponse(const std::string &sResult, const _eNetat
 		if ((!bIsThermostat) && (!m_bFirstTimeWeatherData) && (m_bPollWeatherData))
 		{
 			//Do not warn if we check if we have a Thermostat device
-			Log(LOG_STATUS, "Netatmo: No Weather Station devices found...");
+			Log(LOG_STATUS, "No Weather Station devices found...");
 		}
 		return false;
 	}
@@ -1079,7 +1079,7 @@ void CNetatmo::GetMeterDetails()
 	std::vector<std::string> ExtraHeaders;
 	if (!HTTPClient::GET(httpUrl, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "Netatmo: Error connecting to Server...");
+		Log(LOG_ERROR, "Error connecting to Server...");
 		return;
 	}
 #endif
@@ -1092,14 +1092,14 @@ void CNetatmo::GetMeterDetails()
 	bRet = ParseJSon(sResult, root);
 	if ((!bRet) || (!root.isObject()))
 	{
-		Log(LOG_ERROR, "Netatmo: Invalid data received...");
+		Log(LOG_ERROR, "Invalid data received...");
 		return;
 	}
 
 	if (!root["error"].empty())
 	{
 		//We received an error
-		Log(LOG_ERROR, "Netatmo: %s", root["error"]["message"].asString().c_str());
+		Log(LOG_ERROR, "%s", root["error"]["message"].asString().c_str());
 		m_isLogged = false;
 		return;
 	}
@@ -1117,20 +1117,20 @@ void CNetatmo::GetMeterDetails()
 			httpUrl = MakeRequestURL(NETYPE_HOMECOACH);
 			if (!HTTPClient::GET(httpUrl, ExtraHeaders, sResult))
 			{
-				Log(LOG_ERROR, "Netatmo: Error connecting to Server...");
+				Log(LOG_ERROR, "Error connecting to Server...");
 				return;
 			}
 #endif
 			bool bRet = ParseJSon(sResult, root);
 			if ((!bRet) || (!root.isObject()))
 			{
-				Log(LOG_ERROR, "Netatmo: Invalid data received...");
+				Log(LOG_ERROR, "Invalid data received...");
 				return;
 			}
 			if (!root["error"].empty())
 			{
 				//We received an error
-				Log(LOG_ERROR, "Netatmo: %s", root["error"]["message"].asString().c_str());
+				Log(LOG_ERROR, "%s", root["error"]["message"].asString().c_str());
 				m_isLogged = false;
 				return;
 			}
@@ -1152,20 +1152,20 @@ void CNetatmo::GetMeterDetails()
 				httpUrl = MakeRequestURL(NETYPE_ENERGY);
 				if (!HTTPClient::GET(httpUrl, ExtraHeaders, sResult))
 				{
-					Log(LOG_ERROR, "Netatmo: Error connecting to Server...");
+					Log(LOG_ERROR, "Error connecting to Server...");
 					return;
 				}
 #endif
 				bRet = ParseJSon(sResult, root);
 				if ((!bRet) || (!root.isObject()))
 				{
-					Log(LOG_ERROR, "Netatmo: Invalid data received...");
+					Log(LOG_ERROR, "Invalid data received...");
 					return;
 				}
 				if (!root["error"].empty())
 				{
 					//We received an error
-					Log(LOG_ERROR, "Netatmo: %s", root["error"]["message"].asString().c_str());
+					Log(LOG_ERROR, "%s", root["error"]["message"].asString().c_str());
 					m_isLogged = false;
 					return;
 				}
@@ -1221,7 +1221,7 @@ void CNetatmo::GetThermostatDetails()
 
 	if (!ret)
 	{
-		Log(LOG_ERROR, "Netatmo: Error connecting to Server...");
+		Log(LOG_ERROR, "Error connecting to Server...");
 		return;
 	}
 #endif
@@ -1256,7 +1256,7 @@ bool CNetatmo::ParseHomeData(const std::string &sResult)
 	bool ret = ParseJSon(sResult, root);
 	if ((!ret) || (!root.isObject()))
 	{
-		Log(LOG_STATUS, "Netatmo: Invalid data received...");
+		Log(LOG_STATUS, "Invalid data received...");
 		return false;
 	}
 	//Check if we have a home id
@@ -1304,7 +1304,7 @@ bool CNetatmo::ParseHomeData(const std::string &sResult)
 	if ((!m_bFirstTimeWeatherData) && (m_bPollWeatherData))
 	{
 		//Do not warn if we check if we have a Thermostat device
-		Log(LOG_STATUS, "Netatmo: No Weather Station devices found...");
+		Log(LOG_STATUS, "No Weather Station devices found...");
 	}
 	return false;
 }
@@ -1315,7 +1315,7 @@ bool CNetatmo::ParseHomeStatus(const std::string &sResult)
 	bool ret = ParseJSon(sResult, root);
 	if ((!ret) || (!root.isObject()))
 	{
-		Log(LOG_STATUS, "Netatmo: Invalid data received...");
+		Log(LOG_STATUS, "Invalid data received...");
 		return false;
 	}
 	//bool bHaveDevices = true;

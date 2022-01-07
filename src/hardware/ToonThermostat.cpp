@@ -193,7 +193,7 @@ bool CToonThermostat::StopHardware()
 
 void CToonThermostat::Do_Work()
 {
-	Log(LOG_STATUS,"ToonThermostat: Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 	int sec_counter = 1;
 	while (!IsStopRequested(1000))
 	{
@@ -211,13 +211,13 @@ void CToonThermostat::Do_Work()
 			{
 				m_bDoLogin = true;
 				m_retry_counter = 0;
-				Log(LOG_ERROR, "ToonThermostat: retrieveToonState request not successful, restarting..!");
+				Log(LOG_ERROR, "retrieveToonState request not successful, restarting..!");
 			}
 		}
 	}
 	Logout();
 
-	Log(LOG_STATUS, "ToonThermostat: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 void CToonThermostat::SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
@@ -300,7 +300,7 @@ bool CToonThermostat::Login()
 	std::string sURL = TOON_HOST + TOON_LOGIN_PATH;
 	if (!HTTPClient::POST(sURL, szPostdata, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR,"ToonThermostat: Error login!");
+		Log(LOG_ERROR, "Error login!");
 		return false;
 	}
 
@@ -315,18 +315,18 @@ bool CToonThermostat::Login()
 	bool bRet = ParseJSon(sResult, root);
 	if (!bRet)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	if (root["clientId"].empty() == true)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	m_ClientID = root["clientId"].asString();
 	if (root["clientIdChecksum"].empty() == true)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	m_ClientIDChecksum = root["clientIdChecksum"].asString();
@@ -336,12 +336,12 @@ bool CToonThermostat::Login()
 
 	if (root["agreements"].empty() == true)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	if (root["agreements"].size() < size_t(m_Agreement) + 1)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Agreement not found, did you setup your toon correctly?");
+		Log(LOG_ERROR, "Agreement not found, did you setup your toon correctly?");
 		return false;
 	}
 
@@ -357,7 +357,7 @@ bool CToonThermostat::Login()
 	sURL = TOON_HOST + TOON_AGREEMENT_PATH;
 	if (!HTTPClient::POST(sURL, szPostdata, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "ToonThermostat: Error login!");
+		Log(LOG_ERROR, "Error login!");
 		return false;
 	}
 #ifdef DEBUG_ToonThermostatW
@@ -371,12 +371,12 @@ bool CToonThermostat::Login()
 	bRet = ParseJSon(sResult, root);
 	if (!bRet)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		return false;
 	}
 	if (root["success"].empty() == true)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		return false;
 	}
 	if (root["success"].asBool() == true)
@@ -401,7 +401,7 @@ void CToonThermostat::Logout()
 	std::string sURL = TOON_HOST + TOON_LOGOUT_PATH;
 	if (!HTTPClient::POST(sURL, szPostdata, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "ToonThermostat: Error Logout!");
+		Log(LOG_ERROR, "Error Logout!");
 	}
 	m_ClientID = "";
 	m_ClientIDChecksum = "";
@@ -447,7 +447,7 @@ bool CToonThermostat::SwitchLight(const std::string &UUID, const int SwitchState
 	std::string sURL = TOON_HOST + TOON_SWITCH_POWER + szPostdata;
 	if (!HTTPClient::GET(sURL, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "ToonThermostat: Error setting switch state!");
+		Log(LOG_ERROR, "Error setting switch state!");
 		m_bDoLogin = true;
 		return false;
 	}
@@ -456,12 +456,12 @@ bool CToonThermostat::SwitchLight(const std::string &UUID, const int SwitchState
 	bool bRet = ParseJSon(sResult, root);
 	if (!bRet)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		return false;
 	}
 	if (root["success"].empty() == true)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		return false;
 	}
 	/*
@@ -488,7 +488,7 @@ bool CToonThermostat::SwitchAll(const int SwitchState)
 	std::string sURL = TOON_HOST + TOON_SWITCH_ALL + szPostdata;
 	if (!HTTPClient::GET(sURL, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "ToonThermostat: Error setting switch state!");
+		Log(LOG_ERROR, "Error setting switch state!");
 		m_bDoLogin = true;
 		return false;
 	}
@@ -497,12 +497,12 @@ bool CToonThermostat::SwitchAll(const int SwitchState)
 	bool bRet = ParseJSon(sResult, root);
 	if (!bRet)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		return false;
 	}
 	if (root["success"].empty() == true)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		return false;
 	}
 	m_retry_counter = 0;
@@ -578,7 +578,7 @@ void CToonThermostat::GetMeterDetails()
 	std::string sURL = TOON_HOST + TOON_UPDATE_PATH + szPostdata;
 	if (!HTTPClient::GET(sURL, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "ToonThermostat: Error getting current state!");
+		Log(LOG_ERROR, "Error getting current state!");
 		m_bDoLogin = true;
 		return;
 	}
@@ -593,19 +593,19 @@ void CToonThermostat::GetMeterDetails()
 	bool bRet = ParseJSon(sResult, root);
 	if (!bRet)
 	{
-		Log(LOG_ERROR, "ToonThermostat: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		m_bDoLogin = true;
 		return;
 	}
 	if (root["success"].empty() == true)
 	{
-		Log(LOG_ERROR, "ToonThermostat: ToonState request not successful, restarting..!");
+		Log(LOG_ERROR, "ToonState request not successful, restarting..!");
 		m_bDoLogin = true;
 		return;
 	}
 	if (root["success"].asBool() == false)
 	{
-		Log(LOG_ERROR, "ToonThermostat: ToonState request not successful, restarting..!");
+		Log(LOG_ERROR, "ToonState request not successful, restarting..!");
 		m_bDoLogin = true;
 		return;
 	}
@@ -757,7 +757,7 @@ bool CToonThermostat::ParseDeviceStatusData(const Json::Value &root)
 		{
 			if (!AddUUID(uuid, Idx))
 			{
-				Log(LOG_ERROR, "ToonThermostat: Error adding UUID to database?! Uuid=%s", uuid.c_str());
+				Log(LOG_ERROR, "Error adding UUID to database?! Uuid=%s", uuid.c_str());
 				return false;
 			}
 		}
@@ -872,7 +872,7 @@ void CToonThermostat::SetSetpoint(const int idx, const float temp)
 		std::string sURL = TOON_HOST + TOON_TEMPSET_PATH + szPostdata;
 		if (!HTTPClient::GET(sURL, ExtraHeaders, sResult))
 		{
-			Log(LOG_ERROR, "ToonThermostat: Error setting setpoint!");
+			Log(LOG_ERROR, "Error setting setpoint!");
 			m_bDoLogin = true;
 			return;
 		}
@@ -881,19 +881,19 @@ void CToonThermostat::SetSetpoint(const int idx, const float temp)
 		bool bRet = ParseJSon(sResult, root);
 		if (!bRet)
 		{
-			Log(LOG_ERROR, "ToonThermostat: Invalid data received!");
+			Log(LOG_ERROR, "Invalid data received!");
 			m_bDoLogin = true;
 			return;
 		}
 		if (root["success"].empty() == true)
 		{
-			Log(LOG_ERROR, "ToonThermostat: setPoint request not successful, restarting..!");
+			Log(LOG_ERROR, "setPoint request not successful, restarting..!");
 			m_bDoLogin = true;
 			return;
 		}
 		if (root["success"].asBool() == false)
 		{
-			Log(LOG_ERROR, "ToonThermostat: setPoint request not successful, restarting..!");
+			Log(LOG_ERROR, "setPoint request not successful, restarting..!");
 			m_bDoLogin = true;
 			return;
 		}
@@ -927,7 +927,7 @@ void CToonThermostat::SetProgramState(const int newState)
 	std::string sURL = TOON_HOST + TOON_CHANGE_SCHEME + szPostdata;
 	if (!HTTPClient::GET(sURL, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "ToonThermostat: Error setting Program State!");
+		Log(LOG_ERROR, "Error setting Program State!");
 		return;
 	}
 
@@ -935,19 +935,19 @@ void CToonThermostat::SetProgramState(const int newState)
 	bool bRet = ParseJSon(sResult, root);
 	if (!bRet)
 	{
-		Log(LOG_ERROR, "ToonThermostat: setProgramState request not successful, restarting..!");
+		Log(LOG_ERROR, "setProgramState request not successful, restarting..!");
 		m_bDoLogin = true;
 		return;
 	}
 	if (root["success"].empty() == true)
 	{
-		Log(LOG_ERROR, "ToonThermostat: setProgramState request not successful, restarting..!");
+		Log(LOG_ERROR, "setProgramState request not successful, restarting..!");
 		m_bDoLogin = true;
 		return;
 	}
 	if (root["success"].asBool() == false)
 	{
-		Log(LOG_ERROR, "ToonThermostat: setProgramState request not successful, restarting..!");
+		Log(LOG_ERROR, "setProgramState request not successful, restarting..!");
 		m_bDoLogin = true;
 		return;
 	}

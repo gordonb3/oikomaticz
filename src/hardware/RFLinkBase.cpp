@@ -271,15 +271,15 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 	if ((pSwitch->type != pTypeGeneralSwitch) && (pSwitch->type != pTypeColorSwitch))
 		return false; //only allowed to control regular switches and MiLight
 
-	//Log(LOG_ERROR, "RFLink: switch type: %d", pSwitch->subtype);
+	//Log(LOG_ERROR, "switch type: %d", pSwitch->subtype);
 	std::string switchtype = GetGeneralRFLinkFromInt(rfswitches, pSwitch->subtype);
 	if (switchtype.empty())
 	{
-		Log(LOG_ERROR, "RFLink: trying to send unknown switch type: %d", pSwitch->subtype);
+		Log(LOG_ERROR, "trying to send unknown switch type: %d", pSwitch->subtype);
 		return false;
 	}
-	//Log(LOG_ERROR, "RFLink: id: %d", pSwitch->id);
-	//Log(LOG_ERROR, "RFLink: subtype: %d", pSwitch->subtype);
+	//Log(LOG_ERROR, "id: %d", pSwitch->id);
+	//Log(LOG_ERROR, "subtype: %d", pSwitch->subtype);
 
 	// get SwitchType from SQL table
 	int m_SwitchType = 0;
@@ -287,8 +287,8 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 	sprintf(szDeviceID, "%08X", pSwitch->id);
 
 	GetSwitchType(szDeviceID, pSwitch->unitcode, pSwitch->type, pSwitch->subtype, m_SwitchType);
-	//Log(LOG_ERROR, "RFLink: switch type: %d", m_SwitchType);
-	//Log(LOG_ERROR, "RFLink: switch cmd: %d", pSwitch->cmnd);
+	//Log(LOG_ERROR, "switch type: %d", m_SwitchType);
+	//Log(LOG_ERROR, "switch cmd: %d", pSwitch->cmnd);
 
 	if (pSwitch->type == pTypeGeneralSwitch) {
 		std::string switchcmnd = GetGeneralRFLinkFromInt(rfswitchcommands, pSwitch->cmnd);
@@ -305,7 +305,7 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 				}
 			}
 		}
-		//Log(LOG_ERROR, "RFLink: switch command: %d", pSwitch->cmnd);
+		//Log(LOG_ERROR, "switch command: %d", pSwitch->cmnd);
 
         // check setlevel command
         if (pSwitch->cmnd == gswitch_sSetLevel) {
@@ -314,14 +314,14 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 	   if (fvalue > 15.0F)
 		   fvalue = 15.0F; // 99 is fully on
 	   int svalue = round(fvalue);
-	   //Log(LOG_ERROR, "RFLink: level: %d", svalue);
+	   //Log(LOG_ERROR, "level: %d", svalue);
 	   char buffer[50] = { 0 };
 	   sprintf(buffer, "%d", svalue);
 	   switchcmnd = buffer;
 	    }
 
 		if (switchcmnd.empty()) {
-			Log(LOG_ERROR, "RFLink: trying to send unknown switch command: %d", pSwitch->cmnd);
+			Log(LOG_ERROR, "trying to send unknown switch command: %d", pSwitch->cmnd);
 			return false;
 		}
 
@@ -355,7 +355,7 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 		// Wait for an OK response from RFLink to make sure the command was executed
 		while (m_bTXokay == false) {
 			if (difftime(btime,atime) > 4) {
-				Log(LOG_ERROR, "RFLink: TX time out...");
+				Log(LOG_ERROR, "TX time out...");
 				return false;
 			}
 			btime = mytime(nullptr);
@@ -365,12 +365,12 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 	// RFLink Milight/Living Colours extension
 	const _tColorSwitch *pLed = reinterpret_cast<const _tColorSwitch *>(pdata);
 	/*
-		Log(LOG_ERROR, "RFLink: ledtype: %d", pLed->type);			// type colorswitch
-		Log(LOG_ERROR, "RFLink: subtype: %d", pLed->subtype);		// rgbw/rgb/white?
-		Log(LOG_ERROR, "RFLink: id: %d", pLed->id);				// id
-		Log(LOG_ERROR, "RFLink: unit: %d", pLed->dunit);			// unit 0=All, 1=Group1,2=Group2,3=Group3,4=Group4
-		Log(LOG_ERROR, "RFLink: command: %d", pLed->command);		// command
-		Log(LOG_ERROR, "RFLink: value: %d", pLed->value);			// brightness/color value
+		Log(LOG_ERROR, "ledtype: %d", pLed->type);			// type colorswitch
+		Log(LOG_ERROR, "subtype: %d", pLed->subtype);		// rgbw/rgb/white?
+		Log(LOG_ERROR, "id: %d", pLed->id);				// id
+		Log(LOG_ERROR, "unit: %d", pLed->dunit);			// unit 0=All, 1=Group1,2=Group2,3=Group3,4=Group4
+		Log(LOG_ERROR, "command: %d", pLed->command);		// command
+		Log(LOG_ERROR, "value: %d", pLed->value);			// brightness/color value
 	*/
 	bool bSendOn = false;
 
@@ -419,7 +419,7 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 			}
 			else
 			{
-				Log(LOG_STATUS, "RFLink: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum",
+				Log(LOG_STATUS, "SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum",
 					 pLed->color.mode);
 				return false;
 			}
@@ -476,7 +476,7 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 			bSendOn = true;
 			break;
 		default:
-			Log(LOG_ERROR, "RFLink: trying to send unknown led switch command: %d", pLed->command);
+			Log(LOG_ERROR, "trying to send unknown led switch command: %d", pLed->command);
 			return false;
 	}
 
@@ -500,7 +500,7 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 		{
 			if (difftime(btime, atime) > 4)
 			{
-				Log(LOG_ERROR, "RFLink: TX time out...");
+				Log(LOG_ERROR, "TX time out...");
 				return false;
 			}
 			btime = mytime(nullptr);
@@ -529,7 +529,7 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 		sleep_milliseconds(10);
 		if (difftime(btime, atime) > 4)
 		{
-			Log(LOG_ERROR, "RFLink: TX time out...");
+			Log(LOG_ERROR, "TX time out...");
 			return false;
 		}
 		btime = mytime(nullptr);
@@ -555,7 +555,7 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 		while (m_bTXokay == false) {
 			sleep_milliseconds(10);
 			if (difftime(btime,atime) > 4) {
-				Log(LOG_ERROR, "RFLink: TX time out...");
+				Log(LOG_ERROR, "TX time out...");
 				return false;
 			}
 			btime = mytime(nullptr);
@@ -569,7 +569,7 @@ bool CRFLinkBase::SendSwitchInt(const int ID, const int switchunit, const int Ba
 	int intswitchtype = GetGeneralRFLinkFromString(rfswitches, switchType);
 	if (intswitchtype == -1)
 	{
-		Log(LOG_ERROR, "RFLink: Unhandled switch type: %s", switchType.c_str());
+		Log(LOG_ERROR, "Unhandled switch type: %s", switchType.c_str());
 		return false;
 	}
 
@@ -581,13 +581,13 @@ bool CRFLinkBase::SendSwitchInt(const int ID, const int switchunit, const int Ba
 			cmnd=gswitch_sSetLevel;
 			std::string str2 = switchcmd.substr(10);
 			svalue=atoi(str2.c_str());
-	  		Log(LOG_STATUS, "RFLink: %d level: %d", cmnd, svalue);
+	  		Log(LOG_STATUS, "%d level: %d", cmnd, svalue);
 		}
 	}
 
 	if (cmnd==-1)
 	{
-		Log(LOG_ERROR, "RFLink: Unhandled switch command: %s", switchcmd.c_str());
+		Log(LOG_ERROR, "Unhandled switch command: %s", switchcmd.c_str());
 		return false;
 	}
 
@@ -670,9 +670,9 @@ bool CRFLinkBase::ParseLine(const std::string &sLine)
 
 #ifdef ENABLE_LOGGING
 	if (!bHideDebugLog)
-		Log(LOG_NORM, "RFLink: %s", sLine.c_str());
+		Log(LOG_NORM, "%s", sLine.c_str());
 #endif
-   if (m_bRFDebug == true) Log(LOG_NORM, "RFLink: %s", sLine.c_str());
+   if (m_bRFDebug == true) Log(LOG_NORM, "%s", sLine.c_str());
 
 	//std::string Sensor_ID = results[1];
 	if (results.size() >2)
@@ -681,7 +681,7 @@ bool CRFLinkBase::ParseLine(const std::string &sLine)
 		std::string Name_ID = results[2];
 		if ((Name_ID.find("Nodo RadioFrequencyLink") != std::string::npos) || (Name_ID.find("RFLink Gateway") != std::string::npos))
 		{
-			Log(LOG_STATUS, "RFLink: Controller Initialized!...");
+			Log(LOG_STATUS, "Controller Initialized!...");
 			WriteInt("10;VERSION;\n");  // 20;3C;VER=1.1;REV=37;BUILD=01;
 
 			//Enable DEBUG
@@ -692,7 +692,7 @@ bool CRFLinkBase::ParseLine(const std::string &sLine)
 			return true;
 		}
 		if (Name_ID.find("VER") != std::string::npos) {
-			//Log(LOG_STATUS, "RFLink: %s", sLine.c_str());
+			//Log(LOG_STATUS, "%s", sLine.c_str());
 			int versionlo = 0;
 			int versionhi = 0;
 			int revision = 0;
@@ -721,7 +721,7 @@ bool CRFLinkBase::ParseLine(const std::string &sLine)
 			return true;
 		}
 		if (Name_ID.find("PONG") != std::string::npos) {
-			//Log(LOG_STATUS, "RFLink: PONG received!...");
+			//Log(LOG_STATUS, "PONG received!...");
 			mytime(&m_LastHeartbeatReceive);  // keep heartbeat happy
 			mytime(&m_LastHeartbeat);  // keep heartbeat happy
 			m_LastReceivedTime = m_LastHeartbeat;
@@ -730,7 +730,7 @@ bool CRFLinkBase::ParseLine(const std::string &sLine)
 			return true;
 		}
 		if (Name_ID.find("OK") != std::string::npos) {
-			//Log(LOG_STATUS, "RFLink: OK received!...");
+			//Log(LOG_STATUS, "OK received!...");
 			mytime(&m_LastHeartbeatReceive);  // keep heartbeat happy
 			mytime(&m_LastHeartbeat);  // keep heartbeat happy
 			m_LastReceivedTime = m_LastHeartbeat;
@@ -740,7 +740,7 @@ bool CRFLinkBase::ParseLine(const std::string &sLine)
 		}
 		if (Name_ID.find("CMD UNKNOWN") != std::string::npos)
 		{
-			Log(LOG_ERROR, "RFLink: Error/Unknown command received!...");
+			Log(LOG_ERROR, "Error/Unknown command received!...");
 			m_bTXokay = true; // variable to indicate an ERROR was received
 			return true;
 		}
@@ -753,7 +753,7 @@ bool CRFLinkBase::ParseLine(const std::string &sLine)
 
 	mytime(&m_LastHeartbeatReceive);  // keep heartbeat happy
 	mytime(&m_LastHeartbeat);  // keep heartbeat happy
-	//Log(LOG_STATUS, "RFLink: t1=%d t2=%d", m_LastHeartbeat, m_LastHeartbeatReceive);
+	//Log(LOG_STATUS, "t1=%d t2=%d", m_LastHeartbeat, m_LastHeartbeatReceive);
 	m_LastReceivedTime = m_LastHeartbeat;
 
 	std::stringstream ss;
@@ -1050,7 +1050,7 @@ bool CRFLinkBase::ParseLine(const std::string &sLine)
 		GetWindSensorValue(ID, twindir, twindspeed, twindgust, twindtemp, twindchill, bHaveWindTemp, bExists);
 #ifdef _DEBUG
 		if (bExists) {
-			Log(LOG_STATUS, "RFLink: id:%d wd %d ws %f wg: %f wt: %f wc: %f status:%d", ID, twindir, twindspeed, twindgust, twindtemp, twindchill, bExists);
+			Log(LOG_STATUS, "id:%d wd %d ws %f wg: %f wt: %f wc: %f status:%d", ID, twindir, twindspeed, twindgust, twindtemp, twindchill, bExists);
 		}
 #endif
 		if (bHaveWindDir)
@@ -1214,7 +1214,7 @@ namespace http {
 			// Wait for an OK response from RFLink to make sure the command was executed
 			while (pRFLINK->m_bTXokay == false) {
 				if (difftime(btime,atime) > 4) {
-					_log.Log(LOG_ERROR, "RFLink: TX time out...");
+					_log.Log(LOG_ERROR, "TX time out...");
 					bCreated = false;
 					break;
 				}

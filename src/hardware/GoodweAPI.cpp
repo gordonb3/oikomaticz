@@ -344,12 +344,12 @@ void GoodweAPI::GetMeterDetails()
 
 		if (i[BY_USER_STATION_ID].empty())
 		{
-			Log(LOG_ERROR, "GoodweAPI: no or invalid data received - StationID is missing!");
+			Log(LOG_ERROR, "no or invalid data received - StationID is missing!");
 			return;
 		}
 		if (i[BY_USER_STATION_NAME].empty())
 		{
-			Log(LOG_ERROR, "GoodweAPI: invalid data received - stationName is missing!");
+			Log(LOG_ERROR, "invalid data received - stationName is missing!");
 			return;
 		}
 		std::string sStationId = i[BY_USER_STATION_ID].asString();
@@ -370,7 +370,7 @@ void GoodweAPI::ParseDeviceList(const std::string &sStationId, const std::string
 	bret = GoodweServerClient(sPATH, sResult);
 	if (!bret)
 	{
-		Log(LOG_ERROR, "GoodweAPI: Error getting http data for device list !");
+		Log(LOG_ERROR, "Error getting http data for device list !");
 		return;
 	}
 #ifdef DEBUG_GoodweAPIW
@@ -381,7 +381,7 @@ void GoodweAPI::ParseDeviceList(const std::string &sStationId, const std::string
 	bool ret = ParseJSon(sResult, root);
 	if (!ret)
 	{
-		Log(LOG_ERROR, "GoodweAPI: Invalid device list!");
+		Log(LOG_ERROR, "Invalid device list!");
 		return;
 	}
 
@@ -389,7 +389,7 @@ void GoodweAPI::ParseDeviceList(const std::string &sStationId, const std::string
 	result = root[DEVICE_RESULT];
 	if (result.empty())
 	{
-		Log(LOG_STATUS, "GoodweAPI: devicelist result is empty!");
+		Log(LOG_STATUS, "devicelist result is empty!");
 		return;
 	}
 

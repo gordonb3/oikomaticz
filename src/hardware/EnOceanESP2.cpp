@@ -370,7 +370,7 @@ void CEnOceanESP2::Do_Work()
 	int msec_counter = 0;
 	int sec_counter = 0;
 
-	Log(LOG_STATUS, "EnOcean: Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 
 	while (!IsStopRequested(200))
 	{
@@ -389,7 +389,7 @@ void CEnOceanESP2::Do_Work()
 		{
 			if (m_retrycntr == 0)
 			{
-				Log(LOG_STATUS, "EnOcean: Serial retrying in %d seconds...", ENOCEAN_RETRY_DELAY);
+				Log(LOG_STATUS, "Serial retrying in %d seconds...", ENOCEAN_RETRY_DELAY);
 			}
 			m_retrycntr++;
 			if (m_retrycntr / 5 >= ENOCEAN_RETRY_DELAY)
@@ -414,7 +414,7 @@ void CEnOceanESP2::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS, "EnOcean: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 void CEnOceanESP2::Add2SendQueue(const char* pData, const size_t length)
@@ -670,11 +670,11 @@ bool CEnOceanESP2::OpenSerialDevice()
 	try
 	{
 		open(m_szSerialPort, 9600); // ECP2 open with 9600
-		Log(LOG_STATUS, "EnOcean: Using serial port %s", m_szSerialPort.c_str());
+		Log(LOG_STATUS, "Using serial port %s", m_szSerialPort.c_str());
 	}
 	catch (boost::exception& e)
 	{
-		Log(LOG_ERROR, "EnOcean: Error opening serial port!");
+		Log(LOG_ERROR, "Error opening serial port!");
 #ifdef _DEBUG
 		Log(LOG_ERROR, "-----------------\n%s\n----------------", boost::diagnostic_information(e).c_str());
 #else
@@ -684,7 +684,7 @@ bool CEnOceanESP2::OpenSerialDevice()
 	}
 	catch (...)
 	{
-		Log(LOG_ERROR, "EnOcean: Error opening serial port!!!");
+		Log(LOG_ERROR, "Error opening serial port!!!");
 		return false;
 	}
 	m_bIsStarted = true;
@@ -751,7 +751,7 @@ void CEnOceanESP2::readCallback(const char* data, size_t len)
 			}
 			else
 			{
-				Log(LOG_ERROR, "EnOcean: Frame Checksum Error!...");
+				Log(LOG_ERROR, "Frame Checksum Error!...");
 			}
 			m_receivestate = ERS_SYNC1;
 			break;
@@ -937,43 +937,43 @@ bool CEnOceanESP2::ParseData()
 		switch (pFrame->ORG)
 		{
 		case 0x58:
-			Debug(DEBUG_NORM, "EnOcean: OK");
+			Debug(DEBUG_NORM, "OK");
 			bStopProcessing = true;
 			break;
 		case 0x28:
-			Log(LOG_ERROR, "EnOcean: ERR_MODEM_NOTWANTEDACK");
+			Log(LOG_ERROR, "ERR_MODEM_NOTWANTEDACK");
 			bStopProcessing = true;
 			break;
 		case 0x29:
-			Log(LOG_ERROR, "EnOcean: ERR_MODEM_NOTACK");
+			Log(LOG_ERROR, "ERR_MODEM_NOTACK");
 			bStopProcessing = true;
 			break;
 		case 0x0C:
-			Log(LOG_ERROR, "EnOcean: ERR_MODEM_DUP_ID");
+			Log(LOG_ERROR, "ERR_MODEM_DUP_ID");
 			bStopProcessing = true;
 			break;
 		case 0x08:
-			Log(LOG_ERROR, "EnOcean: Error in H_SEQ");
+			Log(LOG_ERROR, "Error in H_SEQ");
 			bStopProcessing = true;
 			break;
 		case 0x09:
-			Log(LOG_ERROR, "EnOcean: Error in LENGTH");
+			Log(LOG_ERROR, "Error in LENGTH");
 			bStopProcessing = true;
 			break;
 		case 0x0A:
-			Log(LOG_ERROR, "EnOcean: Error in CHECKSUM");
+			Log(LOG_ERROR, "Error in CHECKSUM");
 			bStopProcessing = true;
 			break;
 		case 0x0B:
-			Log(LOG_ERROR, "EnOcean: Error in ORG");
+			Log(LOG_ERROR, "Error in ORG");
 			bStopProcessing = true;
 			break;
 		case 0x22:
-			Log(LOG_ERROR, "EnOcean: ERR_TX_IDRANGE");
+			Log(LOG_ERROR, "ERR_TX_IDRANGE");
 			bStopProcessing = true;
 			break;
 		case 0x1A:
-			Log(LOG_ERROR, "EnOcean: ERR_ IDRANGE");
+			Log(LOG_ERROR, "ERR_ IDRANGE");
 			bStopProcessing = true;
 			break;
 		}
@@ -985,7 +985,7 @@ bool CEnOceanESP2::ParseData()
 	{
 	case C_ORG_INF_IDBASE:
 		m_id_base = GetNodeID(pFrame->DATA_BYTE3, pFrame->DATA_BYTE2, pFrame->DATA_BYTE1, pFrame->DATA_BYTE0);
-		Log(LOG_STATUS, "EnOcean: Transceiver ID_Base %08X", m_id_base);
+		Log(LOG_STATUS, "Transceiver ID_Base %08X", m_id_base);
 		break;
 	case C_ORG_RPS:
 		if (pFrame->STATUS & S_RPS_NU)
@@ -1046,7 +1046,7 @@ bool CEnOceanESP2::ParseData()
 				uint8_t func = pFrame->DATA_BYTE3 >> 2;
 				uint8_t type = ((pFrame->DATA_BYTE3 & 3) << 5) | (pFrame->DATA_BYTE2 >> 3);
 
-				Log(LOG_NORM, "EnOcean: 4BS Teach-in diagram: Node %08X Manufacturer %02X (%s) Profile %02X Type %02X (%s)",
+				Log(LOG_NORM, "4BS Teach-in diagram: Node %08X Manufacturer %02X (%s) Profile %02X Type %02X (%s)",
 					nodeID, manID, GetManufacturerName(manID),
 					func, type, GetEEPLabel(RORG_4BS, func, type));
 

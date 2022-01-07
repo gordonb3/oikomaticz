@@ -65,7 +65,7 @@ void COpenWebNetUSB::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS, "COpenWebNetUSB: Heartbeat worker stopped...");
+	Log(LOG_STATUS, "Heartbeat worker stopped...");
 }
 
 /**
@@ -203,7 +203,7 @@ bool COpenWebNetUSB::WriteToHardware(const char *pdata, const unsigned char leng
 
 	int used = 1;
 	if (!FindDevice(pCmd->id, pCmd->unitcode, subtype, &used)) {
-		Log(LOG_ERROR, "COpenWebNetUSB: command received for unknown device : %d/%s", who, whereStr.str().c_str());
+		Log(LOG_ERROR, "command received for unknown device : %d/%s", who, whereStr.str().c_str());
 		return false;
 	}
 
@@ -290,7 +290,7 @@ bool COpenWebNetUSB::sendCommand(bt_openwebnet& command, std::vector<bt_openwebn
 	//Try to open the Serial Port
 	try
 	{
-		Log(LOG_STATUS, "COpenWebNetUSB: Using serial port: %s", m_szSerialPort.c_str());
+		Log(LOG_STATUS, "Using serial port: %s", m_szSerialPort.c_str());
 #ifndef WIN32
 		openOnlyBaud(
 			m_szSerialPort,
@@ -309,7 +309,7 @@ bool COpenWebNetUSB::sendCommand(bt_openwebnet& command, std::vector<bt_openwebn
 	}
 	catch (boost::exception & e)
 	{
-		Log(LOG_ERROR, "COpenWebNetUSB: Error opening serial port!");
+		Log(LOG_ERROR, "Error opening serial port!");
 #ifdef _DEBUG
 		Log(LOG_ERROR, "-----------------\n%s\n-----------------", boost::diagnostic_information(e).c_str());
 #else
@@ -320,7 +320,7 @@ bool COpenWebNetUSB::sendCommand(bt_openwebnet& command, std::vector<bt_openwebn
 	}
 	catch (...)
 	{
-		Log(LOG_ERROR, "COpenWebNetUSB: Error opening serial port!!!");
+		Log(LOG_ERROR, "Error opening serial port!!!");
 		m_bWriting = false;
 		return false;
 	}

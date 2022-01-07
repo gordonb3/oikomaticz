@@ -70,7 +70,7 @@ bool Meteostick::OpenSerialDevice()
 	//Try to open the Serial Port
 	try
 	{
-		Log(LOG_STATUS, "Meteostick: Using serial port: %s", m_szSerialPort.c_str());
+		Log(LOG_STATUS, "Using serial port: %s", m_szSerialPort.c_str());
 		open(
 			m_szSerialPort,
 			m_iBaudRate,
@@ -125,7 +125,7 @@ void Meteostick::Do_Work()
 		{
 			if (m_retrycntr == 0)
 			{
-				Log(LOG_STATUS, "Meteostick: serial setup retry in %d seconds...", RETRY_DELAY);
+				Log(LOG_STATUS, "serial setup retry in %d seconds...", RETRY_DELAY);
 			}
 			m_retrycntr++;
 			if (m_retrycntr >= RETRY_DELAY)
@@ -137,7 +137,7 @@ void Meteostick::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS, "Meteostick: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 

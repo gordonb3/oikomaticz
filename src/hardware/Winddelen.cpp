@@ -96,7 +96,7 @@ bool CWinddelen::StopHardware()
 
 void CWinddelen::Do_Work()
 {
-	Log(LOG_STATUS, "Winddelen: Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 
 	int sec_counter = WINDDELEN_POLL_INTERVAL - 2;
 
@@ -112,7 +112,7 @@ void CWinddelen::Do_Work()
 			GetMeterDetails();
 		}
 	}
-	Log(LOG_STATUS, "Winddelen: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 bool CWinddelen::WriteToHardware(const char *pdata, const unsigned char length)
@@ -132,7 +132,7 @@ void CWinddelen::GetMeterDetails()
 
 	if (!HTTPClient::GETSingleLine(szURL, sResult))
 	{
-		Log(LOG_ERROR, "Winddelen: Error connecting to: %s", szURL);
+		Log(LOG_ERROR, "Error connecting to: %s", szURL);
 		return;
 	}
 #endif
@@ -146,34 +146,34 @@ void CWinddelen::GetMeterDetails()
 		bool ret = ParseJSon(sResult, root);
 		if (!ret)
 		{
-			Log(LOG_ERROR, "Winddelen: Invalid data received!");
+			Log(LOG_ERROR, "Invalid data received!");
 			return;
 		}
 
 		if (root.empty())
 		{
-			Log(LOG_ERROR, "Winddelen: Invalid data received!");
+			Log(LOG_ERROR, "Invalid data received!");
 			return;
 		}
 		if (!root.isObject())
 		{
-			Log(LOG_ERROR, "Winddelen: Invalid data received, or unknown location!");
+			Log(LOG_ERROR, "Invalid data received, or unknown location!");
 			return;
 		}
 
 		if (root["powerAbsTot"].empty())
 		{
-			Log(LOG_ERROR, "Winddelen: Invalid data received, or unknown location!");
+			Log(LOG_ERROR, "Invalid data received, or unknown location!");
 			return;
 		}
 		if (root["powerAbsWd"].empty())
 		{
-			Log(LOG_ERROR, "Winddelen: Invalid data received, or unknown location!");
+			Log(LOG_ERROR, "Invalid data received, or unknown location!");
 			return;
 		}
 		if (root["kwh"].empty())
 		{
-			Log(LOG_ERROR, "Winddelen: Invalid data received, or unknown location!");
+			Log(LOG_ERROR, "Invalid data received, or unknown location!");
 			return;
 		}
 
@@ -181,7 +181,7 @@ void CWinddelen::GetMeterDetails()
 		{
 			if (root["kwh"].empty())
 			{
-				Log(LOG_ERROR, "Winddelen: unknown location!");
+				Log(LOG_ERROR, "unknown location!");
 				return;
 			}
 		}
@@ -250,7 +250,7 @@ void CWinddelen::GetMeterDetails()
 	}
 	catch (...)
 	{
-		Log(LOG_ERROR, "Winddelen: Error parsing JSon data!");
+		Log(LOG_ERROR, "Error parsing JSon data!");
 	}
 
 
@@ -258,7 +258,7 @@ void CWinddelen::GetMeterDetails()
 	StringSplit(sResult, ",", results);
 	if (results.size() < 7)
 	{
-		Log(LOG_ERROR, "Winddelen: Invalid response for '%s'", m_szMillName.c_str());
+		Log(LOG_ERROR, "Invalid response for '%s'", m_szMillName.c_str());
 		return;
 	}
 

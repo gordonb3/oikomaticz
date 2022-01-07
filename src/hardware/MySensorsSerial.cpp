@@ -69,7 +69,7 @@ void MySensorsSerial::Do_Work()
 {
 	int sec_counter = 0;
 
-	Log(LOG_STATUS, "MySensors: Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 
 	while (!IsStopRequested(1000))
 	{
@@ -83,7 +83,7 @@ void MySensorsSerial::Do_Work()
 		{
 			if (m_retrycntr == 0)
 			{
-				Log(LOG_STATUS, "MySensors: retrying in %d seconds...", RETRY_DELAY);
+				Log(LOG_STATUS, "retrying in %d seconds...", RETRY_DELAY);
 			}
 			m_retrycntr++;
 			if (m_retrycntr >= RETRY_DELAY)
@@ -95,7 +95,7 @@ void MySensorsSerial::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS, "MySensors: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 bool MySensorsSerial::OpenSerialDevice()
@@ -104,7 +104,7 @@ bool MySensorsSerial::OpenSerialDevice()
 	//Try to open the Serial Port
 	try
 	{
-		Log(LOG_STATUS, "MySensors: Using serial port: %s", m_szSerialPort.c_str());
+		Log(LOG_STATUS, "Using serial port: %s", m_szSerialPort.c_str());
 #ifndef WIN32
 		openOnlyBaud(
 			m_szSerialPort,
@@ -123,7 +123,7 @@ bool MySensorsSerial::OpenSerialDevice()
 	}
 	catch (boost::exception & e)
 	{
-		Log(LOG_ERROR, "MySensors: Error opening serial port!");
+		Log(LOG_ERROR, "Error opening serial port!");
 #ifdef _DEBUG
 		Log(LOG_ERROR, "-----------------\n%s\n-----------------", boost::diagnostic_information(e).c_str());
 #else
@@ -133,7 +133,7 @@ bool MySensorsSerial::OpenSerialDevice()
 	}
 	catch (...)
 	{
-		Log(LOG_ERROR, "MySensors: Error opening serial port!!!");
+		Log(LOG_ERROR, "Error opening serial port!!!");
 		return false;
 	}
 #else

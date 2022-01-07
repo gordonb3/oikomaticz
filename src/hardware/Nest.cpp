@@ -99,7 +99,7 @@ bool CNest::StopHardware()
 
 void CNest::Do_Work()
 {
-	Log(LOG_STATUS,"Nest: Worker started...");
+	Log(LOG_STATUS, "Worker started...");
 	int sec_counter = NEST_POLL_INTERVAL - 5;
 	while (!IsStopRequested(1000))
 	{
@@ -115,7 +115,7 @@ void CNest::Do_Work()
 		}
 	}
 	Logout();
-	Log(LOG_STATUS,"Nest: Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 void CNest::SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
@@ -197,7 +197,7 @@ bool CNest::Login()
 	std::string sURL = NEST_LOGIN_PATH;
 	if (!HTTPClient::POST(sURL, szPostdata, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR,"Nest: Error login!");
+		Log(LOG_ERROR, "Error login!");
 		return false;
 	}
 
@@ -205,31 +205,31 @@ bool CNest::Login()
 	bool bRet = ParseJSon(sResult, root);
 	if ((!bRet) || (!root.isObject()))
 	{
-		Log(LOG_ERROR, "Nest: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	if (root["urls"].empty())
 	{
-		Log(LOG_ERROR, "Nest: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	if (root["urls"]["transport_url"].empty())
 	{
-		Log(LOG_ERROR, "Nest: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	m_TransportURL = root["urls"]["transport_url"].asString();
 
 	if (root["access_token"].empty())
 	{
-		Log(LOG_ERROR, "Nest: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	m_AccessToken = root["access_token"].asString();
 
 	if (root["userid"].empty())
 	{
-		Log(LOG_ERROR, "Nest: Invalid data received, or invalid username/password!");
+		Log(LOG_ERROR, "Invalid data received, or invalid username/password!");
 		return false;
 	}
 	m_UserID = root["userid"].asString();
@@ -378,7 +378,7 @@ void CNest::GetMeterDetails()
 	std::string sURL = m_TransportURL + NEST_GET_STATUS + m_UserID;
 	if (!HTTPClient::GET(sURL, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "Nest: Error getting current state!");
+		Log(LOG_ERROR, "Error getting current state!");
 		m_bDoLogin = true;
 		return;
 	}
@@ -392,7 +392,7 @@ void CNest::GetMeterDetails()
 	bool bRet = ParseJSon(sResult, root);
 	if ((!bRet) || (!root.isObject()))
 	{
-		Log(LOG_ERROR, "Nest: Invalid data received!");
+		Log(LOG_ERROR, "Invalid data received!");
 		m_bDoLogin = true;
 		return;
 	}
@@ -401,7 +401,7 @@ void CNest::GetMeterDetails()
 
 	if ((!bHaveShared) && (!bHaveTopaz))
 	{
-		Log(LOG_ERROR, "Nest: request not successful, restarting..!");
+		Log(LOG_ERROR, "request not successful, restarting..!");
 		m_bDoLogin = true;
 		return;
 	}
@@ -411,14 +411,14 @@ void CNest::GetMeterDetails()
 	{
 		if (root["topaz"].empty())
 		{
-			Log(LOG_ERROR, "Nest: request not successful, restarting..!");
+			Log(LOG_ERROR, "request not successful, restarting..!");
 			m_bDoLogin = true;
 			return;
 		}
 		Json::Value::Members members = root["topaz"].getMemberNames();
 		if (members.empty())
 		{
-			Log(LOG_ERROR, "Nest: request not successful, restarting..!");
+			Log(LOG_ERROR, "request not successful, restarting..!");
 			m_bDoLogin = true;
 			return;
 		}
@@ -531,7 +531,7 @@ void CNest::GetMeterDetails()
 	{
 		if (bHaveTopaz)
 			return;
-		Log(LOG_ERROR, "Nest: request not successful, restarting..!");
+		Log(LOG_ERROR, "request not successful, restarting..!");
 		m_bDoLogin = true;
 		return;
 	}
@@ -678,7 +678,7 @@ void CNest::SetSetpoint(const int idx, const float temp)
 	std::string sURL = m_TransportURL + NEST_SET_SHARED + m_thermostats[iThermostat].Serial;
 	if (!HTTPClient::POST(sURL, root.toStyledString(), ExtraHeaders, sResult, true, true))
 	{
-		Log(LOG_ERROR, "Nest: Error setting setpoint!");
+		Log(LOG_ERROR, "Error setting setpoint!");
 		m_bDoLogin = true;
 		return;
 	}
@@ -718,7 +718,7 @@ bool CNest::SetAway(const unsigned char Idx, const bool bIsAway)
 	std::string sURL = m_TransportURL + NEST_SET_STRUCTURE + m_thermostats[iThermostat].StructureID;
 	if (!HTTPClient::POST(sURL, root.toStyledString(), ExtraHeaders, sResult, true, true))
 	{
-		Log(LOG_ERROR, "Nest: Error setting away mode!");
+		Log(LOG_ERROR, "Error setting away mode!");
 		m_bDoLogin = true;
 		return false;
 	}
@@ -763,7 +763,7 @@ bool CNest::SetManualEcoMode(const unsigned char Idx, const bool bIsManualEcoMod
 	std::string sURL = m_TransportURL + NEST_SET_DEVICE + m_thermostats[iThermostat].Serial;
 	if (!HTTPClient::POST(sURL, root.toStyledString(), ExtraHeaders, sResult, true, true))
 	{
-		Log(LOG_ERROR, "Nest: Error setting manual eco mode!");
+		Log(LOG_ERROR, "Error setting manual eco mode!");
 		m_bDoLogin = true;
 		return false;
 	}
