@@ -667,9 +667,6 @@ define(['app'], function (app) {
 					if (typeof data.IFTTTAPI != 'undefined') {
 						$("#ifttttable #IFTTTAPI").val(atob(data.IFTTTAPI));
 					}
-					if (typeof data.WebRemoteProxyIPs != 'undefined') {
-						$("#webproxytable #WebRemoteProxyIPs").val(data.WebRemoteProxyIPs);
-					}
 				}
 			});
 		}

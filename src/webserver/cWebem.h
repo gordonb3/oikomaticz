@@ -31,24 +31,27 @@ namespace http
 			unsigned long ID;
 			std::string Username;
 			std::string Password;
-			_eUserRights userrights;
-			int TotSensors;
-			int ActiveTabs;
+			_eUserRights userrights = URIGHTS_VIEWER;
+			int TotSensors = 0;
+			int ActiveTabs = 0;
 		} WebUserPassword;
 
 		typedef struct _tWebEmSession
 		{
 			std::string id;
 			std::string remote_host;
+			std::string local_host;
+			std::string remote_port;
+			std::string local_port;
 			std::string auth_token;
 			std::string username;
-			int reply_status;
-			time_t timeout;
-			time_t expires;
-			int rights;
-			bool rememberme;
-			bool isnew;
-			bool forcelogin;
+			int reply_status = 0;
+			time_t timeout = 0;
+			time_t expires = 0;
+			int rights = 0;
+			bool rememberme = false;
+			bool isnew = false;
+			bool forcelogin = false;
 		} WebEmSession;
 
 		typedef struct _tIPNetwork
@@ -144,17 +147,12 @@ namespace http
 			bool checkAuthToken(WebEmSession &session);
 			void removeAuthToken(const std::string &sessionId);
 		};
-		// forward declaration for friend declaration
-		class CProxyClient;
+
 		/**
-
 		The webem embedded web server.
-
 		*/
 		class cWebem
 		{
-			friend class CProxyClient;
-
 		      public:
 			cWebem(const server_settings &settings, const std::string &doc_root);
 			~cWebem();
@@ -196,11 +194,6 @@ namespace http
 			void SetDigistRealm(const std::string &realm);
 			std::string m_DigistRealm;
 			void SetZipPassword(const std::string &password);
-
-			// IPs that are allowed to pass proxy headers
-			std::vector<std::string> myRemoteProxyIPs;
-			void AddRemoteProxyIPs(const std::string &ipaddr);
-			void ClearRemoteProxyIPs();
 
 			// Session store manager
 			void SetSessionStore(session_store_impl_ptr sessionStore);
@@ -245,7 +238,7 @@ namespace http
 			cWebemRequestHandler myRequestHandler;
 			/// boost::asio web server (RK: plain or secure)
 			std::shared_ptr<server_base> myServer;
-			// root of url for reverse proxy servers
+			// root of url
 			std::string m_webRoot;
 			/// sessions management
 			std::mutex m_sessionsMutex;

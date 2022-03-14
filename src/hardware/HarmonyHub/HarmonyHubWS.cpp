@@ -627,14 +627,12 @@ void HarmonyHubWS::ProcessHarmonyResponse(const Json::Value &j_data)
 		{
 			std::string resultString = "Harmony Hub: Activity list: {";
 
-			std::map<std::string, std::string>::iterator it = m_mapActivities.begin();
-			std::map<std::string, std::string>::iterator ite = m_mapActivities.end();
-			for (; it != ite; ++it)
+			for (auto &&activity : m_mapActivities)
 			{
 				resultString.append("\"");
-				resultString.append(it->second);
+				resultString.append(activity.second);
 				resultString.append("\":\"");
-				resultString.append(it->first);
+				resultString.append(activity.first);
 				resultString.append("\",");
 			}
 			resultString=resultString.substr(0, resultString.size()-1);

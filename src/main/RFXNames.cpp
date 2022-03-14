@@ -736,6 +736,12 @@ void GetLightStatus(
 	bHaveGroupCmd = false;
 	lstatus = "";
 
+	if (nValue == gswitch_sToggle)
+	{
+		lstatus = "Toggle";
+		return;
+	}
+
 	char szTmp[80];
 	switch (dType)
 	{
@@ -1988,7 +1994,7 @@ void GetLightStatus(
 * Returns a map associating a level value to its name.
 */
 void GetSelectorSwitchStatuses(const std::map<std::string, std::string>& options, std::map<std::string, std::string>& statuses) {
-	std::map< std::string, std::string >::const_iterator itt = options.find("LevelNames");
+	auto itt = options.find("LevelNames");
 	if (itt != options.end()) {
 		//_log.Log(LOG_STATUS, "DEBUG : Get selector switch statuses...");
 		std::string sOptions = itt->second;
@@ -2014,7 +2020,7 @@ void GetSelectorSwitchStatuses(const std::map<std::string, std::string>& options
 */
 int GetSelectorSwitchLevel(const std::map<std::string, std::string>& options, const std::string& levelName) {
 	int level = -1; // not found
-	std::map< std::string, std::string >::const_iterator itt = options.find("LevelNames");
+	auto itt = options.find("LevelNames");
 	if (itt != options.end()) {
 		//_log.Log(LOG_STATUS, "DEBUG : Get selector switch level...");
 		std::string sOptions = itt->second;
@@ -2038,7 +2044,7 @@ int GetSelectorSwitchLevel(const std::map<std::string, std::string>& options, co
 * Returns the action associated with a level
 */
 std::string GetSelectorSwitchLevelAction(const std::map<std::string, std::string>& options, const int level) {
-	std::map< std::string, std::string >::const_iterator itt = options.find("LevelActions");
+	auto itt = options.find("LevelActions");
 	if (itt != options.end()) {
 		//_log.Log(LOG_STATUS, "DEBUG : Get selector switch level action...");
 		std::string sOptions = itt->second;
@@ -2068,6 +2074,12 @@ bool GetLightCommand(
 {
 	if (switchtype == device::tswitch::type::Contact && dType != pTypeGeneralSwitch)
 		return false;	//we can not (or will not) switch this type
+
+	if (switchcmd == "Toggle")
+	{
+		cmd = gswitch_sToggle;
+		return true;
+	}
 
 	switch (dType)
 	{
@@ -3610,6 +3622,7 @@ bool IsNetworkDevice(const hardware::type::value htype)
 	case hardware::type::MySensorsTCP:
 	case hardware::type::MySensorsMQTT:
 	case hardware::type::MQTT:
+	case hardware::type::RFLINKMQTT:
 	case hardware::type::FRITZBOX:
 	case hardware::type::ETH8020:
 	case hardware::type::RelayNet:
@@ -3634,6 +3647,7 @@ bool IsNetworkDevice(const hardware::type::value htype)
 	case hardware::type::S0SmartMeterTCP:
 	case hardware::type::OctoPrint:
 	case hardware::type::TeleinfoMeterTCP:
+	case hardware::type::MQTTAutoDiscovery:
 		return true;
 	default:
 		return false;

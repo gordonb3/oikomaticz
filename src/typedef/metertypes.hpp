@@ -26,7 +26,7 @@ namespace type {
 			{ ENERGY,		"Electric Energy" },
 			{ GAS,			"Gas" },
 			{ WATER,		"Water" },
-			{ COUNTER,		"Counter" },
+			{ COUNTER,		"Custom" },
 			{ ENERGY_GENERATED,	"Electric Energy Generated" },
 			{ TIME,			"Time" },
 			{ CITYHEAT,		"CityHeat Energy" },

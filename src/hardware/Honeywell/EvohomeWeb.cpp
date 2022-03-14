@@ -414,7 +414,7 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 
 				uint8_t unit = GetUnit_by_ID(atol(HeatingZone->szZoneId.c_str()));
 				std::string szDeviceName;
-				m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName);
+				m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName, true, "");
 			}
 			return true;
 		}
@@ -479,7 +479,7 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 
 			uint8_t unit = GetUnit_by_ID(atol(HeatingZone->szZoneId.c_str()));
 			std::string szDeviceName;
-			m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName);
+			m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName, true, "");
 		}
 		return true;
 	}
@@ -639,11 +639,9 @@ void CEvohomeWeb::DecodeControllerMode(evohome::device::temperatureControlSystem
 		if (!result.empty() && ((result[0][2] != devname) || (!result[0][3].empty())))
 		{
 			// also change lastupdate time to allow the web frontend to pick up the change
-			time_t now = mytime(nullptr);
-			struct tm ltime;
-			localtime_r(&now, &ltime);
+			std::string sLastUpdate = TimeToString(nullptr, TF_DateTime);
 			// also wipe StrParam1 - we do not also want to call the old (python) script when changing system mode
-			m_sql.safe_query("UPDATE DeviceStatus SET Name='%q', LastUpdate='%04d-%02d-%02d %02d:%02d:%02d', StrParam1='' WHERE HardwareID=%d AND DeviceID='%s'", devname.c_str(), ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec, this->m_HwdID, tcs->szSystemId.c_str());
+			m_sql.safe_query("UPDATE DeviceStatus SET Name='%q', LastUpdate='%q', StrParam1='' WHERE HardwareID=%d AND DeviceID='%s'", devname.c_str(), sLastUpdate.c_str(), this->m_HwdID, tcs->szSystemId.c_str());
 		}
 	}
 }
@@ -742,7 +740,7 @@ void CEvohomeWeb::DecodeZone(evohome::device::zone* HeatingZone)
 		szUpdateStat.append(";" + szuntil);
 
 	std::string szDeviceName;
-	uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), GetUnit_by_ID(evoID), pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName);
+	uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), GetUnit_by_ID(evoID), pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName, true, "");
 
 	if (m_updatedev && (DevRowIdx != -1))
 	{
@@ -817,7 +815,7 @@ void CEvohomeWeb::DecodeDHWState(evohome::device::temperatureControlSystem* tcs)
 		szUpdateStat.append(";" + szuntil);
 
 	std::string szDeviceName;
-	uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, HotWater->szZoneId.c_str(), 1, pTypeEvohomeWater, sTypeEvohomeWater, 10, 255, 50, szUpdateStat.c_str(), szDeviceName);
+	uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, HotWater->szZoneId.c_str(), 1, pTypeEvohomeWater, sTypeEvohomeWater, 10, 255, 50, szUpdateStat.c_str(), szDeviceName, true, "");
 
 	if (m_updatedev && (DevRowIdx != -1))
 	{
@@ -932,7 +930,7 @@ uint8_t CEvohomeWeb::GetUnit_by_ID(unsigned long evoID)
 		}
 		// else create as unit zero -> we'll update that on the next visit
 
-		uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, cDeviceID, unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, "0.0;0.0;Auto", szDeviceName);
+		uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, cDeviceID, unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, "0.0;0.0;Auto", szDeviceName, true, "");
 		if (DevRowIdx != -1)
 		{
 			char devname[8];

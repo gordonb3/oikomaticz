@@ -76,17 +76,17 @@ namespace
 		"\t-webroot additional web root, useful with proxy servers (for example oikomaticz)\n"
 		"\t-startupdelay seconds (default=0)\n"
 		"\t-nowwwpwd (in case you forgot the web server username/password)\n"
-		"\t-nocache (do not return appcache, use only when developing the web pages)\n"
 		"\t-wwwcompress mode (on = always compress [default], off = always decompress, static = no processing but try precompressed first)\n"
 #if defined WIN32
 		"\t-nobrowser (do not start web browser (Windows Only)\n"
 #endif
-		"\t-noupdates do not use the internal update functionality\n"
 		"\t-dbase_disable_wal_mode\n"
 #if defined WIN32
 		"\t-log file_path (for example D:\\oikomaticz.log)\n"
+		"\t-weblog file_path (for example D:\\oikomaticz_access.log)\n"
 #else
 		"\t-log file_path (for example /var/log/oikomaticz.log)\n"
+		"\t-weblog file_path (for example /var/log/oikomaticz_access.log)\n"
 #endif
 		"\t-loglevel (combination of: all,normal,status,error,debug)\n"
 		"\t-debuglevel (combination of: all,normal,hardware,received,webserver,eventsystem,python,thread_id,sql)\n"
@@ -161,10 +161,10 @@ CSQLHelper m_sql;
 CNotificationHelper m_notifications;
 
 std::string logfile;
+std::string weblogfile;
 bool g_bStopApplication = false;
 bool g_bUseSyslog = false;
 bool g_bRunAsDaemon = false;
-bool g_bDontCacheWWW = false;
 http::server::_eWebCompressionMode g_wwwCompressMode = http::server::WWW_USE_GZIP;
 bool g_bUseUpdater = true;
 http::server::server_settings webserver_settings;
@@ -555,14 +555,14 @@ bool ParseConfigFile(const std::string &szConfigFile)
 				return false;
 			}
 		}
-		else if (szFlag == "cache") {
-			g_bDontCacheWWW = !GetConfigBool(sLine);
-		}
 		else if (szFlag == "reset_password") {
 			m_mainworker.m_bIgnoreUsernamePassword = GetConfigBool(sLine);
 		}
 		else if (szFlag == "log_file") {
 			logfile = sLine;
+		}
+		else if (szFlag == "weblog_file") {
+			weblogfile = sLine;
 		}
 		else if (szFlag == "loglevel") {
 			_log.SetLogFlags(sLine);
@@ -696,6 +696,15 @@ int main(int argc, char**argv)
 			}
 			logfile = cmdLine.GetSafeArgument("-log", 0, "Oikomaticz.log");
 		}
+		if (cmdLine.HasSwitch("-weblog"))
+		{
+			if (cmdLine.GetArgumentCount("-weblog") != 1)
+			{
+				_log.Log(LOG_ERROR, "Please specify an output weblog file (or syslog:<facility>)");
+				return 1;
+			}
+			weblogfile = cmdLine.GetSafeArgument("-weblog", 0, "domoticz_access.log");
+		}
 		if (cmdLine.HasSwitch("-approot"))
 		{
 			if (cmdLine.GetArgumentCount("-approot") != 1)
@@ -714,6 +723,9 @@ int main(int argc, char**argv)
 
 	if (!logfile.empty())
 		_log.SetOutputFile(logfile.c_str());
+
+	if (!weblogfile.empty())
+		_log.SetACLFOutputFile(weblogfile.c_str());
 
 	if (szStartupFolder.empty())
 	{
@@ -814,9 +826,9 @@ int main(int argc, char**argv)
 			}
 			std::string wwwport = cmdLine.GetSafeArgument("-www", 0, "");
 			int iPort = (int)atoi(wwwport.c_str());
-			if ((iPort < 0) || (iPort > 32767))
+			if ((iPort < 0) || (iPort > 49151))
 			{
-				_log.Log(LOG_ERROR, "Please specify a valid www port");
+				_log.Log(LOG_ERROR, "Please specify a valid www port (1 - 49151, or 0 to disable)");
 				return 1;
 			}
 			webserver_settings.listening_port = wwwport;
@@ -855,9 +867,9 @@ int main(int argc, char**argv)
 			}
 			std::string wwwport = cmdLine.GetSafeArgument("-sslwww", 0, "");
 			int iPort = (int)atoi(wwwport.c_str());
-			if ((iPort < 0) || (iPort > 32767))
+			if ((iPort < 0) || (iPort > 49151))
 			{
-				_log.Log(LOG_ERROR, "Please specify a valid sslwww port");
+				_log.Log(LOG_ERROR, "Please specify a valid sslwww port (1 - 49151)");
 				return 1;
 			}
 			secure_webserver_settings.listening_port = wwwport;
@@ -938,10 +950,6 @@ int main(int argc, char**argv)
 		if (cmdLine.HasSwitch("-nowwwpwd"))
 		{
 			m_mainworker.m_bIgnoreUsernamePassword = true;
-		}
-		if (cmdLine.HasSwitch("-nocache"))
-		{
-			g_bDontCacheWWW = true;
 		}
 		if (cmdLine.HasSwitch("-wwwcompress"))
 		{

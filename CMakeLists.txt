@@ -59,6 +59,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-switch")
   #add_definitions( -Wall -O0 -ggdb )
   #add_definitions( -Wfatal-errors -Wformat=2 -Werror=format-security )
+  add_definitions( -D_FILE_OFFSET_BITS=64 )
 endif()
 
 

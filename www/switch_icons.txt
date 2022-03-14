@@ -21,3 +21,4 @@ counter;Counter;Counter
 Sun;Sun;Sun
 Rain;Rain;Rain
 clock;Clock;Chronological device
+Irrigation;Irrigation;Irrigation Zone

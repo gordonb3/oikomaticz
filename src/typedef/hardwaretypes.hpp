@@ -130,6 +130,8 @@ enum value {
 	Mercedes,			//122
 	AirconWithMe,			//123
 	TeleinfoMeterTCP,		//124
+	MQTTAutoDiscovery,		//125
+	RFLINKMQTT,			//126
 	END
 };
 
@@ -190,7 +192,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ MySensorsTCP,			"MySensors Gateway with LAN interface",				"MySensors"		},
 	{ MySensorsMQTT,		"MySensors Gateway with MQTT interface",			"MySensors"		},
 	{ MQTT,				"MQTT Client Gateway with LAN interface",			"MQTT"			},
-	{ FRITZBOX,			"Fritzbox Callmonitor via LAN interface",			"Fritzbox"		},
+	{ FRITZBOX,			"Fritzbox Call/Statistics monitor via LAN interface",		"Fritzbox"		},
 	{ ETH8020,			"ETH8020 Relay board with LAN interface",			"Eth8020"		},
 	{ RFLINKUSB,			"RFLink Gateway USB",						"RFLink"		},
 	{ KMTronicUSB,			"KMTronic Gateway USB",						"KMTronic"		},
@@ -265,6 +267,8 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ Mercedes,			"Mercedes ME Connect",						"Mercedes"		},
 	{ AirconWithMe,			"AirconWithMe Wifi Airco module",				"AirconWithMe"		},
 	{ TeleinfoMeterTCP,		"Teleinfo EDF with LAN interface",				"TeleInfo"		},
+	{ MQTTAutoDiscovery,		"MQTT Auto Discovery Client Gateway with LAN interface",	"MQTT-AD"		},
+	{ RFLINKMQTT,			"RFLink Gateway MQTT",						"RFLink"		},
 	{ 0, nullptr, nullptr }
 };
 
