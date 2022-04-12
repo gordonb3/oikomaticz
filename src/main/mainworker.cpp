@@ -1042,7 +1042,7 @@ bool MainWorker::AddHardwareFromParams(
 		pHardware = new Arilux(ID);
 		break;
 	case hardware::type::IntergasInComfortLAN2RF:
-		pHardware = new CInComfort(ID, Address, Port);
+		pHardware = new CInComfort(ID, Address, Port, Username, Password);
 		break;
 	case hardware::type::Rtl433:
 		pHardware = new CRtl433(ID, Extra);
@@ -12390,6 +12390,8 @@ bool MainWorker::SwitchLight(const uint64_t idx, const std::string& switchcmd, c
 	return SwitchLightInt(sd, switchcmd, level, color, false, User);
 }
 
+//Seems this is only called for EvoHome, so this function needs to be moved to the EvoHome (base)class!
+//(and modify Scheduler scripts)
 bool MainWorker::SetSetPoint(const std::string& idx, const float TempValue, const std::string& newMode, const std::string& until)
 {
 	//Get Device details
@@ -12491,6 +12493,8 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 	if (pHardware == nullptr)
 		return false;
 
+	bool ret = true;
+
 	unsigned long ID;
 	std::stringstream s_strid;
 	s_strid << std::hex << sd[1];
@@ -12505,10 +12509,15 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 	uint8_t dSubType = atoi(sd[4].c_str());
 	//device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 
-	//
-	//	For plugins all the specific logic below is irrelevent
-	//	so just send the full details to the plugin so that it can take appropriate action
-	//
+	_tThermostat tmeter;
+	tmeter.subtype = sTypeThermSetpoint;
+	tmeter.id1 = ID1;
+	tmeter.id2 = ID2;
+	tmeter.id3 = ID3;
+	tmeter.id4 = ID4;
+	tmeter.dunit = 1;
+	tmeter.temp = (m_sql.m_tempsign[0] != 'F') ? TempValue : static_cast<float>(ConvertToCelsius(TempValue));
+
 	if (pHardware->HwdType == hardware::type::PythonPlugin)
 	{
 #ifdef ENABLE_PYTHON
@@ -12600,7 +12609,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 		}
 		else if (pHardware->HwdType == hardware::type::EVOHOME_SCRIPT || pHardware->HwdType == hardware::type::EVOHOME_SERIAL || pHardware->HwdType == hardware::type::EVOHOME_WEB || pHardware->HwdType == hardware::type::EVOHOME_TCP)
 		{
-			SetSetPoint(sd[7], TempValue, "PermanentOverride", "");
+			return SetSetPoint(sd[7], TempValue, "PermanentOverride", "");
 		}
 		else if (pHardware->HwdType == hardware::type::IntergasInComfortLAN2RF)
 		{
@@ -12610,7 +12619,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 		else if (pHardware->HwdType == hardware::type::OpenWebNetTCP)
 		{
 			COpenWebNetTCP* pGateway = dynamic_cast<COpenWebNetTCP*>(pHardware);
-			return pGateway->SetSetpoint(ID, TempValue);
+			ret = pGateway->SetSetpoint(ID, TempValue);
 		}
 		else if (pHardware->HwdType == hardware::type::MQTTAutoDiscovery)
 		{
@@ -12645,34 +12654,18 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 			if (!WriteToHardware(HardwareID, (const char*)&lcmd, sizeof(lcmd.RADIATOR1)))
 				return false;
 			PushAndWaitRxMessage(pHardware, (const uint8_t *)&lcmd, nullptr, -1, nullptr);
+			return true;
 		}
 		else
 		{
-			float tempDest = TempValue;
-			unsigned char tSign = m_sql.m_tempsign[0];
-			if (tSign == 'F')
-			{
-				//Convert to Celsius
-				tempDest = static_cast<float>(ConvertToCelsius(tempDest));
-			}
-
-			_tThermostat tmeter;
-			tmeter.subtype = sTypeThermSetpoint;
-			tmeter.id1 = ID1;
-			tmeter.id2 = ID2;
-			tmeter.id3 = ID3;
-			tmeter.id4 = ID4;
-			tmeter.dunit = 1;
-			tmeter.temp = tempDest;
 			if (!WriteToHardware(HardwareID, (const char*)&tmeter, sizeof(_tThermostat)))
 				return false;
-			if (pHardware->HwdType == hardware::type::Dummy)
-			{
-				//Also put it in the database, as this devices does not send updates
-				PushAndWaitRxMessage(pHardware, (const uint8_t *)&tmeter, nullptr, -1, nullptr);
-			}
 		}
 	}
+	if (!ret)
+		return false;
+	//Also put it in the database, not all devices are awake (battery operated nodes)
+	PushAndWaitRxMessage(pHardware, (const uint8_t*)&tmeter, nullptr, -1, nullptr);
 	return true;
 }
 

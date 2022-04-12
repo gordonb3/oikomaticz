@@ -532,6 +532,7 @@ define(['app'], function (app) {
 				)
 			) {
 				var password = "";
+				var username = "";
 				var address = $("#hardwarecontent #divremote #tcpaddress").val();
 				if (address == "") {
 					ShowNotify($.t('Please enter an Address!'), 2500, true);
@@ -548,15 +549,14 @@ define(['app'], function (app) {
 					return;
 				}
 				var extra = "";
+
 				if (text.indexOf("Evohome") >= 0) {
 					extra = $("#hardwarecontent #divevohometcp #controlleridevohometcp").val();
 				}
-
-				if (text.indexOf("S0 Meter") >= 0) {
+				else if (text.indexOf("S0 Meter") >= 0) {
 					extra = $.devExtra;
 				}
-
-				if (text.indexOf("P1 Smart Meter") >= 0) {
+				else if (text.indexOf("P1 Smart Meter") >= 0) {
 					var decryptionkey = $("#hardwarecontent #divkeyp1p1 #decryptionkey").val();
 					if (decryptionkey.length % 2 != 0 ) {
 						ShowNotify($.t("Invallid Descryption Key Length!"), 2500, true);
@@ -564,13 +564,17 @@ define(['app'], function (app) {
 					}
 					password = decryptionkey;
 				}
-				if (text.indexOf("Teleinfo EDF") >= 0) {
+				else if (text.indexOf("Teleinfo EDF") >= 0) {
 					Mode2 = $("#hardwarecontent #divcrcp1 #disablecrcp1").prop("checked") ? 0 : 1;
 					var ratelimitp1 = $("#hardwarecontent #hardwareparamsratelimitp1 #ratelimitp1").val();
 					if (ratelimitp1 == "") {
 						ratelimitp1 = "60";
 					}
 					Mode3 = ratelimitp1;
+				}
+				else if (text.indexOf("Intergas InComfort") >= 0) {
+					username = $("#hardwarecontent #divlogin #username").val();
+					password = $("#hardwarecontent #divlogin #password").val();
 				}
 
 				$.ajax({
@@ -583,6 +587,7 @@ define(['app'], function (app) {
 					"&enabled=" + bEnabled +
 					"&idx=" + idx +
 					"&datatimeout=" + datatimeout +
+					"&username=" + encodeURIComponent(username) +
 					"&password=" + encodeURIComponent(password) +
 					"&Mode1=" + Mode1 + "&Mode2=" + Mode2 + "&Mode3=" + Mode3 + "&Mode4=" + Mode4 + "&Mode5=" + Mode5 + "&Mode6=" + Mode6,
 					async: false,
@@ -791,6 +796,7 @@ define(['app'], function (app) {
 				(text.indexOf("MySensors Gateway with MQTT") >= 0) ||
 				(text.indexOf("Razberry") >= 0)
 			) {
+				alert("AAA");
 				var address = $("#hardwarecontent #divremote #tcpaddress").val();
 				if (address == "") {
 					ShowNotify($.t('Please enter an Address!'), 2500, true);
@@ -1736,6 +1742,7 @@ define(['app'], function (app) {
 					text.indexOf("MyHome OpenWebNet with LAN interface") == -1
 				)
 			) {
+				var username = "";
 				var password = "";
 				var address = $("#hardwarecontent #divremote #tcpaddress").val();
 				if (address == "") {
@@ -1752,6 +1759,7 @@ define(['app'], function (app) {
 					ShowNotify($.t('Please enter an Valid Port!'), 2500, true);
 					return;
 				}
+
 				var extra = "";
 				if (text.indexOf("Evohome") >= 0) {
 					extra = $("#hardwarecontent #divevohometcp #controlleridevohometcp").val();
@@ -1772,6 +1780,11 @@ define(['app'], function (app) {
 					}
 					Mode3 = ratelimitp1;
 				}
+				else if (text.indexOf("Intergas InComfort") >= 0) {
+					username = $("#hardwarecontent #divlogin #username").val();
+					password = $("#hardwarecontent #divlogin #password").val();
+				}
+				
 				$.ajax({
 					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype +
 					"&loglevel=" + logLevel +
@@ -1779,6 +1792,7 @@ define(['app'], function (app) {
 					"&port=" + port +
 					"&name=" + encodeURIComponent(name) +
 					"&enabled=" + bEnabled +
+					"&username=" + encodeURIComponent(username) +
 					"&password=" + encodeURIComponent(password) +
 					"&datatimeout=" + datatimeout +
 					"&Mode1=" + Mode1 +
@@ -4482,7 +4496,8 @@ define(['app'], function (app) {
 							(data["Type"].indexOf("Logitech Media Server") >= 0) ||
 							(data["Type"].indexOf("HEOS by DENON") >= 0) ||
 							(data["Type"].indexOf("Razberry") >= 0) ||
-							(data["Type"].indexOf("Comm5") >= 0)
+							(data["Type"].indexOf("Comm5") >= 0) ||
+							(data["Type"].indexOf("Intergas InComfort") >= 0)
 						) {
 							$("#hardwarecontent #hardwareparamslogin #username").val(data["Username"]);
 							$("#hardwarecontent #hardwareparamslogin #password").val(data["Password"]);
@@ -4742,6 +4757,7 @@ define(['app'], function (app) {
 				(text.indexOf("LAN") >= 0 ||
 				text.indexOf("Harmony") >= 0 ||
 				text.indexOf("Eco Devices") >= 0 ||
+				text.indexOf("Intergas InComfort") >= 0 ||
 				text.indexOf("MySensors Gateway with MQTT") >= 0) &&
 				text.indexOf("YouLess") == -1 && 
 				text.indexOf("Denkovi") == -1 &&
@@ -4755,15 +4771,18 @@ define(['app'], function (app) {
 						$("#hardwarecontent #divratelimitp1").show();
 						$("#hardwarecontent #divlogin").show();
 					}
-					if (text.indexOf("P1 Smart Meter") >= 0) {
+					else if (text.indexOf("P1 Smart Meter") >= 0) {
 						$("#hardwarecontent #divkeyp1p1").show();
 					}
-					if (text.indexOf("Teleinfo EDF") >= 0) {
+					else if (text.indexOf("Teleinfo EDF") >= 0) {
 						$("#hardwarecontent #divratelimitp1").show();
 						$("#hardwarecontent #divcrcp1").show();
 					}
-					if (text.indexOf("Evohome") >= 0) {
+					else if (text.indexOf("Evohome") >= 0) {
 						$("#hardwarecontent #divevohometcp").show();
+					}
+					else if (text.indexOf("Intergas InComfort") >= 0) {
+						$("#hardwarecontent #divlogin").show();
 					}
 			}
 			else if (

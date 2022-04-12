@@ -348,6 +348,45 @@ bool MQTTAutoDiscover::SetValueWithTemplate(Json::Value& root, std::string szVal
 	return false;
 }
 
+/*
+Some nodes seem to announce the mode/temperature command topics wrong
+They include the value template name field
+
+For example:
+
+  "mode_command_topic": "zigbee2mqtt/My-ThermControl1/set/system_mode",
+  "mode_state_template": "{{ value_json.system_mode }}",
+
+or:
+
+  "temperature_command_topic": "zigbee2mqtt/My-ThermControl1/set/current_heating_setpoint",
+  "temperature_command_template": "{{ value_json.current_heating_setpoint }}",
+
+This function checks this the command_topic ends with /{template name field}
+and if found removes this from the command topic
+
+The result will be:
+  "mode_command_topic": "zigbee2mqtt/My-ThermControl1/set",
+  "temperature_command_topic": "zigbee2mqtt/My-ThermControl1/set",
+*/
+void MQTTAutoDiscover::FixCommandTopicStateTemplate(std::string& command_topic, std::string& state_template)
+{
+	size_t pos = state_template.find("value_json.");
+	if (pos == std::string::npos)
+		return; //no fixing needed
+	std::string value_json = state_template.substr(pos + std::string("value_json.").size());
+	stdreplace(value_json, "]", "");
+
+	std::string svalue = "/" + value_json;
+
+	pos = command_topic.rfind(svalue);
+	if (pos != (command_topic.size() - svalue.size()))
+		return; //no fixing needed
+
+	command_topic = command_topic.substr(0, pos);
+}
+
+
 void MQTTAutoDiscover::on_auto_discovery_message(const struct mosquitto_message* message)
 {
 	std::string topic = message->topic;
@@ -913,6 +952,13 @@ void MQTTAutoDiscover::on_auto_discovery_message(const struct mosquitto_message*
 				pSensor->select_options.push_back(ittMode.asString());
 			}
 		}
+		if (!root["ops"].empty())
+		{
+			for (const auto& ittMode : root["ops"])
+			{
+				pSensor->select_options.push_back(ittMode.asString());
+			}
+		}
 		if ((pSensor->component_type == "select") && (pSensor->select_options.empty()))
 		{
 			Log(LOG_ERROR, "MQTT_Discovery: component_type 'select' received without options! (%s/%s)!", topic.c_str(), qMessage.c_str());
@@ -970,6 +1016,9 @@ void MQTTAutoDiscover::on_auto_discovery_message(const struct mosquitto_message*
 		CleanValueTemplate(pSensor->mode_state_template);
 		CleanValueTemplate(pSensor->temperature_state_template);
 		CleanValueTemplate(pSensor->current_temperature_template);
+
+		FixCommandTopicStateTemplate(pSensor->mode_command_topic, pSensor->mode_state_template);
+		FixCommandTopicStateTemplate(pSensor->temperature_command_topic, pSensor->temperature_command_template);
 
 		if (!root["qos"].empty())
 			pSensor->qos = atoi(root["qos"].asString().c_str());
@@ -1390,7 +1439,7 @@ void MQTTAutoDiscover::GuessSensorTypeValue(const _tMQTTASensor* pSensor, uint8_
 
 		}
 
-		_tMQTTASensor* pWattSensor = get_auto_discovery_sensor_unit(pSensor, "w");
+		_tMQTTASensor* pWattSensor = get_auto_discovery_sensor_WATT_unit(pSensor);
 		if (pWattSensor)
 		{
 			fUsage = static_cast<float>(atof(pWattSensor->last_value.c_str()));
@@ -1659,6 +1708,60 @@ MQTTAutoDiscover::_tMQTTASensor* MQTTAutoDiscover::get_auto_discovery_sensor_uni
 	}
 	return nullptr;
 }
+
+//This is a special routine that first tries to return the value of COMMAND_CLASS_SENSOR_MULTILEVEL else from COMMAND_CLASS_METER for ZWave nodes
+MQTTAutoDiscover::_tMQTTASensor* MQTTAutoDiscover::get_auto_discovery_sensor_WATT_unit(const _tMQTTASensor* pSensor)
+{
+	//Retrieved sensor from same device with specified measurement unit
+	_tMQTTADevice* pDevice = &m_discovered_devices[pSensor->device_identifiers];
+	if (pDevice == nullptr)
+		return nullptr; //device not found!?
+
+	if (pSensor->unique_id.find("zwavejs2mqtt_") != 0)
+		return get_auto_discovery_sensor_unit(pSensor, "w"); //not ZWave
+
+	std::vector<std::string> strarraySensor;
+	StringSplit(pSensor->unique_id, "-", strarraySensor);
+
+	_tMQTTASensor* pSensor2Return = nullptr;
+
+	// Check for the correct sensor with the largest match in the UID
+	for (const auto ittSensorID : pDevice->sensor_ids)
+	{
+		//if (m_discovered_sensors.find(ittSensorID.first) != m_discovered_sensors.end())
+		{
+			_tMQTTASensor* pTmpDeviceSensor = &m_discovered_sensors[ittSensorID.first];
+
+			std::string szUnit = utf8_to_string(pTmpDeviceSensor->unit_of_measurement);
+			stdlower(szUnit);
+
+			if (szUnit == "w")
+			{
+				if (pSensor->unique_id == pTmpDeviceSensor->unique_id)
+					return pTmpDeviceSensor; //non-zwave?
+
+				std::vector<std::string> strarrayTmp;
+				StringSplit(pTmpDeviceSensor->unique_id, "-", strarrayTmp);
+				if (strarrayTmp.size() < 4)
+					continue; //not interested
+
+				if (
+					(strarrayTmp[0] == strarraySensor[0])
+					&& (strarrayTmp[2] == strarraySensor[2])
+					)
+				{
+					if (
+						(pSensor2Return == nullptr)
+						|| (strarrayTmp[1] == "49")
+						)
+						pSensor2Return = pTmpDeviceSensor;
+				}
+			}
+		}
+	}
+	return pSensor2Return;
+}
+
 
 void MQTTAutoDiscover::handle_auto_discovery_battery(_tMQTTASensor* pSensor, const struct mosquitto_message* message)
 {
@@ -3345,11 +3448,7 @@ bool MQTTAutoDiscover::SetSetpoint(const std::string& DeviceID, float Temp)
 	}
 
 	//We might need to convert this to Fahrenheit
-	if (pSensor->temperature_unit == "F")
-	{
-		//Convert to Fahrenheit
-		Temp = (float)ConvertToFahrenheit(Temp);
-	}
+	double TempDest = (pSensor->temperature_unit == "F") ? (float)ConvertToFahrenheit(Temp) : Temp;
 
 	Json::Value root;
 	std::string szSendValue;
@@ -3357,7 +3456,7 @@ bool MQTTAutoDiscover::SetSetpoint(const std::string& DeviceID, float Temp)
 	{
 		std::string szKey = GetValueTemplateKey(pSensor->temperature_command_template);
 		if (!szKey.empty())
-			root[szKey] = Temp;
+			root[szKey] = TempDest;
 		else
 		{
 			Log(LOG_ERROR, "Climate device unhandled temperature_command_template (%s/%s)", DeviceID.c_str(), pSensor->name.c_str());
@@ -3366,12 +3465,27 @@ bool MQTTAutoDiscover::SetSetpoint(const std::string& DeviceID, float Temp)
 		szSendValue = JSonToRawString(root);
 	}
 	else
-		szSendValue = std_format("%.1f", Temp);
+		szSendValue = std_format("%.1f", TempDest);
 
 	std::string szTopic = pSensor->state_topic;
 	if (!pSensor->temperature_command_topic.empty())
 		szTopic = pSensor->temperature_command_topic;
 	SendMessage(szTopic, szSendValue);
+
+	//Because thermostats could be battery operated and not listening 24/7
+	//we force a value update internally in Oikomaticz so the user sees the just set SetPoint
+
+	pSensor->sValue = std_format("%.2f", Temp);
+	std::vector<std::vector<std::string>> result;
+	result = m_sql.safe_query("SELECT Name,nValue,sValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit == %d) AND (Type==%d) AND (Subtype==%d)", m_HwdID,
+		pSensor->unique_id.c_str(), 1, pSensor->devType, pSensor->subType);
+	if (result.empty())
+		return false; //?? That's impossible
+	// Update
+	UpdateValueInt(m_HwdID, pSensor->unique_id.c_str(), 1, pSensor->devType, pSensor->subType, pSensor->SignalLevel, pSensor->BatteryLevel,
+		pSensor->nValue, pSensor->sValue.c_str(),
+		result[0][0]);
+
 	return true;
 }
 

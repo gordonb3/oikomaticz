@@ -39,7 +39,7 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 2
-#define DOMOTICZ_DB_VERSION 154
+#define DOMOTICZ_DB_VERSION 155
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)

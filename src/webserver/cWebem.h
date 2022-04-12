@@ -57,6 +57,7 @@ namespace http
 		typedef struct _tIPNetwork
 		{
 			bool bIsIPv6 = false;
+			std::string ip_string;
 			uint8_t Network[16] = { 0 };
 			uint8_t Mask[16] = { 0 };
 		} IPNetwork;

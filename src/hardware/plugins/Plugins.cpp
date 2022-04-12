@@ -25,7 +25,7 @@
 #define ADD_STRING_TO_DICT(pPlugin, pDict, key, value)                                                                                      \
 	{                                                                                                                                       \
 		PyNewRef	pObj = Py_BuildValue("s", value.c_str());                                                                               \
-		if (PyDict_SetItemString(pDict, key, pObj) == -1)                                                                                   \
+		if (!pObj || PyDict_SetItemString(pDict, key, pObj) == -1)                                                                                   \
 			pPlugin->Log(LOG_ERROR, "Failed to add key '%s', value '%s' to dictionary.", key, value.c_str());     \
 	}
 
@@ -1170,7 +1170,7 @@ namespace Plugins
 				//	Python loads the 'site' module automatically and adds extra search directories for module loading
 				//	This code makes the plugin framework function the same way
 				//
-				void *pSiteModule = PyImport_ImportModule("site");
+				PyNewRef	pSiteModule = PyImport_ImportModule("site");
 				if (!pSiteModule)
 				{
 					Log(LOG_ERROR, "(%s) failed to load 'site' module, continuing.", m_PluginKey.c_str());
@@ -1213,17 +1213,25 @@ namespace Plugins
 				//
 				//	Load the 'faulthandler' module to get a python stackdump during a segfault
 				//
-				void *pFaultModule = PyImport_ImportModule("faulthandler");
+				PyNewRef	pFaultModule = PyImport_ImportModule("faulthandler");
 				if (!pFaultModule)
 				{
 					Log(LOG_ERROR, "(%s) failed to load 'faulthandler' module, continuing.", m_PluginKey.c_str());
 				}
 				else
 				{
-					PyNewRef	pFunc = PyObject_GetAttrString((PyObject *)pFaultModule, "enable");
+					PyNewRef	pFunc = PyObject_GetAttrString((PyObject*)pFaultModule, "is_enabled");
 					if (pFunc && PyCallable_Check(pFunc))
 					{
-						PyNewRef pRetObj = PyObject_CallObject(pFunc, nullptr);
+						PyNewRef	pRetObj = PyObject_CallObject(pFunc, nullptr);
+						if (!pRetObj.IsTrue())
+						{
+							PyNewRef	pFunc = PyObject_GetAttrString((PyObject*)pFaultModule, "enable");
+							if (pFunc && PyCallable_Check(pFunc))
+							{
+								PyNewRef pRetObj = PyObject_CallObject(pFunc, nullptr);
+							}
+						}
 					}
 				}
 			}
@@ -2140,6 +2148,37 @@ namespace Plugins
 		}
 	}
 
+	long CPlugin::PythonThreadCount()
+	{
+		long	lRetVal = 0;
+
+		if (m_PyModule)
+		{
+			PyBorrowedRef	pModuleDict = PyModule_GetDict(m_PyModule);
+			if (pModuleDict)
+			{
+				PyBorrowedRef	pThreadModule = PyDict_GetItemString(pModuleDict, "threading");
+				if (pThreadModule)
+				{
+					PyNewRef pFunc = PyObject_GetAttrString(pThreadModule, "active_count");
+					if (pFunc && PyCallable_Check(pFunc))
+					{
+						PyNewRef	pReturnValue = PyObject_CallObject(pFunc, nullptr);
+						if (pReturnValue.IsLong())
+						{
+							lRetVal = PyLong_AsLong(pReturnValue) - 1;
+							if (lRetVal)
+							{
+								Log(LOG_NORM, "Warning: Plugin has %d Python threads running.", (int)lRetVal);
+							}
+						}
+					}
+				}
+			}
+		}
+		return lRetVal;
+	}
+
 	void CPlugin::Stop()
 	{
 		try
@@ -2246,8 +2285,17 @@ namespace Plugins
 				PyDict_Clear((PyObject*)m_DeviceDict);
 			}
 
+			// if threading module is running then check no threads are still running
+			for (int i=10; PythonThreadCount() && i; i--)
+			{
+				sleep_milliseconds(1000);
+			}
+			if (PythonThreadCount())
+				Log(LOG_NORM, "Abandoning wait for Plugin thread shutdown, hang or crash may result.");
+
 			// Stop Python
 			Py_XDECREF(m_PyModule);
+			m_PyModule = nullptr;
 			Py_XDECREF(m_DeviceDict);
 			if (m_ImageDict)
 				Py_XDECREF(m_ImageDict);
@@ -2263,11 +2311,11 @@ namespace Plugins
 		}
 		catch (std::exception *e)
 		{
-			Log(LOG_ERROR, "%s: Execption thrown releasing Interpreter: %s", __func__, e->what());
+			Log(LOG_ERROR, "%s: Exception thrown releasing Interpreter: %s", __func__, e->what());
 		}
 		catch (...)
 		{
-			Log(LOG_ERROR, "%s: Unknown execption thrown releasing Interpreter", __func__);
+			Log(LOG_ERROR, "%s: Unknown exception thrown releasing Interpreter", __func__);
 		}
 
 		m_PyModule = nullptr;

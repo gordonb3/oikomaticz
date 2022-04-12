@@ -95,6 +95,7 @@ namespace Plugins {
 	  void ConnectionDisconnect(CDirectiveBase *);
 	  void DisconnectEvent(CEventBase *);
 	  void Callback(PyBorrowedRef& pTarget, const std::string &sHandler, PyObject *pParams);
+	  long PythonThreadCount();
 	  void RestoreThread();
 	  void ReleaseThread();
 	  void Stop();
@@ -171,6 +172,7 @@ namespace Plugins {
 		bool		IsFloat() { return Type() == "float"; };
 		bool		IsBool() { return Type() == "bool"; };
 		bool		IsNone() { return m_pObject && (m_pObject == Py_None); };
+		bool		IsTrue() { return m_pObject && PyObject_IsTrue(m_pObject); };
 		operator PyObject *() const
 		{
 			return m_pObject;

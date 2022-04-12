@@ -1048,10 +1048,7 @@ namespace http {
 						 != 1)
 						return; //invalid address
 					memset((void*)&ipnetwork.Mask, 0xFF, iASize);
-
-					//Apply mask to network address
-					for (ii = 0; ii < iASize; ii++)
-						ipnetwork.Network[ii] = ipnetwork.Network[ii] & ipnetwork.Mask[ii];
+					ipnetwork.ip_string = network;
 				}
 			}
 
@@ -1961,29 +1958,31 @@ namespace http {
 			// Initialize session
 			WebEmSession session;
 			session.remote_host = req.host_remote_address;
+			session.remote_port = req.host_remote_port;
+			session.local_host = req.host_local_address;
+			session.local_port = req.host_local_port;
 
-			if (!myWebem->myRemoteProxyIPs.empty())
+			for (const auto& ip_string : myWebem->myRemoteProxyIPs)
 			{
-				for (auto &myRemoteProxyIP : myWebem->myRemoteProxyIPs)
+				if (ip_string.empty())
+					continue;
+				if (session.remote_host == ip_string)
 				{
-					if (session.remote_host == myRemoteProxyIP)
+					const char* host_header = request::get_req_header(&req, "X-Forwarded-For");
+					if (host_header != nullptr)
 					{
-						const char *host_header = request::get_req_header(&req, "X-Forwarded-For");
-						if (host_header != nullptr)
+						if (strstr(host_header, ",") != nullptr)
 						{
-							if (strstr(host_header, ",") != nullptr)
+							//Multiple proxies are used... this is not very common
+							host_header = request::get_req_header(&req, "X-Real-IP"); //try our NGINX header
+							if (!host_header)
 							{
-								//Multiple proxies are used... this is not very common
-								host_header = request::get_req_header(&req, "X-Real-IP"); //try our NGINX header
-								if (!host_header)
-								{
-									_log.Log(LOG_ERROR, "Webserver: Multiple proxies are used (Or possible spoofing attempt), ignoring client request (remote address: %s)", session.remote_host.c_str());
-									rep = reply::stock_reply(reply::forbidden);
-									return;
-								}
+								_log.Log(LOG_ERROR, "Webserver: Multiple proxies are used (Or possible spoofing attempt), ignoring client request (remote address: %s)", session.remote_host.c_str());
+								rep = reply::stock_reply(reply::forbidden);
+								return;
 							}
-							session.remote_host = host_header;
 						}
+						session.remote_host = host_header;
 					}
 				}
 			}
