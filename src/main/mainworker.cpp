@@ -74,6 +74,7 @@
 #include "hardware/KMTronicUDP.h"
 #include "hardware/Kodi.h"
 #include "hardware/Limitless.h"
+#include "hardware/LocalTuya/LocalTuya.hpp"
 #include "hardware/LogitechMediaServer.h"
 #include "hardware/Meteorologisk.h"
 #include "hardware/Meteostick.h"
@@ -1082,6 +1083,9 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case hardware::type::MQTTAutoDiscovery:
 		pHardware = new MQTTAutoDiscover(ID, Name, Address, Port, Username, Password, Extra, Mode2);
+		break;
+	case hardware::type::LocalTuya:
+		pHardware = new CLocalTuya(ID);
 		break;
 	}
 

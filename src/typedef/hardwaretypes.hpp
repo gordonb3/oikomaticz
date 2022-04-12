@@ -132,6 +132,7 @@ enum value {
 	TeleinfoMeterTCP,		//124
 	MQTTAutoDiscovery,		//125
 	RFLINKMQTT,			//126
+	LocalTuya = 1000,		//1000
 	END
 };
 
@@ -269,6 +270,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ TeleinfoMeterTCP,		"Teleinfo EDF with LAN interface",				"TeleInfo"		},
 	{ MQTTAutoDiscovery,		"MQTT Auto Discovery Client Gateway with LAN interface",	"MQTT-AD"		},
 	{ RFLINKMQTT,			"RFLink Gateway MQTT",						"RFLink"		},
+	{ LocalTuya,			"Local Tuya provider",						"LocalTuya"		},
 	{ 0, nullptr, nullptr }
 };
 
