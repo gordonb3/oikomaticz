@@ -3,7 +3,7 @@
  *
  *  Copyright 2017 - gordonb3 https://github.com/gordonb3/tuyapp
  *
- *  Licensed under GNU General Public License 3.0 or later. 
+ *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See COPYING, AUTHORS.
  *
  * @license GPL-3.0+ <https://github.com/gordonb3/tuyapp/blob/master/LICENSE>
@@ -75,22 +75,19 @@ bool CLocalTuya::StopHardware()
 
 void CLocalTuya::Do_Work()
 {
-	_log.Log(LOG_STATUS, "Worker started...");
+	// connect to devices
+
 	unsigned long sec_counter = 0;
 	while (!IsStopRequested(1000))
 	{
-		sleep_seconds(1);
 		sec_counter++;
-		if (sec_counter % 10 == 0) {
+		if (sec_counter % 12 == 0) {
 			m_LastHeartbeat = mytime(NULL);
 		}
-		if (sec_counter % 60 == 0)
-		{
-//			GetStatus();
-		}
-	}
-	_log.Log(LOG_STATUS,"Worker stopped...");
 
+		// track disconnected devices
+
+	}
 }
 
 
@@ -102,25 +99,66 @@ bool CLocalTuya::WriteToHardware(const char *pdata, const unsigned char length)
 	// switch command
 	const _tGeneralSwitch *pSwitch = reinterpret_cast<const _tGeneralSwitch*>(pdata);
 	if (pSwitch->type != pTypeGeneralSwitch)
-		return false; //only allowed to control regular switches
+		return false; // only allowed to control regular switches
 
 	int cmnd = pSwitch->cmnd;
 
-	if (pSwitch->id == 255)
+	if (pSwitch->id == (uint32_t)(-1))
 	{
-		// tariff indicator
-		if (cmnd == gswitch_sOn)
+		// signal energy meters to switch tariff
+		if (cmnd == gswitch_sOn) // low tariff
 			m_tariff = 1;
 		else
-			m_tariff = 0;
-		
+			m_tariff = 0; // high/single tariff
+		return true;
 	}
-	char szDeviceID[20];
-	sprintf(szDeviceID, "%08X", pSwitch->id);
 
+//	char szDeviceID[20];
+//	sprintf(szDeviceID, "%08X", pSwitch->id);
+
+	// send switch command to device communication thread
 
 	return true;
 }
 
 
+void CLocalTuya::SendMeter(const TuyaData* devicedata)
+{
+	if ((devicedata->usageHigh > 0) || (devicedata->usageLow > 0))
+	{
+		P1Power	tuya_energy;
+		memset(&tuya_energy, 0, sizeof(P1Power));
+		tuya_energy.len = sizeof(P1Power) - 1;
+		tuya_energy.type = pTypeP1Power;
+		tuya_energy.subtype = sTypeP1Power;
+		tuya_energy.ID = devicedata->deviceID;
 
+		if (devicedata->isEnergyInput)
+		{
+			tuya_energy.delivcurrent = devicedata->power;
+			tuya_energy.powerdeliv1 = devicedata->usageLow;
+			tuya_energy.powerdeliv2 = devicedata->usageHigh;
+		}
+		else
+		{
+			tuya_energy.usagecurrent = devicedata->power;
+			tuya_energy.powerusage1 = devicedata->usageLow;
+			tuya_energy.powerusage2 = devicedata->usageHigh;
+		}
+		sDecodeRXMessage(this, (const unsigned char *)&tuya_energy, devicedata->deviceName, 255, nullptr);
+	}
+}
+
+void CLocalTuya::SendSwitch(const TuyaData* devicedata)
+{
+	GeneralSwitch tuya_switch;
+	memset(&tuya_switch, 0, sizeof(GeneralSwitch));
+	tuya_switch.len = sizeof(GeneralSwitch) - 1;
+	tuya_switch.type = pTypeGeneralSwitch;
+	tuya_switch.subtype = sSwitchTypeAC;
+	tuya_switch.switchtype = device::tswitch::type::OnOff;
+	tuya_switch.id = devicedata->deviceID;
+	tuya_switch.unitcode = 2; // P1 meter claims unit code 1
+	tuya_switch.cmnd = (uint8_t)devicedata->switchstate;
+	sDecodeRXMessage(this, (const unsigned char *)&tuya_switch, devicedata->deviceName, 255, nullptr);
+}
