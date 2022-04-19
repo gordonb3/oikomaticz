@@ -1316,6 +1316,10 @@ namespace http
 			{
 				// all fine here!
 			}
+			else if (htype == hardware::type::LocalTuya)
+			{
+				// all fine here!
+			}
 			else
 				return;
 
@@ -1694,6 +1698,10 @@ namespace http
 				// all fine here!
 			}
 			else if (htype == hardware::type::RFLINKMQTT)
+			{
+				//all fine here!
+			}
+			else if (htype == hardware::type::LocalTuya)
 			{
 				//all fine here!
 			}

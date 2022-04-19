@@ -333,7 +333,9 @@ define(['app'], function (app) {
 				(text.indexOf("Evohome") >= 0 && text.indexOf("script") >= 0) ||
 				(text.indexOf("YeeLight") >= 0) ||
 				(text.indexOf("Arilux AL-LC0x") >= 0) ||
-				(text.indexOf("sysfs GPIO") >= 0)
+				(text.indexOf("sysfs GPIO") >= 0) ||
+				(text.indexOf("Local Tuya provider") >= 0)
+
 				)
 			 {
 				// if hardwaretype == 1000 => I2C sensors grouping
@@ -1827,7 +1829,8 @@ define(['app'], function (app) {
 				(text.indexOf("Tellstick") >= 0) ||
 				(text.indexOf("Motherboard") >= 0) ||
 				(text.indexOf("YeeLight") >= 0) ||
-				(text.indexOf("Arilux AL-LC0x") >= 0)
+				(text.indexOf("Arilux AL-LC0x") >= 0) ||
+				(text.indexOf("Local Tuya provider") >= 0)
 			) {
 				$.ajax({
 					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype +
@@ -3817,6 +3820,42 @@ define(['app'], function (app) {
 
 		/* End of P1 Smart Meter plugin code */
 
+		/* Start of Tuya plugin code */
+		
+		EditTuya = function (idx, name) {
+			$.devIdx = idx;
+			cursordefault();
+			var htmlcontent = '';
+			htmlcontent = '<p><center><h2><span data-i18n="Hardware"></span>: ' + name + '</h2></center></p>\n';
+			htmlcontent += $('#tuya').html();
+			$('#hardwarecontent').html(GetBackbuttonHTMLTable('ShowHardware') + htmlcontent);
+			$('#hardwarecontent').i18n();
+
+			$("#hardwarecontent #tuyasettingstable #pollinterval").val(Mode1);
+
+			var oTable = $('#tuyadevicestable').dataTable({
+				"sDom": '<"H"lfrC>t<"F"ip>',
+				"oTableTools": {
+					"sRowSelect": "single",
+				},
+				"aaSorting": [[0, "desc"]],
+				"bSortClasses": false,
+				"bProcessing": true,
+				"bStateSave": true,
+				"bJQueryUI": true,
+				"aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+				"iDisplayLength": 25,
+				"sPaginationType": "full_numbers",
+				language: $.DataTableLanguage
+			});
+
+			$('#hardwarecontent #idx').val(idx);
+
+//			RefreshTuyaDevicesTable();
+		}
+
+		/* End of Tuya plugin code */
+
 		RefreshHardwareTable = function () {
 			$('#modal').show();
 
@@ -3999,6 +4038,9 @@ define(['app'], function (app) {
 							{
 								var baudrate = (HwTypeStr.indexOf("LAN") >= 0) ? 1 : item.Mode1;
 								HwTypeStr += ' <span class="label label-info lcursor" onclick="EditP1(' + item.idx + ',\'' + item.Name + '\',' + baudrate + ',' + item.Mode2 + ',' + item.Mode3 + ',' + item.Mode4 + ');">' + $.t("Options") + '</span>';
+							}
+							else if (HwTypeStr.indexOf("Local Tuya provider") >= 0) {
+								HwTypeStr += ' <span class="label label-info lcursor" onclick="EditTuya(' + item.idx + ',\'' + item.Name + '\');">' + $.t("Setup Tuya Devices") + '</span>';
 							}
 
 							var sDataTimeout = "";

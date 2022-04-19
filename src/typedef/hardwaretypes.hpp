@@ -132,7 +132,7 @@ enum value {
 	TeleinfoMeterTCP,		//124
 	MQTTAutoDiscovery,		//125
 	RFLINKMQTT,			//126
-	LocalTuya = 1000,		//1000
+	LocalTuya = 501,		//501
 	END
 };
 
