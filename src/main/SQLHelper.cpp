@@ -599,6 +599,17 @@ constexpr auto sqlCreateMobileDevices =
 "[LastUpdate] DATETIME DEFAULT(datetime('now', 'localtime'))"
 ");";
 
+constexpr auto sqlCreateTuyaDevices =
+"CREATE TABLE IF NOT EXISTS [TuyaDevices]("
+"[ID] INTEGER PRIMARY KEY, "
+"[HardwareID] INTEGER NOT NULL, "
+"[DeviceID] VARCHAR(30) DEFAULT '',"
+"[LocalKey] VARCHAR(30) DEFAULT '',"
+"[IPAddress] VARCHAR(60) DEFAULT '',"
+"[Name] VARCHAR(60) DEFAULT '',"
+"[EnergyDivider] INTEGER DEFAULT 0"
+");";
+
 extern std::string szUserDataFolder;
 
 CSQLStatement::CSQLStatement(sqlite3 *pDBase, const std::string &pSQL)
@@ -784,6 +795,7 @@ bool CSQLHelper::OpenDatabase()
 	query(sqlCreateToonDevices);
 	query(sqlCreateUserSessions);
 	query(sqlCreateMobileDevices);
+	query(sqlCreateTuyaDevices);
 	//Add indexes to log tables
 	query("create index if not exists ds_hduts_idx	on DeviceStatus(HardwareID, DeviceID, Unit, Type, SubType);");
 	query("create index if not exists f_id_idx		on Fan(DeviceRowID);");

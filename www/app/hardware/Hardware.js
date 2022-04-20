@@ -3822,6 +3822,41 @@ define(['app'], function (app) {
 
 		/* Start of Tuya plugin code */
 		
+		RefreshTuyaDevicesTable = function () {
+			$('#modal').show();
+			$('#updelclr #deviceupdate').attr("class", "btnstyle3-dis");
+			$('#updelclr #devicedelete').attr("class", "btnstyle3-dis");
+
+			var oTable = $('#tuyadevicestable').dataTable();
+			oTable.fnClearTable();
+
+			$.ajax({
+				url: "json.htm?type=command&param=tuyagetdevices&idx=" + $.devIdx,
+				async: false,
+				dataType: 'json',
+				success: function (data) {
+					if (typeof data.result != 'undefined') {
+						$.each(data.result, function (i, item) {
+							var addId = oTable.fnAddData({
+								"DT_RowId": item.idx,
+								"Name": item.Name,
+								"IP": item.IP,
+								"Tuya ID": item.Tuya_ID,
+								"Local Key": item.Local_Key,
+								"0": item.idx,
+								"1": item.Name,
+								"2": item.IP,
+								"3": item.Tuya_ID,
+								"4": item.Local_Key
+							});
+						});
+					}
+				}
+			});
+
+			$('#modal').hide();
+		}
+
 		EditTuya = function (idx, name) {
 			$.devIdx = idx;
 			cursordefault();
@@ -3830,8 +3865,6 @@ define(['app'], function (app) {
 			htmlcontent += $('#tuya').html();
 			$('#hardwarecontent').html(GetBackbuttonHTMLTable('ShowHardware') + htmlcontent);
 			$('#hardwarecontent').i18n();
-
-			$("#hardwarecontent #tuyasettingstable #pollinterval").val(Mode1);
 
 			var oTable = $('#tuyadevicestable').dataTable({
 				"sDom": '<"H"lfrC>t<"F"ip>',
@@ -3851,7 +3884,7 @@ define(['app'], function (app) {
 
 			$('#hardwarecontent #idx').val(idx);
 
-//			RefreshTuyaDevicesTable();
+			RefreshTuyaDevicesTable();
 		}
 
 		/* End of Tuya plugin code */

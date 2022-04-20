@@ -28,13 +28,15 @@ public:
 private:
 	std::shared_ptr<std::thread> m_thread;
 	uint8_t m_tariff;
+	std::vector<TuyaMonitor*> m_tuyadevices;
 
 	void Init();
 	bool StartHardware() override;
 	bool StopHardware() override;
 	void Do_Work();
-	void SendSwitch(const TuyaData* devicedata);
-	void SendMeter(const TuyaData* devicedata);
+	void SendSwitch(const TuyaData *devicedata);
+	void SendMeter(const TuyaData *devicedata);
+	void LoadMeterStartData(TuyaMonitor *tuyadevice, const int DeviceID, const int energyDivider);
 
 };
 

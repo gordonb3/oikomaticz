@@ -12,7 +12,7 @@
 #include <fstream>
 
 
-TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address) :
+TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const int energyDivider) :
 	m_name(name),
 	m_id(id),
 	m_key(key),
@@ -21,6 +21,7 @@ TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, cons
 	m_devicedata = new TuyaData();
 	memset(m_devicedata, 0, sizeof(TuyaData));
 	m_devicedata->deviceID = seqnr;
+	m_devicedata->energyDivider = energyDivider;
 	strncpy(m_devicedata->deviceName, m_name.c_str(), 19);
 
 	m_tuyaclient = new tuyaAPI33();
@@ -140,7 +141,7 @@ void TuyaMonitor::MonitorThread()
 		}
 		else
 		{
-			std:: string tuyaresponse = m_tuyaclient->DecodeTuyaMessage(message_buffer, numbytes, m_key);
+			std::string tuyaresponse = m_tuyaclient->DecodeTuyaMessage(message_buffer, numbytes, m_key);
 
 			jReader->parse(tuyaresponse.c_str(), tuyaresponse.c_str() + tuyaresponse.size(), &jStatus, nullptr);
 			if (jStatus.isMember("dps"))
@@ -159,9 +160,9 @@ void TuyaMonitor::MonitorThread()
 						unsigned int timediff = (int)(newtimeval - timeval);
 						m_devicedata->power = jStatus["dps"]["19"].asUInt();
 						if (m_devicedata->isLowTariff)
-							m_devicedata->usageLow += (m_devicedata->power * timediff / 36000.0);
+							m_devicedata->usageLow += (m_devicedata->power * timediff / 3600.0);
 						else
-							m_devicedata->usageHigh += (m_devicedata->power * timediff / 36000.0);
+							m_devicedata->usageHigh += (m_devicedata->power * timediff / 3600.0);
 						sigSendMeter(m_devicedata);
 					}
 					timeval = newtimeval;
@@ -178,5 +179,12 @@ void TuyaMonitor::MonitorThread()
 bool TuyaMonitor::SendCommand()
 {
 	return true;
+}
+
+
+void TuyaMonitor::SetMeterStartData(const float usageHigh, const float usageLow)
+{
+	m_devicedata->usageLow = usageLow;
+	m_devicedata->usageHigh = usageHigh;
 }
 

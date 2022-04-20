@@ -17,11 +17,11 @@ class TuyaData
 public:
 	unsigned int deviceID;
 	char deviceName[20];
-	bool isEnergyInput;
 	bool connected;
 	bool switchstate;
 	bool isLowTariff;
 	unsigned int power;
+	int energyDivider;
 	float usageLow;
 	float usageHigh;
 };
@@ -31,12 +31,13 @@ class TuyaMonitor : public StoppableTask
 {
 
 public:
-	TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address);
+	TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const int energyDivider);
 	~TuyaMonitor();
 
 	bool StartMonitor();
 	bool StopMonitor();
 	bool SendCommand();
+	void SetMeterStartData(const float usageHigh, const float usageLow);
 
 	TuyaData* m_devicedata;
 	boost::signals2::signal<void(TuyaData* tuyadevice)> sigSendSwitch;
