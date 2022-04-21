@@ -129,7 +129,16 @@ void CLocalTuya::Do_Work()
 		}
 
 		// track disconnected devices
-
+		for (auto &device : m_tuyadevices)
+		{
+			TuyaData* devicedata = device->m_devicedata;
+			if (!devicedata->connected)
+			{
+				Log(LOG_STATUS, "Restart communication thread to %s", devicedata->deviceName);
+				device->StopMonitor();
+				device->StartMonitor();
+			}
+		}
 	}
 }
 
@@ -238,7 +247,7 @@ namespace http {
 			root["title"] = "TuyaGetDevices";
 
 			std::vector<std::vector<std::string> > result;
-			result = m_sql.safe_query("SELECT ID,Name,IPAddress,DeviceID,LocalKey FROM TuyaDevices WHERE (HardwareID=%d)", iHardwareID);
+			result = m_sql.safe_query("SELECT ID,Name,IPAddress,DeviceID,LocalKey,EnergyDivider FROM TuyaDevices WHERE (HardwareID=%d)", iHardwareID);
 			if (!result.empty())
 			{
 				int ii = 0;
@@ -249,12 +258,47 @@ namespace http {
 					root["result"][ii]["IP"] = sd[2];
 					root["result"][ii]["Tuya_ID"] = sd[3];
 					root["result"][ii]["Local_Key"] = sd[4];
+					root["result"][ii]["EnergyDivider"] = sd[5];
 					ii++;
 				}
 			}
 		}
 
+		void CWebServer::Cmd_AddTuyaDevice(WebEmSession & session, const request& req, Json::Value &root)
+		{
+			if (session.rights != 2)
+			{
+				session.reply_status = reply::forbidden;
+				return; //Only admin user allowed
+			}
+			std::string hwid = request::findValue(&req, "idx");
+			if (hwid.empty())
+				return;
+			int iHardwareID = atoi(hwid.c_str());
+			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(iHardwareID);
+			if (pHardware == nullptr)
+				return;
+			if (pHardware->HwdType != hardware::type::LocalTuya)
+				return;
 
+			std::string devicename = request::findValue(&req, "name");
+			std::string tuyaID = request::findValue(&req, "tuyaid");
+			std::string localkey = request::findValue(&req, "localkey");
+			std::string IP_Address = request::findValue(&req, "ipaddr");
+			std::string sEnergyDivider = request::findValue(&req, "energydivider");
+			int iEnergyDivider = atoi(sEnergyDivider.c_str());
+
+
+			//Make a unique number for ID
+			int nid = 1;
+			std::vector<std::vector<std::string> > result;
+			result = m_sql.safe_query("SELECT MAX(ID) FROM TuyaDevices");
+			if (!result.empty())
+				nid = atoi(result[0][0].c_str()) + 1;
+
+			m_sql.safe_query("INSERT INTO TuyaDevices VALUES (%d,%d,'%s','%s','%s','%s',%d)", nid, iHardwareID, tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), iEnergyDivider);
+			m_mainworker.RestartHardware(hwid);
+		}
 
 
 	}

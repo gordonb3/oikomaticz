@@ -583,6 +583,7 @@ namespace http
 			RegisterCommandCode("p1setoptions", [this](auto &&session, auto &&req, auto &&root) { Cmd_P1SetOptions(session, req, root); });
 
 			RegisterCommandCode("tuyagetdevices", [this](auto &&session, auto &&req, auto &&root) { Cmd_TuyaGetDevices(session, req, root); });
+			RegisterCommandCode("addtuyadevice", [this](auto &&session, auto &&req, auto &&root) { Cmd_AddTuyaDevice(session, req, root); });
 
 #ifdef TELLDUSCORE_INCLUDE
 			RegisterCommandCode("tellstickApplySettings", [this](auto &&session, auto &&req, auto &&root) { Cmd_TellstickApplySettings(session, req, root); });
