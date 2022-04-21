@@ -36,7 +36,7 @@ public:
 
 	bool StartMonitor();
 	bool StopMonitor();
-	bool SendCommand();
+	bool SendSwitchCommand(int switchstate);
 	void SetMeterStartData(const float usageHigh, const float usageLow);
 
 	TuyaData* m_devicedata;
@@ -53,6 +53,7 @@ private:
 	unsigned char message_buffer[MAX_BUFFER_SIZE];
 	std::shared_ptr<std::thread> m_thread;
 	bool m_isPowerMeter;
+	bool m_waitForSwitch;
 };
 
 

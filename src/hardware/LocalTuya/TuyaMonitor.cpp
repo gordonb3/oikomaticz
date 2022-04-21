@@ -8,6 +8,7 @@
 #include <string.h>
 #include <cmath>
 #include "main/json_helper.h"
+#include <chrono>
 
 #include <fstream>
 
@@ -149,7 +150,10 @@ void TuyaMonitor::MonitorThread()
 				if (jStatus["dps"].isMember("1"))
 				{
 					m_devicedata->switchstate = jStatus["dps"]["1"].asBool();
-					sigSendSwitch(m_devicedata);
+					if (m_waitForSwitch)
+						m_waitForSwitch = false;
+					else
+						sigSendSwitch(m_devicedata);
 				}
 
 				if (jStatus["dps"].isMember("19"))
@@ -176,9 +180,31 @@ void TuyaMonitor::MonitorThread()
 }
 
 
-bool TuyaMonitor::SendCommand()
+bool TuyaMonitor::SendSwitchCommand(int switchstate)
 {
-	return true;
+	long currenttime = time(NULL) ;
+	std::stringstream ss_payload;
+	ss_payload << "{\"devId\":\"" << m_id << "\",\"uid\":\"" << m_id << "\",\"dps\":{\"1\":";
+	if (switchstate)
+		ss_payload << "true";
+	else
+		ss_payload << "false";
+	ss_payload <<  "},\"t\":\"" << currenttime << "\"}";
+	std::string payload = ss_payload.str();
+	int numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_CONTROL, payload, m_key);
+
+	m_waitForSwitch = true;
+	numbytes = m_tuyaclient->send(message_buffer, numbytes);
+	if (numbytes < 0)
+		return false;
+	for (int i=0; i < 12; i++)
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		if (!m_waitForSwitch)
+			return true;
+	}
+	m_waitForSwitch = false;
+	return false;
 }
 
 

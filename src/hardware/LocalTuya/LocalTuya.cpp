@@ -166,6 +166,15 @@ bool CLocalTuya::WriteToHardware(const char *pdata, const unsigned char length)
 	}
 
 	// send switch command to device communication thread
+	for (auto &device : m_tuyadevices)
+	{
+		TuyaData* devicedata = device->m_devicedata;
+		if (devicedata->deviceID == pSwitch->id)
+		{
+			Log(LOG_STATUS, "Sending switch command to %s", devicedata->deviceName);
+			device->SendSwitchCommand(cmnd);
+		}
+	}
 
 	return true;
 }
