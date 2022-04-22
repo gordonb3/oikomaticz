@@ -23,6 +23,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#define CUSTOM_IMAGE_ID 19		// row index inside 'switch_icons.txt'
+
 
 extern std::string szUserDataFolder;
 
@@ -42,7 +44,44 @@ CLocalTuya::~CLocalTuya(void)
 
 void CLocalTuya::Init()
 {
+	std::vector<std::vector<std::string> > result;
+	result = m_sql.safe_query("SELECT nValue FROM DeviceStatus WHERE (HardwareID=%d) AND (DeviceID='FFFFFFFF') AND (Unit=1) AND (Type=%d) AND (SubType=%d) AND (SwitchType=%d)",
+		m_HwdID, pTypeGeneralSwitch, sSwitchGeneralSwitch, int(device::tswitch::type::OnOff));
+	if (result.empty())
+	{
+		GeneralSwitch pSwitch;
+		pSwitch.type = pTypeGeneralSwitch;
+		pSwitch.subtype = sSwitchGeneralSwitch;
+		pSwitch.id = 0xFFFFFFFF;
+		pSwitch.unitcode = 1;
+		pSwitch.cmnd = 1;
+		pSwitch.seqnbr = 0;
+Log(LOG_STATUS, "Adding tariff switch");
+		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&pSwitch, "Low Tariff", 255, m_Name.c_str());
 
+		// wait a maximum of 1 second for mainworker to finish adding the device
+		int i=10;
+		while (i && result.empty())
+		{
+Log(LOG_STATUS, "check if added - %d", i);
+			result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (DeviceID='FFFFFFFF') AND (Unit=1) AND (Type=%d) AND (SubType=%d)",
+				m_HwdID, pTypeGeneralSwitch, sSwitchGeneralSwitch);
+
+			if (result.empty())
+			{
+				sleep_milliseconds(100);
+				i--;
+			}
+		}
+
+		//Set SwitchType and CustomImage
+		int iconID = CUSTOM_IMAGE_ID;
+		m_sql.safe_query("UPDATE DeviceStatus SET SwitchType=%d, CustomImage=%d WHERE (HardwareID=%d) AND (DeviceID='FFFFFFFF') AND (Unit=1) AND (Type=%d) AND (SubType=%d)", int(device::tswitch::type::OnOff), iconID, m_HwdID, pTypeGeneralSwitch, sSwitchGeneralSwitch);
+	}
+	else
+	{
+		m_tariff = atoi(result[0][0].c_str());
+	}
 }
 
 
@@ -70,6 +109,7 @@ bool CLocalTuya::StopHardware()
 		m_thread.reset();
 	}
 	m_bIsStarted = false;
+	m_tuyadevices.clear();
 	return true;
 }
 
@@ -159,9 +199,15 @@ bool CLocalTuya::WriteToHardware(const char *pdata, const unsigned char length)
 	{
 		// signal energy meters to switch tariff
 		if (cmnd == gswitch_sOn) // low tariff
+		{
+			Log(LOG_STATUS, "Enabling low tariff");
 			m_tariff = 1;
+		}
 		else
+		{
+			Log(LOG_STATUS, "Enabling high tariff");
 			m_tariff = 0; // high/single tariff
+		}
 		return true;
 	}
 
@@ -180,7 +226,7 @@ bool CLocalTuya::WriteToHardware(const char *pdata, const unsigned char length)
 }
 
 
-void CLocalTuya::SendMeter(const TuyaData *devicedata)
+void CLocalTuya::SendMeter(TuyaData *devicedata)
 {
 	if ((devicedata->usageHigh > 0) || (devicedata->usageLow > 0))
 	{
@@ -213,9 +259,11 @@ void CLocalTuya::SendMeter(const TuyaData *devicedata)
 		}
 		sDecodeRXMessage(this, (const unsigned char *)&tuya_energy, devicedata->deviceName, 255, nullptr);
 	}
+	if (devicedata->isLowTariff != m_tariff)
+		devicedata->isLowTariff = m_tariff;
 }
 
-void CLocalTuya::SendSwitch(const TuyaData *devicedata)
+void CLocalTuya::SendSwitch(TuyaData *devicedata)
 {
 	GeneralSwitch tuya_switch;
 	memset(&tuya_switch, 0, sizeof(GeneralSwitch));

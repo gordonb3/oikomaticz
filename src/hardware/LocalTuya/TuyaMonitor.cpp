@@ -68,7 +68,7 @@ bool TuyaMonitor::ConnectToDevice()
 		m_devicedata->switchstate = jStatus["dps"]["1"].asBool();
 		sigSendSwitch(m_devicedata);
 	}
-	if (jStatus["dps"].isMember("19"))
+	if ((m_devicedata->energyDivider != 0) && jStatus["dps"].isMember("19"))
 	{
 		m_devicedata->power = jStatus["dps"]["19"].asUInt();
 		m_isPowerMeter = true;

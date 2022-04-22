@@ -34,8 +34,8 @@ private:
 	bool StartHardware() override;
 	bool StopHardware() override;
 	void Do_Work();
-	void SendSwitch(const TuyaData *devicedata);
-	void SendMeter(const TuyaData *devicedata);
+	void SendSwitch(TuyaData *devicedata);
+	void SendMeter(TuyaData *devicedata);
 	void LoadMeterStartData(TuyaMonitor *tuyadevice, const int DeviceID, const int energyDivider);
 
 };
