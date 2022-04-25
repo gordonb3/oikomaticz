@@ -102,6 +102,17 @@ bool CLocalTuya::StartHardware()
 
 bool CLocalTuya::StopHardware()
 {
+
+	Log(LOG_STATUS, "Stopping tuya communication threads");
+	for (auto &device : m_tuyadevices)
+	{
+		device->StopMonitor();
+		if ((device->m_devicedata)->connected)
+			Log(LOG_ERROR, "Failed to stop tuya communication thread to %s", (device->m_devicedata)->deviceName);
+		delete device;
+	}
+	m_tuyadevices.clear();
+
 	if (m_thread)
 	{
 		RequestStop();
@@ -109,7 +120,6 @@ bool CLocalTuya::StopHardware()
 		m_thread.reset();
 	}
 	m_bIsStarted = false;
-	m_tuyadevices.clear();
 	return true;
 }
 
@@ -142,6 +152,7 @@ void CLocalTuya::LoadMeterStartData(TuyaMonitor *tuyadevice, const int DeviceID,
 void CLocalTuya::Do_Work()
 {
 	// connect to devices
+	Log(LOG_STATUS, "Setup tuya communication threads");
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query("SELECT ID,Name,DeviceID,LocalKey,IPAddress,EnergyDivider FROM TuyaDevices WHERE (HardwareID=%d)", m_HwdID);
 	if (!result.empty())
@@ -154,7 +165,8 @@ void CLocalTuya::Do_Work()
 			tuyadevice->sigSendMeter.connect([this](auto devicedata) {SendMeter(devicedata);});
 			tuyadevice->sigSendSwitch.connect([this](auto devicedata) {SendSwitch(devicedata);});
 			LoadMeterStartData(tuyadevice, ID, energyDivider);
-			tuyadevice->StartMonitor();
+			if (tuyadevice->StartMonitor())
+				Log(LOG_STATUS, "Successfully connected to %s", (tuyadevice->m_devicedata)->deviceName);
 			m_tuyadevices.push_back(tuyadevice);
 		}
 	}
@@ -168,15 +180,18 @@ void CLocalTuya::Do_Work()
 			m_LastHeartbeat = mytime(NULL);
 		}
 
-		// track disconnected devices
-		for (auto &device : m_tuyadevices)
-		{
-			TuyaData* devicedata = device->m_devicedata;
-			if (!devicedata->connected)
+		if (sec_counter % 2 == 0) {
+			// track disconnected devices
+			for (auto &device : m_tuyadevices)
 			{
-				Log(LOG_STATUS, "Restart communication thread to %s", devicedata->deviceName);
-				device->StopMonitor();
-				device->StartMonitor();
+				TuyaData* devicedata = device->m_devicedata;
+				if (!devicedata->connected)
+				{
+					Log(LOG_STATUS, "Retry communication thread to %s", devicedata->deviceName);
+					device->StopMonitor();
+					if (device->StartMonitor())
+						Log(LOG_STATUS, "Successfully connected to %s", (device->m_devicedata)->deviceName);
+				}
 			}
 		}
 	}
@@ -217,12 +232,11 @@ bool CLocalTuya::WriteToHardware(const char *pdata, const unsigned char length)
 		TuyaData* devicedata = device->m_devicedata;
 		if (devicedata->deviceID == pSwitch->id)
 		{
-			Log(LOG_STATUS, "Sending switch command to %s", devicedata->deviceName);
-			device->SendSwitchCommand(cmnd);
+			return device->SendSwitchCommand(cmnd);
 		}
 	}
 
-	return true;
+	return false;
 }
 
 

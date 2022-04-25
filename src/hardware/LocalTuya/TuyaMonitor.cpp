@@ -9,6 +9,7 @@
 #include <cmath>
 #include "main/json_helper.h"
 #include <chrono>
+#include "main/Logger.h"
 
 #include <fstream>
 
@@ -39,7 +40,10 @@ TuyaMonitor::~TuyaMonitor()
 bool TuyaMonitor::ConnectToDevice()
 {
 	if (!m_tuyaclient->ConnectToDevice(m_address, TUYA_COMMAND_PORT))
+	{
+		_log.Log(LOG_ERROR, "failed to connect to %s - wrong IP?", m_name.c_str());
 		return false;
+	}
 
 	// request current state of the device
 	std::stringstream ss_payload;
@@ -50,10 +54,18 @@ bool TuyaMonitor::ConnectToDevice()
 	int numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_DP_QUERY, payload, m_key);
 	numbytes = m_tuyaclient->send(message_buffer, numbytes);
 	if (numbytes < 0)
+	{
+		_log.Log(LOG_ERROR, "failed send to %s", m_name.c_str());
+		m_tuyaclient->disconnect();
 		return false;
+	}
 	numbytes = m_tuyaclient->receive(message_buffer, MAX_BUFFER_SIZE - 1);
 	if (numbytes < 0)
+	{
+		_log.Log(LOG_ERROR, "failed receive from %s, error is %d", m_name.c_str(), errno);
+		m_tuyaclient->disconnect();
 		return false;
+	}
 	std::string tuyaresponse = m_tuyaclient->DecodeTuyaMessage(message_buffer, numbytes, m_key);
 
 	Json::Value jStatus;
@@ -61,7 +73,11 @@ bool TuyaMonitor::ConnectToDevice()
 	std::unique_ptr<Json::CharReader> jReader(jBuilder.newCharReader());
 	jReader->parse(tuyaresponse.c_str(), tuyaresponse.c_str() + tuyaresponse.size(), &jStatus, nullptr);
 	if (!jStatus.isMember("dps"))
+	{
+		_log.Log(LOG_ERROR, "received invalid data from %s, verify ID and local key", m_name.c_str());
+		m_tuyaclient->disconnect();
 		return false;
+	}
 
 	if (jStatus["dps"].isMember("1"))
 	{
@@ -117,7 +133,6 @@ void TuyaMonitor::MonitorThread()
 
 		if (m_isPowerMeter)
 		{
-
 			// request data point updates
 			payload = "{\"dpId\":[19]}";
 			numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_UPDATEDPS, payload, m_key);
@@ -176,6 +191,7 @@ void TuyaMonitor::MonitorThread()
 	}
 
 	// inform main that thread has ended
+	_log.Log(LOG_STATUS, "Lost communication with %s", m_name.c_str());
 	m_devicedata->connected = false;
 }
 
