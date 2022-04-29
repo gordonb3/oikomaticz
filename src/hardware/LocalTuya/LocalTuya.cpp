@@ -56,14 +56,12 @@ void CLocalTuya::Init()
 		pSwitch.unitcode = 1;
 		pSwitch.cmnd = 1;
 		pSwitch.seqnbr = 0;
-Log(LOG_STATUS, "Adding tariff switch");
 		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&pSwitch, "Low Tariff", 255, m_Name.c_str());
 
 		// wait a maximum of 1 second for mainworker to finish adding the device
 		int i=10;
 		while (i && result.empty())
 		{
-Log(LOG_STATUS, "check if added - %d", i);
 			result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (DeviceID='FFFFFFFF') AND (Unit=1) AND (Type=%d) AND (SubType=%d)",
 				m_HwdID, pTypeGeneralSwitch, sSwitchGeneralSwitch);
 
@@ -107,8 +105,9 @@ bool CLocalTuya::StopHardware()
 	for (auto &device : m_tuyadevices)
 	{
 		device->StopMonitor();
-		if ((device->m_devicedata)->connected)
-			Log(LOG_ERROR, "Failed to stop tuya communication thread to %s", (device->m_devicedata)->deviceName);
+		TuyaData* devicedata = device->m_devicedata;
+		if (devicedata->connected)
+			Log(LOG_ERROR, "Failed to stop tuya communication thread to %s", devicedata->deviceName);
 		delete device;
 	}
 	m_tuyadevices.clear();
@@ -190,7 +189,7 @@ void CLocalTuya::Do_Work()
 					Log(LOG_STATUS, "Retry communication thread to %s", devicedata->deviceName);
 					device->StopMonitor();
 					if (device->StartMonitor())
-						Log(LOG_STATUS, "Successfully connected to %s", (device->m_devicedata)->deviceName);
+						Log(LOG_STATUS, "Successfully connected to %s", devicedata->deviceName);
 				}
 			}
 		}

@@ -41,7 +41,7 @@ bool TuyaMonitor::ConnectToDevice()
 {
 	if (!m_tuyaclient->ConnectToDevice(m_address, TUYA_COMMAND_PORT))
 	{
-		_log.Log(LOG_ERROR, "failed to connect to %s - wrong IP?", m_name.c_str());
+		_log.Log(LOG_ERROR, "Tuya Monitor: failed to connect to %s - wrong IP?", m_name.c_str());
 		return false;
 	}
 
@@ -55,14 +55,14 @@ bool TuyaMonitor::ConnectToDevice()
 	numbytes = m_tuyaclient->send(message_buffer, numbytes);
 	if (numbytes < 0)
 	{
-		_log.Log(LOG_ERROR, "failed send to %s", m_name.c_str());
+		_log.Log(LOG_ERROR, "Tuya Monitor: failed send to %s", m_name.c_str());
 		m_tuyaclient->disconnect();
 		return false;
 	}
 	numbytes = m_tuyaclient->receive(message_buffer, MAX_BUFFER_SIZE - 1);
 	if (numbytes < 0)
 	{
-		_log.Log(LOG_ERROR, "failed receive from %s, error is %d", m_name.c_str(), errno);
+		_log.Log(LOG_ERROR, "Tuya Monitor: failed receive from %s, error is %d", m_name.c_str(), errno);
 		m_tuyaclient->disconnect();
 		return false;
 	}
@@ -74,7 +74,7 @@ bool TuyaMonitor::ConnectToDevice()
 	jReader->parse(tuyaresponse.c_str(), tuyaresponse.c_str() + tuyaresponse.size(), &jStatus, nullptr);
 	if (!jStatus.isMember("dps"))
 	{
-		_log.Log(LOG_ERROR, "received invalid data from %s, verify ID and local key", m_name.c_str());
+		_log.Log(LOG_ERROR, "Tuya Monitor: received invalid data from %s, verify ID and local key", m_name.c_str());
 		m_tuyaclient->disconnect();
 		return false;
 	}
@@ -94,14 +94,16 @@ bool TuyaMonitor::ConnectToDevice()
 
 bool TuyaMonitor::StartMonitor()
 {
-	if (!ConnectToDevice())
-		return false;
-	RequestStart();
-	m_thread = std::make_shared<std::thread>([this] { MonitorThread(); });
-	if (!m_thread)
-		return false;
 	m_devicedata->connected = true;
-	return true;
+	if (ConnectToDevice())
+	{
+		RequestStart();
+		m_thread = std::make_shared<std::thread>([this] { MonitorThread(); });
+		if (m_thread)
+			return true;
+	}
+	m_devicedata->connected = false;
+	return false;
 }
 
 
@@ -153,7 +155,10 @@ void TuyaMonitor::MonitorThread()
 		{
 			// expect a timeout because the device will only send updates when the requested values change
 			if (errno != 11)
+			{
+				_log.Log(LOG_ERROR, "Tuya Monitor: device %s returned error %d", m_name.c_str(), errno);
 				break;
+			}
 		}
 		else
 		{
@@ -191,7 +196,8 @@ void TuyaMonitor::MonitorThread()
 	}
 
 	// inform main that thread has ended
-	_log.Log(LOG_STATUS, "Lost communication with %s", m_name.c_str());
+	if (!IsStopRequested(1))
+		_log.Log(LOG_STATUS, "Tuya Monitor: Lost communication with %s", m_name.c_str());
 	m_devicedata->connected = false;
 }
 
@@ -213,9 +219,9 @@ bool TuyaMonitor::SendSwitchCommand(int switchstate)
 	numbytes = m_tuyaclient->send(message_buffer, numbytes);
 	if (numbytes < 0)
 		return false;
-	for (int i=0; i < 12; i++)
+	for (int i=0; i < 20; i++)
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		if (!m_waitForSwitch)
 			return true;
 	}

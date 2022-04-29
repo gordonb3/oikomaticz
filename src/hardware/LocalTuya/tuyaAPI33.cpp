@@ -11,6 +11,7 @@
 
 
 //#define DEBUG
+#define SOCKET_TIMEOUT_SECS 5
 
 #include "tuyaAPI33.hpp"
 #include "AES.h"
@@ -19,6 +20,7 @@
 #include <sstream>
 #include <thread>
 #include <chrono>
+
 
 
 #ifdef DEBUG
@@ -172,7 +174,7 @@ bool tuyaAPI33::ConnectToDevice(const std::string &hostname, const int portnumbe
 	serv_addr.sin_port = htons(portnumber);
 
 	struct timeval tv;
-	tv.tv_sec = 5;
+	tv.tv_sec = SOCKET_TIMEOUT_SECS;
 	tv.tv_usec = 0;
 	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
