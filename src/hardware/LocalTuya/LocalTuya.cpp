@@ -368,9 +368,66 @@ namespace http {
 
 			m_sql.safe_query("INSERT INTO TuyaDevices VALUES (%d,%d,'%s','%s','%s','%s',%d)", nid, iHardwareID, tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), iEnergyDivider);
 			m_mainworker.RestartHardware(hwid);
+			root["status"] = "OK";
 		}
 
 
+		void CWebServer::Cmd_UpdateTuyaDevice(WebEmSession & session, const request& req, Json::Value &root)
+		{
+			if (session.rights != 2)
+			{
+				session.reply_status = reply::forbidden;
+				return; //Only admin user allowed
+			}
+			std::string hwid = request::findValue(&req, "idx");
+			if (hwid.empty())
+				return;
+			int iHardwareID = atoi(hwid.c_str());
+			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(iHardwareID);
+			if (pHardware == nullptr)
+				return;
+			if (pHardware->HwdType != hardware::type::LocalTuya)
+				return;
+
+			std::string devid = request::findValue(&req, "devid");
+			int nid= atoi(devid.c_str());
+			std::string devicename = request::findValue(&req, "name");
+			std::string tuyaID = request::findValue(&req, "tuyaid");
+			std::string localkey = request::findValue(&req, "localkey");
+			std::string IP_Address = request::findValue(&req, "ipaddr");
+			std::string sEnergyDivider = request::findValue(&req, "energydivider");
+			int iEnergyDivider = atoi(sEnergyDivider.c_str());
+_log.Log(LOG_STATUS,"UPDATE TuyaDevices SET DeviceID='%s', LocalKey='%s', IPAddress='%s', Name='%s', energyDivider=%d WHERE (ID=%d) AND (HardwareID=%d)", tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), iEnergyDivider,nid, iHardwareID);
+
+			m_sql.safe_query("UPDATE TuyaDevices SET DeviceID='%s', LocalKey='%s', IPAddress='%s', Name='%s', energyDivider=%d WHERE (ID=%d) AND (HardwareID=%d)", tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), iEnergyDivider, nid, iHardwareID);
+			m_mainworker.RestartHardware(hwid);
+			root["status"] = "OK";
+		}
+
+		void CWebServer::Cmd_DeleteTuyaDevice(WebEmSession & session, const request& req, Json::Value &root)
+		{
+			if (session.rights != 2)
+			{
+				session.reply_status = reply::forbidden;
+				return; //Only admin user allowed
+			}
+			std::string hwid = request::findValue(&req, "idx");
+			if (hwid.empty())
+				return;
+			int iHardwareID = atoi(hwid.c_str());
+			CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(iHardwareID);
+			if (pHardware == nullptr)
+				return;
+			if (pHardware->HwdType != hardware::type::LocalTuya)
+				return;
+
+			std::string devid = request::findValue(&req, "devid");
+			int nid= atoi(devid.c_str());
+
+			m_sql.safe_query("DELETE FROM TuyaDevices WHERE (ID=%d) AND (HardwareID=%d)", nid, iHardwareID);
+			m_mainworker.RestartHardware(hwid);
+			root["status"] = "OK";
+		}
 	}
 }
 

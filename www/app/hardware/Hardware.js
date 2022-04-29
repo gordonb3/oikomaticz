@@ -3847,8 +3847,7 @@ define(['app'], function (app) {
 								"0": item.idx,
 								"1": item.Name,
 								"2": item.IP,
-								"3": item.Tuya_ID,
-								"4": item.Local_Key
+								"3": item.Tuya_ID
 							});
 						});
 					}
@@ -3877,6 +3876,9 @@ define(['app'], function (app) {
 						$('#tuyadeviceparams #localkey').val(data["Local_Key"]);
 						$('#tuyadeviceparams #ipaddress').val(data["IP"]);
 						$('#tuyadeviceparams #energydivider').val(data["EnergyDivider"]);
+
+						$("#tuyaupdel #tuyadeviceupdate").attr("href", "javascript:UpdateTuyaDevice(" + idx + ")");
+						$("#tuyaupdel #tuyadevicedelete").attr("href", "javascript:DeleteTuyaDevice(" + idx + ")");
 					}
 				}
 			});
@@ -3928,6 +3930,41 @@ define(['app'], function (app) {
 				},
 				error: function () {
 					ShowNotify($.t('Problem adding device!'), 2500, true);
+				}
+			});
+		}
+
+		UpdateTuyaDevice = function (devid) {
+			$.ajax({
+				url: "json.htm?type=command&param=updatetuyadevice&idx=" + $.devIdx + "&devid=" + devid +
+				"&name=" + encodeURIComponent($("#tuyadeviceparams #devicename").val()) +
+				"&tuyaid=" + $("#tuyadeviceparams #tuyaid").val() +
+				"&localkey=" + $("#tuyadeviceparams #localkey").val() +
+				"&ipaddr=" + $("#tuyadeviceparams #ipaddress").val() +
+				"&energydivider=" + $("#tuyadeviceparams #energydivider").val(),
+				async: false,
+				dataType: 'json',
+				success: function (data) {
+					RefreshTuyaDevicesTable();
+				},
+				error: function () {
+					ShowNotify($.t('Problem adding device!'), 2500, true);
+				}
+			});
+		}
+
+
+		DeleteTuyaDevice = function (devid) {
+			$.ajax({
+				url: "json.htm?type=command&param=deletetuyadevice&idx=" + $.devIdx + "&devid=" + devid,
+				async: false,
+				dataType: 'json',
+				success: function (data) {
+					RefreshTuyaDevicesTable();
+				},
+				error: function () {
+					HideNotify();
+					ShowNotify($.t('Problem deleting device!'), 2500, true);
 				}
 			});
 		}

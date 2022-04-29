@@ -584,6 +584,8 @@ namespace http
 
 			RegisterCommandCode("tuyagetdevices", [this](auto &&session, auto &&req, auto &&root) { Cmd_TuyaGetDevices(session, req, root); });
 			RegisterCommandCode("addtuyadevice", [this](auto &&session, auto &&req, auto &&root) { Cmd_AddTuyaDevice(session, req, root); });
+			RegisterCommandCode("updatetuyadevice", [this](auto &&session, auto &&req, auto &&root) { Cmd_UpdateTuyaDevice(session, req, root); });
+			RegisterCommandCode("deletetuyadevice", [this](auto &&session, auto &&req, auto &&root) { Cmd_DeleteTuyaDevice(session, req, root); });
 
 #ifdef TELLDUSCORE_INCLUDE
 			RegisterCommandCode("tellstickApplySettings", [this](auto &&session, auto &&req, auto &&root) { Cmd_TellstickApplySettings(session, req, root); });

@@ -284,6 +284,8 @@ private:
 
 	void Cmd_TuyaGetDevices(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_AddTuyaDevice(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_UpdateTuyaDevice(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_DeleteTuyaDevice(WebEmSession & session, const request& req, Json::Value &root);
 
 	// Plugin functions
 	void Cmd_PluginCommand(WebEmSession & session, const request& req, Json::Value &root);

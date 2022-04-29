@@ -1735,7 +1735,6 @@
 				<th align="left" data-i18n="Name">Name</th>
 				<th width="120" align="left" data-i18n="IP Address">IP Address</th>
 				<th width="160" align="left" data-i18n="Tuya ID">Tuya ID</th>
-				<th width="160" align="left" data-i18n="Local Key">Local Key</th>
 			</tr>
 		</thead>
 	</table>
@@ -1764,9 +1763,11 @@
 			<td align="right" style="width:110px"><label><span data-i18n="IP Address">IP Address</span>:</label></td>
 			<td><input type="text" id="ipaddress" style="width: 250px; padding: .2em;" class="text ui-widget-content ui-corner-all"></td>
 		</tr>
-		<tr>
+		<tr valign="top">
 			<td align="right" style="width:110px"><label><span data-i18n="Energy Divider">Energy Divider</span>:</label></td>
-			<td><input type="text" id="energydivider" style="width: 200px; padding: .2em;" class="text ui-widget-content ui-corner-all" value="10"></td>
+			<td><input type="text" id="energydivider" style="width: 200px; padding: .2em;" class="text ui-widget-content ui-corner-all" value="10"> (default = 10)<br />
+			<span data-i18n="Set to 0 to disable energy monitoring. Change to negative to register as returned energy.">Set to 0 to disable energy monitoring. Change to negative to register as returned energy.</span><br />
+			</td>
 		</tr>
 	</table>
 	<div>
