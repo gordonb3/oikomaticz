@@ -90,7 +90,7 @@ public:
 
 
 private:
-	int sockfd;
+	int m_sockfd;
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
 

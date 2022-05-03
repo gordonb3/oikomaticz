@@ -21,8 +21,6 @@
 #include <thread>
 #include <chrono>
 
-
-
 #ifdef DEBUG
 #include <iostream>
 
@@ -152,8 +150,8 @@ std::string tuyaAPI33::DecodeTuyaMessage(unsigned char* buffer, const int size, 
 
 bool tuyaAPI33::ConnectToDevice(const std::string &hostname, const int portnumber, uint8_t retries)
 {
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0)
+	m_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (m_sockfd < 0)
 #ifdef DEBUG
 		exit_error("ERROR opening socket");
 #else
@@ -176,11 +174,11 @@ bool tuyaAPI33::ConnectToDevice(const std::string &hostname, const int portnumbe
 	struct timeval tv;
 	tv.tv_sec = SOCKET_TIMEOUT_SECS;
 	tv.tv_usec = 0;
-	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+	setsockopt(m_sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
 	for (uint8_t i = 0; i < retries; i++)
 	{
-		int res = connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
+		int res = connect(m_sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
 		if (res == 0)
 			return true;
 #ifdef DEBUG
@@ -197,12 +195,12 @@ bool tuyaAPI33::ConnectToDevice(const std::string &hostname, const int portnumbe
 
 int tuyaAPI33::send(unsigned char* buffer, const unsigned int size)
 {
-	return write(sockfd, buffer, size + sizeof(MESSAGE_SEND_HEADER) + sizeof(MESSAGE_SEND_TRAILER));
+	return write(m_sockfd, buffer, size + sizeof(MESSAGE_SEND_HEADER) + sizeof(MESSAGE_SEND_TRAILER));
 }
 
 int tuyaAPI33::receive(unsigned char* buffer, const unsigned int maxsize, const unsigned int minsize)
 {
-	unsigned int numbytes = (unsigned int)read(sockfd, buffer, maxsize);
+	unsigned int numbytes = (unsigned int)read(m_sockfd, buffer, maxsize);
 	while (numbytes <= minsize)
 	{
 		// after sending a device state change command tuya devices send an empty `ack` reply first
@@ -211,13 +209,13 @@ int tuyaAPI33::receive(unsigned char* buffer, const unsigned int maxsize, const 
 		std::cout << "{\"ack\":true}\n";
 #endif
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		numbytes = (unsigned int)read(sockfd, buffer, maxsize);
+		numbytes = (unsigned int)read(m_sockfd, buffer, maxsize);
 	}
 	return (int)numbytes;
 }
 
 void tuyaAPI33::disconnect()
 {
-	close(sockfd);
+	close(m_sockfd);
 }
 

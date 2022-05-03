@@ -164,6 +164,7 @@ void CLocalTuya::Do_Work()
 			tuyadevice->sigSendMeter.connect([this](auto devicedata) {SendMeter(devicedata);});
 			tuyadevice->sigSendSwitch.connect([this](auto devicedata) {SendSwitch(devicedata);});
 			LoadMeterStartData(tuyadevice, ID, energyDivider);
+			Log(LOG_NORM, "Setup communication thread to %s", (tuyadevice->m_devicedata)->deviceName);
 			if (tuyadevice->StartMonitor())
 				Log(LOG_STATUS, "Successfully connected to %s", (tuyadevice->m_devicedata)->deviceName);
 			m_tuyadevices.push_back(tuyadevice);
@@ -186,7 +187,7 @@ void CLocalTuya::Do_Work()
 				TuyaData* devicedata = device->m_devicedata;
 				if (!devicedata->connected)
 				{
-					Log(LOG_STATUS, "Retry communication thread to %s", devicedata->deviceName);
+					Log(LOG_NORM, "Retry communication thread to %s", devicedata->deviceName);
 					device->StopMonitor();
 					if (device->StartMonitor())
 						Log(LOG_STATUS, "Successfully connected to %s", devicedata->deviceName);

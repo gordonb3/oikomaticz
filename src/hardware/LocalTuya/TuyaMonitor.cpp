@@ -26,22 +26,22 @@ TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, cons
 	m_devicedata->energyDivider = energyDivider;
 	strncpy(m_devicedata->deviceName, m_name.c_str(), 19);
 
-	m_tuyaclient = new tuyaAPI33();
-
 	m_isPowerMeter = false;
 }
 
 TuyaMonitor::~TuyaMonitor()
 {
-	delete m_tuyaclient;
+	StopMonitor();
+	delete m_devicedata;
 }
 
 
 bool TuyaMonitor::ConnectToDevice()
 {
-	if (!m_tuyaclient->ConnectToDevice(m_address, TUYA_COMMAND_PORT))
+	m_tuyaclient = new tuyaAPI33();
+	if (!m_tuyaclient->ConnectToDevice(m_address, TUYA_COMMAND_PORT, 1))
 	{
-		_log.Log(LOG_ERROR, "Tuya Monitor: failed to connect to %s - wrong IP?", m_name.c_str());
+		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: failed to connect to %s - wrong IP?", m_name.c_str());
 		return false;
 	}
 
@@ -55,15 +55,13 @@ bool TuyaMonitor::ConnectToDevice()
 	numbytes = m_tuyaclient->send(message_buffer, numbytes);
 	if (numbytes < 0)
 	{
-		_log.Log(LOG_ERROR, "Tuya Monitor: failed send to %s", m_name.c_str());
-		m_tuyaclient->disconnect();
+		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: failed send to %s", m_name.c_str());
 		return false;
 	}
 	numbytes = m_tuyaclient->receive(message_buffer, MAX_BUFFER_SIZE - 1);
 	if (numbytes < 0)
 	{
-		_log.Log(LOG_ERROR, "Tuya Monitor: failed receive from %s, error is %d", m_name.c_str(), errno);
-		m_tuyaclient->disconnect();
+		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: failed receive from %s, error is %d", m_name.c_str(), errno);
 		return false;
 	}
 	std::string tuyaresponse = m_tuyaclient->DecodeTuyaMessage(message_buffer, numbytes, m_key);
@@ -74,8 +72,7 @@ bool TuyaMonitor::ConnectToDevice()
 	jReader->parse(tuyaresponse.c_str(), tuyaresponse.c_str() + tuyaresponse.size(), &jStatus, nullptr);
 	if (!jStatus.isMember("dps"))
 	{
-		_log.Log(LOG_ERROR, "Tuya Monitor: received invalid data from %s, verify ID and local key", m_name.c_str());
-		m_tuyaclient->disconnect();
+		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: received invalid data from %s, verify ID and local key", m_name.c_str());
 		return false;
 	}
 
@@ -94,6 +91,8 @@ bool TuyaMonitor::ConnectToDevice()
 
 bool TuyaMonitor::StartMonitor()
 {
+	if (m_devicedata->connected)
+		return false;
 	m_devicedata->connected = true;
 	if (ConnectToDevice())
 	{
@@ -114,6 +113,11 @@ bool TuyaMonitor::StopMonitor()
 		RequestStop();
 		m_thread->join();
 		m_thread.reset();
+	}
+	if (m_tuyaclient != nullptr)
+	{
+		delete m_tuyaclient;
+		m_tuyaclient = nullptr;
 	}
 	return true;
 }
@@ -156,7 +160,7 @@ void TuyaMonitor::MonitorThread()
 			// expect a timeout because the device will only send updates when the requested values change
 			if (errno != 11)
 			{
-				_log.Log(LOG_ERROR, "Tuya Monitor: device %s returned error %d", m_name.c_str(), errno);
+				_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d", m_name.c_str(), errno);
 				break;
 			}
 		}
@@ -197,7 +201,7 @@ void TuyaMonitor::MonitorThread()
 
 	// inform main that thread has ended
 	if (!IsStopRequested(1))
-		_log.Log(LOG_STATUS, "Tuya Monitor: Lost communication with %s", m_name.c_str());
+		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: Lost communication with %s", m_name.c_str());
 	m_devicedata->connected = false;
 }
 
@@ -219,7 +223,7 @@ bool TuyaMonitor::SendSwitchCommand(int switchstate)
 	numbytes = m_tuyaclient->send(message_buffer, numbytes);
 	if (numbytes < 0)
 		return false;
-	for (int i=0; i < 20; i++)
+	for (int i = 0; i < 20; i++)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		if (!m_waitForSwitch)
