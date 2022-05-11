@@ -1,14 +1,13 @@
 /*
- * client interface for local Tuya device access
+ *  Client interface for local Tuya device access
  *
- *  Copyright 2017-2020 - gordonb3 https://github.com/gordonb3/tuyapp
+ *  Copyright 2022 - gordonb3 https://github.com/gordonb3/tuyapp
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See COPYING, AUTHORS.
  *
  *  @license GPL-3.0+ <https://github.com/gordonb3/tuyapp/blob/master/LICENSE>
  */
-
 
 //#define DEBUG
 #define SOCKET_TIMEOUT_SECS 5
@@ -23,7 +22,6 @@
 
 #ifdef DEBUG
 #include <iostream>
-
 void exit_error(const char *msg)
 {
 	perror(msg);
@@ -31,13 +29,21 @@ void exit_error(const char *msg)
 }
 #endif
 
+
 tuyaAPI33::tuyaAPI33()
 {
 }
 
+
 tuyaAPI33::~tuyaAPI33()
 {
 	disconnect();
+}
+
+
+void tuyaAPI33::disconnect()
+{
+	close(m_sockfd);
 }
 
 
@@ -212,10 +218,5 @@ int tuyaAPI33::receive(unsigned char* buffer, const unsigned int maxsize, const 
 		numbytes = (unsigned int)read(m_sockfd, buffer, maxsize);
 	}
 	return (int)numbytes;
-}
-
-void tuyaAPI33::disconnect()
-{
-	close(m_sockfd);
 }
 

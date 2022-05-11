@@ -1,16 +1,12 @@
 /*
- * Local Tuya provider for Oikomaticz
+ *  Local Tuya provider for Oikomaticz
  *
- *  Copyright 2017 - gordonb3 https://github.com/gordonb3/tuyapp
+ *  Copyright 2022 - gordonb3 https://github.com/gordonb3/tuyapp
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See COPYING, AUTHORS.
  *
  * @license GPL-3.0+ <https://github.com/gordonb3/tuyapp/blob/master/LICENSE>
- *
- *
- *
- *
  */
 
 #pragma once
@@ -39,5 +35,4 @@ private:
 	void LoadMeterStartData(TuyaMonitor *tuyadevice, const int DeviceID, const int energyDivider);
 
 };
-
 

@@ -1,5 +1,15 @@
-#define TUYA_COMMAND_PORT 6668
+/*
+ *  Monitoring loop for the local Tuya client
+ *
+ *  Copyright 2022 - gordonb3 https://github.com/gordonb3/tuyapp
+ *
+ *  Licensed under GNU General Public License 3.0 or later.
+ *  Some rights reserved. See COPYING, AUTHORS.
+ *
+ *  @license GPL-3.0+ <https://github.com/gordonb3/tuyapp/blob/master/LICENSE>
+ */
 
+#define TUYA_COMMAND_PORT 6668
 
 #include "TuyaMonitor.hpp"
 #include <unistd.h>
@@ -28,6 +38,7 @@ TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, cons
 
 	m_isPowerMeter = false;
 }
+
 
 TuyaMonitor::~TuyaMonitor()
 {
@@ -88,6 +99,7 @@ bool TuyaMonitor::ConnectToDevice()
 	}
 	return true;
 }
+
 
 bool TuyaMonitor::StartMonitor()
 {

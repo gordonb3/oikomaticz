@@ -1,13 +1,14 @@
 /*
- * Local Tuya provider for Oikomaticz
+ *  Local Tuya provider for Oikomaticz
  *
- *  Copyright 2017 - gordonb3 https://github.com/gordonb3/tuyapp
+ *  Copyright 2022 - gordonb3 https://github.com/gordonb3/tuyapp
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See COPYING, AUTHORS.
  *
  * @license GPL-3.0+ <https://github.com/gordonb3/tuyapp/blob/master/LICENSE>
  */
+
 #include "stdafx.h"
 #include "LocalTuya.hpp"
 #include "main/Helper.h"
@@ -17,16 +18,12 @@
 #include "hardware/hardwaretypes.h"
 #include "main/json_helper.h"
 #include "main/WebServer.h"
-
 #include <string>
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
 #define CUSTOM_IMAGE_ID 19		// row index inside 'switch_icons.txt'
-
-
-extern std::string szUserDataFolder;
 
 
 CLocalTuya::CLocalTuya(const int ID)
@@ -145,7 +142,6 @@ void CLocalTuya::LoadMeterStartData(TuyaMonitor *tuyadevice, const int DeviceID,
 		}
 	}
 }
-
 
 
 void CLocalTuya::Do_Work()
@@ -277,6 +273,7 @@ void CLocalTuya::SendMeter(TuyaData *devicedata)
 		devicedata->isLowTariff = m_tariff;
 }
 
+
 void CLocalTuya::SendSwitch(TuyaData *devicedata)
 {
 	GeneralSwitch tuya_switch;
@@ -290,7 +287,6 @@ void CLocalTuya::SendSwitch(TuyaData *devicedata)
 	tuya_switch.cmnd = (uint8_t)devicedata->switchstate;
 	sDecodeRXMessage(this, (const unsigned char *)&tuya_switch, devicedata->deviceName, 255, nullptr);
 }
-
 
 
 //Webserver helpers
