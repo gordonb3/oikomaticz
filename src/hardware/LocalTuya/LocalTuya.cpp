@@ -282,6 +282,18 @@ void CLocalTuya::SendMeter(TuyaData *devicedata)
 
 void CLocalTuya::SendSwitch(TuyaData *devicedata)
 {
+	uint8_t unitcode = 2; // P1 meter claims unit code 1
+
+	std::vector<std::vector<std::string> > result;
+	result = m_sql.safe_query("SELECT nValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%s') AND (Unit==%d) AND (Type==%d) AND (Subtype==%d)", m_HwdID, devicedata->deviceID, unitcode, int(pTypeGeneralSwitch), int(sSwitchTypeAC));
+	if (!result.empty())
+	{
+		//check if we have a change, if not do not update it
+		int currentState = atoi(result[0][0].c_str());
+		if (currentState == (int)devicedata->switchstate)
+			return;
+	}
+
 	GeneralSwitch tuya_switch;
 	memset(&tuya_switch, 0, sizeof(GeneralSwitch));
 	tuya_switch.len = sizeof(GeneralSwitch) - 1;
@@ -289,7 +301,7 @@ void CLocalTuya::SendSwitch(TuyaData *devicedata)
 	tuya_switch.subtype = sSwitchTypeAC;
 	tuya_switch.switchtype = device::tswitch::type::OnOff;
 	tuya_switch.id = devicedata->deviceID;
-	tuya_switch.unitcode = 2; // P1 meter claims unit code 1
+	tuya_switch.unitcode = unitcode;
 	tuya_switch.cmnd = (uint8_t)devicedata->switchstate;
 	sDecodeRXMessage(this, (const unsigned char *)&tuya_switch, devicedata->deviceName, 255, nullptr);
 }
