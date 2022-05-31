@@ -228,7 +228,13 @@ bool CLocalTuya::WriteToHardware(const char *pdata, const unsigned char length)
 		TuyaData* devicedata = device->m_devicedata;
 		if (devicedata->deviceID == pSwitch->id)
 		{
-			return device->SendSwitchCommand(cmnd);
+			if (!devicedata->connected)
+				return false;
+			if (device->SendSwitchCommand(cmnd))
+				return true;
+			// looks like we were silently dropped - force a reconnect
+			device->StopMonitor();
+			return false;
 		}
 	}
 
