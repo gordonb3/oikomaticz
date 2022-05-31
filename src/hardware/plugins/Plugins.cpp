@@ -24,8 +24,8 @@
 
 #define ADD_STRING_TO_DICT(pPlugin, pDict, key, value)                                                                                      \
 	{                                                                                                                                       \
-		PyNewRef	pObj = Py_BuildValue("s", value.c_str());                                                                               \
-		if (!pObj || PyDict_SetItemString(pDict, key, pObj) == -1)                                                                                   \
+		PyNewRef	pStr(value);                                                                               \
+		if (!pStr || PyDict_SetItemString(pDict, key, pStr) == -1)                                                                                   \
 			pPlugin->Log(LOG_ERROR, "Failed to add key '%s', value '%s' to dictionary.", key, value.c_str());     \
 	}
 
@@ -1350,8 +1350,8 @@ namespace Plugins
 				goto Error;
 			}
 
-			PyNewRef pObj = Py_BuildValue("i", m_HwdID);
-			if (PyDict_SetItemString(pParamsDict, "HardwareID", pObj) == -1)
+			PyNewRef pHwdID(m_HwdID);
+			if (PyDict_SetItemString(pParamsDict, "HardwareID", pHwdID) == -1)
 			{
 				Log(LOG_ERROR, "(%s) failed to add key 'HardwareID', value '%d' to dictionary.", m_PluginKey.c_str(), m_HwdID);
 				goto Error;
@@ -1682,6 +1682,11 @@ namespace Plugins
 		CConnection *pConnection = pMessage->m_pConnection;
 
 		pConnection->pProtocol->ProcessInbound(pMessage);
+
+		if (PyErr_Occurred())
+		{
+			LogPythonException("ProcessInbound");
+		}
 	}
 
 	void CPlugin::ConnectionWrite(CDirectiveBase *pMess)
@@ -2339,37 +2344,41 @@ namespace Plugins
 
 	bool CPlugin::LoadSettings()
 	{
-		PyBorrowedRef	pModuleDict = PyModule_GetDict(PythonModule()); // returns a borrowed referece to the __dict__ object for the module
-		if (m_SettingsDict)
-			Py_XDECREF(m_SettingsDict);
-		m_SettingsDict = PyDict_New();
-		if (PyDict_SetItemString(pModuleDict, "Settings", (PyObject *)m_SettingsDict) == -1)
+		// Only load/reload settings if the plugin initial import was successful
+		if (PythonModule())
 		{
-			Log(LOG_ERROR, "(%s) failed to add Settings dictionary.", m_PluginKey.c_str());
-			return false;
-		}
-
-		// load associated settings to make them available to python
-		std::vector<std::vector<std::string>> result;
-		result = m_sql.safe_query("SELECT Key, nValue, sValue FROM Preferences");
-		if (!result.empty())
-		{
-			// Add settings strings into the settings dictionary with Unit as the key
-			for (const auto &sd : result)
+			PyBorrowedRef	pModuleDict = PyModule_GetDict(PythonModule()); // returns a borrowed referece to the __dict__ object for the __main__ module
+			if (m_SettingsDict)
+				Py_XDECREF(m_SettingsDict);
+			m_SettingsDict = PyDict_New();
+			if (PyDict_SetItemString(pModuleDict, "Settings", (PyObject*)m_SettingsDict) == -1)
 			{
-				PyNewRef	pValue;
-				if (!sd[2].empty())
+				Log(LOG_ERROR, "(%s) failed to add Settings dictionary.", m_PluginKey.c_str());
+				return false;
+			}
+
+			// load associated settings to make them available to python
+			std::vector<std::vector<std::string>> result;
+			result = m_sql.safe_query("SELECT Key, nValue, sValue FROM Preferences");
+			if (!result.empty())
+			{
+				// Add settings strings into the settings dictionary with Unit as the key
+				for (const auto& sd : result)
 				{
-					pValue = PyUnicode_FromString(sd[2].c_str());
-				}
-				else
-				{
-					pValue = PyUnicode_FromString(sd[1].c_str());
-				}
-				if (PyDict_SetItemString((PyObject *)m_SettingsDict, sd[0].c_str(), pValue))
-				{
-					Log(LOG_ERROR, "(%s) failed to add setting '%s' to settings dictionary.", m_PluginKey.c_str(), sd[0].c_str());
-					return false;
+					PyNewRef	pValue;
+					if (!sd[2].empty())
+					{
+						pValue = PyUnicode_FromString(sd[2].c_str());
+					}
+					else
+					{
+						pValue = PyUnicode_FromString(sd[1].c_str());
+					}
+					if (PyDict_SetItemString((PyObject*)m_SettingsDict, sd[0].c_str(), pValue))
+					{
+						Log(LOG_ERROR, "(%s) failed to add setting '%s' to settings dictionary.", m_PluginKey.c_str(), sd[0].c_str());
+						return false;
+					}
 				}
 			}
 		}
@@ -2437,8 +2446,6 @@ namespace Plugins
 	{
 		if (!m_DeviceDict)
 			return true;
-
-		return false;
 
 		PyObject *key, *value;
 		Py_ssize_t pos = 0;

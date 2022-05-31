@@ -1403,15 +1403,11 @@ void MainWorker::ParseRFXLogFile()
 			std::string _line;
 			getline(myfile, _line);
 			size_t tpos = _line.find("=");
-			if (tpos != std::string::npos)
-			{
-				_line = _line.substr(tpos + 1);
-				tpos = _line.find(" ");
-				if (tpos == 0)
-				{
-					_line = _line.substr(1);
-				}
-			}
+			if ((tpos == std::string::npos) || (tpos < 10))
+				continue;
+			if (_line[tpos - 4] != ':')
+				continue;
+			_line = _line.substr(tpos + 1);
 			stdreplace(_line, " ", "");
 			_lines.push_back(_line);
 		}
@@ -1420,17 +1416,19 @@ void MainWorker::ParseRFXLogFile()
 	int HWID = 999;
 	//m_sql.DeleteHardware("999");
 
-	CDomoticzHardwareBase* pHardware = GetHardware(HWID);
+	RFXComTCP* pHardware = (RFXComTCP*)GetHardware(HWID);
 	if (pHardware == NULL)
 	{
-		pHardware = new CDummy(HWID);
+		pHardware = new RFXComTCP(HWID, "127.0.0.1", 1234, CRFXBase::ATYPE_P1_DSMR_5);
 		//pHardware->sDecodeRXMessage.connect(boost::bind(&MainWorker::DecodeRXMessage, this, _1, _2, _3, _4, _5));
 		AddDomoticzHardware(pHardware);
+		pHardware->m_bEnableReceive = true;
+		pHardware->m_Name = pHardware->m_ShortName = "RFXCom debug";
 	}
 
 	unsigned char rxbuffer[600];
 	static const char* const lut = "0123456789ABCDEF";
-	for (const auto &hexstring : _lines.begin())
+	for (const auto &hexstring : _lines)
 	{
 		if (hexstring.size() % 2 != 0)
 			continue;//illegal
@@ -1453,16 +1451,8 @@ void MainWorker::ParseRFXLogFile()
 		}
 		if (ii == 0)
 			continue;
-		if (CRFXBase::CheckValidRFXData((const uint8_t*)&rxbuffer))
-		{
-			//pHardware->WriteToHardware((const char *)&rxbuffer, totbytes);
-			DecodeRXMessage(pHardware, (const unsigned char*)&rxbuffer, NULL, 255);
-			sleep_milliseconds(300);
-		}
-		else
-		{
-			_log.Log(LOG_ERROR, "Invalid data/length!");
-		}
+		pHardware->onInternalMessage((const uint8_t*)&rxbuffer, ii);
+		sleep_milliseconds(100);
 	}
 #endif
 }
@@ -3216,6 +3206,10 @@ void MainWorker::decode_Wind(const CDomoticzHardwareBase* pHardware, const tRBUF
 				float chillJatTI = 13.12F + 0.6215F * temp - 11.37F * pow(wspeedms * 3.6F, 0.16F) + 0.3965F * temp * pow(wspeedms * 3.6F, 0.16F);
 				chill = chillJatTI;
 			}
+			else
+			{
+				chill = temp;
+			}
 		}
 	}
 
@@ -4189,6 +4183,10 @@ void MainWorker::decode_UV(const CDomoticzHardwareBase* pHardware, const tRBUF* 
 	else
 		BatteryLevel = 100;
 	float Level = float(pResponse->UV.uv) / 10.0F;
+	float AddjValue2 = 0.0F;
+	float AddjMulti2 = 1.0F;
+	m_sql.GetAddjustment2(pHardware->m_HwdID, ID.c_str(), Unit, devType, subType, AddjValue2, AddjMulti2);
+	Level *= AddjMulti2;
 	if (Level > 30)
 	{
 		WriteMessage(" Invalid UV");
@@ -4258,13 +4256,13 @@ void MainWorker::decode_UV(const CDomoticzHardwareBase* pHardware, const tRBUF* 
 			WriteMessage(szTmp);
 		}
 
-		if (pResponse->UV.uv < 3)
+		if (Level < 3)
 			WriteMessage("Description = Low");
-		else if (pResponse->UV.uv < 6)
+		else if (Level < 6)
 			WriteMessage("Description = Medium");
-		else if (pResponse->UV.uv < 8)
+		else if (Level < 8)
 			WriteMessage("Description = High");
-		else if (pResponse->UV.uv < 11)
+		else if (Level < 11)
 			WriteMessage("Description = Very high");
 		else
 			WriteMessage("Description = Dangerous");
@@ -8769,7 +8767,7 @@ void MainWorker::decode_Current(const CDomoticzHardwareBase* pHardware, const tR
 		WriteMessage(szTmp);
 		sprintf(szTmp, "ID            = %d", (pResponse->CURRENT.id1 * 256) + pResponse->CURRENT.id2);
 		WriteMessage(szTmp);
-		sprintf(szTmp, "Count         = %d", pResponse->CURRENT.id2);//m_rxbuffer[5]);
+		sprintf(szTmp, "Count         = %d", pResponse->CURRENT.count);
 		WriteMessage(szTmp);
 		sprintf(szTmp, "Channel 1     = %.1f ampere", CurrentChannel1);
 		WriteMessage(szTmp);

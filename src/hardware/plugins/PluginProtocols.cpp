@@ -122,44 +122,52 @@ namespace Plugins {
 
 	static void AddBytesToDict(PyObject* pDict, const char* key, const std::string& value)
 	{
-		PyNewRef pObj = Py_BuildValue("y#", value.c_str(), value.length());
-		if (!pObj || PyDict_SetItemString(pDict, key, pObj) == -1)
+		//PyNewRef pObj = Py_BuildValue("y#", value.c_str(), value.length());
+		PyNewRef pObj((byte*)value.c_str(), value.length());
+		if (!pObj || PyDict_SetItemString(pDict, key, (PyObject*)pObj) == -1)
 			_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, key, value.c_str());
 	}
 
 	static void AddStringToDict(PyObject* pDict, const char* key, const std::string& value)
 	{
-		PyNewRef pObj = Py_BuildValue("s", value.c_str());
-		if (!pObj || PyDict_SetItemString(pDict, key, pObj) == -1)
+		PyNewRef pObj(value);
+		if (!pObj || PyDict_SetItemString(pDict, key, (PyObject*)pObj) == -1)
 			_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, key, value.c_str());
 	}
 
 	static void AddIntToDict(PyObject* pDict, const char* key, const int value)
 	{
-		PyNewRef pObj = Py_BuildValue("i", value);
-		if (!pObj || PyDict_SetItemString(pDict, key, pObj) == -1)
+		PyNewRef pObj(value);
+		if (!pObj || PyDict_SetItemString(pDict, key, (PyObject*)pObj) == -1)
 			_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%d' to dictionary.", __func__, key, value);
+	}
+
+	static void AddLongToDict(PyObject* pDict, const char* key, const long value)
+	{
+		PyNewRef pObj(value);
+		if (!pObj || PyDict_SetItemString(pDict, key, (PyObject*)pObj) == -1)
+			_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%ld' to dictionary.", __func__, key, value);
 	}
 
 	static void AddUIntToDict(PyObject* pDict, const char* key, const unsigned int value)
 	{
-		PyNewRef pObj = Py_BuildValue("I", value);
-		if (!pObj || PyDict_SetItemString(pDict, key, pObj) == -1)
+		PyNewRef pObj(value);
+		if (!pObj || PyDict_SetItemString(pDict, key, (PyObject*)pObj) == -1)
 			_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%d' to dictionary.", __func__, key, value);
 	}
 
 	static void AddDoubleToDict(PyObject* pDict, const char* key, const double value)
 	{
-		PyNewRef pObj = Py_BuildValue("d", value);
-		if (!pObj || PyDict_SetItemString(pDict, key, pObj) == -1)
+		PyNewRef pObj(value);
+		if (!pObj || PyDict_SetItemString(pDict, key, (PyObject*)pObj) == -1)
 			_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%f' to dictionary.", __func__, key, value);
 	}
 
 	static void AddBoolToDict(PyObject* pDict, const char* key, const bool value)
 	{
-		PyNewRef pObj = Py_BuildValue("N", PyBool_FromLong(value));
-		if (!pObj || PyDict_SetItemString(pDict, key, pObj) == -1)
-			_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%d' to dictionary.", __func__, key, value);
+		PyNewRef pObj(value);
+		if (!pObj || PyDict_SetItemString(pDict, key, (PyObject*)pObj) == -1)
+			_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, key, value ? "True" : "False");
 	}
 
 	PyObject* CPluginProtocolJSON::JSONtoPython(Json::Value* pJSON)
@@ -477,7 +485,7 @@ namespace Plugins {
 				if (uHeaderText == "CHUNKED")
 					m_Chunked = true;
 			}
-			PyNewRef		pObj = Py_BuildValue("s", sHeaderText.c_str());
+			PyNewRef		pObj(sHeaderText);
 			PyBorrowedRef	pPrevObj = PyDict_GetItemString((PyObject *)m_Headers, sHeaderName.c_str());
 			// Encode multi headers in a list
 			if (pPrevObj)
@@ -530,7 +538,7 @@ namespace Plugins {
 		// HTML is non binary so use strings
 		std::string		sData(m_sRetainedData.begin(), m_sRetainedData.end());
 
-		m_ContentLength = -1;
+		m_ContentLength = 0;
 		m_Chunked = false;
 		m_RemainingChunk = 0;
 
@@ -593,7 +601,7 @@ namespace Plugins {
 					if ((m_ContentLength == sData.length()) || (Message->m_Buffer.empty()))
 					{
 						PyObject* pDataDict = PyDict_New();
-						PyNewRef pObj = Py_BuildValue("s", m_Status.c_str());
+						PyNewRef pObj(m_Status);
 						if (PyDict_SetItemString(pDataDict, "Status", pObj) == -1)
 							_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", "HTTP", "Status", m_Status.c_str());
 
@@ -607,9 +615,9 @@ namespace Plugins {
 
 						if (sData.length())
 						{
-							PyNewRef pObj = Py_BuildValue("y#", sData.c_str(), sData.length());
+							PyNewRef pObj((const byte*)sData.c_str(), sData.length());
 							if (PyDict_SetItemString(pDataDict, "Data", pObj) == -1)
-								_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", "HTTP", "Data", sData.c_str());
+									_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", "HTTP", "Data", sData.c_str());
 						}
 
 						Message->m_pConnection->pPlugin->MessagePlugin(new onMessageCallback(Message->m_pConnection, pDataDict));
@@ -643,7 +651,7 @@ namespace Plugins {
 							if (m_RemainingChunk == 0 && (sData.find_first_of('\n') != std::string::npos))
 							{
 								PyObject* pDataDict = PyDict_New();
-								PyNewRef pObj = Py_BuildValue("s", m_Status.c_str());
+								PyNewRef pObj(m_Status);
 								if (PyDict_SetItemString(pDataDict, "Status", pObj) == -1)
 									_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", "HTTP", "Status", m_Status.c_str());
 
@@ -657,7 +665,7 @@ namespace Plugins {
 
 								if (sPayload.length())
 								{
-									PyNewRef pObj = Py_BuildValue("y#", sPayload.c_str(), sPayload.length());
+									PyNewRef pObj = PyBytes_FromStringAndSize(sPayload.c_str(), sPayload.length());
 									if (PyDict_SetItemString(pDataDict, "Data", pObj) == -1)
 										_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", "HTTP", "Data", sPayload.c_str());
 								}
@@ -702,7 +710,7 @@ namespace Plugins {
 				{
 					PyObject* DataDict = PyDict_New();
 					std::string		sVerb = sFirstLine.substr(0, sFirstLine.find_first_of(' '));
-					PyNewRef pObj = Py_BuildValue("s", sVerb.c_str());
+					PyNewRef pObj(sVerb);
 					if (PyDict_SetItemString(DataDict, "Verb", pObj) == -1)
 						_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", "HTTP", "Verb", sVerb.c_str());
 
@@ -717,7 +725,7 @@ namespace Plugins {
 						_log.Log(LOG_ERROR, "malformed request response received (verb: %s/%s)", sVerb.c_str(), sFirstLine.c_str());
 					}
 
-					PyNewRef pURL = Py_BuildValue("s", sURL.c_str());
+					PyNewRef pURL(sURL);
 					if (PyDict_SetItemString(DataDict, "URL", pURL) == -1)
 						_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", "HTTP", "URL", sURL.c_str());
 
@@ -731,7 +739,7 @@ namespace Plugins {
 
 					if (sPayload.length())
 					{
-						PyNewRef pObj = Py_BuildValue("y#", sPayload.c_str(), sPayload.length());
+						PyNewRef pObj = PyBytes_FromStringAndSize(sPayload.c_str(), sPayload.length());
 						if (PyDict_SetItemString(DataDict, "Data", pObj) == -1)
 							_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", "HTTP", "Data", sPayload.c_str());
 					}
@@ -1053,7 +1061,7 @@ namespace Plugins {
 
 	void CPluginProtocolICMP::ProcessInbound(const ReadEvent* Message)
 	{
-		PyNewRef pObj = nullptr;
+		PyNewRef pObj;
 		PyObject* pDataDict = PyDict_New();
 		int			iTotalData = 0;
 		int			iDataOffset = 0;
@@ -2219,7 +2227,7 @@ namespace Plugins {
 
 	bool CPluginProtocolWS::ProcessWholeMessage(std::vector<byte>& vMessage, const ReadEvent* Message)
 	{
-		while (!vMessage.empty())
+		if (vMessage.size() > 1)
 		{
 			// Look for a complete message
 			std::vector<byte>	vPayload;
@@ -2282,12 +2290,10 @@ namespace Plugins {
 			}
 
 			PyObject* pDataDict = (PyObject*)PyDict_New();
-			PyNewRef pPayload = nullptr;
+			PyNewRef pPayload;
 
 			// Handle full message
-			PyNewRef pObj = Py_BuildValue("N", PyBool_FromLong(bFinish));
-			if (PyDict_SetItemString(pDataDict, "Finish", pObj) == -1)
-				_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, "Finish", bFinish ? "True" : "False");
+			AddBoolToDict(pDataDict, "Finish", bFinish);
 
 			// Masked data?
 			if (lMaskingKey)
@@ -2297,26 +2303,23 @@ namespace Plugins {
 				{
 					vPayload[i] ^= pbMask[i % 4];
 				}
-				PyNewRef pObj = Py_BuildValue("i", lMaskingKey);
-				if (PyDict_SetItemString(pDataDict, "Mask", pObj) == -1)
-					_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%ld' to dictionary.", __func__, "Mask", lMaskingKey);
+
+				AddLongToDict(pDataDict, "Mask", lMaskingKey);
 			}
 
 			switch (iOpCode)
 			{
 			case 0x01:	// Text message
 			{
-				std::string		sPayload(vPayload.begin(), vPayload.end());
-				pPayload = Py_BuildValue("s", sPayload.c_str());
+				// Force text messages to be returned as Unicode rather than Bytes
+				pPayload = PyNewRef(std::string(vPayload.begin(), vPayload.end()));
 				break;
 			}
 			case 0x02:	// Binary message
 				break;
 			case 0x08:	// Connection Close
 			{
-				PyNewRef pObj = Py_BuildValue("s", "Close");
-				if (PyDict_SetItemString(pDataDict, "Operation", pObj) == -1)
-					_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, "Operation", "Close");
+				AddStringToDict(pDataDict, "Operation", "Close");
 				if (vPayload.size() == 2)
 				{
 					int		iReasonCode = (vPayload[0] << 8) + vPayload[1];
@@ -2327,17 +2330,13 @@ namespace Plugins {
 			case 0x09:	// Ping
 			{
 				pDataDict = (PyObject*)PyDict_New();
-				PyNewRef pObj = Py_BuildValue("s", "Ping");
-				if (PyDict_SetItemString(pDataDict, "Operation", pObj) == -1)
-					_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, "Operation", "Ping");
+				AddStringToDict(pDataDict, "Operation", "Ping");
 				break;
 			}
 			case 0x0A:	// Pong
 			{
 				pDataDict = (PyObject*)PyDict_New();
-				PyNewRef pObj = Py_BuildValue("s", "Pong");
-				if (PyDict_SetItemString(pDataDict, "Operation", pObj) == -1)
-					_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, "Operation", "Pong");
+				AddStringToDict(pDataDict, "Operation", "Pong");
 				break;
 			}
 			default:
@@ -2347,7 +2346,9 @@ namespace Plugins {
 			// If there is a payload but not handled then map it as binary
 			if (!vPayload.empty() && !pPayload)
 			{
-				pPayload = Py_BuildValue("y#", &vPayload[0], vPayload.size());
+				pPayload = PyNewRef(vPayload);
+				if (!pPayload)
+					_log.Log(LOG_ERROR, "(%s) failed build Python object for payload.", __func__);
 			}
 
 			// If there is a payload then add it
@@ -2370,23 +2371,27 @@ namespace Plugins {
 
 	void CPluginProtocolWS::ProcessInbound(const ReadEvent* Message)
 	{
-		//	Although messages can be fragmented, control messages can be inserted in between fragments
-		//	so try to process just the message first, then retained data and the message
-		std::vector<byte>	Buffer = Message->m_Buffer;
-		if (ProcessWholeMessage(Buffer, Message))
+		// Check this isn't an HTTP message (connection/protocol switch may have failed)
+		if (Message->m_Buffer.size() >= 4)
 		{
-			return;		// Message processed
+			std::string		sData(Message->m_Buffer.begin(), Message->m_Buffer.begin() + 4);
+			if (sData == "HTTP")
+			{
+				CPluginProtocolHTTP::ProcessInbound(Message);
+				return;
+			}
 		}
 
 		// Add new message to retained data, process all messages if this one is the finish of a message
 		m_sRetainedData.insert(m_sRetainedData.end(), Message->m_Buffer.begin(), Message->m_Buffer.end());
 
+		// Although messages can be fragmented, control messages can be inserted in between fragments.
+		// see https://datatracker.ietf.org/doc/html/rfc6455#section-5.4
 		// Always process the whole buffer because we can't know if we have whole, multiple or even complete messages unless we work through from the start
-		if (ProcessWholeMessage(m_sRetainedData, Message))
+		while (ProcessWholeMessage(m_sRetainedData, Message))
 		{
-			return;		// Message processed
+			continue;		// Message processed
 		}
-
 	}
 
 	std::vector<byte> CPluginProtocolWS::ProcessOutbound(const WriteDirective* WriteMessage)
@@ -2403,17 +2408,13 @@ namespace Plugins {
 		}
 		else
 		{
+			// If a URL is specified then this is an HTTP message (which must be the WebSocket upgrade message in a valid flow)
 			PyBorrowedRef pURL = PyDict_GetItemString(WriteMessage->m_Object, "URL");
 			if (pURL)
 			{
 				// Is a verb specified?
-				PyBorrowedRef pVerb = PyDict_GetItemString(WriteMessage->m_Object, "Verb");
-				if (!pVerb)
-				{
-					PyNewRef pObj = Py_BuildValue("s", "GET");
-					if (PyDict_SetItemString(WriteMessage->m_Object, "Verb", pObj) == -1)
-						_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, "Verb", "GET");
-				}
+				if (!PyDict_GetItemString(WriteMessage->m_Object, "Verb"))
+					AddStringToDict(WriteMessage->m_Object, "Verb", "GET");
 
 				// Required headers specified?
 				PyBorrowedRef pHeaders = PyDict_GetItemString(WriteMessage->m_Object, "Headers");
@@ -2421,36 +2422,46 @@ namespace Plugins {
 				{
 					pHeaders = (PyObject*)PyDict_New();
 					if (PyDict_SetItemString(WriteMessage->m_Object, "Headers", (PyObject*)pHeaders) == -1)
-						_log.Log(LOG_ERROR, "(%s) failed to add key '%s' to dictionary.", "WS", "Headers");
+						_log.Log(LOG_ERROR, "(%s) failed to create '%s' missing dictionary.", "WS", "Headers");
 					Py_DECREF(pHeaders);
 				}
-				PyBorrowedRef pConnection = PyDict_GetItemString(pHeaders, "Connection");
-				if (!pConnection)
-				{
-					PyNewRef pObj = Py_BuildValue("s", "keep-alive, Upgrade");
-					if (PyDict_SetItemString(pHeaders, "Connection", pObj) == -1)
-						_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, "Connection", "Upgrade");
-				}
-				PyBorrowedRef pUpgrade = PyDict_GetItemString(pHeaders, "Upgrade");
-				if (!pUpgrade)
-				{
-					PyNewRef pObj = Py_BuildValue("s", "websocket");
-					if (PyDict_SetItemString(pHeaders, "Upgrade", pObj) == -1)
-						_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, "Upgrade", "websocket");
-				}
-				PyBorrowedRef pUserAgent = PyDict_GetItemString(pHeaders, "User-Agent");
-				if (!pUserAgent)
-				{
-					PyNewRef pObj = Py_BuildValue("s", "Domoticz/1.0");
-					if (PyDict_SetItemString(pHeaders, "User-Agent", pObj) == -1)
-						_log.Log(LOG_ERROR, "(%s) failed to add key '%s', value '%s' to dictionary.", __func__, "User-Agent", "Domoticz/1.0");
-				}
 
-				// Use parent HTTP protocol object to do the actual formatting
+				// Add default values for missing headers
+				if (!PyDict_GetItemString(pHeaders, "Accept"))
+					AddStringToDict(pHeaders, "Accept", "*/*");
+
+				if (!PyDict_GetItemString(pHeaders, "Accept-Language"))
+					AddStringToDict(pHeaders, "Accept-Language", "en-US,en;q=0.9'");
+
+				if (!PyDict_GetItemString(pHeaders, "Accept-Encoding"))
+					AddStringToDict(pHeaders, "Accept-Encoding", "gzip, deflate");
+
+				if (!PyDict_GetItemString(pHeaders, "Connection"))
+					AddStringToDict(pHeaders, "Connection", "keep-alive, Upgrade");
+
+				if (!PyDict_GetItemString(pHeaders, "Sec-WebSocket-Version"))
+					AddStringToDict(pHeaders, "Sec-WebSocket-Version", "13");
+
+				if (!PyDict_GetItemString(pHeaders, "Sec-WebSocket-Extensions"))
+					AddStringToDict(pHeaders, "Sec-WebSocket-Extensions", "permessage-deflate");
+
+				if (!PyDict_GetItemString(pHeaders, "Upgrade"))
+					AddStringToDict(pHeaders, "Upgrade", "websocket");
+
+				if (!PyDict_GetItemString(pHeaders, "User-Agent"))
+					AddStringToDict(pHeaders, "User-Agent", "Domoticz/1.0");
+
+				if (!PyDict_GetItemString(pHeaders, "Pragma"))
+					AddStringToDict(pHeaders, "Pragma", "no-cache");
+
+				if (!PyDict_GetItemString(pHeaders, "Cache-Control"))
+					AddStringToDict(pHeaders, "Cache-Control", "no-cache");
+
+				// Use parent HTTP protocol object to do the actual formatting and queuing
 				return CPluginProtocolHTTP::ProcessOutbound(WriteMessage);
 			}
 			int iOpCode = 0;
-			long lMaskingKey = 0;
+			long long llMaskingKey = 0;
 			long lPayloadLength = 0;
 			byte bMaskBit = 0x00;
 
@@ -2505,13 +2516,13 @@ namespace Plugins {
 			{
 				if (pMask.IsLong())
 				{
-					lMaskingKey = PyLong_AsLong(pMask);
+					llMaskingKey = PyLong_AsLongLong(pMask);
 					bMaskBit = 0x80; // Set mask bit in header
 				}
 				else if (pMask.IsString())
 				{
 					std::string sMask = PyUnicode_AsUTF8(pMask);
-					lMaskingKey = atoi(sMask.c_str());
+					llMaskingKey = atoi(sMask.c_str());
 					bMaskBit = 0x80; // Set mask bit in header
 				}
 				else
@@ -2540,11 +2551,11 @@ namespace Plugins {
 			byte *pbMask = nullptr;
 			if (bMaskBit)
 			{
-				retVal.push_back(lMaskingKey >> 24);
+				retVal.push_back(llMaskingKey >> 24);
 				pbMask = &retVal[retVal.size() - 1];
-				retVal.push_back((lMaskingKey >> 16) & 0xFF);
-				retVal.push_back((lMaskingKey >> 8) & 0xFF);
-				retVal.push_back(lMaskingKey & 0xFF); // Encode mask
+				retVal.push_back((llMaskingKey >> 16) & 0xFF);
+				retVal.push_back((llMaskingKey >> 8) & 0xFF);
+				retVal.push_back(llMaskingKey & 0xFF); // Encode mask
 			}
 
 			if (pPayload.IsString())
@@ -2552,7 +2563,10 @@ namespace Plugins {
 				std::string sPayload = PyUnicode_AsUTF8(pPayload);
 				for (int i = 0; i < lPayloadLength; i++)
 				{
-					retVal.push_back(sPayload[i] ^ pbMask[i % 4]);
+					if (bMaskBit)
+						retVal.push_back(sPayload[i] ^ pbMask[i % 4]);
+					else
+						retVal.push_back(sPayload[i]);
 				}
 			}
 			else if (pPayload.IsBytes())
@@ -2560,7 +2574,10 @@ namespace Plugins {
 				byte *pByte = (byte *)PyBytes_AsString(pPayload);
 				for (int i = 0; i < lPayloadLength; i++)
 				{
-					retVal.push_back(pByte[i] ^ pbMask[i % 4]);
+					if (bMaskBit)
+						retVal.push_back(pByte[i] ^ pbMask[i % 4]);
+					else
+						retVal.push_back(pByte[i]);
 				}
 			}
 			else if (pPayload.IsByteArray())
@@ -2568,7 +2585,10 @@ namespace Plugins {
 				byte *pByte = (byte *)PyByteArray_AsString(pPayload);
 				for (int i = 0; i < lPayloadLength; i++)
 				{
-					retVal.push_back(pByte[i] ^ pbMask[i % 4]);
+					if (bMaskBit)
+						retVal.push_back(pByte[i] ^ pbMask[i % 4]);
+					else
+						retVal.push_back(pByte[i]);
 				}
 			}
 		}
