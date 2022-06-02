@@ -285,7 +285,7 @@ void CLocalTuya::SendSwitch(TuyaData *devicedata)
 	uint8_t unitcode = 2; // P1 meter claims unit code 1
 
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT nValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%s') AND (Unit==%d) AND (Type==%d) AND (Subtype==%d)", m_HwdID, devicedata->deviceID, unitcode, int(pTypeGeneralSwitch), int(sSwitchTypeAC));
+	result = m_sql.safe_query("SELECT nValue FROM DeviceStatus WHERE (HardwareID=%d) AND (DeviceID='%08d') AND (Unit=%d) AND (Type=%d) AND (Subtype=%d)", m_HwdID, devicedata->deviceID, unitcode, pTypeGeneralSwitch, sSwitchTypeAC);
 	if (!result.empty())
 	{
 		//check if we have a change, if not do not update it
