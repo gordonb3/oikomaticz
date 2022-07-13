@@ -595,6 +595,7 @@ namespace http
 			RegisterRType("lightlog", [this](auto &&session, auto &&req, auto &&root) { RType_LightLog(session, req, root); });
 			RegisterRType("textlog", [this](auto &&session, auto &&req, auto &&root) { RType_TextLog(session, req, root); });
 			RegisterRType("scenelog", [this](auto &&session, auto &&req, auto &&root) { RType_SceneLog(session, req, root); });
+			RegisterRType("rclientslog", [this](auto&& session, auto&& req, auto&& root) { RType_RemoteWebClientsLog(session, req, root); });
 			RegisterRType("settings", [this](auto &&session, auto &&req, auto &&root) { RType_Settings(session, req, root); });
 			RegisterRType("events", [this](auto &&session, auto &&req, auto &&root) { RType_Events(session, req, root); });
 
@@ -7708,6 +7709,9 @@ namespace http
 
 				/* More complex ones that need additional processing */
 				/* ------------------------------------------------- */
+				bool ShortLogAddOnlyNewValues = (request::findValue(&req, "ShortLogAddOnlyNewValues") == "on" ? 1 : 0);
+				m_sql.UpdatePreferencesVar("ShortLogAddOnlyNewValues", ShortLogAddOnlyNewValues); cntSettings++;
+				m_sql.m_bShortLogAddOnlyNewValues = ShortLogAddOnlyNewValues;
 
 				float CostEnergy = static_cast<float>(atof(request::findValue(&req, "CostEnergy").c_str()));
 				m_sql.UpdatePreferencesVar("CostEnergy", int(CostEnergy * 10000.0F)); cntSettings++;
@@ -12759,6 +12763,10 @@ namespace http
 				{
 					root["ShortLogDays"] = nValue;
 				}
+				else if (Key == "ShortLogAddOnlyNewValues")
+				{
+					root["ShortLogAddOnlyNewValues"] = nValue;
+				}
 				else if (Key == "ShortLogInterval")
 				{
 					root["ShortLogInterval"] = nValue;
@@ -13268,6 +13276,37 @@ namespace http
 					root["result"][ii]["Date"] = sd[3];
 					ii++;
 				}
+			}
+		}
+
+		extern std::map<std::string, http::server::connection::_tRemoteClients> m_remote_web_clients;
+
+		void CWebServer::RType_RemoteWebClientsLog(WebEmSession& session, const request& req, Json::Value& root)
+		{
+			if (session.rights != 2)
+			{
+				session.reply_status = reply::forbidden;
+				return; // Only admin user allowed
+			}
+
+			root["status"] = "OK";
+			root["title"] = "RemoteWebClientsLog";
+
+			int ii = 0;
+			for (const auto& itt_rc : m_remote_web_clients)
+			{
+				char timestring[128];
+				timestring[0] = 0;
+				struct tm timeinfo;
+				localtime_r(&itt_rc.second.last_seen, &timeinfo);
+
+				strftime(timestring, sizeof(timestring), "%a, %d %b %Y %H:%M:%S %z", &timeinfo);
+
+				root["result"][ii]["date"] = timestring;
+				root["result"][ii]["address"] = itt_rc.second.host_remote_endpoint_address_;
+				root["result"][ii]["port"] = itt_rc.second.host_local_endpoint_port_;
+				root["result"][ii]["req"] = itt_rc.second.host_last_request_uri_;
+				ii++;
 			}
 		}
 

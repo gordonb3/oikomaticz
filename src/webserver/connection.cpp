@@ -421,6 +421,7 @@ namespace http {
 						}
 						request_.host_remote_port = host_remote_endpoint_port_;
 						request_.host_local_port = host_local_endpoint_port_;
+						host_last_request_uri_ = request_.uri;
 						request_handler_.handle_request(request_, reply_);
 
 						if(_log.IsACLFlogEnabled())	// Only do this if we are gonna use it, otherwise don't spend the compute power

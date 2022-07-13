@@ -688,6 +688,7 @@ CSQLHelper::CSQLHelper()
 	m_bEnableEventSystemFullURLLog = true;
 	m_bDisableDzVentsSystem = false;
 	m_ShortLogInterval = 5;
+	m_bShortLogAddOnlyNewValues = false;
 	m_bPreviousAcceptNewHardware = false;
 	m_bLogEventScriptTrigger = false;
 
@@ -3556,6 +3557,12 @@ bool CSQLHelper::OpenDatabase()
 	if (nValue < 1)
 		nValue = 5;
 	m_ShortLogInterval = nValue;
+	nValue = 0;
+	if (!GetPreferencesVar("ShortLogAddOnlyNewValues", nValue))
+	{
+		UpdatePreferencesVar("ShortLogAddOnlyNewValues", nValue);
+	}
+	m_bShortLogAddOnlyNewValues = (nValue != 0);
 
 	if (!GetPreferencesVar("SendErrorsAsNotification", nValue))
 	{
@@ -5989,6 +5996,11 @@ void CSQLHelper::UpdateTemperatureLog()
 
 				if (difftime(now, checktime) >= SensorTimeOut * 60)
 					continue;
+				if (m_bShortLogAddOnlyNewValues)
+				{
+					if (difftime(now, checktime) > m_ShortLogInterval * 60)
+						continue;
+				}
 			}
 
 			std::vector<std::string> splitresults;
@@ -6150,6 +6162,11 @@ void CSQLHelper::UpdateRainLog()
 
 			if (difftime(now, checktime) >= SensorTimeOut * 60)
 				continue;
+			if (m_bShortLogAddOnlyNewValues)
+			{
+				if (difftime(now, checktime) > m_ShortLogInterval * 60)
+					continue;
+			}
 
 			std::vector<std::string> splitresults;
 			StringSplit(sValue, ";", splitresults);
@@ -6207,6 +6224,11 @@ void CSQLHelper::UpdateWindLog()
 
 			if (difftime(now, checktime) >= SensorTimeOut * 60)
 				continue;
+			if (m_bShortLogAddOnlyNewValues)
+			{
+				if (difftime(now, checktime) > m_ShortLogInterval * 60)
+					continue;
+			}
 
 			std::vector<std::string> splitresults;
 			StringSplit(sValue, ";", splitresults);
@@ -6276,6 +6298,11 @@ void CSQLHelper::UpdateUVLog()
 
 			if (difftime(now, checktime) >= SensorTimeOut * 60)
 				continue;
+			if (m_bShortLogAddOnlyNewValues)
+			{
+				if (difftime(now, checktime) > m_ShortLogInterval * 60)
+					continue;
+			}
 
 			std::vector<std::string> splitresults;
 			StringSplit(sValue, ";", splitresults);
@@ -6578,6 +6605,11 @@ void CSQLHelper::UpdateMeter()
 			{
 				if (difftime(now, checktime) >= SensorTimeOut * 60)
 					continue;
+				if (m_bShortLogAddOnlyNewValues)
+				{
+					if (difftime(now, checktime) > m_ShortLogInterval * 60)
+						continue;
+				}
 			}
 			else
 			{
@@ -6784,6 +6816,12 @@ void CSQLHelper::UpdateMultiMeter()
 
 			if (difftime(now, checktime) >= SensorTimeOut * 60)
 				continue;
+			if (m_bShortLogAddOnlyNewValues)
+			{
+				if (difftime(now, checktime) > m_ShortLogInterval * 60)
+					continue;
+			}
+
 			std::vector<std::string> splitresults;
 			StringSplit(sValue, ";", splitresults);
 
@@ -6901,6 +6939,11 @@ void CSQLHelper::UpdatePercentageLog()
 
 			if (difftime(now, checktime) >= SensorTimeOut * 60)
 				continue;
+			if (m_bShortLogAddOnlyNewValues)
+			{
+				if (difftime(now, checktime) > m_ShortLogInterval * 60)
+					continue;
+			}
 
 			std::vector<std::string> splitresults;
 			StringSplit(sValue, ";", splitresults);
@@ -6954,6 +6997,11 @@ void CSQLHelper::UpdateFanLog()
 
 			if (difftime(now, checktime) >= SensorTimeOut * 60)
 				continue;
+			if (m_bShortLogAddOnlyNewValues)
+			{
+				if (difftime(now, checktime) > m_ShortLogInterval * 60)
+					continue;
+			}
 
 			std::vector<std::string> splitresults;
 			StringSplit(sValue, ";", splitresults);
