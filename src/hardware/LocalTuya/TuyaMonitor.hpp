@@ -21,13 +21,27 @@
 #include <boost/signals2.hpp>
 #include "main/StoppableTask.h"
 
+namespace device {
+namespace tuya {
+namespace connectstate {
+	enum value {
+		OFFLINE = 0,
+		STARTING,
+		STOPPING,
+		CONNECTED,
+		RESETBYPEER
+	};
+}; // namespace connectstate
+}; // namespace tuya
+}; // namespace device
+
 
 class TuyaData
 {
 public:
 	unsigned int deviceID;
 	char deviceName[20];
-	bool connected;
+	device::tuya::connectstate::value connectstate;
 	bool switchstate;
 	bool isLowTariff;
 	unsigned int power;

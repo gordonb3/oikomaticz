@@ -103,17 +103,26 @@ bool TuyaMonitor::ConnectToDevice()
 
 bool TuyaMonitor::StartMonitor()
 {
-	if (m_devicedata->connected)
-		return false;
-	m_devicedata->connected = true;
-	if (ConnectToDevice())
+	if ((m_devicedata->connectstate == device::tuya::connectstate::OFFLINE) || (m_devicedata->connectstate == device::tuya::connectstate::RESETBYPEER))
 	{
-		RequestStart();
-		m_thread = std::make_shared<std::thread>([this] { MonitorThread(); });
-		if (m_thread)
-			return true;
+		m_devicedata->connectstate = device::tuya::connectstate::STARTING;
+		if (ConnectToDevice())
+		{
+			RequestStart();
+			m_thread = std::make_shared<std::thread>([this] { MonitorThread(); });
+			if (m_thread)
+			{
+				m_devicedata->connectstate = device::tuya::connectstate::CONNECTED;
+				return true;
+			}
+			else
+			{
+				m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
+				return false;
+			}
+		}
+		m_devicedata->connectstate = device::tuya::connectstate::OFFLINE;
 	}
-	m_devicedata->connected = false;
 	return false;
 }
 
@@ -122,6 +131,7 @@ bool TuyaMonitor::StopMonitor()
 {
 	if (m_thread)
 	{
+		m_devicedata->connectstate = device::tuya::connectstate::STOPPING;
 		RequestStop();
 		m_thread->join();
 		m_thread.reset();
@@ -213,8 +223,12 @@ void TuyaMonitor::MonitorThread()
 
 	// inform main that thread has ended
 	if (!IsStopRequested(1))
+	{
 		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: Lost communication with %s", m_name.c_str());
-	m_devicedata->connected = false;
+		m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
+		return;
+	}
+	m_devicedata->connectstate = device::tuya::connectstate::OFFLINE;
 }
 
 

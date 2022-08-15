@@ -103,7 +103,7 @@ bool CLocalTuya::StopHardware()
 	{
 		device->StopMonitor();
 		TuyaData* devicedata = device->m_devicedata;
-		if (devicedata->connected)
+		if (devicedata->connectstate != device::tuya::connectstate::OFFLINE)
 			Log(LOG_ERROR, "Failed to stop tuya communication thread to %s", devicedata->deviceName);
 		delete device;
 	}
@@ -181,7 +181,7 @@ void CLocalTuya::Do_Work()
 			for (auto &device : m_tuyadevices)
 			{
 				TuyaData* devicedata = device->m_devicedata;
-				if (!devicedata->connected)
+				if (devicedata->connectstate == device::tuya::connectstate::RESETBYPEER)
 				{
 					Log(LOG_NORM, "Retry communication thread to %s", devicedata->deviceName);
 					device->StopMonitor();
@@ -228,7 +228,7 @@ bool CLocalTuya::WriteToHardware(const char *pdata, const unsigned char length)
 		TuyaData* devicedata = device->m_devicedata;
 		if (devicedata->deviceID == pSwitch->id)
 		{
-			if (!devicedata->connected)
+			if (devicedata->connectstate != device::tuya::connectstate::CONNECTED)
 				return false;
 			if (device->SendSwitchCommand(cmnd))
 				return true;
