@@ -103,23 +103,20 @@ bool TuyaMonitor::ConnectToDevice()
 
 bool TuyaMonitor::StartMonitor()
 {
-	if ((m_devicedata->connectstate == device::tuya::connectstate::OFFLINE) || (m_devicedata->connectstate == device::tuya::connectstate::RESETBYPEER))
+	if (m_devicedata->connectstate == device::tuya::connectstate::OFFLINE)
 	{
 		m_devicedata->connectstate = device::tuya::connectstate::STARTING;
 		if (ConnectToDevice())
 		{
 			RequestStart();
 			m_thread = std::make_shared<std::thread>([this] { MonitorThread(); });
-			if (m_thread)
-			{
-				m_devicedata->connectstate = device::tuya::connectstate::CONNECTED;
-				return true;
-			}
-			else
-			{
-				m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
-				return false;
-			}
+			m_devicedata->connectstate = device::tuya::connectstate::CONNECTED;
+			return true;
+		}
+		if (m_tuyaclient != nullptr)
+		{
+			delete m_tuyaclient;
+			m_tuyaclient = nullptr;
 		}
 		m_devicedata->connectstate = device::tuya::connectstate::OFFLINE;
 	}
@@ -129,9 +126,9 @@ bool TuyaMonitor::StartMonitor()
 
 bool TuyaMonitor::StopMonitor()
 {
-	if (m_thread)
+	m_devicedata->connectstate = device::tuya::connectstate::STOPPING;
+	if (m_thread != nullptr)
 	{
-		m_devicedata->connectstate = device::tuya::connectstate::STOPPING;
 		RequestStop();
 		m_thread->join();
 		m_thread.reset();
@@ -141,6 +138,7 @@ bool TuyaMonitor::StopMonitor()
 		delete m_tuyaclient;
 		m_tuyaclient = nullptr;
 	}
+	m_devicedata->connectstate = device::tuya::connectstate::OFFLINE;
 	return true;
 }
 
@@ -156,7 +154,7 @@ void TuyaMonitor::MonitorThread()
 	Json::CharReaderBuilder jBuilder;
 	std::unique_ptr<Json::CharReader> jReader(jBuilder.newCharReader());
 
-	while (!IsStopRequested(1))
+	while (!IsStopRequested(1) && (m_devicedata->connectstate == device::tuya::connectstate::CONNECTED))
 	{
 
 		if (m_isPowerMeter)
@@ -174,7 +172,11 @@ void TuyaMonitor::MonitorThread()
 
 		numbytes = m_tuyaclient->send(message_buffer, numbytes);
 		if (numbytes < 0)
+		{
+			_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: Lost communication with %s", m_name.c_str());
+			m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
 			break;
+		}
 
 		numbytes = m_tuyaclient->receive(message_buffer, MAX_BUFFER_SIZE - 1);
 		if (numbytes < 0)
@@ -183,6 +185,7 @@ void TuyaMonitor::MonitorThread()
 			if (errno != 11)
 			{
 				_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d", m_name.c_str(), errno);
+				m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
 				break;
 			}
 		}
@@ -221,14 +224,10 @@ void TuyaMonitor::MonitorThread()
 		}
 	}
 
-	// inform main that thread has ended
-	if (!IsStopRequested(1))
+	while (!IsStopRequested(1))
 	{
-		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: Lost communication with %s", m_name.c_str());
-		m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
-		return;
+		// wait for final stop signal to end the thread
 	}
-	m_devicedata->connectstate = device::tuya::connectstate::OFFLINE;
 }
 
 

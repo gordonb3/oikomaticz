@@ -10,7 +10,7 @@
  */
 
 //#define DEBUG
-#define SOCKET_TIMEOUT_SECS 5
+#define SOCKET_TIMEOUT_SECS 3
 
 #include "tuyaAPI33.hpp"
 #include "AES.h"

@@ -87,7 +87,7 @@ bool CLocalTuya::StartHardware()
 	Init();
 	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
-	if (!m_thread)
+	if (m_thread == nullptr)
 		return false;
 	m_bIsStarted = true;
 	sOnConnected(this);
@@ -97,19 +97,28 @@ bool CLocalTuya::StartHardware()
 
 bool CLocalTuya::StopHardware()
 {
-
 	Log(LOG_STATUS, "Stopping tuya communication threads");
+
+	// we don't want to concatenate receive timeouts on our devices, so first inform communication threads that they should not start any new send/receive
+	for (auto &device : m_tuyadevices)
+	{
+		TuyaData* devicedata = device->m_devicedata;
+		devicedata->connectstate = device::tuya::connectstate::STOPPING;
+	}
+
+	// stop communication threads
 	for (auto &device : m_tuyadevices)
 	{
 		device->StopMonitor();
 		TuyaData* devicedata = device->m_devicedata;
 		if (devicedata->connectstate != device::tuya::connectstate::OFFLINE)
-			Log(LOG_ERROR, "Failed to stop tuya communication thread to %s", devicedata->deviceName);
+			Log(LOG_ERROR, "Failed to stop tuya communication thread with %s", devicedata->deviceName);
 		delete device;
 	}
 	m_tuyadevices.clear();
 
-	if (m_thread)
+	// stop master thread ([this])
+	if (m_thread != nullptr)
 	{
 		RequestStop();
 		m_thread->join();
@@ -160,9 +169,11 @@ void CLocalTuya::Do_Work()
 			tuyadevice->sigSendMeter.connect([this](auto devicedata) {SendMeter(devicedata);});
 			tuyadevice->sigSendSwitch.connect([this](auto devicedata) {SendSwitch(devicedata);});
 			LoadMeterStartData(tuyadevice, ID, energyDivider);
-			Log(LOG_NORM, "Setup communication thread to %s", (tuyadevice->m_devicedata)->deviceName);
+			Log(LOG_NORM, "Setup communication thread with %s", (tuyadevice->m_devicedata)->deviceName);
 			if (tuyadevice->StartMonitor())
 				Log(LOG_STATUS, "Successfully connected to %s", (tuyadevice->m_devicedata)->deviceName);
+			else
+				Log(LOG_ERROR, "Failed connect to %s", (tuyadevice->m_devicedata)->deviceName);
 			m_tuyadevices.push_back(tuyadevice);
 		}
 	}
@@ -183,8 +194,12 @@ void CLocalTuya::Do_Work()
 				TuyaData* devicedata = device->m_devicedata;
 				if (devicedata->connectstate == device::tuya::connectstate::RESETBYPEER)
 				{
-					Log(LOG_NORM, "Retry communication thread to %s", devicedata->deviceName);
+					_log.Debug(DEBUG_HARDWARE, "connection with device %s was reset by peer", devicedata->deviceName);
 					device->StopMonitor();
+				}
+				if (devicedata->connectstate == device::tuya::connectstate::OFFLINE)
+				{
+					Log(LOG_NORM, "Retry communication thread with %s", devicedata->deviceName);
 					if (device->StartMonitor())
 						Log(LOG_STATUS, "Successfully connected to %s", devicedata->deviceName);
 				}
@@ -229,11 +244,15 @@ bool CLocalTuya::WriteToHardware(const char *pdata, const unsigned char length)
 		if (devicedata->deviceID == pSwitch->id)
 		{
 			if (devicedata->connectstate != device::tuya::connectstate::CONNECTED)
+			{
+				Log(LOG_ERROR, "Device %s is offline", devicedata->deviceName);
 				return false;
+			}
 			if (device->SendSwitchCommand(cmnd))
 				return true;
 			// looks like we were silently dropped - force a reconnect
-			device->StopMonitor();
+			Log(LOG_ERROR, "Failed to send switch command to %s, forcing a reconnect", devicedata->deviceName);
+			devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
 			return false;
 		}
 	}
