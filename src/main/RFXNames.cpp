@@ -690,7 +690,7 @@ NULL
 };
 */
 const char *ZWave_Thermostat_Fan_Modes[]
-	= { "Auto Low", "On Low", "Auto High", "On High", "Unknown 4", "Unknown 5", "Circulate", "Unknown", nullptr };
+= { "Auto Low", "On Low", "Auto High", "On High", "Unknown 4", "Unknown 5", "Circulate", "Unknown", nullptr };
 
 int Lookup_ZWave_Thermostat_Modes(const std::vector<std::string>& Modes, const std::string& sMode)
 {
@@ -1178,10 +1178,12 @@ void GetLightStatus(
 			break;
 		case gswitch_sSetLevel:
 			sprintf(szTmp, "Set Level: %d %%", llevel);
-			if (sValue != "0")
-				lstatus = szTmp;
-			else
+			if (sValue == "0")
 				lstatus = "Off";
+			else if (sValue == "100")
+				lstatus = "On";
+			else
+				lstatus = szTmp;
 			break;
 		case gswitch_sGroupOff:
 			lstatus = "Group Off";
@@ -1488,6 +1490,18 @@ void GetLightStatus(
 		}
 		break;
 	case pTypeBlinds:
+		if (switchtype == device::tswitch::type::BlindsPercentage ||
+			switchtype == device::tswitch::type::BlindsPercentageInverted ||
+			switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop ||
+			switchtype == device::tswitch::type::BlindsPercentageWithStop)
+		{
+			bHaveDimmer = true;
+			maxDimLevel = 100;
+
+		// Calculate % that the light is currently on, taking the maxdimlevel into account.
+			llevel = (int)float((100.0F / float(maxDimLevel)) * atof(sValue.c_str()));
+		}
+
 		switch (nValue)
 		{
 		case blinds_sOpen:
@@ -1952,6 +1966,9 @@ void GetLightStatus(
 				break;
 			case fan_NovyLearn:
 				lstatus = "learn";
+				break;
+			case fan_NovyMood:
+				lstatus = "mood";
 				break;
 			}
 		}
@@ -2987,11 +3004,11 @@ bool GetLightCommand(
 	{
 		if (switchcmd == "On")
 		{
-			cmd = curtain_sClose;
+			cmd = curtain_sOpen;
 		}
 		else if (switchcmd == "Off")
 		{
-			cmd = curtain_sOpen;
+			cmd = curtain_sClose;
 		}
 		else
 		{
@@ -3002,19 +3019,13 @@ bool GetLightCommand(
 	break;
 	case pTypeBlinds:
 	{
-		if (switchcmd == "On")
+		if (switchcmd == "Off")
 		{
-			if (dSubType == sTypeBlindsT10)
-				cmd = blinds_sOpen;
-			else
-				cmd = blinds_sClose;
+			cmd = blinds_sOpen;
 		}
-		else if (switchcmd == "Off")
+		else if (switchcmd == "On")
 		{
-			if (dSubType == sTypeBlindsT10)
-				cmd = blinds_sClose;
-			else
-				cmd = blinds_sOpen;
+			cmd = blinds_sClose;
 		}
 		else
 		{
@@ -3482,6 +3493,8 @@ bool GetLightCommand(
 				cmd = fan_NovyLight;
 			if (switchcmd == "learn")
 				cmd = fan_NovyLearn;
+			if (switchcmd == "mood")
+				cmd = fan_NovyMood;
 		}
 		break;
 		}
@@ -3711,7 +3724,6 @@ void ConvertToGeneralSwitchType(std::string& devid, int& dtype, int& subtype)
 		subtype = sSwitchTypeHomeConfort;
 	}
 	else if (dtype == pTypeBlinds) {
-		dtype = pTypeGeneralSwitch;
 		if (subtype == sTypeBlindsT5) subtype = sSwitchTypeBofu;
 		else if (subtype == sTypeBlindsT6) subtype = sSwitchTypeBrel;
 		else if (subtype == sTypeBlindsT7) subtype = sSwitchTypeDooya;

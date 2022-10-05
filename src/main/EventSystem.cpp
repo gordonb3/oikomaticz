@@ -3780,6 +3780,9 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 	bool bHaveGroupCmd = false;
 	int maxDimLevel = 0;
 
+	std::string openStatus = "Open";
+	std::string closedStatus = "Closed";
+
 	if (IsLightOrSwitch(dType, dSubType))
 	{
 		GetLightStatus(dType, dSubType, switchtype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
@@ -3842,40 +3845,57 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 	}
 	else if (
 		(switchtype == device::tswitch::type::Blinds)
-		|| (switchtype == device::tswitch::type::BlindsPercentage)
-		|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
-		)
+		|| (switchtype == device::tswitch::type::VenetianBlindsUS)
+		|| (switchtype == device::tswitch::type::VenetianBlindsEU))
+	{
+		if ((lstatus == "On") || (lstatus == "Close inline relay"))
+		{
+			lstatus = closedStatus;
+		}
+		else if ((lstatus == "Stop") || (lstatus == "Stop inline relay"))
+		{
+			lstatus = "Stopped";
+		}
+		else
+		{
+			lstatus = openStatus;
+		}
+	}
+	else if (switchtype == device::tswitch::type::BlindsInverted)
 	{
 		if (lstatus == "On")
 		{
-			lstatus = "Closed";
+			lstatus = openStatus;
 		}
-		else if (lstatus == "Stop")
+		else if (lstatus == "Off")
+		{
+			lstatus = closedStatus;
+		}
+		else if ((lstatus == "Stop") || (lstatus == "Stop inline relay"))
 		{
 			lstatus = "Stopped";
-		}
-		else
-		{
-			lstatus = "Open";
 		}
 	}
 	else if (
-		(switchtype == device::tswitch::type::BlindsInverted)
+		(switchtype == device::tswitch::type::BlindsPercentage)
 		|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
+		|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
 		|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
 		)
 	{
-		if (lstatus == "Off")
+		//int iLevel = round((float(maxDimLevel) / 100.0F) * LastLevel);
+		//root["result"][ii]["LevelInt"] = iLevel;
+		if (lstatus == "On")
 		{
-			lstatus = "Closed";
+			lstatus = ((switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageWithStop)) ? closedStatus : openStatus;
+		}
+		else if (lstatus == "Off")
+		{
+			lstatus = ((switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageWithStop)) ? openStatus : closedStatus;
 		}
 		else if (lstatus == "Stop")
 		{
 			lstatus = "Stopped";
-		}
-		else
-		{
-			lstatus = "Open";
 		}
 	}
 	else if (switchtype == device::tswitch::type::Media)
@@ -3956,7 +3976,7 @@ void CEventSystem::WWWGetItemStates(std::vector<_tDeviceStatus> &iStates)
 
 	iStates.clear();
 	std::transform(m_devicestates.begin(), m_devicestates.end(), std::back_inserter(iStates),
-		       [](const std::pair<const uint64_t, CEventSystem::_tDeviceStatus> &m) { return m.second; });
+		[](const std::pair<const uint64_t, CEventSystem::_tDeviceStatus> &m) { return m.second; });
 }
 
 int CEventSystem::getSunRiseSunSetMinutes(const std::string &what)
@@ -3988,7 +4008,7 @@ bool CEventSystem::isEventscheduled(const std::string &eventName)
 		return false;
 
 	return std::any_of(currentTasks.begin(), currentTasks.end(),
-			   [&](const _tTaskItem &currentTask) { return currentTask._relatedEvent == eventName; });
+		[&](const _tTaskItem &currentTask) { return currentTask._relatedEvent == eventName; });
 }
 
 int CEventSystem::calculateDimLevel(int deviceID, int percentageLevel)
@@ -4023,6 +4043,7 @@ int CEventSystem::calculateDimLevel(int deviceID, int percentageLevel)
 				float fLevel = (maxDimLevel / 100.0F) * percentageLevel;
 				if (fLevel > 100)
 					fLevel = 100;
+
 				iLevel = int(fLevel);
 			}
 			else if (switchtype == device::tswitch::type::Selector)

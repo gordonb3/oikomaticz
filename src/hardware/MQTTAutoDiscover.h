@@ -54,6 +54,7 @@ class MQTTAutoDiscover : public MQTT
 		std::string state_off;
 
 		bool bBrightness = false;
+		bool bHave_brightness_scale = false;
 		float brightness_scale = 254.0F;
 
 		bool bColor_mode = false;
@@ -163,6 +164,7 @@ private:
 	_tMQTTASensor* get_auto_discovery_sensor_WATT_unit(const _tMQTTASensor* pSensor);
 private:
 	std::string m_TopicDiscoveryPrefix;
+	std::vector<std::string> m_allowed_components;
 
 	std::map<std::string, _tMQTTADevice> m_discovered_devices;
 	std::map<std::string, _tMQTTASensor> m_discovered_sensors;

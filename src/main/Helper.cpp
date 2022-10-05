@@ -581,34 +581,32 @@ double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d)
 	return 2.0 * earthRadiusKm * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
 }
 
+// trim only the space character
 std::string &stdstring_ltrim(std::string &s)
 {
-	while (!s.empty())
-	{
-		if (s[0] != ' ')
-			return s;
-		s = s.substr(1);
-	}
-	//	s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-	return s;
+	return s.erase(0, s.find_first_not_of(' '));
 }
 
 std::string &stdstring_rtrim(std::string &s)
 {
-	while (!s.empty())
-	{
-		if (s[s.size() - 1] != ' ')
-			return s;
-		s = s.substr(0, s.size() - 1);
-	}
-	//s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-	return s;
+	return s.erase(s.find_last_not_of(' ') + 1);
 }
-
-// trim from both ends
 std::string &stdstring_trim(std::string &s)
 {
 	return stdstring_ltrim(stdstring_rtrim(s));
+}
+// trim all whitespace
+std::string &stdstring_ltrimws(std::string &s)
+{
+	return s.erase(0, s.find_first_not_of(WHITESPACE));
+}
+std::string &stdstring_rtrimws(std::string &s)
+{
+	return s.erase(s.find_last_not_of(WHITESPACE) + 1);
+}
+std::string &stdstring_trimws(std::string &s)
+{
+	return stdstring_ltrimws(stdstring_rtrimws(s));
 }
 
 double CalculateDewPoint(double temp, int humidity)

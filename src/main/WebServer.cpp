@@ -1021,8 +1021,8 @@ namespace http
 			std::string loglevel = request::findValue(&req, "loglevel");
 			std::string address = HTMLSanitizer::Sanitize(request::findValue(&req, "address"));
 			std::string sport = request::findValue(&req, "port");
-			std::string username = HTMLSanitizer::Sanitize(CURLEncode::URLDecode(request::findValue(&req, "username")));
-			std::string password = HTMLSanitizer::Sanitize(CURLEncode::URLDecode(request::findValue(&req, "password")));
+			std::string username = HTMLSanitizer::Sanitize(request::findValue(&req, "username"));
+			std::string password = request::findValue(&req, "password");
 			std::string extra = CURLEncode::URLDecode(request::findValue(&req, "extra"));
 			std::string sdatatimeout = request::findValue(&req, "datatimeout");
 			if ((name.empty()) || (senabled.empty()) || (shtype.empty()))
@@ -1439,8 +1439,8 @@ namespace http
 			std::string loglevel = request::findValue(&req, "loglevel");
 			std::string address = HTMLSanitizer::Sanitize(request::findValue(&req, "address"));
 			std::string sport = request::findValue(&req, "port");
-			std::string username = HTMLSanitizer::Sanitize(CURLEncode::URLDecode(request::findValue(&req, "username")));
-			std::string password = CURLEncode::URLDecode(request::findValue(&req, "password"));
+			std::string username = HTMLSanitizer::Sanitize(request::findValue(&req, "username"));
+			std::string password = request::findValue(&req, "password");
 			std::string extra = HTMLSanitizer::Sanitize(CURLEncode::URLDecode(request::findValue(&req, "extra")));
 			std::string sdatatimeout = request::findValue(&req, "datatimeout");
 
@@ -7709,9 +7709,6 @@ namespace http
 
 				/* More complex ones that need additional processing */
 				/* ------------------------------------------------- */
-				bool ShortLogAddOnlyNewValues = (request::findValue(&req, "ShortLogAddOnlyNewValues") == "on" ? 1 : 0);
-				m_sql.UpdatePreferencesVar("ShortLogAddOnlyNewValues", ShortLogAddOnlyNewValues); cntSettings++;
-				m_sql.m_bShortLogAddOnlyNewValues = ShortLogAddOnlyNewValues;
 
 				float CostEnergy = static_cast<float>(atof(request::findValue(&req, "CostEnergy").c_str()));
 				m_sql.UpdatePreferencesVar("CostEnergy", int(CostEnergy * 10000.0F)); cntSettings++;
@@ -7764,6 +7761,9 @@ namespace http
 					iShortLogInterval = 5;
 				m_sql.m_ShortLogInterval = iShortLogInterval;
 				m_sql.UpdatePreferencesVar("ShortLogInterval", m_sql.m_ShortLogInterval); cntSettings++;
+
+				m_sql.m_bShortLogAddOnlyNewValues = (request::findValue(&req, "ShortLogAddOnlyNewValues") == "on" ? 1 : 0);
+				m_sql.UpdatePreferencesVar("ShortLogAddOnlyNewValues", m_sql.m_bShortLogAddOnlyNewValues); cntSettings++;
 
 				m_sql.m_bLogEventScriptTrigger = (request::findValue(&req, "LogEventScriptTrigger") == "on" ? 1 : 0);
 				m_sql.UpdatePreferencesVar("LogEventScriptTrigger", m_sql.m_bLogEventScriptTrigger); cntSettings++;
@@ -8151,7 +8151,7 @@ namespace http
 			}
 			else
 			{
-				sprintf(szOrderBy, "A.[Order],A.%%s ASC");
+				sprintf(szOrderBy, "A.[Order],A.%s ASC", order.c_str());
 			}
 
 			unsigned char tempsign = m_sql.m_tempsign[0];
@@ -8384,7 +8384,7 @@ namespace http
 						strcpy(szOrderBy, "A.[Order],A.LastUpdate DESC");
 					else
 					{
-						sprintf(szOrderBy, "A.[Order],A.%%s ASC");
+						sprintf(szOrderBy, "A.[Order],A.%s ASC", order.c_str());
 					}
 					//_log.Log(LOG_STATUS, "Getting all devices: order by %s ", szOrderBy);
 					if (!hardwareid.empty())
@@ -8895,8 +8895,8 @@ namespace http
 							int iLevel = round((float(maxDimLevel) / 100.0F) * LastLevel);
 							root["result"][ii]["LevelInt"] = iLevel;
 							if ((dType == pTypeColorSwitch) || (dType == pTypeLighting5 && dSubType == sTypeTRC02) ||
-							    (dType == pTypeLighting5 && dSubType == sTypeTRC02_2) || (dType == pTypeGeneralSwitch && dSubType == sSwitchTypeTRC02) ||
-							    (dType == pTypeGeneralSwitch && dSubType == sSwitchTypeTRC02_2))
+								(dType == pTypeLighting5 && dSubType == sTypeTRC02_2) || (dType == pTypeGeneralSwitch && dSubType == sSwitchTypeTRC02) ||
+								(dType == pTypeGeneralSwitch && dSubType == sSwitchTypeTRC02_2))
 							{
 								_tColor color(sColor);
 								std::string jsonColor = color.toJSONString();
@@ -8923,10 +8923,10 @@ namespace http
 							{
 								// Milight V4/V5 bridges do not support absolute dimming for RGB or CW_WW lights
 								if (_hardwareNames[hardwareID].HardwareTypeVal == hardware::type::LimitlessLights &&
-								    atoi(_hardwareNames[hardwareID].Mode2.c_str()) != CLimitLess::LBTYPE_V6 &&
-								    (atoi(_hardwareNames[hardwareID].Mode1.c_str()) == sTypeColor_RGB ||
-								     atoi(_hardwareNames[hardwareID].Mode1.c_str()) == sTypeColor_White ||
-								     atoi(_hardwareNames[hardwareID].Mode1.c_str()) == sTypeColor_CW_WW))
+									atoi(_hardwareNames[hardwareID].Mode2.c_str()) != CLimitLess::LBTYPE_V6 &&
+									(atoi(_hardwareNames[hardwareID].Mode1.c_str()) == sTypeColor_RGB ||
+										atoi(_hardwareNames[hardwareID].Mode1.c_str()) == sTypeColor_White ||
+										atoi(_hardwareNames[hardwareID].Mode1.c_str()) == sTypeColor_CW_WW))
 								{
 									DimmerType = "rel";
 								}
@@ -8954,6 +8954,8 @@ namespace http
 
 						root["result"][ii]["IsSubDevice"] = bIsSubDevice;
 
+						std::string openStatus = "Open";
+						std::string closedStatus = "Closed";
 						if (switchtype == device::tswitch::type::Doorbell)
 						{
 							root["result"][ii]["TypeImg"] = "doorbell";
@@ -9071,12 +9073,24 @@ namespace http
 							root["result"][ii]["Status"] = device::tmedia::status::Description((device::tmedia::status::value)nValue);
 							lstatus = sValue;
 						}
-						else if ((switchtype == device::tswitch::type::Blinds) || (switchtype == device::tswitch::type::VenetianBlindsUS) || (switchtype == device::tswitch::type::VenetianBlindsEU))
+						else if (
+							(switchtype == device::tswitch::type::Blinds)
+							|| (switchtype == device::tswitch::type::BlindsInverted)
+							|| (switchtype == device::tswitch::type::VenetianBlindsUS)
+							|| (switchtype == device::tswitch::type::VenetianBlindsEU)
+							)
+
 						{
+							root["result"][ii]["Image"] = "blinds";
 							root["result"][ii]["TypeImg"] = "blinds";
+
 							if ((lstatus == "On") || (lstatus == "Close inline relay"))
 							{
-								lstatus = "Closed";
+								lstatus = openStatus;
+							}
+							else if ((lstatus == "Off") || (lstatus == "Open inline relay"))
+							{
+								lstatus = closedStatus;
 							}
 							else if ((lstatus == "Stop") || (lstatus == "Stop inline relay"))
 							{
@@ -9084,24 +9098,7 @@ namespace http
 							}
 							else
 							{
-								lstatus = "Open";
-							}
-							root["result"][ii]["Status"] = lstatus;
-						}
-						else if (switchtype == device::tswitch::type::BlindsInverted)
-						{
-							root["result"][ii]["TypeImg"] = "blinds";
-							if (lstatus == "On")
-							{
-								lstatus = "Open";
-							}
-							else if (lstatus == "Off")
-							{
-								lstatus = "Closed";
-							}
-							else if ((lstatus == "Stop") || (lstatus == "Stop inline relay"))
-							{
-								lstatus = "Stopped";
+								lstatus = "??";
 							}
 							root["result"][ii]["Status"] = lstatus;
 						}
@@ -9112,24 +9109,19 @@ namespace http
 							|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
 							)
 						{
+							root["result"][ii]["Image"] = "blinds";
 							root["result"][ii]["TypeImg"] = "blinds";
 							root["result"][ii]["Level"] = LastLevel;
 							int iLevel = round((float(maxDimLevel) / 100.0F) * LastLevel);
 							root["result"][ii]["LevelInt"] = iLevel;
-/*
-							if ((iLevel > 0) && (iLevel < maxDimLevel))
-							{
-								lstatus = std_format("%d %%", iLevel);
-							}
-							else if (lstatus == "On")
-*/
+
 							if (lstatus == "On")
 							{
-								lstatus = ((switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageWithStop)) ? "Closed" : "Open";
+								lstatus = openStatus;
 							}
 							else if (lstatus == "Off")
 							{
-								lstatus = ((switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageWithStop)) ? "Open" : "Closed";
+								lstatus = closedStatus;
 							}
 							else if (lstatus == "Stop")
 							{
@@ -13192,25 +13184,25 @@ namespace http
 						case device::tswitch::type::Blinds:
 						case device::tswitch::type::VenetianBlindsEU:
 						case device::tswitch::type::VenetianBlindsUS:
+						ldata = (ldata == "On") ? "Closed" : "Open";
+						break;
+					case device::tswitch::type::BlindsInverted:
+						ldata = (ldata == "On") ? "Open" : "Closed";
+						break;
+					case device::tswitch::type::BlindsPercentage:
+					case device::tswitch::type::BlindsPercentageWithStop:
+						if ((ldata == "On") || (ldata == "Off"))
+						{
 							ldata = (ldata == "On") ? "Closed" : "Open";
-							break;
-						case device::tswitch::type::BlindsInverted:
+						}
+						break;
+					case device::tswitch::type::BlindsPercentageInverted:
+					case device::tswitch::type::BlindsPercentageInvertedWithStop:
+						if ((ldata == "On") || (ldata == "Off"))
+						{
 							ldata = (ldata == "On") ? "Open" : "Closed";
-							break;
-						case device::tswitch::type::BlindsPercentage:
-						case device::tswitch::type::BlindsPercentageWithStop:
-							if ((ldata == "On") || (ldata == "Off"))
-							{
-								ldata = (ldata == "On") ? "Closed" : "Open";
-							}
-							break;
-						case device::tswitch::type::BlindsPercentageInverted:
-						case device::tswitch::type::BlindsPercentageInvertedWithStop:
-							if ((ldata == "On") || (ldata == "Off"))
-							{
-								ldata = (ldata == "On") ? "Open" : "Closed";
-							}
-							break;
+						}
+						break;
 					}
 
 					root["result"][ii]["idx"] = lidx;

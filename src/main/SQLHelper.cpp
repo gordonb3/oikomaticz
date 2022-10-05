@@ -3638,7 +3638,19 @@ bool CSQLHelper::SwitchLightFromTasker(uint64_t idx, const std::string& switchcm
 		return false;
 
 	std::vector<std::string> sd = result[0];
-	return m_mainworker.SwitchLightInt(sd, switchcmd, level, color, false, User);
+	int HardwareID = atoi(sd[0].c_str());
+	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
+	CDomoticzHardwareBase* pHardware = m_mainworker.GetHardware(HardwareID);
+	if (pHardware == nullptr)
+		return false;
+
+	std::string switchCommand = switchcmd;
+	if (switchCommand == "Close")
+		switchCommand = "On";
+	else if (switchCommand == "Open")
+		switchCommand = "Off";
+
+	return m_mainworker.SwitchLightInt(sd, switchCommand, level, color, false, User);
 }
 
 #ifndef WIN32
@@ -5137,17 +5149,17 @@ uint64_t CSQLHelper::UpdateValueInt(
 			if (powerAndEnergyBeforeUpdate.size() == 2)
 			{
 				//we need to use atof here because some users seem to have a illegal sValue in the database that causes std::stof to crash
-				float powerDuringInterval = static_cast<float>(atof(powerAndEnergyBeforeUpdate[0].c_str()));
-				float energyUpToInterval = static_cast<float>(atof(powerAndEnergyBeforeUpdate[1].c_str()));
-				float energyDuringInterval = static_cast<float>(powerDuringInterval * intervalSeconds / 3600);
-				float energyAfterInterval = static_cast<float>(energyUpToInterval + energyDuringInterval);
+				double powerDuringInterval = atof(powerAndEnergyBeforeUpdate[0].c_str());
+				double energyUpToInterval = atof(powerAndEnergyBeforeUpdate[1].c_str());
+				double energyDuringInterval = powerDuringInterval * intervalSeconds / 3600;
+				double energyAfterInterval = energyUpToInterval + energyDuringInterval;
 				std::vector<std::string> powerAndEnergyUpdate;
 				StringSplit(sValue, ";", powerAndEnergyUpdate);
 				if (!powerAndEnergyUpdate.empty())
 				{
 					const char* powerUpdate = powerAndEnergyUpdate[0].c_str();
                     char sValueUpdate[100];
-                    sprintf(sValueUpdate, "%s;%.1f", powerUpdate, energyAfterInterval);
+                    sprintf(sValueUpdate, "%s;%.4f", powerUpdate, energyAfterInterval);
 					sValue = sValueUpdate;
 				}
 				else
@@ -5374,12 +5386,8 @@ uint64_t CSQLHelper::UpdateValueInt(
 				)
 			{
 				if (
-					(HWtype != hardware::type::MQTTAutoDiscovery)
-					&&
-					(switchtype == device::tswitch::type::BlindsPercentage
-					|| switchtype == device::tswitch::type::BlindsPercentageWithStop
-					|| switchtype == device::tswitch::type::BlindsPercentageInverted
-					|| switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
+					(switchtype == device::tswitch::type::BlindsPercentage)
+					|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
 					)
 				{
 					if (nValue == light2_sOn)
@@ -5387,6 +5395,17 @@ uint64_t CSQLHelper::UpdateValueInt(
 					else if (nValue == light2_sOff)
 						llevel = 0;
 				}
+				else if (
+					(switchtype == device::tswitch::type::BlindsPercentageWithStop)
+					|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
+					)
+				{
+					if (nValue == light2_sOn)
+						llevel = 0;
+					else if (nValue == light2_sOff)
+						llevel = 100;
+				}
+
 				//update level for device
 				safe_query(
 					"UPDATE DeviceStatus SET LastLevel='%d' WHERE (ID = %" PRIu64 ")",
@@ -7369,33 +7388,27 @@ void CSQLHelper::AddCalendarUpdateMeter()
 						    "VALUES ('%" PRIu64 "', '%.2f','%.2f','%.2f','%.2f','%.2f','%.2f', '%q')",
 						    ID, total_min, total_max, avg_value, 0.0F, 0.0F, 0.0F, szDateStart);
 			}
+			//Insert the last (max) counter value into the meter table to get the "today" value correct.
 			if (
-				(devType != pTypeAirQuality) &&
-				(devType != pTypeRFXSensor) &&
-				((devType != pTypeGeneral) && (subType != sTypeVisibility)) &&
-				((devType != pTypeGeneral) && (subType != sTypeDistance)) &&
-				((devType != pTypeGeneral) && (subType != sTypeSolarRadiation)) &&
-				((devType != pTypeGeneral) && (subType != sTypeVoltage)) &&
-				((devType != pTypeGeneral) && (subType != sTypeCurrent)) &&
-				((devType != pTypeGeneral) && (subType != sTypePressure)) &&
-				((devType != pTypeGeneral) && (subType != sTypeSoilMoisture)) &&
-				((devType != pTypeGeneral) && (subType != sTypeLeafWetness)) &&
-				((devType != pTypeGeneral) && (subType != sTypeSoundLevel)) &&
-				(devType != pTypeLux) &&
-				(devType != pTypeWEIGHT)
+				(devType == pTypeRFXMeter)
+				|| (devType == pTypeP1BusDevice)
+				|| (devType == pTypeYouLess)
+				|| (devType == pTypeENERGY)
+				|| (devType == pTypePOWER)
+				|| ((devType == pTypeRego6XXValue) && (subType == sTypeRego6XXCounter))
+				|| ((devType == pTypeGeneral) && (subType == sTypeCounterIncremental))
+				|| ((devType == pTypeGeneral) && (subType == sTypeKwh))
 				)
 			{
 				result = safe_query("SELECT Value FROM Meter WHERE (DeviceRowID='%" PRIu64 "') ORDER BY ROWID DESC LIMIT 1", ID);
 				if (!result.empty())
 				{
 					std::vector<std::string> sd = result[0];
-					//Insert the last (max) counter value into the meter table to get the "today" value correct.
 					result = safe_query(
-						"INSERT INTO Meter (DeviceRowID, Value, Date) "
-						"VALUES ('%" PRIu64 "', '%q', '%q')",
+						"INSERT INTO Meter (DeviceRowID, Value) "
+						"VALUES ('%" PRIu64 "', '%q')",
 						ID,
-						sd[0].c_str(),
-						szDateEnd
+						sd[0].c_str()
 					);
 				}
 			}

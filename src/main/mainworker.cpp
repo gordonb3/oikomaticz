@@ -1460,6 +1460,7 @@ void MainWorker::ParseRFXLogFile()
 void MainWorker::Do_Work()
 {
 	int second_counter = 0;
+	int minute_counter = 0;
 	int heartbeat_counter = 0;
 	while (!IsStopRequested(500))
 	{
@@ -1522,6 +1523,7 @@ void MainWorker::Do_Work()
 
 		if (ltime.tm_min != m_ScheduleLastMinute)
 		{
+			minute_counter++;
 			if (difftime(atime, m_ScheduleLastMinuteTime) > 30) //avoid RTC/NTP clock drifts
 			{
 				m_ScheduleLastMinuteTime = atime;
@@ -2290,6 +2292,9 @@ void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase *pHardware, const 
 			break;
 		case pTypeHunter:
 			decode_Hunter(pHardware, reinterpret_cast<const tRBUF*>(pRXCommand), procResult);
+			break;
+		case pTypeLEVELSENSOR:
+			decode_LevelSensor(pHardware, reinterpret_cast<const tRBUF*>(pRXCommand), procResult);
 			break;
 		default:
 			_log.Log(LOG_ERROR, "UNHANDLED PACKET TYPE:      FS20 %02X", pRXCommand[1]);
@@ -10985,7 +10990,7 @@ void MainWorker::decode_Solar(const CDomoticzHardwareBase* pHardware, const tRBU
 
 	gdevice.rssi = SignalLevel;
 	gdevice.battery_level = BatteryLevel;
-	decode_General(pHardware, pResponse, procResult);
+	decode_General(pHardware, (const tRBUF*)&gdevice, procResult);
 	procResult.bProcessBatteryValue = false;
 }
 
@@ -11059,6 +11064,59 @@ void MainWorker::decode_Hunter(const CDomoticzHardwareBase* pHardware, const tRB
 	}
 	procResult.DeviceRowIdx = DevRowIdx;
 }
+
+void MainWorker::decode_LevelSensor(const CDomoticzHardwareBase* pHardware, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult)
+{
+	char szTmp[50];
+
+	uint8_t devType = pTypeLEVELSENSOR;
+	uint8_t subType = pResponse->LEVELSENSOR.subtype;
+
+	sprintf(szTmp, "%d", (pResponse->LEVELSENSOR.id1 * 256) + pResponse->LEVELSENSOR.id2);
+	std::string ID = szTmp;
+	uint8_t Unit = pResponse->TEMP.id2;
+
+
+	uint8_t SignalLevel = pResponse->LEVELSENSOR.rssi;
+	uint8_t BatteryLevel = get_BateryLevel(pHardware->HwdType, false, pResponse->LEVELSENSOR.battery_level & 0x0F);
+
+	float temp = 0;
+	if (!pResponse->LEVELSENSOR.temperaturesign)
+	{
+		temp = float((pResponse->LEVELSENSOR.temperaturehigh * 256) + pResponse->LEVELSENSOR.temperaturelow) / 10.0F;
+	}
+	else
+	{
+		temp = -(float(((pResponse->LEVELSENSOR.temperaturehigh & 0x7F) * 256) + pResponse->LEVELSENSOR.temperaturelow) / 10.0F);
+	}
+	if ((temp < -200) || (temp > 380))
+	{
+		WriteMessage("ERROR: Invalid Temperature");
+		return;
+	}
+
+	float AddjValue = 0.0F;
+	float AddjMulti = 1.0F;
+	m_sql.GetAddjustment(pHardware->m_HwdID, ID.c_str(), Unit, devType, subType, AddjValue, AddjMulti);
+	temp += AddjValue;
+
+	sprintf(szTmp, "%.1f", temp);
+	uint64_t DevRowIdx = m_sql.UpdateValue(pHardware->m_HwdID, ID.c_str(), Unit, pTypeTEMP, sTypeTEMP1, SignalLevel, BatteryLevel, 0, szTmp, procResult.DeviceName, true, procResult.Username.c_str());
+	if (DevRowIdx == (uint64_t)-1)
+		return;
+
+	//Depth
+	_tGeneralDevice gdevice;
+	gdevice.subtype = sTypeDistance;
+	gdevice.intval1 = (pResponse->LEVELSENSOR.id1 * 256) + pResponse->LEVELSENSOR.id2;
+	gdevice.id = (uint8_t)gdevice.intval1;
+	gdevice.floatval1 = float((pResponse->LEVELSENSOR.depth1 * 256) + float(pResponse->LEVELSENSOR.depth2));
+	gdevice.rssi = SignalLevel;
+	gdevice.battery_level = BatteryLevel;
+	decode_General(pHardware, (const tRBUF*)&gdevice, procResult);
+	procResult.bProcessBatteryValue = false;
+}
+
 
 bool MainWorker::GetSensorData(const uint64_t idx, int& nValue, std::string& sValue)
 {
@@ -11259,25 +11317,18 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 
 	std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10]);
 
-	//when asking for Toggle, just switch to the opposite value
-	if (switchcmd == "Toggle") {
-		//Request current state of switch
-		std::string lstatus;
-		int llevel = 0;
-		bool bHaveDimmer = false;
-		bool bHaveGroupCmd = false;
-		int maxDimLevel = 0;
-
-		int nValue = atoi(sd[7].c_str());
-		std::string sValue = sd[8];
-
-		GetLightStatus(dType, dSubType, switchtype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
-		//Flip the status
-		switchcmd = (IsLightSwitchOn(lstatus) == true) ? "Off" : "On";
-	}
+	bool bIsBlinds = (switchtype == device::tswitch::type::Blinds
+		|| switchtype == device::tswitch::type::BlindsPercentage
+		|| switchtype == device::tswitch::type::BlindsPercentageWithStop
+		|| switchtype == device::tswitch::type::VenetianBlindsEU
+		|| switchtype == device::tswitch::type::VenetianBlindsUS
+		|| switchtype == device::tswitch::type::BlindsInverted
+		|| switchtype == device::tswitch::type::BlindsPercentageInverted
+		|| switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop
+		);
 
 	// If dimlevel is 0 or no dimlevel, turn switch off
-	if (level <= 0 && switchcmd == "Set Level")
+	if ((level <= 0 && switchcmd == "Set Level") && (!bIsBlinds))
 		switchcmd = "Off";
 
 	//when level is invalid or command is "On", replace level with "LastLevel"
@@ -11295,6 +11346,68 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 	}
 	// TODO: Something smarter if level is not valid?
 	level = std::max(level, 0);
+
+	if (bIsBlinds)
+	{
+		if (
+			(switchcmd == "Off")
+			|| ((switchcmd == "Set Level" && level == 0) && (pHardware->HwdType != hardware::type::MQTTAutoDiscovery))
+			)
+			switchcmd = "Open";
+		else if (
+			(switchcmd == "On")
+			|| ((switchcmd == "Set Level" && level == 100) && (pHardware->HwdType != hardware::type::MQTTAutoDiscovery))
+			)
+			switchcmd = "Close";
+	}
+
+	if (switchtype == device::tswitch::type::Blinds
+		|| switchtype == device::tswitch::type::BlindsPercentage
+		|| switchtype == device::tswitch::type::BlindsPercentageWithStop
+		|| switchtype == device::tswitch::type::VenetianBlindsEU
+		|| switchtype == device::tswitch::type::VenetianBlindsUS
+		)
+	{
+		if (switchcmd == "Open")
+		{
+			switchcmd = "Off";
+		}
+		else if (switchcmd.find("Close") != std::string::npos)
+		{
+			switchcmd = "On";
+		}
+	}
+	else if (switchtype == device::tswitch::type::BlindsInverted
+		|| switchtype == device::tswitch::type::BlindsPercentageInverted
+		|| switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop
+		)
+	{
+		if (switchcmd == "Open")
+		{
+			switchcmd = "On";
+		}
+		else if (switchcmd.find("Close") != std::string::npos)
+		{
+			switchcmd = "Off";
+		}
+	}
+
+	//when asking for Toggle, just switch to the opposite value
+	if (switchcmd == "Toggle") {
+		//Request current state of switch
+		std::string lstatus;
+		int llevel = 0;
+		bool bHaveDimmer = false;
+		bool bHaveGroupCmd = false;
+		int maxDimLevel = 0;
+
+		int nValue = atoi(sd[7].c_str());
+		std::string sValue = sd[8];
+
+		GetLightStatus(dType, dSubType, switchtype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
+		//Flip the status
+		switchcmd = (IsLightSwitchOn(lstatus) == true) ? "Off" : "On";
+	}
 
 	//
 	//	For plugins all the specific logic below is irrelevent
@@ -11439,9 +11552,11 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 	}
 	break;
 	case pTypeLighting3:
+	{
 		if (level > 9)
 			level = 9;
-		break;
+	}
+	break;
 	case pTypeLighting4:
 	{
 		tRBUF lcmd;
@@ -12135,6 +12250,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 	}
 	break;
 	case pTypeRadiator1:
+	{
 		tRBUF lcmd;
 		lcmd.RADIATOR1.packetlength = sizeof(lcmd.RADIATOR1) - 1;
 		lcmd.RADIATOR1.packettype = pTypeRadiator1;
@@ -12159,12 +12275,13 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		if (!IsTesting) {
 			//send to internal for now (later we use the ACK)
 			lcmd.RADIATOR1.subtype = sTypeSmartwaresSwitchRadiator;
-			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t *)&lcmd, nullptr, -1, User.c_str());
+			PushAndWaitRxMessage(m_hardwaredevices[hindex], (const uint8_t*)&lcmd, nullptr, -1, User.c_str());
 		}
 		return true;
+	}
 	case pTypeGeneralSwitch:
 	{
-
+		tRBUF lcmd;
 		_tGeneralSwitch gswitch;
 		gswitch.type = dType;
 		gswitch.subtype = dSubType;
@@ -12354,6 +12471,7 @@ bool MainWorker::SwitchLight(const uint64_t idx, const std::string& switchcmd, c
 	int nValue = atoi(sd[7].c_str());
 	std::string sValue = sd[8];
 	std::string devName = sd[9];
+
 	//std::string sOptions = sd[10].c_str();
 	// ----------- If needed convert to GeneralSwitch type (for o.a. RFlink) -----------
 	CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(atoi(hwdid.c_str()));
@@ -12517,7 +12635,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 	tmeter.id2 = ID2;
 	tmeter.id3 = ID3;
 	tmeter.id4 = ID4;
-	tmeter.dunit = 1;
+	tmeter.dunit = Unit;
 	tmeter.temp = (m_sql.m_tempsign[0] != 'F') ? TempValue : static_cast<float>(ConvertToCelsius(TempValue));
 
 	if (pHardware->HwdType == hardware::type::PythonPlugin)
