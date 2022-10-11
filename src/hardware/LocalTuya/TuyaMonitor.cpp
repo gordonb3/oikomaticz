@@ -126,6 +126,10 @@ bool TuyaMonitor::StartMonitor()
 
 bool TuyaMonitor::StopMonitor()
 {
+	while (m_devicedata->connectstate == device::tuya::connectstate::STARTING)
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	}
 	m_devicedata->connectstate = device::tuya::connectstate::STOPPING;
 	if (m_thread != nullptr)
 	{
@@ -138,7 +142,7 @@ bool TuyaMonitor::StopMonitor()
 		delete m_tuyaclient;
 		m_tuyaclient = nullptr;
 	}
-	m_devicedata->connectstate = device::tuya::connectstate::OFFLINE;
+	m_devicedata->connectstate = device::tuya::connectstate::STOPPED;
 	return true;
 }
 

@@ -29,7 +29,8 @@ namespace connectstate {
 		STARTING,
 		STOPPING,
 		CONNECTED,
-		RESETBYPEER
+		RESETBYPEER,
+		STOPPED
 	};
 }; // namespace connectstate
 }; // namespace tuya

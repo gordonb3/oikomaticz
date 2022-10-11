@@ -111,7 +111,7 @@ bool CLocalTuya::StopHardware()
 	{
 		device->StopMonitor();
 		TuyaData* devicedata = device->m_devicedata;
-		if (devicedata->connectstate != device::tuya::connectstate::OFFLINE)
+		if (devicedata->connectstate != device::tuya::connectstate::STOPPED)
 			Log(LOG_ERROR, "Failed to stop tuya communication thread with %s", devicedata->deviceName);
 		delete device;
 	}
