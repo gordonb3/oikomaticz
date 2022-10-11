@@ -30,9 +30,12 @@ private:
 	bool StartHardware() override;
 	bool StopHardware() override;
 	void Do_Work();
+
 	void SendSwitch(TuyaData *devicedata);
+
 	void SendMeter(TuyaData *devicedata);
 	void LoadMeterStartData(TuyaMonitor *tuyadevice, const int DeviceID, const int energyDivider);
 
+	void SendVoltage(TuyaData *devicedata);
 };
 

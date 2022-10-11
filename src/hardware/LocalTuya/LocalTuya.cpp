@@ -168,6 +168,7 @@ void CLocalTuya::Do_Work()
 			TuyaMonitor* tuyadevice = new TuyaMonitor(ID, sd[1], sd[2], sd[3], sd[4], energyDivider);
 			tuyadevice->sigSendMeter.connect([this](auto devicedata) {SendMeter(devicedata);});
 			tuyadevice->sigSendSwitch.connect([this](auto devicedata) {SendSwitch(devicedata);});
+			tuyadevice->sigSendVoltage.connect([this](auto devicedata) {SendVoltage(devicedata);});
 			LoadMeterStartData(tuyadevice, ID, energyDivider);
 			Log(LOG_NORM, "Setup communication thread with %s", (tuyadevice->m_devicedata)->deviceName);
 			if (tuyadevice->StartMonitor())
@@ -325,6 +326,15 @@ void CLocalTuya::SendSwitch(TuyaData *devicedata)
 	sDecodeRXMessage(this, (const unsigned char *)&tuya_switch, devicedata->deviceName, 255, nullptr);
 }
 
+void CLocalTuya::SendVoltage(TuyaData *devicedata)
+{
+	GeneralDevice tuya_voltmeter;
+	tuya_voltmeter.subtype = sTypeVoltage;
+	tuya_voltmeter.id = devicedata->deviceID;
+	tuya_voltmeter.intval1 = devicedata->deviceID | 0x30000;
+	tuya_voltmeter.floatval1 = (float)(devicedata->voltage) / 10;
+	sDecodeRXMessage(this, (const unsigned char *)&tuya_voltmeter, devicedata->deviceName, 255, nullptr);
+}
 
 //Webserver helpers
 namespace http {

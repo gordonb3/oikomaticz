@@ -92,10 +92,18 @@ bool TuyaMonitor::ConnectToDevice()
 		m_devicedata->switchstate = jStatus["dps"]["1"].asBool();
 		sigSendSwitch(m_devicedata);
 	}
-	if ((m_devicedata->energyDivider != 0) && jStatus["dps"].isMember("19"))
+	if (m_devicedata->energyDivider != 0)
 	{
-		m_devicedata->power = jStatus["dps"]["19"].asUInt();
-		m_isPowerMeter = true;
+		if (jStatus["dps"].isMember("19"))
+		{
+			m_devicedata->power = jStatus["dps"]["19"].asUInt();
+			m_isPowerMeter = true;
+		}
+		if (jStatus["dps"].isMember("20"))
+		{
+			m_devicedata->voltage = jStatus["dps"]["20"].asUInt();
+			sigSendVoltage(m_devicedata);
+		}
 	}
 	return true;
 }
@@ -164,7 +172,7 @@ void TuyaMonitor::MonitorThread()
 		if (m_isPowerMeter)
 		{
 			// request data point updates
-			payload = "{\"dpId\":[19]}";
+			payload = "{\"dpId\":[19,20]}";
 			numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_UPDATEDPS, payload, m_key);
 		}
 		else
@@ -224,6 +232,11 @@ void TuyaMonitor::MonitorThread()
 					}
 					timeval = newtimeval;
 				}
+				if (jStatus["dps"].isMember("20"))
+				{
+					m_devicedata->voltage = jStatus["dps"]["20"].asUInt();
+					sigSendVoltage(m_devicedata);
+				}
 			}
 		}
 	}
@@ -263,7 +276,7 @@ bool TuyaMonitor::SendSwitchCommand(int switchstate)
 }
 
 
-void TuyaMonitor::SetMeterStartData(const float usageHigh, const float usageLow)
+void TuyaMonitor::SetMeterStartData(const double usageHigh, const double usageLow)
 {
 	m_devicedata->usageLow = usageLow;
 	m_devicedata->usageHigh = usageHigh;

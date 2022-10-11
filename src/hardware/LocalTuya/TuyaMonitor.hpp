@@ -47,8 +47,9 @@ public:
 	bool isLowTariff;
 	unsigned int power;
 	int energyDivider;
-	float usageLow;
-	float usageHigh;
+	unsigned int voltage;
+	double usageLow;
+	double usageHigh;
 };
 
 
@@ -62,11 +63,12 @@ public:
 	bool StartMonitor();
 	bool StopMonitor();
 	bool SendSwitchCommand(int switchstate);
-	void SetMeterStartData(const float usageHigh, const float usageLow);
+	void SetMeterStartData(const double usageHigh, const double usageLow);
 
 	TuyaData* m_devicedata;
 	boost::signals2::signal<void(TuyaData* tuyadevice)> sigSendSwitch;
 	boost::signals2::signal<void(TuyaData* tuyadevice)> sigSendMeter;
+	boost::signals2::signal<void(TuyaData* tuyadevice)> sigSendVoltage;
 
 private:
 
