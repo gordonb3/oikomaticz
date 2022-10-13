@@ -197,6 +197,11 @@ void CLocalTuya::Do_Work()
 				{
 					_log.Debug(DEBUG_HARDWARE, "connection with device %s was reset by peer", devicedata->deviceName);
 					device->StopMonitor();
+					while (devicedata->connectstate != device::tuya::connectstate::STOPPED)
+					{
+						std::this_thread::sleep_for(std::chrono::milliseconds(200));
+					}
+					devicedata->connectstate = device::tuya::connectstate::OFFLINE;
 				}
 				if (devicedata->connectstate == device::tuya::connectstate::OFFLINE)
 				{
