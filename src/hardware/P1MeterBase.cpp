@@ -55,8 +55,9 @@ constexpr std::array<uint16_t, 256> p1_crc_16 {
 
 P1MeterBase::P1MeterBase()
 {
-	m_bDisableCRC = true;
+	m_bDisableCRC = false;
 	m_ratelimit = 0;
+	m_applylimits = false;
 	Init();
 }
 
@@ -660,13 +661,13 @@ bool P1MeterBase::MatchLine()
 		{
 			m_phasedata.instpwrdel[0] = 1;
 			float temp_power = static_cast<float>(strtod(value, &validate)*1000.0f);
-			if (temp_power < 10000)
+			if (!m_applylimits || (temp_power < 10000))
 				m_phasedata.instpwrdel[phase] = temp_power;
 		}
 		else
 		{
 			temp_usage = (unsigned long)(strtod(value, &validate)*1000.0f);
-			if (temp_usage < 17250)
+			if (!m_applylimits || (temp_usage < 17250))
 				m_power.delivcurrent = temp_usage;
 		}
 		break;
@@ -675,13 +676,13 @@ bool P1MeterBase::MatchLine()
 		{
 			m_phasedata.instpwruse[0] = 1;
 			float temp_power = static_cast<float>(strtod(value, &validate)*1000.0f);
-			if (temp_power < 10000)
+			if (!m_applylimits || (temp_power < 10000))
 				m_phasedata.instpwruse[phase] = temp_power;
 		}
 		else
 		{
 			temp_usage = (unsigned long)(strtod(value, &validate)*1000.0f);
-			if (temp_usage < 17250)
+			if (!m_applylimits || (temp_usage < 17250))
 				m_power.usagecurrent = temp_usage;
 		}
 		break;
@@ -689,7 +690,7 @@ bool P1MeterBase::MatchLine()
 		{
 			m_phasedata.voltage[0] = 1;
 			float temp_volt = strtof(value, &validate);
-			if (temp_volt < 300)
+			if (!m_applylimits || (temp_volt < 300))
 				m_phasedata.voltage[phase] = temp_volt;
 		}
 		break;
@@ -706,7 +707,7 @@ bool P1MeterBase::MatchLine()
 		if (m_phasedata.ampere[0] > 0)
 		{
 			float temp_ampere = strtof(value, &validate);
-			if (temp_ampere < 300)
+			if (!m_applylimits || (temp_ampere < 300))
 				m_phasedata.ampere[phase] = temp_ampere;
 		}
 		break;
@@ -820,6 +821,7 @@ bool P1MeterBase::CheckCRC()
 		{
 			_log.Log(LOG_STATUS, "Meter is pre DSMR 4.0 and does not send a CRC checksum - using DSMR 2.2 compatibility");
 			m_p1version = 2;
+			m_applylimits = true;
 		}
 		// always return true with pre DSMRv4 format message
 		return true;
@@ -1176,6 +1178,7 @@ bool P1MeterBase::SetOptions(const bool disable_crc, const unsigned int ratelimi
 		m_privgas.channel = 0;
 
 	m_bDisableCRC = disable_crc;
+	m_applylimits = disable_crc;
 	m_ratelimit = ratelimit;
 	return true;
 }

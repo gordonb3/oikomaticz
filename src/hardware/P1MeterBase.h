@@ -38,6 +38,7 @@ class P1MeterBase : public CDomoticzHardwareBase
       protected:
 	bool m_bDisableCRC;
 	int m_ratelimit;
+	bool m_applylimits;
 
       private:
 	typedef struct _tP1PhaseData
