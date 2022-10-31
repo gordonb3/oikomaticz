@@ -13621,42 +13621,43 @@ namespace http
 											curDeliv2 = 0;
 
 										float tdiff = static_cast<float>(difftime(atime, lastTime));
-										if (tdiff == 0)
-											tdiff = 1;
-										float tlaps = 3600.0F / tdiff;
-										curUsage1 *= int(tlaps);
-										curUsage2 *= int(tlaps);
-										curDeliv1 *= int(tlaps);
-										curDeliv2 *= int(tlaps);
-
-										root["result"][ii]["d"] = sd[6].substr(0, 16);
-
-										if ((curDeliv1 != 0) || (curDeliv2 != 0))
-											bHaveDeliverd = true;
-
-										sprintf(szTmp, "%ld", curUsage1);
-										root["result"][ii]["v"] = szTmp;
-										sprintf(szTmp, "%ld", curUsage2);
-										root["result"][ii]["v2"] = szTmp;
-										sprintf(szTmp, "%ld", curDeliv1);
-										root["result"][ii]["r1"] = szTmp;
-										sprintf(szTmp, "%ld", curDeliv2);
-										root["result"][ii]["r2"] = szTmp;
-
-										long pUsage1 = (long)(actUsage1 - firstUsage1);
-										long pUsage2 = (long)(actUsage2 - firstUsage2);
-
-										sprintf(szTmp, "%ld", pUsage1 + pUsage2);
-										root["result"][ii]["eu"] = szTmp;
-										if (bHaveDeliverd)
+										if (tdiff > 10)
 										{
-											long pDeliv1 = (long)(actDeliv1 - firstDeliv1);
-											long pDeliv2 = (long)(actDeliv2 - firstDeliv2);
-											sprintf(szTmp, "%ld", pDeliv1 + pDeliv2);
-											root["result"][ii]["eg"] = szTmp;
+											float tlaps = 3600.0F / tdiff;
+											curUsage1 *= int(tlaps);
+											curUsage2 *= int(tlaps);
+											curDeliv1 *= int(tlaps);
+											curDeliv2 *= int(tlaps);
+
+											root["result"][ii]["d"] = sd[6].substr(0, 16);
+
+											if ((curDeliv1 != 0) || (curDeliv2 != 0))
+												bHaveDeliverd = true;
+
+											sprintf(szTmp, "%ld", curUsage1);
+											root["result"][ii]["v"] = szTmp;
+											sprintf(szTmp, "%ld", curUsage2);
+											root["result"][ii]["v2"] = szTmp;
+											sprintf(szTmp, "%ld", curDeliv1);
+											root["result"][ii]["r1"] = szTmp;
+											sprintf(szTmp, "%ld", curDeliv2);
+											root["result"][ii]["r2"] = szTmp;
+
+											long pUsage1 = (long)(actUsage1 - firstUsage1);
+											long pUsage2 = (long)(actUsage2 - firstUsage2);
+
+											sprintf(szTmp, "%ld", pUsage1 + pUsage2);
+											root["result"][ii]["eu"] = szTmp;
+											if (bHaveDeliverd)
+											{
+												long pDeliv1 = (long)(actDeliv1 - firstDeliv1);
+												long pDeliv2 = (long)(actDeliv2 - firstDeliv2);
+												sprintf(szTmp, "%ld", pDeliv1 + pDeliv2);
+												root["result"][ii]["eg"] = szTmp;
+											}
+											ii++;
 										}
 
-										ii++;
 									}
 									else
 									{
@@ -14263,37 +14264,38 @@ namespace http
 										long long curValue = actValue - ulLastValue;
 
 										float tdiff = static_cast<float>(difftime(atime, lastTime));
-										if (tdiff == 0)
-											tdiff = 1;
-										float tlaps = 3600.0F / tdiff;
-										curValue *= int(tlaps);
-
-										root["result"][ii]["d"] = sd[1].substr(0, 16);
-
-										double TotalValue = double(curValue);
-										// if (TotalValue != 0)
+										if (tdiff > 10)
 										{
-											switch (metertype)
+											float tlaps = 3600.0F / tdiff;
+											curValue *= int(tlaps);
+
+											root["result"][ii]["d"] = sd[1].substr(0, 16);
+
+											double TotalValue = double(curValue);
+											// if (TotalValue != 0)
 											{
-											case device::tmeter::type::ENERGY:
-											case device::tmeter::type::ENERGY_GENERATED:
-												sprintf(szTmp, "%.3f", (TotalValue / divider) * 1000.0); // from kWh -> Watt
-												break;
-											case device::tmeter::type::GAS:
-												sprintf(szTmp, "%.2f", TotalValue / divider);
-												break;
-											case device::tmeter::type::WATER:
-												sprintf(szTmp, "%.3f", TotalValue / divider);
-												break;
-											case device::tmeter::type::COUNTER:
-												sprintf(szTmp, "%.10g", TotalValue / divider);
-												break;
-											default:
-												strcpy(szTmp, "0");
-												break;
+												switch (metertype)
+												{
+												case device::tmeter::type::ENERGY:
+												case device::tmeter::type::ENERGY_GENERATED:
+													sprintf(szTmp, "%.3f", (TotalValue / divider) * 1000.0); // from kWh -> Watt
+													break;
+												case device::tmeter::type::GAS:
+													sprintf(szTmp, "%.2f", TotalValue / divider);
+													break;
+												case device::tmeter::type::WATER:
+													sprintf(szTmp, "%.3f", TotalValue / divider);
+													break;
+												case device::tmeter::type::COUNTER:
+													sprintf(szTmp, "%.10g", TotalValue / divider);
+													break;
+												default:
+													strcpy(szTmp, "0");
+													break;
+												}
+												root["result"][ii]["v"] = szTmp;
+												ii++;
 											}
-											root["result"][ii]["v"] = szTmp;
-											ii++;
 										}
 									}
 									else
