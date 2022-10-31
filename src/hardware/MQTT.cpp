@@ -299,7 +299,7 @@ void MQTT::on_message(const struct mosquitto_message *message)
 			std::string switchcmd = root["switchcmd"].asString();
 			// if ((switchcmd != "On") && (switchcmd != "Off") && (switchcmd != "Toggle") && (switchcmd != "Set Level") && (switchcmd != "Stop"))
 			//	goto mqttinvaliddata;
-			int level = 0;
+			int level = -1;
 			if (!root["level"].empty())
 			{
 				if (root["level"].isString())
@@ -841,7 +841,11 @@ void MQTT::SendDeviceInfo(const int HwdID, const uint64_t DeviceRowIdx, const st
 		root["description"] = description;
 		root["LastUpdate"] = sLastUpdate;
 
-		if (switchType == device::tswitch::type::Dimmer)
+		if (
+			(switchType == device::tswitch::type::Dimmer)
+			|| (switchType == device::tswitch::type::BlindsPercentage)
+			|| (switchType == device::tswitch::type::BlindsPercentageWithStop)
+			)
 		{
 			root["Level"] = LastLevel;
 			if (dType == pTypeColorSwitch)

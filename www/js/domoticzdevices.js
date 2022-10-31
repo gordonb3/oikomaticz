@@ -859,7 +859,7 @@ Device.create = function (item) {
     } else if (
         (item.SwitchType === 'Dusk Sensor') ||
         (item.SwitchType === 'Selector')
-    ) {
+	  ) {
         type = item.SwitchType.toLowerCase()
     } else {
         type = item.TypeImg.toLowerCase();
@@ -875,8 +875,8 @@ Device.create = function (item) {
             dev = new Baro(item);
             break;
         case "blinds":
-        case "blinds inverted":
         case "blinds percentage":
+        case "venetian blinds":
             dev = new Blinds(item);
             break;
         case "contact":
@@ -968,9 +968,6 @@ Device.create = function (item) {
             break;
         case "visibility":
             dev = new Visibility(item);
-            break;
-        case "venetian blinds":
-            dev = new Blinds(item);
             break;
         case "wind":
             dev = new Wind(item);
@@ -1162,7 +1159,7 @@ function Sensor(item) {
         this.parent.constructor(item);
        
         this.image = "images/";
-        
+		
         if ((item.Type == "RFXMeter") || (item.Type == "YouLess Meter") || (item.SubType == "Counter Incremental") || (item.SubType == "Managed Counter")) {
           if (item.SwitchTypeVal == 1) {
             this.image += (item.CustomImage == 0)  ? 'Gas48.png' : item.TypeImg + '48.png';
@@ -1184,12 +1181,12 @@ function Sensor(item) {
             this.image += (item.CustomImage == 0)  ? 'PV48.png' : item.TypeImg + '48.png';
           }
           else {
-            this.image += item.TypeImg + "48.png";
+            this.image += (item.CustomImage == 0)  ? item.TypeImg + '48.png' : item.Image + '48_On.png';
           }
         } else if (item.SubType == "Gas") {
             this.image += "Gas48.png";
         } else {
-            this.image += item.TypeImg + "48.png";
+			this.image += (item.CustomImage == 0)  ? item.TypeImg + '48.png' : item.Image + '48_On.png';
         }
         
         var sensorType = this.type.replace(/\s/g, '');
@@ -1342,29 +1339,35 @@ function Baro(item) {
 Baro.inheritsFrom(WeatherSensor);
 
 function Blinds(item) {
-    if (arguments.length != 0) {
-        this.parent.constructor(item);
-        this.data = '';
-    var onoff = ((item.SwitchType.match(/inverted/i)) ? 'Off' : 'On');
-        
-        if (item.Status == 'Closed') {
+    if (arguments.length == 0)
+        return;
+
+    this.parent.constructor(item);
+    this.data = '';
+
+    if (item.SwitchType.match(/percentage/i)) {
+        this.haveDimmer = true;
+        this.image2 = '';
+        this.onClick2 = '';
+
+        if (item.Status == 'Open') {
+            this.image = 'images/blindsopen48sel.png';
+            this.onClick = 'SwitchLight(' + this.index + ",'Close'," + this.protected + ');';
+        } else {
             this.image = 'images/blinds48sel.png';
-            this.image2 = 'images/blindsopen48.png';
-            this.onClick = 'SwitchLight(' + this.index + ",'" + onoff + "'," + this.protected + ');';
-            this.onClick2 = 'SwitchLight(' + this.index + ",'" + ((onoff == 'On') ? 'Off' :  'On') + "'," + this.protected + ');';
-         }
-        else {
+            this.onClick = 'SwitchLight(' + this.index + ",'Open'," + this.protected + ');';
+        }
+    } else {
+        if (item.Status == 'Open') {
             this.image = 'images/blindsopen48sel.png';
             this.image2 = 'images/blinds48.png';
-            this.onClick = 'SwitchLight(' + this.index + ",'" + ((onoff == 'On') ? 'Off' :  'On') + "'," + this.protected + ');';
-            this.onClick2 = 'SwitchLight(' + this.index + ",'" + onoff + "'," + this.protected + ');';
-    }
-        if (item.SwitchType.match(/percentage/i)) {
-            this.haveDimmer = true;
-            this.image2 = '';
-        this.onClick = this.onClick2;
-            this.onClick2 = '';
         }
+        else {
+            this.image = 'images/blinds48sel.png';
+            this.image2 = 'images/blindsopen48.png';
+        }
+        this.onClick = 'SwitchLight(' + this.index + ",'Open'," + this.protected + ');';
+        this.onClick2 = 'SwitchLight(' + this.index + ",'Close'," + this.protected + ');';
     }
 }
 Blinds.inheritsFrom(Switch);
@@ -1716,7 +1719,7 @@ function SetPoint(item) {
     if (arguments.length != 0) {
         this.parent.constructor(item);
         if (item.CustomImage != 0 && typeof item.Image != 'undefined') {
-            this.image = "images/" + item.Image + ".png";
+            this.image = "images/" + item.Image + "48_On.png";
         } else {
             this.image = "images/override.png";
         }

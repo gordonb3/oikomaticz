@@ -80,6 +80,11 @@ class MQTTAutoDiscover : public MQTT
 		std::string temperature_unit = "C";
 		std::string current_temperature_topic;
 		std::string current_temperature_template;
+		std::vector<std::string> preset_modes;
+		std::string preset_mode_command_topic;
+		std::string preset_mode_command_template;
+		std::string preset_mode_state_topic;
+		std::string preset_mode_value_template;
 
 		//Lock
 		std::string payload_lock = "LOCK";
@@ -124,8 +129,8 @@ public:
 	~MQTTAutoDiscover() override = default;
 
 	uint64_t UpdateValueInt(int HardwareID, const char* ID, unsigned char unit, unsigned char devType, unsigned char subType, unsigned char signallevel, unsigned char batterylevel, int nValue,
-		const char* sValue, std::string& devname, bool bUseOnOffAction = true);
-	bool SendSwitchCommand(const std::string& DeviceID, const std::string& DeviceName, int Unit, std::string command, int level, _tColor color);
+		const char* sValue, std::string& devname, bool bUseOnOffAction = true, const std::string& user = "");
+	bool SendSwitchCommand(const std::string& DeviceID, const std::string& DeviceName, int Unit, std::string command, int level, _tColor color, const std::string& user);
 	bool SetSetpoint(const std::string& DeviceID, const float Temp);
 
 public:
@@ -135,6 +140,9 @@ public:
 
 private:
 	void InsertUpdateSwitch(_tMQTTASensor* pSensor);
+
+	void UpdateBlindPosition(_tMQTTASensor* pSensor);
+	bool SendCoverCommand(_tMQTTASensor* pSensor, const std::string& DeviceName, std::string command, int level, const std::string& user);
 	void CleanValueTemplate(std::string& szValueTemplate);
 	void FixCommandTopicStateTemplate(std::string& command_topic, std::string& state_template);
 	std::string GetValueTemplateKey(const std::string& szValueTemplate);

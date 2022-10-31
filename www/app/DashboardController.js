@@ -2108,9 +2108,7 @@ define(['app', 'livesocket'], function (app) {
 									}
 									else if (
 										(item.SwitchType == "Blinds Percentage")
-										|| (item.SwitchType == "Blinds Percentage Inverted")
 										|| (item.SwitchType == "Blinds + Stop")
-										|| (item.SwitchType == "Blinds Inverted + Stop")
 									) {
 										xhtm += '<tr>';
 										xhtm += '<td colspan="2" style="border:0px solid red; padding-top:10px; padding-bottom:10px;">';
@@ -2168,11 +2166,8 @@ define(['app', 'livesocket'], function (app) {
 									if (
 										(item.Type.indexOf('Blind') == 0)
 										|| (item.SwitchType == "Blinds")
-										|| (item.SwitchType == "Blinds Inverted")
 										|| (item.SwitchType == "Blinds Percentage")
-										|| (item.SwitchType == "Blinds Percentage Inverted")
 										|| (item.SwitchType == "Blinds + Stop")
-										|| (item.SwitchType == "Blinds Inverted + Stop")
 										|| (item.SwitchType.indexOf("Venetian Blinds") == 0)
 										|| (item.SwitchType.indexOf("Media Player") == 0)
 									) {
@@ -2193,7 +2188,6 @@ define(['app', 'livesocket'], function (app) {
 											|| (item.SubType.indexOf('Confexx') == 0)
 											|| (item.SwitchType.indexOf("Venetian Blinds") == 0)
 											|| (item.SwitchType == "Blinds + Stop")
-											|| (item.SwitchType == "Blinds Inverted + Stop")
 										) {
 											xhtm += '\t    <table id="itemtablesmalltrippleicon" id="itemtablesmalltripleicon" border="0" cellpadding="0" cellspacing="0">\n';
 										}
@@ -2480,14 +2474,8 @@ define(['app', 'livesocket'], function (app) {
 									else if (item.SwitchType == "Blinds Percentage") {
 										xhtm += '<td class="input"><div style="margin-left:94px; margin-top: 7px;" class="dimslider dimslidersmalldouble" id="light_' + item.idx + '_slider" data-idx="' + item.idx + '" data-type="blinds" data-maxlevel="' + item.MaxDimLevel + '" data-isprotected="' + item.Protected + '" data-svalue="' + item.LevelInt + '"></div></td>';
 									}
-									else if (item.SwitchType == "Blinds Percentage Inverted") {
-										xhtm += '<td class="input"><div style="margin-left:94px; margin-top: 7px;" class="dimslider dimslidersmalldouble" id="light_' + item.idx + '_slider" data-idx="' + item.idx + '" data-type="blinds_inv" data-maxlevel="' + item.MaxDimLevel + '" data-isprotected="' + item.Protected + '" data-svalue="' + item.LevelInt + '"></div></td>';
-									}
 									else if (item.SwitchType == "Blinds + Stop") {
 										xhtm += '<td class="input"><div style="margin-left:124px; margin-top: 7px;" class="dimslider dimslidersmalltripple" id="light_' + item.idx + '_slider" data-idx="' + item.idx + '" data-type="blinds" data-maxlevel="' + item.MaxDimLevel + '" data-isprotected="' + item.Protected + '" data-svalue="' + item.LevelInt + '"></div></td>';
-									}
-									else if (item.SwitchType == "Blinds Inverted + Stop") {
-										xhtm += '<td class="input"><div style="margin-left:124px; margin-top: 7px;" class="dimslider dimslidersmalltripple" id="light_' + item.idx + '_slider" data-idx="' + item.idx + '" data-type="blinds_inv" data-maxlevel="' + item.MaxDimLevel + '" data-isprotected="' + item.Protected + '" data-svalue="' + item.LevelInt + '"></div></td>';
 									}
 									else if (item.SwitchType == "Selector") {
 										if (item.SelectorStyle === 0) {
@@ -3832,11 +3820,7 @@ define(['app', 'livesocket'], function (app) {
 						var TxtOff = "Off";
 						if (dtype == "blinds") {
 							TxtOn = "Open";
-							TxtOff = "Close";
-						}
-						else if (dtype == "blinds_inv") {
-							TxtOn = "Close";
-							TxtOff = "Open";
+							TxtOff = "Closed";
 						}
 						if (($scope.config.DashboardType == 2) || (window.myglobals.ismobile == true)) {
 							if (fPercentage == 0) {
@@ -3858,13 +3842,13 @@ define(['app', 'livesocket'], function (app) {
 								imgname = "Fireplace48_O"
 							if (fPercentage == 0) {
 								img = '<img src="images/' + imgname + 'ff.png" title="' + $.t("Turn On") + '" onclick="SwitchLight(' + idx + ',\'On\',' + isProtected + ');" class="lcursor" height="40" width="40">';
-								status = "Off";
+								status = fPercentage + " %";
 							}
 							else {
 								img = '<img src="images/' + imgname + 'n.png" title="' + $.t("Turn Off") + '" onclick="SwitchLight(' + idx + ',\'Off\',' + isProtected + ');" class="lcursor" height="40" width="40">';
 								status = fPercentage + " %";
 							}
-							if ((dtype != "blinds") && (dtype != "blinds_inv") && !isled) {
+							if ((dtype != "blinds") && !isled) {
 								if ($(id + " #img").html() != img) {
 									$(id + " #img").html(img);
 								}

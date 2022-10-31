@@ -3730,6 +3730,8 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 
 		}
 		else {
+			if (oParseResults.sCommand == "Closed")
+				oParseResults.sCommand = "Close";
 			tItem = _tTaskItem::SwitchLightEvent(fDelayTime, deviceID, oParseResults.sCommand, level, NoColor, eventName, "EventSystem/" + eventName);
 		}
 		m_sql.AddTaskItem(tItem);
@@ -3801,6 +3803,10 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 	{
 		lstatus = std::to_string(nValue);
 	}
+	else if (dType == pTypeEvohome)
+	{
+		GetLightStatus(dType, dSubType, switchtype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
+	}
 	else if (switchtype == device::tswitch::type::Selector)
 	{
 		std::map<std::string, std::string> statuses;
@@ -3845,53 +3851,53 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 	}
 	else if (
 		(switchtype == device::tswitch::type::Blinds)
-		|| (switchtype == device::tswitch::type::VenetianBlindsUS)
-		|| (switchtype == device::tswitch::type::VenetianBlindsEU))
-	{
-		if ((lstatus == "On") || (lstatus == "Close inline relay"))
-		{
-			lstatus = closedStatus;
-		}
-		else if ((lstatus == "Stop") || (lstatus == "Stop inline relay"))
-		{
-			lstatus = "Stopped";
-		}
-		else
-		{
-			lstatus = openStatus;
-		}
-	}
-	else if (switchtype == device::tswitch::type::BlindsInverted)
-	{
-		if (lstatus == "On")
-		{
-			lstatus = openStatus;
-		}
-		else if (lstatus == "Off")
-		{
-			lstatus = closedStatus;
-		}
-		else if ((lstatus == "Stop") || (lstatus == "Stop inline relay"))
-		{
-			lstatus = "Stopped";
-		}
-	}
-	else if (
-		(switchtype == device::tswitch::type::BlindsPercentage)
-		|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
+		|| (switchtype == device::tswitch::type::BlindsPercentage)
 		|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
-		|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
+		|| (switchtype == device::tswitch::type::VenetianBlindsUS)
+		|| (switchtype == device::tswitch::type::VenetianBlindsEU)
 		)
 	{
-		//int iLevel = round((float(maxDimLevel) / 100.0F) * LastLevel);
-		//root["result"][ii]["LevelInt"] = iLevel;
-		if (lstatus == "On")
+		if (lstatus == "Close inline relay")
 		{
-			lstatus = ((switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageWithStop)) ? closedStatus : openStatus;
+			lstatus = "Close";
 		}
-		else if (lstatus == "Off")
+		else if (lstatus == "Open inline relay")
 		{
-			lstatus = ((switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageWithStop)) ? openStatus : closedStatus;
+			lstatus = "Open";
+		}
+
+		bool bReverseState = false;
+		bool bReversePosition = false;
+
+		auto itt = options.find("ReverseState");
+		if (itt!= options.end())
+			bReverseState = (itt->second == "true");
+		itt = options.find("ReversePosition");
+		if (itt != options.end())
+			bReversePosition = (itt->second == "true");
+
+		if (bReversePosition)
+		{
+			llevel = 100 - llevel;
+			if (lstatus.find("Set Level") == 0)
+				lstatus = std_format("Set Level: %d %%", llevel);
+		}
+
+		if (bReverseState)
+		{
+			if (lstatus == "Open")
+				lstatus = "Close";
+			else if (lstatus == "Close")
+				lstatus = "Open";
+		}
+
+		if (lstatus == "Open")
+		{
+			lstatus = openStatus;
+		}
+		else if (lstatus == "Close")
+		{
+			lstatus = closedStatus;
 		}
 		else if (lstatus == "Stop")
 		{
@@ -4036,8 +4042,8 @@ int CEventSystem::calculateDimLevel(int deviceID, int percentageLevel)
 		{
 			if (
 				(switchtype == device::tswitch::type::Dimmer)
-				|| (switchtype == device::tswitch::type::BlindsPercentage) || (switchtype == device::tswitch::type::BlindsPercentageInverted)
-				|| (switchtype == device::tswitch::type::BlindsPercentageWithStop) || (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
+				|| (switchtype == device::tswitch::type::BlindsPercentage)
+				|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
 				)
 			{
 				float fLevel = (maxDimLevel / 100.0F) * percentageLevel;

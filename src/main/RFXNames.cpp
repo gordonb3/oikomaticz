@@ -1479,10 +1479,10 @@ void GetLightStatus(
 		switch (nValue)
 		{
 		case curtain_sOpen:
-			lstatus = "Off";
+			lstatus = "Open";
 			break;
 		case curtain_sClose:
-			lstatus = "On";
+			lstatus = "Close";
 			break;
 		case curtain_sStop:
 			lstatus = "Stop";
@@ -1491,8 +1491,6 @@ void GetLightStatus(
 		break;
 	case pTypeBlinds:
 		if (switchtype == device::tswitch::type::BlindsPercentage ||
-			switchtype == device::tswitch::type::BlindsPercentageInverted ||
-			switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop ||
 			switchtype == device::tswitch::type::BlindsPercentageWithStop)
 		{
 			bHaveDimmer = true;
@@ -1505,16 +1503,10 @@ void GetLightStatus(
 		switch (nValue)
 		{
 		case blinds_sOpen:
-			if (dSubType == sTypeBlindsT10)
-				lstatus = "On";
-			else
-				lstatus = "Off";
+			lstatus = "Open";
 			break;
 		case blinds_sClose:
-			if (dSubType == sTypeBlindsT10)
-				lstatus = "Off";
-			else
-				lstatus = "On";
+			lstatus = "Close";
 			break;
 		case blinds_sStop:
 			lstatus = "Stop";
@@ -1563,10 +1555,10 @@ void GetLightStatus(
 			switch (nValue)
 			{
 			case rfy_sUp:
-				lstatus = "Off";
+				lstatus = "Open";
 				break;
 			case rfy_sDown:
-				lstatus = "On";
+				lstatus = "Close";
 				break;
 			case rfy_sStop:
 				lstatus = "Stop";
@@ -2003,6 +1995,21 @@ void GetLightStatus(
 		}
 		break;
 	}
+
+	const bool bIsBlinds = (switchtype == device::tswitch::type::Blinds
+		|| switchtype == device::tswitch::type::BlindsPercentage
+		|| switchtype == device::tswitch::type::BlindsPercentageWithStop
+		|| switchtype == device::tswitch::type::VenetianBlindsEU
+		|| switchtype == device::tswitch::type::VenetianBlindsUS
+		);
+	if (bIsBlinds)
+	{
+		if (lstatus == "Off")
+			lstatus = "Close";
+		else if (lstatus == "On")
+			lstatus = "Open";
+	}
+
 	//_log.Debug(DEBUG_NORM, "RFXN : GetLightStatus Typ:%2d STyp:%2d nVal:%d sVal:%-4s llvl:%2d isDim:%d maxDim:%2d GrpCmd:%d lstat:%s",
 	//dType, dSubType, nValue, sValue.c_str(), llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd, lstatus.c_str());
 }
@@ -2137,12 +2144,12 @@ bool GetLightCommand(
 			}
 			return false;
 		}
-		if (switchcmd == "Off")
+		if ((switchcmd == "Off") || (switchcmd == "Close"))
 		{
 			cmd = light1_sOff;
 			return true;
 		}
-		if (switchcmd == "On")
+		if ((switchcmd == "On") || (switchcmd == "Open"))
 		{
 			cmd = light1_sOn;
 			return true;
@@ -2198,12 +2205,12 @@ bool GetLightCommand(
 			}
 			return false;
 		}
-		if (switchcmd == "Off")
+		if ((switchcmd == "Off") || (switchcmd == "Close"))
 		{
 			cmd = light2_sOff;
 			return true;
 		}
-		if (switchcmd == "On")
+		if ((switchcmd == "On") || (switchcmd == "Open"))
 		{
 			cmd = light2_sOn;
 			return true;
@@ -2325,12 +2332,12 @@ bool GetLightCommand(
 			}
 			return false;
 		}
-		if (switchcmd == "Off")
+		if ((switchcmd == "Off") || (switchcmd == "Close"))
 		{
 			cmd = light5_sOff;
 			return true;
 		}
-		if (switchcmd == "On")
+		if ((switchcmd == "On") || (switchcmd == "Open"))
 		{
 			cmd = light5_sOn;
 			return true;
@@ -2392,12 +2399,12 @@ bool GetLightCommand(
 		}
 		return false;
 	case pTypeLighting6:
-		if (switchcmd == "Off")
+		if ((switchcmd == "Off") || (switchcmd == "Close"))
 		{
 			cmd = light6_sOff;
 			return true;
 		}
-		if (switchcmd == "On")
+		if ((switchcmd == "On") || (switchcmd == "Open"))
 		{
 			cmd = light6_sOn;
 			return true;
@@ -2424,12 +2431,12 @@ bool GetLightCommand(
 			//no other combinations for the door switch
 			return false;
 		}
-		if (switchcmd == "Off")
+		if ((switchcmd == "Off") || (switchcmd == "Close"))
 		{
 			cmd = HomeConfort_sOff;
 			return true;
 		}
-		if (switchcmd == "On")
+		if ((switchcmd == "On") || (switchcmd == "Open"))
 		{
 			cmd = HomeConfort_sOn;
 			return true;
@@ -2629,6 +2636,16 @@ bool GetLightCommand(
 		if (switchcmd == "On")
 		{
 			cmd = gswitch_sOn;
+			return true;
+		}
+		if (switchcmd == "Open")
+		{
+			cmd = gswitch_sOpen;
+			return true;
+		}
+		if (switchcmd == "Close")
+		{
+			cmd = gswitch_sClose;
 			return true;
 		}
 		if (switchcmd == "Set Level")
@@ -3002,11 +3019,11 @@ bool GetLightCommand(
 		return true;
 	case pTypeCurtain:
 	{
-		if (switchcmd == "On")
+		if (switchcmd == "Open")
 		{
 			cmd = curtain_sOpen;
 		}
-		else if (switchcmd == "Off")
+		else if (switchcmd == "Close")
 		{
 			cmd = curtain_sClose;
 		}
@@ -3019,11 +3036,11 @@ bool GetLightCommand(
 	break;
 	case pTypeBlinds:
 	{
-		if (switchcmd == "Off")
+		if (switchcmd == "Open")
 		{
 			cmd = blinds_sOpen;
 		}
-		else if (switchcmd == "On")
+		else if (switchcmd == "Close")
 		{
 			cmd = blinds_sClose;
 		}
@@ -3067,7 +3084,7 @@ bool GetLightCommand(
 			-up / down(transmit < 0.5 seconds) : change angle
 			-up / down(transmit > 2seconds) : open or close
 			*/
-			if (switchcmd == "On")
+			if (switchcmd == "Close")
 			{
 				if (switchtype == device::tswitch::type::VenetianBlindsUS)
 				{
@@ -3082,7 +3099,7 @@ bool GetLightCommand(
 					cmd = rfy_sDown;
 				}
 			}
-			else if (switchcmd == "Off")
+			else if (switchcmd == "Open")
 			{
 				if (switchtype == device::tswitch::type::VenetianBlindsUS)
 				{
@@ -3542,6 +3559,7 @@ bool IsLightSwitchOn(const std::string& lstatus)
 {
 	return (
 		(lstatus == "On") ||
+		(lstatus == "Open") ||
 		(lstatus == "Group On") ||
 		(lstatus == "All On") ||
 		(lstatus == "Chime") ||

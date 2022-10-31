@@ -2659,11 +2659,8 @@ namespace Plugins
 					szTypeImage = "Contact48";
 					break;
 				case device::tswitch::type::Blinds:
-				case device::tswitch::type::BlindsInverted:
 				case device::tswitch::type::BlindsPercentage:
-				case device::tswitch::type::BlindsPercentageInverted:
 				case device::tswitch::type::BlindsPercentageWithStop:
-				case device::tswitch::type::BlindsPercentageInvertedWithStop:
 				case device::tswitch::type::VenetianBlindsUS:
 				case device::tswitch::type::VenetianBlindsEU:
 					szTypeImage = "blinds48";

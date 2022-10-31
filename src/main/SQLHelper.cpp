@@ -39,7 +39,7 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 2
-#define DOMOTICZ_DB_VERSION 155
+#define DOMOTICZ_DB_VERSION 156
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
@@ -3015,6 +3015,13 @@ bool CSQLHelper::OpenDatabase()
 		{
 			query("ALTER TABLE Cameras ADD COLUMN [AspectRatio] INTEGER DEFAULT 0");
 		}
+		if (dbversion < 156)
+		{
+			//Convert inverted blinds to normal blinds
+			safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (SwitchType=%d)", device::tswitch::type::Blinds, 6); //device::tswitch::type::BlindsInverted
+			safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (SwitchType=%d)", device::tswitch::type::BlindsPercentage, 16); //device::tswitch::type::BlindsPercentageInverted
+			safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (SwitchType=%d)", device::tswitch::type::BlindsPercentageWithStop, 22); //device::tswitch::type::BlindsPercentageInvertedWithStop
+		}
 	}
 
 	if ((!bNewInstall) && (ozdbversion < OIKOMATICZ_DB_VERSION))
@@ -3645,11 +3652,6 @@ bool CSQLHelper::SwitchLightFromTasker(uint64_t idx, const std::string& switchcm
 		return false;
 
 	std::string switchCommand = switchcmd;
-	if (switchCommand == "Close")
-		switchCommand = "On";
-	else if (switchCommand == "Open")
-		switchCommand = "Off";
-
 	return m_mainworker.SwitchLightInt(sd, switchCommand, level, color, false, User);
 }
 
@@ -5377,40 +5379,23 @@ uint64_t CSQLHelper::UpdateValueInt(
 			if (pHardware != nullptr)
 				HWtype = pHardware->HwdType;
 
+			bool bIsBlindsPercentage = (
+				(switchtype == device::tswitch::type::Dimmer)
+				|| (switchtype == device::tswitch::type::BlindsPercentage)
+				|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
+				);
+
 			if (
 				((bIsLightSwitchOn) && (llevel != 0) && (llevel != 255))
-				|| (switchtype == device::tswitch::type::BlindsPercentage)
-				|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
-				|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
-				|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
+				|| (bIsBlindsPercentage)
 				)
 			{
-				if (
-					(switchtype == device::tswitch::type::BlindsPercentage)
-					|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
-					)
-				{
-					if (nValue == light2_sOn)
-						llevel = 100;
-					else if (nValue == light2_sOff)
-						llevel = 0;
-				}
-				else if (
-					(switchtype == device::tswitch::type::BlindsPercentageWithStop)
-					|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
-					)
-				{
-					if (nValue == light2_sOn)
-						llevel = 0;
-					else if (nValue == light2_sOff)
-						llevel = 100;
-				}
-
 				//update level for device
 				safe_query(
 					"UPDATE DeviceStatus SET LastLevel='%d' WHERE (ID = %" PRIu64 ")",
 					llevel,
 					ulID);
+
 				if (bUseOnOffAction)
 					slevel = std::to_string(llevel);
 			}

@@ -11296,6 +11296,15 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 	int dSubType = atoi(sd[4].c_str());
 	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 
+	std::string lstatus;
+	int llevel = 0;
+	bool bHaveDimmer = false;
+	bool bHaveGroupCmd = false;
+	int maxDimLevel = 0;
+	int nValue = atoi(sd[7].c_str());
+	std::string sValue = sd[8];
+	GetLightStatus(dType, dSubType, switchtype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
+
 	if (pHardware->HwdType == hardware::type::DomoticzInternal)
 	{
 		//Special cases
@@ -11317,19 +11326,20 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 
 	std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10]);
 
-	bool bIsBlinds = (switchtype == device::tswitch::type::Blinds
+	const bool bIsBlinds = (
+		switchtype == device::tswitch::type::Blinds
 		|| switchtype == device::tswitch::type::BlindsPercentage
 		|| switchtype == device::tswitch::type::BlindsPercentageWithStop
 		|| switchtype == device::tswitch::type::VenetianBlindsEU
 		|| switchtype == device::tswitch::type::VenetianBlindsUS
-		|| switchtype == device::tswitch::type::BlindsInverted
-		|| switchtype == device::tswitch::type::BlindsPercentageInverted
-		|| switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop
 		);
 
 	// If dimlevel is 0 or no dimlevel, turn switch off
 	if ((level <= 0 && switchcmd == "Set Level") && (!bIsBlinds))
 		switchcmd = "Off";
+	// If command is Off, we retrieve/store our previous level below
+	if ((switchcmd == "Off") && (!bIsBlinds))
+		level = (switchtype != device::tswitch::type::Selector)  ? -1 : 0;
 
 	//when level is invalid or command is "On", replace level with "LastLevel"
 	if (switchcmd == "On" || level < 0)
@@ -11342,71 +11352,63 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		{
 			level = atoi(result[0][0].c_str());
 		}
+
+		//level here is from 0-100, convert it to device range
+		if ((maxDimLevel != 0) && (switchtype != device::tswitch::type::Selector))
+		{
+			float fLevel = (maxDimLevel / 100.0F) * level;
+			if (fLevel > 100)
+				fLevel = 100;
+			level = round(fLevel);
+		}
 		_log.Debug(DEBUG_NORM, "MAIN SwitchLightInt : switchcmd==\"On\" || level < 0, new level:%d", level);
 	}
-	// TODO: Something smarter if level is not valid?
 	level = std::max(level, 0);
 
 	if (bIsBlinds)
 	{
-		if (
-			(switchcmd == "Off")
-			|| ((switchcmd == "Set Level" && level == 0) && (pHardware->HwdType != hardware::type::MQTTAutoDiscovery))
-			)
-			switchcmd = "Open";
-		else if (
-			(switchcmd == "On")
-			|| ((switchcmd == "Set Level" && level == 100) && (pHardware->HwdType != hardware::type::MQTTAutoDiscovery))
-			)
-			switchcmd = "Close";
-	}
+		std::string szOrgCommand = switchcmd;
+		bool bReverseState = false;
+		bool bReversePosition = false;
 
-	if (switchtype == device::tswitch::type::Blinds
-		|| switchtype == device::tswitch::type::BlindsPercentage
-		|| switchtype == device::tswitch::type::BlindsPercentageWithStop
-		|| switchtype == device::tswitch::type::VenetianBlindsEU
-		|| switchtype == device::tswitch::type::VenetianBlindsUS
-		)
-	{
+		auto itt = options.find("ReverseState");
+		if (itt != options.end())
+			bReverseState = (itt->second == "true");
+		itt = options.find("ReversePosition");
+		if (itt != options.end())
+			bReversePosition = (itt->second == "true");
+
+		if ((bReversePosition) && (switchcmd == "Set Level"))
+		{
+			level = 100 - level;
+		}
+
+		if ((switchcmd == "Off") || (switchcmd == "Set Level" && level == 0))
+			switchcmd = "Close";
+		else if ((switchcmd == "On") || (switchcmd == "Set Level" && level == 100))
+			switchcmd = "Open";
+
 		if (switchcmd == "Open")
+			level = 100;
+		else if (switchcmd == "Close")
+			level = 0;
+
+		if ((bReverseState) && (szOrgCommand != "Set Level"))
 		{
-			switchcmd = "Off";
-		}
-		else if (switchcmd.find("Close") != std::string::npos)
-		{
-			switchcmd = "On";
-		}
-	}
-	else if (switchtype == device::tswitch::type::BlindsInverted
-		|| switchtype == device::tswitch::type::BlindsPercentageInverted
-		|| switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop
-		)
-	{
-		if (switchcmd == "Open")
-		{
-			switchcmd = "On";
-		}
-		else if (switchcmd.find("Close") != std::string::npos)
-		{
-			switchcmd = "Off";
+			if (switchcmd == "Open")
+				switchcmd = "Close";
+			else if (switchcmd == "Close")
+				switchcmd = "Open";
 		}
 	}
 
 	//when asking for Toggle, just switch to the opposite value
 	if (switchcmd == "Toggle") {
-		//Request current state of switch
-		std::string lstatus;
-		int llevel = 0;
-		bool bHaveDimmer = false;
-		bool bHaveGroupCmd = false;
-		int maxDimLevel = 0;
-
-		int nValue = atoi(sd[7].c_str());
-		std::string sValue = sd[8];
-
-		GetLightStatus(dType, dSubType, switchtype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 		//Flip the status
-		switchcmd = (IsLightSwitchOn(lstatus) == true) ? "Off" : "On";
+		if (IsLightSwitchOn(lstatus) == true)
+			switchcmd = (!bIsBlinds) ? "Off" : "Close";
+		else
+			switchcmd = (!bIsBlinds) ? "On" : "Open";
 	}
 
 	//
@@ -11435,7 +11437,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		{
 			switchcmd = "Set Color";
 		}
-		return ((MQTTAutoDiscover*)m_hardwaredevices[hindex])->SendSwitchCommand(sd[1], sd[9], Unit, switchcmd, level, color);
+		return ((MQTTAutoDiscover*)m_hardwaredevices[hindex])->SendSwitchCommand(sd[1], sd[9], Unit, switchcmd, level, color, User);
 	}
 
 	switch (dType)
@@ -11504,9 +11506,7 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		}
 		else if (
 			(switchtype == device::tswitch::type::BlindsPercentage)
-			|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
 			|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
-			|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
 			)
 		{
 			if (lcmd.LIGHTING2.cmnd == light2_sSetLevel)
@@ -12058,9 +12058,9 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 	case pTypeRFY:
 	{
 		tRBUF lcmd;
-		lcmd.BLINDS1.packetlength = sizeof(lcmd.RFY) - 1;
-		lcmd.BLINDS1.packettype = dType;
-		lcmd.BLINDS1.subtype = dSubType;
+		lcmd.RFY.packetlength = sizeof(lcmd.RFY) - 1;
+		lcmd.RFY.packettype = dType;
+		lcmd.RFY.subtype = dSubType;
 		lcmd.RFY.id1 = ID2;
 		lcmd.RFY.id2 = ID3;
 		lcmd.RFY.id3 = ID4;
@@ -12077,10 +12077,10 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 				return false;
 		}
 
-		if (lcmd.BLINDS1.subtype == sTypeRFY2)
+		if (lcmd.RFY.subtype == sTypeRFY2)
 		{
 			//Special case for protocol version 2
-			lcmd.BLINDS1.subtype = sTypeRFY;
+			lcmd.RFY.subtype = sTypeRFY;
 			if (lcmd.RFY.cmnd == rfy_sUp)
 				lcmd.RFY.cmnd = rfy_s2SecUp;
 			else if (lcmd.RFY.cmnd == rfy_sDown)
@@ -12326,28 +12326,25 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 		}
 		else if (
 				(switchtype == device::tswitch::type::BlindsPercentage)
-				|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
 				|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
-				|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
 				|| (switchtype == device::tswitch::type::VenetianBlindsUS)
 				|| (switchtype == device::tswitch::type::VenetianBlindsEU)
 				)
 		 {
-			if (((gswitch.cmnd == gswitch_sSetLevel) && (level == 100)) || (gswitch.cmnd == gswitch_sOn))
+			if (
+				(gswitch.cmnd == gswitch_sSetLevel)
+				&& (level == 100)
+				&& (pHardware->HwdType == hardware::type::OpenZWave)
+				)
 			{
-				if (pHardware->HwdType == hardware::type::OpenZWave)
+				//For Multilevel switches, 255 (0xFF) means Restore to most recent (non-zero) level,
+				//which is perfect for dimmers, but for blinds (and using the slider), we set it to 99%
+				//this should be done in the openzwave class, but it is deprecated and will be removed soon
+				level = 99;
+				if (gswitch.cmnd == gswitch_sOpen)
 				{
-					//For Multilevel switches, 255 (0xFF) means Restore to most recent (non-zero) level,
-					//which is perfect for dimmers, but for blinds (and using the slider), we set it to 99%
-					level = 99;
-
-					if (gswitch.cmnd == gswitch_sOn)
-					{
-					  	gswitch.cmnd = gswitch_sSetLevel;
-					}
+					gswitch.cmnd = gswitch_sSetLevel;
 				}
-				else
-					gswitch.cmnd = gswitch_sOn;
 			}
 		}
 
@@ -13186,15 +13183,13 @@ bool MainWorker::SwitchScene(const uint64_t idx, std::string switchcmd, const st
 				(
 					(switchtype == device::tswitch::type::Dimmer)
 					|| (switchtype == device::tswitch::type::BlindsPercentage)
-					|| (switchtype == device::tswitch::type::BlindsPercentageInverted)
 					|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
-					|| (switchtype == device::tswitch::type::BlindsPercentageInvertedWithStop)
 					|| (switchtype == device::tswitch::type::Selector)
 				)
 				&& (maxDimLevel != 0)
 			   )
 			{
-				if (lstatus == "On")
+				if ((lstatus == "On")|| (lstatus == "Open"))
 				{
 					lstatus = "Set Level";
 					float fLevel = (maxDimLevel / 100.0F) * level;
