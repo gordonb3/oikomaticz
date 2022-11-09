@@ -3092,40 +3092,47 @@ namespace http
 
 		void CWebServer::Cmd_GetCosts(WebEmSession& session, const request& req, Json::Value& root)
 		{
+			int nValue = 0;
+			m_sql.GetPreferencesVar("CostEnergy", nValue);
+			root["CostEnergy"] = nValue;
+			m_sql.GetPreferencesVar("CostEnergyT2", nValue);
+			root["CostEnergyT2"] = nValue;
+			m_sql.GetPreferencesVar("CostEnergyR1", nValue);
+			root["CostEnergyR1"] = nValue;
+			m_sql.GetPreferencesVar("CostEnergyR2", nValue);
+			root["CostEnergyR2"] = nValue;
+			m_sql.GetPreferencesVar("CostGas", nValue);
+			root["CostGas"] = nValue;
+			m_sql.GetPreferencesVar("CostWater", nValue);
+			root["CostWater"] = nValue;
+			m_sql.GetPreferencesVar("CostCityHeat", nValue);
+			root["CostCityHeat"] = nValue;
+
+			int tValue = 1000;
+			if (m_sql.GetPreferencesVar("MeterDividerWater", tValue))
+			{
+				root["DividerWater"] = float(tValue);
+			}
+			float EnergyDivider = 1000.0F;
+			if (m_sql.GetPreferencesVar("MeterDividerEnergy", tValue))
+			{
+				EnergyDivider = float(tValue);
+				root["DividerEnergy"] = EnergyDivider;
+			}
+
 			std::string idx = request::findValue(&req, "idx");
 			if (idx.empty())
 				return;
+
 			char szTmp[100];
 			std::vector<std::vector<std::string>> result;
 			result = m_sql.safe_query("SELECT Type, SubType, nValue, sValue FROM DeviceStatus WHERE (ID=='%q')", idx.c_str());
 			if (!result.empty())
 			{
-				std::vector<std::string> sd = result[0];
-
-				int nValue = 0;
 				root["status"] = "OK";
-				root["title"] = "GetElectraCosts";
-				m_sql.GetPreferencesVar("CostEnergy", nValue);
-				root["CostEnergy"] = nValue;
-				m_sql.GetPreferencesVar("CostEnergyT2", nValue);
-				root["CostEnergyT2"] = nValue;
-				m_sql.GetPreferencesVar("CostEnergyR1", nValue);
-				root["CostEnergyR1"] = nValue;
-				m_sql.GetPreferencesVar("CostEnergyR2", nValue);
-				root["CostEnergyR2"] = nValue;
-				m_sql.GetPreferencesVar("CostGas", nValue);
-				root["CostGas"] = nValue;
-				m_sql.GetPreferencesVar("CostWater", nValue);
-				root["CostWater"] = nValue;
-				m_sql.GetPreferencesVar("CostCityHeat", nValue);
-				root["CostCityHeat"] = nValue;
+				root["title"] = "GetCosts";
 
-				int tValue = 1000;
-				if (m_sql.GetPreferencesVar("MeterDividerWater", tValue))
-				{
-					root["DividerWater"] = float(tValue);
-				}
-
+				std::vector<std::string> sd = result[0];
 				unsigned char dType = atoi(sd[0].c_str());
 				// unsigned char subType = atoi(sd[1].c_str());
 				// nValue = (unsigned char)atoi(sd[2].c_str());
@@ -3139,12 +3146,6 @@ namespace http
 					StringSplit(sValue, ";", splitresults);
 					if (splitresults.size() != 6)
 						return;
-
-					float EnergyDivider = 1000.0F;
-					if (m_sql.GetPreferencesVar("MeterDividerEnergy", tValue))
-					{
-						EnergyDivider = float(tValue);
-					}
 
 					unsigned long long powerusage1 = std::strtoull(splitresults[0].c_str(), nullptr, 10);
 					unsigned long long powerusage2 = std::strtoull(splitresults[1].c_str(), nullptr, 10);
@@ -13377,6 +13378,8 @@ namespace http
 					dbasetable = "Fan";
 				else if (sensor == "counter")
 				{
+					Cmd_GetCosts(session, req, root);
+
 					if ((dType == pTypeP1Power) || (dType == pTypeCURRENT) || (dType == pTypeCURRENTENERGY))
 					{
 						dbasetable = "MultiMeter";
@@ -13406,6 +13409,8 @@ namespace http
 					dbasetable = "Fan_Calendar";
 				else if (sensor == "counter")
 				{
+					Cmd_GetCosts(session, req, root);
+
 					if (dType == pTypeP1Power
 						|| dType == pTypeCURRENT
 						|| dType == pTypeCURRENTENERGY
@@ -13552,7 +13557,6 @@ namespace http
 						}
 					}
 				}
-
 				else if (sensor == "counter")
 				{
 					if (dType == pTypeP1Power)
@@ -13621,43 +13625,46 @@ namespace http
 											curDeliv2 = 0;
 
 										float tdiff = static_cast<float>(difftime(atime, lastTime));
-										if (tdiff > 10)
+										if (tdiff <= 10)
 										{
-											float tlaps = 3600.0F / tdiff;
-											curUsage1 *= int(tlaps);
-											curUsage2 *= int(tlaps);
-											curDeliv1 *= int(tlaps);
-											curDeliv2 *= int(tlaps);
-
-											root["result"][ii]["d"] = sd[6].substr(0, 16);
-
-											if ((curDeliv1 != 0) || (curDeliv2 != 0))
-												bHaveDeliverd = true;
-
-											sprintf(szTmp, "%ld", curUsage1);
-											root["result"][ii]["v"] = szTmp;
-											sprintf(szTmp, "%ld", curUsage2);
-											root["result"][ii]["v2"] = szTmp;
-											sprintf(szTmp, "%ld", curDeliv1);
-											root["result"][ii]["r1"] = szTmp;
-											sprintf(szTmp, "%ld", curDeliv2);
-											root["result"][ii]["r2"] = szTmp;
-
-											long pUsage1 = (long)(actUsage1 - firstUsage1);
-											long pUsage2 = (long)(actUsage2 - firstUsage2);
-
-											sprintf(szTmp, "%ld", pUsage1 + pUsage2);
-											root["result"][ii]["eu"] = szTmp;
-											if (bHaveDeliverd)
-											{
-												long pDeliv1 = (long)(actDeliv1 - firstDeliv1);
-												long pDeliv2 = (long)(actDeliv2 - firstDeliv2);
-												sprintf(szTmp, "%ld", pDeliv1 + pDeliv2);
-												root["result"][ii]["eg"] = szTmp;
-											}
-											ii++;
+											// datapoints in the shortlog should not be this close together - DST clock backwards move?
+											continue;
 										}
 
+										float tlaps = 3600.0F / tdiff;
+										curUsage1 *= int(tlaps);
+										curUsage2 *= int(tlaps);
+										curDeliv1 *= int(tlaps);
+										curDeliv2 *= int(tlaps);
+
+										root["result"][ii]["d"] = sd[6].substr(0, 16);
+
+										if ((curDeliv1 != 0) || (curDeliv2 != 0))
+											bHaveDeliverd = true;
+
+										sprintf(szTmp, "%ld", curUsage1);
+										root["result"][ii]["v"] = szTmp;
+										sprintf(szTmp, "%ld", curUsage2);
+										root["result"][ii]["v2"] = szTmp;
+										sprintf(szTmp, "%ld", curDeliv1);
+										root["result"][ii]["r1"] = szTmp;
+										sprintf(szTmp, "%ld", curDeliv2);
+										root["result"][ii]["r2"] = szTmp;
+
+										long pUsage1 = (long)(actUsage1 - firstUsage1);
+										long pUsage2 = (long)(actUsage2 - firstUsage2);
+
+										sprintf(szTmp, "%ld", pUsage1 + pUsage2);
+										root["result"][ii]["eu"] = szTmp;
+										if (bHaveDeliverd)
+										{
+											long pDeliv1 = (long)(actDeliv1 - firstDeliv1);
+											long pDeliv2 = (long)(actDeliv2 - firstDeliv2);
+											sprintf(szTmp, "%ld", pDeliv1 + pDeliv2);
+											root["result"][ii]["eg"] = szTmp;
+										}
+
+										ii++;
 									}
 									else
 									{
@@ -14264,38 +14271,41 @@ namespace http
 										long long curValue = actValue - ulLastValue;
 
 										float tdiff = static_cast<float>(difftime(atime, lastTime));
-										if (tdiff > 10)
+										if (tdiff <= 10)
 										{
-											float tlaps = 3600.0F / tdiff;
-											curValue *= int(tlaps);
+											// datapoints in the shortlog should not be this close together - DST clock backwards move?
+											continue;
+										}
 
-											root["result"][ii]["d"] = sd[1].substr(0, 16);
+										float tlaps = 3600.0F / tdiff;
+										curValue *= int(tlaps);
 
-											double TotalValue = double(curValue);
-											// if (TotalValue != 0)
+										root["result"][ii]["d"] = sd[1].substr(0, 16);
+
+										double TotalValue = double(curValue);
+										// if (TotalValue != 0)
+										{
+											switch (metertype)
 											{
-												switch (metertype)
-												{
-												case device::tmeter::type::ENERGY:
-												case device::tmeter::type::ENERGY_GENERATED:
-													sprintf(szTmp, "%.3f", (TotalValue / divider) * 1000.0); // from kWh -> Watt
-													break;
-												case device::tmeter::type::GAS:
-													sprintf(szTmp, "%.2f", TotalValue / divider);
-													break;
-												case device::tmeter::type::WATER:
-													sprintf(szTmp, "%.3f", TotalValue / divider);
-													break;
-												case device::tmeter::type::COUNTER:
-													sprintf(szTmp, "%.10g", TotalValue / divider);
-													break;
-												default:
-													strcpy(szTmp, "0");
-													break;
-												}
-												root["result"][ii]["v"] = szTmp;
-												ii++;
+											case device::tmeter::type::ENERGY:
+											case device::tmeter::type::ENERGY_GENERATED:
+												sprintf(szTmp, "%.3f", (TotalValue / divider) * 1000.0); // from kWh -> Watt
+												break;
+											case device::tmeter::type::GAS:
+												sprintf(szTmp, "%.2f", TotalValue / divider);
+												break;
+											case device::tmeter::type::WATER:
+												sprintf(szTmp, "%.3f", TotalValue / divider);
+												break;
+											case device::tmeter::type::COUNTER:
+												sprintf(szTmp, "%.10g", TotalValue / divider);
+												break;
+											default:
+												strcpy(szTmp, "0");
+												break;
 											}
+											root["result"][ii]["v"] = szTmp;
+											ii++;
 										}
 									}
 									else
