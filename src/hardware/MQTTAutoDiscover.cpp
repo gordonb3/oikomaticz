@@ -1251,16 +1251,19 @@ void MQTTAutoDiscover::handle_auto_discovery_sensor_message(const struct mosquit
 					pSensor->BatteryLevel = root["battery"].asInt();
 				}
 
-				std::string value_template = pSensor->value_template;
-				if (!value_template.empty())
+				if (!pSensor->position_template.empty())
 				{
-					szValue = GetValueFromTemplate(root, value_template);
+					szValue = GetValueFromTemplate(root, pSensor->position_template);
+				}
+				else if (!pSensor->value_template.empty())
+				{
+					szValue = GetValueFromTemplate(root, pSensor->value_template);
 					if (szValue.empty())
 					{
 						// key not found!
 						continue;
 					}
-					if (value_template.find("RSSI") != std::string::npos)
+					if (pSensor->value_template.find("RSSI") != std::string::npos)
 					{
 						pSensor->SignalLevel = (int)round((10.0F / 255.0F) * atof(szValue.c_str()));
 						ApplySignalLevelDevice(pSensor);
@@ -1375,7 +1378,6 @@ void MQTTAutoDiscover::GuessSensorTypeValue(const _tMQTTASensor* pSensor, uint8_
 		|| (szUnit == "\xB0" "c")
 		|| (szUnit == "c")
 		|| (szUnit == "?c")
-		|| (szUnit == "f")
 		|| (pSensor->value_template.find("temperature") != std::string::npos)
 		|| (pSensor->state_topic.find("temperature") != std::string::npos)
 		)
@@ -1384,9 +1386,14 @@ void MQTTAutoDiscover::GuessSensorTypeValue(const _tMQTTASensor* pSensor, uint8_
 		subType = sTypeTEMP1;
 
 		double temp = static_cast<float>(atof(pSensor->last_value.c_str()));
-		if (szUnit == "f")
+
+		if (
+			(szUnit == "°f")
+			|| (szUnit == "\xB0" "f")
+			|| (szUnit == "f")
+			|| (szUnit == "?f")
+			)
 		{
-			// Convert back to Celsius
 			temp = ConvertToCelsius(temp);
 		}
 
@@ -1948,6 +1955,15 @@ void MQTTAutoDiscover::handle_auto_discovery_sensor(_tMQTTASensor* pSensor, cons
 			//it's a standalone sensor, or a configuration option that should not have been specified as a 'sensor'
 			//for now, we assume the later and ignore this
 			return; //else do nothing
+		}
+		else if (
+			(pSensor->object_id.find("dew_point") != std::string::npos)
+			|| (pSensor->state_topic.find("Dew_point") != std::string::npos)
+			)
+		{
+			//this is a dew-point sensor, threat is as stand-alone
+			pHumSensor = nullptr;
+			pBaroSensor = nullptr;
 		}
 		else
 		{
@@ -2863,7 +2879,8 @@ void MQTTAutoDiscover::InsertUpdateSwitch(_tMQTTASensor* pSensor)
 			{
 				root["state"] = "OFF";
 			}
-			else root["state"] = "ON";
+			else
+				root["state"] = "ON";
 		}
 
 		if (!root["state"].empty())
@@ -3231,7 +3248,7 @@ bool MQTTAutoDiscover::SendSwitchCommand(const std::string& DeviceID, const std:
 			else
 			{
 				root["brightness"] = slevel;
-				root["state"] = (slevel > 0) ? "ON" : "OFF";
+				//root["state"] = (slevel > 0) ? "ON" : "OFF";
 			}
 
 			szSendValue = JSonToRawString(root);
@@ -3724,16 +3741,13 @@ bool MQTTAutoDiscover::SetSetpoint(const std::string& DeviceID, float Temp)
 		return false;
 	}
 
-	//We might need to convert this to Fahrenheit
-	double TempDest = (pSensor->temperature_unit == "F") ? (float)ConvertToFahrenheit(Temp) : Temp;
-
 	Json::Value root;
 	std::string szSendValue;
 	if (!pSensor->temperature_command_template.empty())
 	{
 		std::string szKey = GetValueTemplateKey(pSensor->temperature_command_template);
 		if (!szKey.empty())
-			root[szKey] = TempDest;
+			root[szKey] = Temp;
 		else
 		{
 			Log(LOG_ERROR, "Climate device unhandled temperature_command_template (%s/%s)", DeviceID.c_str(), pSensor->name.c_str());
@@ -3742,7 +3756,7 @@ bool MQTTAutoDiscover::SetSetpoint(const std::string& DeviceID, float Temp)
 		szSendValue = JSonToRawString(root);
 	}
 	else
-		szSendValue = std_format("%.1f", TempDest);
+		szSendValue = std_format("%.1f", Temp);
 
 	std::string szTopic = pSensor->state_topic;
 	if (!pSensor->temperature_command_topic.empty())

@@ -110,6 +110,10 @@ bool HTTPClient::DELETE(const std::string &szUrl, const std::string &szPutdata, 
 	return RESTClient::Execute((connection::HTTP::method::value)(connection::HTTP::method::DELETE | connection::HTTP::method::HEAD), szUrl, szPutdata, vExtraHeaders, szResponse, vHeaderData, true, -1, bIgnoreNoDataReturned);
 }
 
+bool HTTPClient::PATCH(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned)
+{
+	return RESTClient::Execute((connection::HTTP::method::value)(connection::HTTP::method::PATCH | connection::HTTP::method::HEAD), szUrl, szPutdata, vExtraHeaders, szResponse, vHeaderData, true, -1, bIgnoreNoDataReturned);
+}
 
 /************************************************************************
  *									*

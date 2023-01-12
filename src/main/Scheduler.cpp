@@ -1141,9 +1141,23 @@ namespace http {
 				return;
 			root["status"] = "OK";
 			root["title"] = "Timers";
-			char szTmp[50];
 
 			std::vector<std::vector<std::string> > result;
+
+			result = m_sql.safe_query("SELECT SwitchType FROM DeviceStatus WHERE (ID==%" PRIu64 ")", idx);
+			if (result.empty())
+				return;
+
+			device::tswitch::type::value switchtype = (device::tswitch::type::value)std::stoi(result[0][0]);
+			const bool bIsBlinds = (
+				switchtype == device::tswitch::type::Blinds
+				|| switchtype == device::tswitch::type::BlindsPercentage
+				|| switchtype == device::tswitch::type::BlindsPercentageWithStop
+				|| switchtype == device::tswitch::type::VenetianBlindsEU
+				|| switchtype == device::tswitch::type::VenetianBlindsUS
+				);
+
+
 			result = m_sql.safe_query("SELECT ID, Active, [Date], Time, Type, Cmd, Level, Color, Days, UseRandomness, MDay, Month, Occurence FROM Timers WHERE (DeviceRowID==%" PRIu64 ") AND (TimerPlan==%d) ORDER BY ID",
 				idx, m_sql.m_ActiveTimerPlan);
 			if (!result.empty())
@@ -1152,7 +1166,7 @@ namespace http {
 				for (const auto &sd : result)
 				{
 					unsigned char iLevel = atoi(sd[6].c_str());
-					if (iLevel == 0)
+					if ((iLevel == 0) && (!bIsBlinds))
 						iLevel = 100;
 
 					int iTimerType = atoi(sd[4].c_str());
@@ -1162,8 +1176,7 @@ namespace http {
 						int Year = atoi(sdate.substr(0, 4).c_str());
 						int Month = atoi(sdate.substr(5, 2).c_str());
 						int Day = atoi(sdate.substr(8, 2).c_str());
-						sprintf(szTmp, "%04d-%02d-%02d", Year, Month, Day);
-						sdate = szTmp;
+						sdate = std_format("%04d-%02d-%02d", Year, Month, Day);
 					}
 					else
 						sdate = "";

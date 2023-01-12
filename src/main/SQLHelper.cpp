@@ -18,8 +18,10 @@
 #include <sqlite3.h>
 #include "hardware/hardwaretypes.h"
 #include "protocols/SMTPClient.h"
+#include "push/InfluxPush.h"
 #include "WebServerHelper.h"
 #include "webserver/Base64.h"
+#include "webserver/cWebem.h"
 #include "clx_unzip.h"
 #include "notifications/NotificationHelper.h"
 #include "IFTTT.h"
@@ -39,11 +41,13 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 2
-#define DOMOTICZ_DB_VERSION 156
+#define DOMOTICZ_DB_VERSION 159
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
 
+#define DEFAULT_ADMINUSER "admin"
+#define DEFAULT_ADMINPWD "domoticz"
 
 extern http::server::CWebServerHelper m_webservers;
 extern std::string szWWWFolder;
@@ -599,6 +603,18 @@ constexpr auto sqlCreateMobileDevices =
 "[LastUpdate] DATETIME DEFAULT(datetime('now', 'localtime'))"
 ");";
 
+constexpr auto sqlCreateApplications =
+"CREATE TABLE IF NOT EXISTS [Applications]("
+"[ID] INTEGER PRIMARY KEY, "
+"[Active] BOOLEAN NOT NULL DEFAULT false, "
+"[Public] BOOLEAN NOT NULL DEFAULT false, "
+"[Applicationname] VARCHAR(100) DEFAULT '',"
+"[Secret] VARCHAR(100) DEFAULT '',"
+"[Pemfile] VARCHAR(100) DEFAULT '',"
+"[LastSeen] DATETIME DEFAULT NULL,"
+"[LastUpdate] DATETIME DEFAULT(datetime('now', 'localtime'))"
+");";
+
 constexpr auto sqlCreateTuyaDevices =
 "CREATE TABLE IF NOT EXISTS [TuyaDevices]("
 "[ID] INTEGER PRIMARY KEY, "
@@ -796,6 +812,7 @@ bool CSQLHelper::OpenDatabase()
 	query(sqlCreateToonDevices);
 	query(sqlCreateUserSessions);
 	query(sqlCreateMobileDevices);
+	query(sqlCreateApplications);
 	query(sqlCreateTuyaDevices);
 	//Add indexes to log tables
 	query("create index if not exists ds_hduts_idx	on DeviceStatus(HardwareID, DeviceID, Unit, Type, SubType);");
@@ -3015,12 +3032,110 @@ bool CSQLHelper::OpenDatabase()
 		{
 			query("ALTER TABLE Cameras ADD COLUMN [AspectRatio] INTEGER DEFAULT 0");
 		}
+		if (dbversion < 155)
+		{
+			//Merge remote proxy IP's into local networks
+
+			std::string WebLocalNetworks, RemoteProxyIPs;
+			m_sql.GetPreferencesVar("WebLocalNetworks", WebLocalNetworks);
+			m_sql.GetPreferencesVar("WebRemoteProxyIPs", RemoteProxyIPs);
+
+			std::vector<std::string> strarray;
+			StringSplit(RemoteProxyIPs, ";", strarray);
+			for (const auto& str : strarray)
+			{
+				if (WebLocalNetworks.find(str) == std::string::npos)
+				{
+					if (!WebLocalNetworks.empty())
+						WebLocalNetworks += ";";
+					WebLocalNetworks += str;
+				}
+			}
+			m_sql.UpdatePreferencesVar("WebLocalNetworks", WebLocalNetworks);
+			DeletePreferencesVar("WebRemoteProxyIPs");
+		}
 		if (dbversion < 156)
 		{
 			//Convert inverted blinds to normal blinds
 			safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (SwitchType=%d)", device::tswitch::type::Blinds, 6); //device::tswitch::type::BlindsInverted
 			safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (SwitchType=%d)", device::tswitch::type::BlindsPercentage, 16); //device::tswitch::type::BlindsPercentageInverted
 			safe_query("UPDATE DeviceStatus SET SwitchType=%d WHERE (SwitchType=%d)", device::tswitch::type::BlindsPercentageWithStop, 22); //device::tswitch::type::BlindsPercentageInvertedWithStop
+		}
+		if (dbversion < 157)
+		{
+			// Step 1: Migrate this 'Admin User' from Preferences to a real User with Admin rights
+			// Either insert a new User or Update an existing User with the same name to Admin or skip
+			// And remove the old Preference variables
+			std::string WebUserName, WebPassword;
+			int nValue;
+			if (GetPreferencesVar("WebUserName", nValue, WebUserName))
+			{
+				if (GetPreferencesVar("WebPassword", nValue, WebPassword))
+				{
+					if (!WebUserName.empty() && !WebPassword.empty())
+					{
+						result = safe_query("SELECT ROWID, Active, Rights FROM Users WHERE Username='%s'", WebUserName.c_str());
+						if (result.empty())
+						{
+							// Add this User to the Users table as no User with this name exists
+							safe_query("INSERT INTO Users (Active, Username, Password, Rights, TabsEnabled) VALUES (1, '%s', '%s', %d, 0x1F)", WebUserName.c_str(), WebPassword.c_str(), http::server::URIGHTS_ADMIN);
+						}
+						else
+						{
+							nValue = atoi(result[0][0].c_str());	// RowID
+							int iActive = atoi(result[0][1].c_str());
+							int iRights = atoi(result[0][2].c_str());
+							if (iActive != 1 || iRights != http::server::URIGHTS_ADMIN)
+							{
+								// Although there already is a User with the same Username as the WebUserName
+								// this User is not an Admin and/or is not Active so cannot be used if we don't update it
+								safe_query("UPDATE Users SET Password='%s', Active=1, Rights=%d WHERE ROWID=%d", WebPassword.c_str(), http::server::URIGHTS_ADMIN, nValue);
+							}
+						}
+					}
+				}
+				// Remove these Pref vars as we do not use them anymore
+				DeletePreferencesVar("WebPassword");
+				DeletePreferencesVar("WebUserName");
+			}
+			// Step 2: Make sure that there is at least 1 active Admin user otherwise no-one can maintain the User administration
+			// If no User exists with Admin right, a default 'admin' is inserted
+			// and any already existing user called 'admin' is renamed to 'admin_old'
+			result = safe_query("SELECT COUNT(*) FROM Users WHERE Active=1 AND Rights=%d", http::server::URIGHTS_ADMIN);
+			if(!result.empty())
+			{
+				nValue = atoi(result[0][0].c_str());
+				if (nValue == 0)
+				{
+					result = safe_query("SELECT ROWID FROM Users WHERE Username='%s'", base64_encode(DEFAULT_ADMINUSER).c_str());
+					if (!result.empty())
+					{
+						// There is already a User called Admin but apparently either not Active and/or with Admin privileges
+						nValue = atoi(result[0][0].c_str());
+						std::string oldUserName = DEFAULT_ADMINUSER;
+						oldUserName.append("_old");
+						safe_query("UPDATE Users SET Username='%s' WHERE ROWID='%d'", base64_encode(oldUserName).c_str(), nValue);
+					}
+					// Add a default Admin User as no active users with Admin priviliges exist
+					safe_query("INSERT INTO Users (Active, Username, Password, Rights, TabsEnabled) VALUES (1, '%s', '%s', %d, 0x1F)", base64_encode(DEFAULT_ADMINUSER).c_str(), GenerateMD5Hash(DEFAULT_ADMINPWD).c_str(), http::server::URIGHTS_ADMIN);
+					_log.Log(LOG_STATUS, "A default admin User called 'admin' has been added with a default password!");
+				}
+			}
+		}
+		if (dbversion < 158)
+		{
+			// Remove these Pref vars as we do not use them anymore
+			DeletePreferencesVar("EnableTabLights");
+			DeletePreferencesVar("EnableTabTemp");
+			DeletePreferencesVar("EnableTabWeather");
+			DeletePreferencesVar("EnableTabUtility");
+			DeletePreferencesVar("EnableTabCustom");
+			DeletePreferencesVar("EnableTabScenes");
+			DeletePreferencesVar("EnableTabFloorplans");
+		}
+		if (dbversion < 159)
+		{
+			DeletePreferencesVar("AuthenticationMethod");
 		}
 	}
 
@@ -3101,7 +3216,8 @@ bool CSQLHelper::OpenDatabase()
 		//place here actions that needs to be performed on new databases
 		query("INSERT INTO Plans (Name) VALUES ('$Hidden Devices')");
 		// Add hardware for internal use
-		m_sql.safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Domoticz Internal',1, %d,'',1,'','',0,0,0,0,0,0)", hardware::type::DomoticzInternal);
+		safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Domoticz Internal',1, %d,'',1,'','',0,0,0,0,0,0)", hardware::type::DomoticzInternal);
+		safe_query("INSERT INTO Users (Active, Username, Password, Rights, TabsEnabled) VALUES (1, '%s', '%s', %d, 0x1F)", base64_encode(DEFAULT_ADMINUSER).c_str(), GenerateMD5Hash(DEFAULT_ADMINPWD).c_str(), http::server::URIGHTS_ADMIN);
 	}
 	UpdatePreferencesVar("DB_Version", DB_VERSION);
 
@@ -3115,6 +3231,16 @@ bool CSQLHelper::OpenDatabase()
 		}
 		_log.Log(LOG_STATUS, "Empty extreme sized sValue(s) in Preferences table to prevent future issues" );
 		safe_query("UPDATE Preferences SET sValue ='' WHERE LENGTH(sValue) > 1000");
+	}
+
+	// Check if the default admin User password has been changed
+	result = safe_query("SELECT Password FROM Users WHERE Username='%s'", base64_encode(DEFAULT_ADMINUSER).c_str());
+	if (!result.empty())
+	{
+		if (result[0][0] == GenerateMD5Hash(DEFAULT_ADMINPWD))
+		{
+			_log.Log(LOG_ERROR, "Default admin password has NOT been changed! Change it asap!");
+		}
 	}
 
 	//Make sure we have some default preferences
@@ -3276,34 +3402,6 @@ bool CSQLHelper::OpenDatabase()
 	{
 		UpdatePreferencesVar("SmartMeterType", 0);
 	}
-	if (!GetPreferencesVar("EnableTabLights", nValue))
-	{
-		UpdatePreferencesVar("EnableTabLights", 1);
-	}
-	if (!GetPreferencesVar("EnableTabTemp", nValue))
-	{
-		UpdatePreferencesVar("EnableTabTemp", 1);
-	}
-	if (!GetPreferencesVar("EnableTabWeather", nValue))
-	{
-		UpdatePreferencesVar("EnableTabWeather", 1);
-	}
-	if (!GetPreferencesVar("EnableTabUtility", nValue))
-	{
-		UpdatePreferencesVar("EnableTabUtility", 1);
-	}
-	if (!GetPreferencesVar("EnableTabCustom", nValue))
-	{
-		UpdatePreferencesVar("EnableTabCustom", 1);
-	}
-	if (!GetPreferencesVar("EnableTabScenes", nValue))
-	{
-		UpdatePreferencesVar("EnableTabScenes", 1);
-	}
-	if (!GetPreferencesVar("EnableTabFloorplans", nValue))
-	{
-		UpdatePreferencesVar("EnableTabFloorplans", 0);
-	}
 	if (!GetPreferencesVar("NotificationSensorInterval", nValue))
 	{
 		UpdatePreferencesVar("NotificationSensorInterval", 12 * 60 * 60);
@@ -3368,11 +3466,6 @@ bool CSQLHelper::OpenDatabase()
 	if (!GetPreferencesVar("SecOnDelay", nValue))
 	{
 		UpdatePreferencesVar("SecOnDelay", 30);
-	}
-
-	if (!GetPreferencesVar("AuthenticationMethod", nValue))
-	{
-		UpdatePreferencesVar("AuthenticationMethod", 0);//AUTH_LOGIN=0, AUTH_BASIC=1
 	}
 	if (!GetPreferencesVar("ReleaseChannel", nValue))
 	{
@@ -3949,6 +4042,10 @@ void CSQLHelper::PerformThreadedAction(const _tTaskItem tItem)
 		else if (tmethod == connection::HTTP::method::DELETE)
 		{
 			ret = HTTPClient::DELETE(url, postData, extraHeaders, response, headerData, true);
+		}
+		else if (tmethod == connection::HTTP::method::PATCH)
+		{
+			ret = HTTPClient::PATCH(url, postData, extraHeaders, response, headerData, true);
 		}
 		else
 			return; // unsupported method
@@ -7395,6 +7492,8 @@ void CSQLHelper::AddCalendarUpdateMeter()
 						ID,
 						sd[0].c_str()
 					);
+					//also send this to Influx as this can be used as start counter of today()
+					m_influxpush.DoInfluxPush(ID, true);
 				}
 			}
 		}
@@ -8800,7 +8899,7 @@ void CSQLHelper::CheckDeviceTimeout()
 		"SELECT ID, Name, LastUpdate FROM DeviceStatus WHERE (Used!=0 AND LastUpdate<='%04d-%02d-%02d %02d:%02d:%02d' "
 		"AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d "
 		"AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d AND Type!=%d) "
-		"ORDER BY Name",
+		"ORDER BY Name COLLATE NOCASE ASC",
 		ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec,
 		pTypeLighting1,
 		pTypeLighting2,

@@ -449,6 +449,8 @@ bool CdzVents::OpenURL(lua_State *lua_state, const std::vector<_tLuaTableValues>
 			eMethod = connection::HTTP::method::PUT;
 		else if (method == "DELETE")
 			eMethod = connection::HTTP::method::DELETE;
+		else if (method == "PATCH")
+			eMethod = connection::HTTP::method::PATCH;
 		else
 		{
 			_log.Log(LOG_ERROR, "dzVents: Invalid HTTP method '%s'", method.c_str());

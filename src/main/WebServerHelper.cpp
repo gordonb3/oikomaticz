@@ -62,11 +62,11 @@ namespace http {
 			}
 		}
 
-		void CWebServerHelper::SetAuthenticationMethod(const _eAuthenticationMethod amethod)
+		void CWebServerHelper::SetAllowPlainBasicAuth(const bool allow)
 		{
 			for (auto &it : serverCollection)
 			{
-				it->SetAuthenticationMethod(amethod);
+				it->SetAllowPlainBasicAuth(allow);
 			}
 		}
 
@@ -102,30 +102,21 @@ namespace http {
 			}
 		}
 
-		void CWebServerHelper::ReloadLocalNetworks()
+		void CWebServerHelper::ReloadTrustedNetworks()
 		{
-			std::string WebLocalNetworks, WebRemoteProxyIPs;
-			m_sql.GetPreferencesVar("WebLocalNetworks", WebLocalNetworks);
-			m_sql.GetPreferencesVar("WebRemoteProxyIPs", WebRemoteProxyIPs);
+			std::string TrustedNetworks;
+			m_sql.GetPreferencesVar("WebLocalNetworks", TrustedNetworks);
 
 			for (auto &it : serverCollection)
 			{
 				if (it->m_pWebEm == nullptr)
 					continue;
-				it->m_pWebEm->ClearLocalNetworks();
+				it->m_pWebEm->ClearTrustedNetworks();
 
 				std::vector<std::string> strarray;
-				StringSplit(WebLocalNetworks, ";", strarray);
+				StringSplit(TrustedNetworks, ";", strarray);
 				for (const auto &str : strarray)
-					it->m_pWebEm->AddLocalNetworks(str);
-				// add local hostname
-				it->m_pWebEm->AddLocalNetworks("");
-
-				it->m_pWebEm->ClearRemoteProxyIPs();
-				strarray.clear();
-				StringSplit(WebRemoteProxyIPs, ";", strarray);
-				for (const auto &str : strarray)
-					it->m_pWebEm->AddRemoteProxyIPs(str);
+					it->m_pWebEm->AddTrustedNetworks(str);
 			}
 		}
 
