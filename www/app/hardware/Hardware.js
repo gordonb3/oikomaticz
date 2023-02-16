@@ -4081,6 +4081,9 @@ define(['app'], function (app) {
 									HwTypeStr += ' <a href="#/Hardware/' + item.idx + '" class="label ' + lblStatus + ' btn-link">' + $.t("Setup") + '</a>';
 								}
 							}
+							else if (HwTypeStr.indexOf("Enphase") >= 0) {
+								HwTypeStr += '<br>Version: ' + item.version;
+							}							
 							else if (HwTypeStr.indexOf("EnOcean") >= 0 && HwTypeStr.indexOf("(ESP3)") >= 0) {
 								HwTypeStr += ' ' + hardwareSetupLink;
 							}
@@ -4678,7 +4681,7 @@ define(['app'], function (app) {
 							(data["Type"].indexOf("HEOS by DENON") >= 0) ||
 							(data["Type"].indexOf("Razberry") >= 0) ||
 							(data["Type"].indexOf("Comm5") >= 0) ||
-							(data["Type"].indexOf("Intergas InComfort") >= 0)
+							(data["Type"].indexOf("Intergas InComfort") >= 0) ||
 							(data["Type"].indexOf("Enphase") >= 0)
 						) {
 							$("#hardwarecontent #hardwareparamslogin #username").val(data["Username"]);

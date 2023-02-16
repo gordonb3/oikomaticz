@@ -467,11 +467,11 @@ define(['app', 'livesocket'], function (app) {
 						status += '<br>' + $.t("Return") + ': ' + $.t("Today") + ': ' + item.CounterDelivToday + ', ' + item.CounterDeliv;
 						if (item.UsageDeliv.charAt(0) != 0) {
 							if (parseInt(item.Usage) != 0) {
-								bigtext += ', -' + item.UsageDeliv;
+								bigtext += ', ';
+							} else {
+								bigtext='';
 							}
-							else {
-								bigtext = '-' + item.UsageDeliv;
-							}
+							bigtext += '-' + item.UsageDeliv;
 						}
 					}
 				}
@@ -494,8 +494,14 @@ define(['app', 'livesocket'], function (app) {
 						$(id + " #img").html(img);
 					}
 				}
-				if ($scope.config.ShowUpdatedEffect == true) {
-					$(id + " #name").effect("highlight", { color: '#EEFFEE' }, 1000);
+				
+				var searchText = GenerateLiveSearchTextU(item, bigtext);
+				$(id).find('#name').attr('data-search', searchText);
+				
+				if (!document.hidden) {
+					if ($scope.config.ShowUpdatedEffect == true) {
+						$(id + " #name").effect("highlight", { color: '#EEFFEE' }, 1000);
+					}
 				}
 				RefreshLiveSearch();
 			}
@@ -573,6 +579,9 @@ define(['app', 'livesocket'], function (app) {
 									bigtext += item.Usage;
 								}
 								if (item.UsageDeliv.charAt(0) != 0) {
+									if (parseInt(item.Usage) > 0) {
+										bigtext += ', ';
+									}
 									bigtext += '-' + item.UsageDeliv;
 								}
 							}
@@ -631,7 +640,9 @@ define(['app', 'livesocket'], function (app) {
 								bigtext += item.Data;
 							}
 							
-							xhtm += '\t      <td id="name" class="item-name" data-idx="'+item.idx+'" data-desc="'+item.Description.replace('"',"'")+'" data-status="'+bigtext+'">' + item.Name + '</td>\n';
+							var searchText = GenerateLiveSearchTextL(item, bigtext);
+							
+							xhtm += '\t      <td id="name" class="item-name" data-idx="'+item.idx+'" data-desc="'+item.Description.replace('"',"'")+'" data-search="'+searchText+'">' + item.Name + '</td>\n';
 							xhtm += '\t      <td id="bigtext">'+bigtext;							
 							xhtm += '</td>\n';
 							xhtm += '\t      <td id="img">';

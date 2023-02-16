@@ -307,7 +307,7 @@ define(['app', 'livesocket'], function (app) {
 			htm += '</ul></div>';
 			return htm;
 		}
-
+		
 		RefreshItem = function (item) {
 			var id = "#lightcontent #" + item.idx;
 			if ($(id + " #name").html() === undefined) {
@@ -505,6 +505,10 @@ define(['app', 'livesocket'], function (app) {
 			else if (item.SwitchType == "Dimmer") {
 				isdimmer = true;
 				if (item.CustomImage == 0) item.Image = item.TypeImg;
+				if (typeof item.Image == 'undefined') {
+					item.CustomImage = 0;
+					item.Image = item.TypeImg;
+				}
 				item.Image = item.Image.charAt(0).toUpperCase() + item.Image.slice(1);
 				if (
 					(item.Status == 'On') ||
@@ -697,9 +701,16 @@ define(['app', 'livesocket'], function (app) {
 			if ($(id + " #lastupdate").html() != item.LastUpdate) {
 				$(id + " #lastupdate").html(item.LastUpdate);
 			}
-			if ($scope.config.ShowUpdatedEffect == true) {
-				$(id + " #name").effect("highlight", { color: '#EEFFEE' }, 1000);
+
+			var searchText = GenerateLiveSearchTextL(item, bigtext);
+			$(id).find('#name').attr('data-search', searchText);
+			
+			if (!document.hidden) {
+				if ($scope.config.ShowUpdatedEffect == true) {
+					$(id + " #name").effect("highlight", { color: '#EEFFEE' }, 1000);
+				}
 			}
+			
 			RefreshLiveSearch();
 		}
 
@@ -809,10 +820,12 @@ define(['app', 'livesocket'], function (app) {
 							if (item.SwitchType === "Selector" || item.SubType == "Evohome") {
 								bigtext = GetLightStatusText(item);
 							}
+							
+							var searchText = GenerateLiveSearchTextL(item, bigtext);
 
 							xhtm +=
 								'\t    <tr>\n' +
-								'\t      <td id="name" class="item-name" data-idx="'+item.idx+'" data-desc="'+item.Description.replace('"',"'")+'" data-status="'+bigtext+'">' + item.Name +'</td>\n' +
+								'\t      <td id="name" class="item-name" data-idx="'+item.idx+'" data-desc="'+item.Description.replace('"',"'")+'" data-search="'+searchText+'">' + item.Name +'</td>\n' +
 								'\t      <td id="bigtext">';
 
 							if (item.UsedByCamera == true) {
@@ -1021,6 +1034,10 @@ define(['app', 'livesocket'], function (app) {
 							else if (item.SwitchType == "Dimmer") {
 								bIsDimmer = true;
 								if (item.CustomImage == 0) item.Image = item.TypeImg;
+								if (typeof item.Image == 'undefined') {
+									item.CustomImage = 0;
+									item.Image = item.TypeImg;
+								}
 								item.Image = item.Image.charAt(0).toUpperCase() + item.Image.slice(1);
 								if (
 									(item.Status == 'On') ||

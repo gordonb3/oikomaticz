@@ -103,8 +103,11 @@ define(['app', 'livesocket'], function (app) {
 			var id = "";
 			//Scenes
 			if (
-				(item.Type.indexOf('Scene') == 0) ||
-				(item.Type.indexOf('Group') == 0)
+				($scope.config.EnableTabScenes) &&
+				(
+					(item.Type.indexOf('Scene') == 0) ||
+					(item.Type.indexOf('Group') == 0)
+				)
 			) {
 				id = "#scene_" + item.idx;
 				var obj = $(id);
@@ -165,8 +168,10 @@ define(['app', 'livesocket'], function (app) {
 							if ($(id + " #lastupdate > span").html() != item.LastUpdate) {
 								$(id + " #lastupdate > span").html(item.LastUpdate);
 							}
-							if ($scope.config.ShowUpdatedEffect == true) {
-								$(id + " #name").effect("highlight", { color: '#EEFFEE' }, 1000);
+							if (!document.hidden) {
+								if ($scope.config.ShowUpdatedEffect == true) {
+									$(id + " #name").effect("highlight", { color: '#EEFFEE' }, 1000);
+								}
 							}
 						}
 					}
@@ -177,20 +182,23 @@ define(['app', 'livesocket'], function (app) {
 			//Lights
 			var isdimmer = false;
 			if (
-				(item.Type.indexOf('Light') == 0) ||
-				(item.Type.indexOf('Blind') == 0) ||
-				(item.Type.indexOf('Curtain') == 0) ||
-				(item.Type.indexOf('Thermostat 2') == 0) ||
-				(item.Type.indexOf('Thermostat 3') == 0) ||
-				(item.Type.indexOf('Chime') == 0) ||
-				(item.Type.indexOf('Color Switch') == 0) ||
-				(item.Type.indexOf('RFY') == 0) ||
-				(item.Type.indexOf('ASA') == 0) ||
-				(item.SubType == "Smartwares Mode") ||
-				(item.SubType == "Relay") ||
-				((typeof item.SubType != 'undefined') && (item.SubType.indexOf('Itho') == 0)) ||
-				((typeof item.SubType != 'undefined') && (item.SubType.indexOf('Lucci') == 0)) ||
-				((typeof item.SubType != 'undefined') && (item.SubType.indexOf('Westinghouse') == 0))
+				($scope.config.EnableTabLights) &&
+				(
+					(item.Type.indexOf('Light') == 0) ||
+					(item.Type.indexOf('Blind') == 0) ||
+					(item.Type.indexOf('Curtain') == 0) ||
+					(item.Type.indexOf('Thermostat 2') == 0) ||
+					(item.Type.indexOf('Thermostat 3') == 0) ||
+					(item.Type.indexOf('Chime') == 0) ||
+					(item.Type.indexOf('Color Switch') == 0) ||
+					(item.Type.indexOf('RFY') == 0) ||
+					(item.Type.indexOf('ASA') == 0) ||
+					(item.SubType == "Smartwares Mode") ||
+					(item.SubType == "Relay") ||
+					((typeof item.SubType != 'undefined') && (item.SubType.indexOf('Itho') == 0)) ||
+					((typeof item.SubType != 'undefined') && (item.SubType.indexOf('Lucci') == 0)) ||
+					((typeof item.SubType != 'undefined') && (item.SubType.indexOf('Westinghouse') == 0))
+				)
 			) {
 				id = "#light_" + item.idx;
 				var obj = $(id);
@@ -613,6 +621,10 @@ define(['app', 'livesocket'], function (app) {
 						else if (item.SwitchType == "Dimmer") {
 							isdimmer = true;
 							if (item.CustomImage == 0) item.Image = item.TypeImg;
+							if (typeof item.Image == 'undefined') {
+								item.CustomImage = 0;
+								item.Image = item.TypeImg;
+							}
 							item.Image = item.Image.charAt(0).toUpperCase() + item.Image.slice(1);
 							if (
 								(item.Status == 'On') ||
@@ -1284,10 +1296,10 @@ define(['app', 'livesocket'], function (app) {
 						if (typeof item.Counter != 'undefined') {
 							if ($scope.config.DashboardType == 0) {
 								if (item.SubType == "Managed Counter") {
-									status += '' + item.Counter;
+									status += item.Counter;
 								}
 								else {
-									status += '' + $.t("Usage") + ': ' + item.CounterToday;
+									status += $.t("Usage") + ': ' + item.CounterToday;
 								}
 							}
 							else {
@@ -1355,8 +1367,9 @@ define(['app', 'livesocket'], function (app) {
 								bHaveReturnUsage = true;
 							}
 						}
-						if (!bHaveReturnUsage) {
-							if (typeof item.Usage != 'undefined') {
+
+						if (typeof item.Usage != 'undefined') {
+							if ((typeof item.Usage != 'undefined') && (typeof item.UsageDeliv == 'undefined')) {
 								if ($scope.config.DashboardType == 0) {
 									status += '<br>' + $.t("Actual") + ': ' + item.Usage;
 								}
@@ -1364,21 +1377,30 @@ define(['app', 'livesocket'], function (app) {
 									status += ", A: " + item.Usage;
 								}
 							}
+							else {
+								if (parseInt(item.Usage) > 0) {
+									if ($scope.config.DashboardType == 0) {
+										status += '<br>' + $.t("Actual") + ': ' + item.Usage;
+									}
+									else {
+										status += ", A: " + item.Usage;
+									}
+								}
+							}
 						}
 						if (typeof item.CounterDeliv != 'undefined') {
 							if (item.CounterDeliv != 0) {
 								if ($scope.config.DashboardType == 0) {
 									status += '<br>' + $.t("Return") + ': ' + item.CounterDelivToday;
-									status += '<br>' + $.t("Actual") + ': ' + item.UsageDeliv;
-								}
-								else {
+								} else {
 									status += '<br>R: T: ' + item.CounterDelivToday;
-									if (bHaveReturnUsage) {
-										status += ", A: ";
-										if (parseInt(item.UsageDeliv) > 0) {
-											status += "-";
-										}
-										status += item.UsageDeliv;
+								}
+								if (parseInt(item.UsageDeliv) > 0) {
+									if ($scope.config.DashboardType == 0) {
+										status += '<br>' + $.t("Actual") + ': -' + item.UsageDeliv;
+									}
+									else {
+										status += ", A: -" + item.UsageDeliv;
 									}
 								}
 							}
@@ -1413,7 +1435,7 @@ define(['app', 'livesocket'], function (app) {
 								bigtext = item.Counter;
 							}
 							else {
-								status = '' + $.t("Usage") + ': ' + item.CounterToday;
+								status = $.t("Usage") + ': ' + item.CounterToday;
 							}
 						}
 						else if (item.Type == "Current") {
@@ -1490,7 +1512,12 @@ define(['app', 'livesocket'], function (app) {
 							bigtext = item.Data;
 						}
 						if (typeof item.Usage != 'undefined') {
-							bigtext = item.Usage;
+							if ((typeof item.Usage != 'undefined') && (typeof item.UsageDeliv == 'undefined')) {
+								bigtext = item.Usage;
+							} else {
+								if (parseInt(item.Usage) > 0)
+									bigtext = item.Usage;
+							}
 							if (item.Type != "P1 Smart Meter") {
 								if ($scope.config.DashboardType == 0) {
 									if (typeof item.CounterToday != 'undefined') {
@@ -1504,18 +1531,18 @@ define(['app', 'livesocket'], function (app) {
 								}
 							}
 						}
-						if (typeof item.CounterDeliv != 'undefined') {
-							if (item.CounterDeliv != 0) {
-								if (item.UsageDeliv.charAt(0) != 0) {
-									bigtext = '-' + item.UsageDeliv;
-								}
-								status += '<br>';
-								if (($scope.config.DashboardType == 2) || (window.myglobals.ismobile == true)) {
-									status += 'R: ' + item.CounterDelivToday;
-								}
-								else {
-									status += '' + $.t("Return") + ': ' + item.CounterDelivToday;
-								}
+						if ( (typeof item.CounterDeliv != 'undefined') && (item.CounterDeliv != 0) ) {
+							if (item.UsageDeliv.charAt(0) != 0) {
+								if (parseInt(item.Usage) > 0)
+									bigtext += ', ';
+								bigtext += '-' + item.UsageDeliv;
+							}
+							status += '<br>';
+							if (($scope.config.DashboardType == 2) || (window.myglobals.ismobile == true)) {
+								status += 'R: ' + item.CounterDelivToday;
+							}
+							else {
+								status += $.t("Return") + ': ' + item.CounterDelivToday;
 							}
 						}
 
@@ -1626,8 +1653,11 @@ define(['app', 'livesocket'], function (app) {
 						$.each(data.result, function (i, item) {
 							//Scenes/Groups
 							if (
-								(item.Type.indexOf('Scene') == 0) ||
-								(item.Type.indexOf('Group') == 0)
+								($scope.config.EnableTabScenes) &&
+								(
+									(item.Type.indexOf('Scene') == 0) ||
+									(item.Type.indexOf('Group') == 0)
+								)
 							) {
 								totdevices += 1;
 								if (jj == 0) {
@@ -1678,7 +1708,7 @@ define(['app', 'livesocket'], function (app) {
 										}
 									}
 									xhtm +=
-										'\t      <td id="status" class="status">' + status + '</td>\n' +
+										'\t      <td id="status" class="status nowrap">' + status + '</td>\n' +
 										'\t    </tr>\n';
 								}
 								else {
@@ -1748,12 +1778,12 @@ define(['app', 'livesocket'], function (app) {
 							htmlcontent += '</section>';
 						}
 
-
 						//light devices
 						jj = 0;
 						bHaveAddedDivider = false;
 						$.each(data.result, function (i, item) {
 							if (
+								($scope.config.EnableTabLights) &&
 								(
 									(item.Type.indexOf('Light') == 0) ||
 									(item.SubType == "Smartwares Mode") ||
@@ -2071,7 +2101,7 @@ define(['app', 'livesocket'], function (app) {
 										}
 									}
 									xhtm +=
-										'\t      <td id="status" class="status">' + status + '</td>\n' +
+										'\t      <td id="status" class="status nowrap">' + status + '</td>\n' +
 										'\t    </tr>\n';
 									if (item.SwitchType == "Dimmer") {
 										xhtm += '<tr>';
@@ -2317,6 +2347,10 @@ define(['app', 'livesocket'], function (app) {
 									}
 									else if (item.SwitchType == "Dimmer") {
 										if (item.CustomImage == 0) item.Image = item.TypeImg;
+										if (typeof item.Image == 'undefined') {
+											item.CustomImage = 0;
+											item.Image = item.TypeImg;
+										}
 										item.Image = item.Image.charAt(0).toUpperCase() + item.Image.slice(1);
 										if (
 											(item.Status == 'On') ||
@@ -3047,100 +3081,6 @@ define(['app', 'livesocket'], function (app) {
 							htmlcontent += '</section>';
 						}
 
-						//Gizmocuz: Don't know how did this ? But this should be under utility devices!
-						//Please do so
-						/*
-												//evohome devices
-												jj = 0;
-												bHaveAddedDivider = false;
-												$.each(data.result, function (i, item) {
-													if (item.Type.indexOf('Heating') == 0) {
-														totdevices += 1;
-														if (jj == 0) {
-															//first time
-															htmlcontent += '<section class="dashCategory" id="dashEvohome">';
-															if (($scope.config.DashboardType == 2) || (window.myglobals.ismobile == true)) {
-																if (htmlcontent != "") {
-																	htmlcontent += '<br>';
-																}
-																htmlcontent += '\t    <table class="mobileitem">\n';
-																htmlcontent += '\t    <thead>\n';
-																htmlcontent += '\t    <tr>\n';
-																htmlcontent += '\t    		<th>' + $.t('evohome Devices') + '</th>\n';
-																htmlcontent += '\t    		<th style="text-align:right"><a id="cevohome" href="javascript:SwitchLayout(\'LightSwitches\')"><img src="images/next.png"></a></th>\n';
-																htmlcontent += '\t    </tr>\n';
-																htmlcontent += '\t    </thead>\n';
-															}
-															else {
-																htmlcontent += '<h2>' + $.t('evohome Devices') + ':</h2>\n';
-															}
-														}
-														if (jj % rowItems == 0) {
-															//add devider
-															if (bHaveAddedDivider == true) {
-																//close previous devider
-																htmlcontent += '</div>\n';
-															}
-															htmlcontent += '<div class="row divider">\n';
-															bHaveAddedDivider = true;
-														}
-														var xhtm = "";
-														if (($scope.config.DashboardType == 2) || (window.myglobals.ismobile == true)) {
-															if (item.SubType == "Evohome") {
-																xhtm +=
-																	'\t    <tr id="evohome_' + item.idx + '">\n' +
-																	'\t      <td id="name" class="name">' + item.Name + '</td>\n';
-																xhtm += EvohomePopupMenu(item, 'evomobile');
-																xhtm += '\n\r  </tr>\n';
-															}
-														}
-														else {
-															if (item.SubType == "Evohome") {
-																if ($scope.config.DashboardType == 0) {
-																	xhtm = '\t<div class="span4 movable" id="evohome_' + item.idx + '">\n';
-																}
-																else if ($scope.config.DashboardType == 1) {
-																	xhtm = '\t<div class="span3 movable" id="evohome_' + item.idx + '">\n';
-																}
-																xhtm += '\t  <div class="item">\n';
-																if ($scope.config.DashboardType == 0) {
-																	xhtm += '\t    <table id="itemtablesmall" class="itemtablesmall" border="0" cellpadding="0" cellspacing="0">\n';
-																}
-																else if ($scope.config.DashboardType == 1) {
-																	xhtm += '\t    <table id="itemtablesmall" class="itemtablesmall" border="0" cellpadding="0" cellspacing="0">\n';
-																}
-																var backgroundClass = $rootScope.GetItemBackgroundStatus(item);
-						
-																xhtm +=
-																	'\t    <tr class="' + backgroundClass + '">\n' +
-																	'\t      <td id="name" class="name ' + backgroundClass + '">' + item.Name + '</td>\n' +
-																	'\t      <td id="bigtext" class="bigtext"><span></span></td>\n';
-																xhtm += EvohomePopupMenu(item, 'evomini');
-																xhtm +=
-																	'\t      <td id="status" class="status">' + TranslateStatus(EvoDisplayTextMode(item.Status)) + '</td>\n' +
-																	'\t      <td id="lastupdate" class="lastupdate"><span>' + item.LastUpdate + '</span></td>\n' +
-																	'\t    </tr>\n' +
-																	'\t    </table>\n' +
-																	'\t  </div><!--item end-->\n' +
-																	'\t</div>\n';
-															}
-														}
-														htmlcontent += xhtm;
-														jj += 1;
-													}
-												}); //evohome devices
-												if (bHaveAddedDivider == true) {
-													//close previous devider
-													htmlcontent += '</div>\n';
-												}
-												if (($scope.config.DashboardType == 2) || (window.myglobals.ismobile == true)) {
-													htmlcontent += '\t    </table>\n';
-												}
-												if (jj > 0) {
-													htmlcontent += '</section>';
-												}
-						*/
-
 						//Utility Sensors
 						if ($scope.config.EnableTabUtility) {
 							jj = 0;
@@ -3270,10 +3210,10 @@ define(['app', 'livesocket'], function (app) {
 										if (typeof item.Counter != 'undefined') {
 											if ($scope.config.DashboardType == 0) {
 												if (item.SubType == "Managed Counter") {
-													status = '' + item.Counter;
+													status = item.Counter;
 												}
 												else {
-													status = '' + $.t("Usage") + ': ' + item.CounterToday;
+													status = $.t("Usage") + ': ' + item.CounterToday;
 												}
 											}
 											else {
@@ -3281,7 +3221,7 @@ define(['app', 'livesocket'], function (app) {
 													status = 'U: T: ' + item.CounterToday;
 												} else {
 													if (item.SubType == "Managed Counter") {
-														status = '' + item.Counter;
+														status = item.Counter;
 													}
 													else {
 														status = 'T: ' + item.CounterToday;
@@ -3348,12 +3288,25 @@ define(['app', 'livesocket'], function (app) {
 										}
 
 										if (typeof item.Usage != 'undefined') {
-											if ($scope.config.DashboardType == 0) {
-												status += '<br>' + $.t("Actual") + ': ' + item.Usage;
-											}
-											else {
-												if (!bHaveReturnUsage) {
-													status += ", A: " + item.Usage;
+											if ((typeof item.Usage != 'undefined') && (typeof item.UsageDeliv == 'undefined')) {
+												if ($scope.config.DashboardType == 0) {
+													status += '<br>' + $.t("Actual") + ': ' + item.Usage;
+												}
+												else {
+													if (!bHaveReturnUsage) {
+														status += ", A: " + item.Usage;
+													}
+												}
+											} else {
+												if (parseInt(item.Usage) > 0) {
+													if ($scope.config.DashboardType == 0) {
+														status += '<br>' + $.t("Actual") + ': ' + item.Usage;
+													}
+													else {
+														if (!bHaveReturnUsage) {
+															status += ", A: " + item.Usage;
+														}
+													}
 												}
 											}
 										}
@@ -3362,16 +3315,23 @@ define(['app', 'livesocket'], function (app) {
 											if (item.CounterDeliv != 0) {
 												if ($scope.config.DashboardType == 0) {
 													status += '<br>' + $.t("Return") + ': ' + item.CounterDelivToday;
-													status += '<br>' + $.t("Actual") + ': -' + item.UsageDeliv;
+													if (parseInt(item.UsageDeliv) > 0) {
+														status += '<br>' + $.t("Actual") + ': ';
+														status += "-" + item.UsageDeliv;
+													}
+													
 												}
 												else {
+													if (parseInt(item.Usage) > 0) {
+														status += ", A: ";
+														status += item.Usage;
+													}
 													status += '<br>R: T: ' + item.CounterDelivToday;
 													if (bHaveReturnUsage) {
-														status += ", A: ";
 														if (parseInt(item.UsageDeliv) > 0) {
-															status += "-";
+															status += ", A: ";
+															status += "-" + item.UsageDeliv;
 														}
-														status += item.UsageDeliv;
 													}
 												}
 											}
@@ -3413,14 +3373,14 @@ define(['app', 'livesocket'], function (app) {
 											bigtexthtml += item.Usage;
 										}
 										else if ((typeof item.Usage != 'undefined') && (typeof item.UsageDeliv != 'undefined')) {
-											if (parseInt(item.Usage) > 0) {
+											if ((item.UsageDeliv.charAt(0) == 0) || (parseInt(item.Usage) != 0)) {
 												bigtexthtml += item.Usage;
 											}
-											else if (parseInt(item.UsageDeliv) > 0) {
-												bigtexthtml += "-" + item.UsageDeliv;
-											}
-											else {
-												bigtexthtml += item.Usage;
+											if (item.UsageDeliv.charAt(0) != 0) {
+												if (parseInt(item.Usage) > 0) {
+													bigtexthtml += ', ';
+												}
+												bigtexthtml += '-' + item.UsageDeliv;
 											}
 										}
 										else if (
@@ -3506,7 +3466,7 @@ define(['app', 'livesocket'], function (app) {
 												statushtml = item.Counter;
 											}
 											else if ((item.SubType != "Gas") && (item.SubType != "Managed Counter")) { // this is weird..
-												statushtml = '' + $.t("Usage") + ': ' + item.CounterToday;
+												statushtml = $.t("Usage") + ': ' + item.CounterToday;
 											}
 											else if ((item.SubType == "Gas") || (item.SubType == "RFXMeter counter")) { // added this to fill the status value. If it's the same as the bigtext, then it won't be shown again.
 												statushtml += "";
