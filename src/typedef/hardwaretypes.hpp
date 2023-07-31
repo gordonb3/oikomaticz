@@ -132,6 +132,7 @@ enum value {
 	TeleinfoMeterTCP,		//124
 	MQTTAutoDiscovery,		//125
 	RFLINKMQTT,			//126
+	VisualCrossing,			//127
 	LocalTuya = 501,		//501
 	END
 };
@@ -161,6 +162,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ OneWire,			"1-Wire (System)",						"1-Wire"		},
 	{ Wunderground,			"Weather Underground",						"WU"			},
 	{ DarkSky,			"DarkSky (Weather Lookup)",					"Darksky"		},
+	{ VisualCrossing,		"Visual Crossing (Weather Lookup)",				"Visual Crossing"	},
 	{ Dummy,			"Dummy (Does nothing, use for virtual switches only)",		"Dummy"			},
 	{ Tellstick,			"Tellstick",							"Tellstick"		},
 	{ PiFace,			"PiFace - Raspberry Pi IO expansion board",			"PiFace"		},

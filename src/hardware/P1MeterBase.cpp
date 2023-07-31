@@ -1091,12 +1091,12 @@ void P1MeterBase::ParseP1EncryptedData(const unsigned char *pData, const int Len
 			EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
 			EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, m_p1gcmdata.iv.size(), nullptr);
 
-			EVP_DecryptInit_ex(ctx, nullptr, nullptr, (const unsigned uint8_t*)m_decryptkey.c_str(), (const unsigned uint8_t*)m_p1gcmdata.iv.c_str());
+			EVP_DecryptInit_ex(ctx, nullptr, nullptr, (const unsigned char*)m_decryptkey.c_str(), (const unsigned char*)m_p1gcmdata.iv.c_str());
 
-			uint8_t AddAuthData[] = {0x30, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
-			EVP_DecryptUpdate(ctx, nullptr, &decryptedsize, (const unsigned uint8_t*) AddAuthData, 17);
+			unsigned char AddAuthData[] = {0x30, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+			EVP_DecryptUpdate(ctx, nullptr, &decryptedsize, (const unsigned char*) AddAuthData, 17);
 
-			EVP_DecryptUpdate(ctx, (uint8_t*)decryptedData, &decryptedsize, (uint8_t*)m_p1gcmdata.payload.c_str(), m_p1gcmdata.payload.size());
+			EVP_DecryptUpdate(ctx, (unsigned char*)decryptedData, &decryptedsize, (unsigned char*)m_p1gcmdata.payload.c_str(), m_p1gcmdata.payload.size());
 			EVP_CIPHER_CTX_free(ctx);
 		}
 		catch (const std::exception& e)

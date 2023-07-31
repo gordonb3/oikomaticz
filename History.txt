@@ -1,3 +1,40 @@
+Version 4.10.485 (Februari 16 2023)
+- Implemented: Accept JWT tokens as authentication and Authorization Bearer tokens (either from internal or external IAM service)
+- Implemented: Blinds, added option to schedule 0%
+- Implemented: dzVents, OpenURL PATCH method
+- Implemented: Enphase, redesign and added battery readings (Supports firmware V7)
+- Implemented: Internal OAuth2/OIDC IAM service supporting 4 different flows (OAuth2 (RFC6749), PKCE extension (RFC7636) and JWT Tokens (RFC7519))
+- Implemented: MQTT, added support for Lock status
+- Implemented: MQTT, added support for wildcards in discovery topics
+- Implemented: MQTT, climate preset mode
+- Implemented: New 'auth' debug flag to see IAM related messages
+- Implemented: SECURITY_SETUP.md describing the new/improved security setup
+- Implemented: Support for basic OpenID Connect Discovery ('https://<servername>/.well-known/openid-configuration')
+- Implemented: Search option in Switches/Scenes/Temperature/Utility and Weather tab
+- Implemented: The Security realm can be configured using the 'vhostname' option
+- Implemented: Timer, Grid option for selected switches and thermostat. Big thanks to syrhus/labelette91580 and xbeaudouin
+- Implemented: User device selection now displays type/subtype
+- Changed: All security related setting are now in 1 settings tab
+- Changed: By default prompt for login to only allow secure access
+- Changed: Default 'admin' user is generated with standard password (see Users)
+- Changed: Dimmer, restores to previous Set Level state after Off
+- Changed: Implicit adding local IP to 'trusted networks' has been removed. Needs to be set explicitly for security reasons!
+- Changed: Lots of security related code cleanup and improvements
+- Changed: Menu option for 'Users' moved to main 'Setup' menu list
+- Changed: MQTT timeout increased to 2 minutes
+- Changed: The following proxy headers are now properly supported 'Forwarded' (RFC7239), 'X-Forwarder-For' and 'X-Real-IP' (in that order)
+- Changed: The secure server (HTTPS) sends proper CORS and Security headers
+- Fixed: Dashboard, scenes/lights hidden when this was disabled in user settings
+- Fixed: Dashboard, mobile display did not display P1 meter current return value correctly
+- Fixed: Dashboard, not showing disabled sections (temperature/weather/utility) when a device has multiple properties (for instance temperature + weather)
+- Fixed: Highcharts dropdown menu z-index problem
+- Fixed: Logout now returns 204 instead of 401
+- Fixed: Waterflow sensor custom icon
+- Fixed: Making sure Custom icons are valid (when someone manually edits the database)
+- Fixed: Mobile display text objects with long lines
+- Fixed: MQTT-AD Climate, fixed setpoint temperature display
+- Fixed: Navigation bar display issues on some mobile devices
+- Fixed: Setpoint popup when using protection
 
 Version 4.10.483 (November 9 2022)
 - Implemented: Blockly,	added 'Toggle' set command

@@ -139,6 +139,8 @@ void EnphaseAPI::Do_Work()
 					)
 				{
 					//no need to poll outside sun hours
+					m_sql.safe_query(
+						"UPDATE DeviceStatus SET LastUpdate='%s' WHERE (HardwareID==%d)", TimeToString(nullptr, TF_DateTime).c_str(), m_HwdID);
 					continue;
 				}
 			}
@@ -229,14 +231,14 @@ int EnphaseAPI::getSunRiseSunSetMinutes(const bool bGetSunRise)
 }
 
 // emupwGetMobilePasswd taken from https://github.com/sarnau/EnphaseEnergy
-std::string EnphaseAPI::V5_emupwGetMobilePasswd(const std::string &serialNumber, const std::string &userName, const std::string &realm)
+std::string EnphaseAPI::V5_emupwGetMobilePasswd(const std::string& serialNumber, const std::string& userName, const std::string& realm)
 {
-	std::string digest =  GenerateMD5Hash(std::string("[e]") + userName + "@" + realm + "#" + serialNumber + " EnPhAsE eNeRgY ");
+	std::string digest = GenerateMD5Hash(std::string("[e]") + userName + "@" + realm + "#" + serialNumber + " EnPhAsE eNeRgY ");
 	if (digest.length() <= 8)
 		return "";
 
-	int countZero = std::count(digest.begin(), digest.end(), '0');
-	int countOne = std::count(digest.begin(), digest.end(), '1');
+	int countZero = (int)std::count(digest.begin(), digest.end(), '0');
+	int countOne = (int)std::count(digest.begin(), digest.end(), '1');
 	std::string szPassword;
 	std::string szRight = digest.substr(digest.length() - 8);
 	for (auto it = szRight.rbegin(); it != szRight.rend(); it++)
@@ -562,7 +564,11 @@ bool EnphaseAPI::getProductionDetails(Json::Value& result)
 void EnphaseAPI::parseProduction(const Json::Value& root)
 {
 	if (!IsItSunny())
+	{
+		m_sql.safe_query(
+			"UPDATE DeviceStatus SET LastUpdate='%s' WHERE (HardwareID==%d)", TimeToString(nullptr, TF_DateTime).c_str(), m_HwdID);
 		return;
+	}
 	if (root["production"].empty() == true)
 	{
 		//No production details available

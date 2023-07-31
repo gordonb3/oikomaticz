@@ -284,6 +284,7 @@ const char* RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeRAIN, sTypeRAIN7, "Alecto" },
 		{ pTypeRAIN, sTypeRAIN8, "Davis" },
 		{ pTypeRAIN, sTypeRAIN9, "TFA 30.3233.01" },
+		{ pTypeRAIN, sTypeRAIN10, "FineOffset WH5360, EcoWitt WH40" },
 		{ pTypeRAIN, sTypeRAINWU, "WWW" },
 		{ pTypeRAIN, sTypeRAINByRate, "RainByRate" },
 
@@ -301,6 +302,7 @@ const char* RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeUV, sTypeUV2, "UVN800" },
 		{ pTypeUV, sTypeUV3, "TFA" },
 
+		{ pTypeWEATHER, sTypeWEATHER0, "Ecowitt WS90" },
 		{ pTypeWEATHER, sTypeWEATHER1, "Alecto ACH2010" },
 		{ pTypeWEATHER, sTypeWEATHER2, "Alecto WS5500" },
 
@@ -504,6 +506,8 @@ const char* RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeFan, sTypeLucciAirDCII, "Lucci Air DC II" },
 		{ pTypeFan, sTypeIthoECO, "Itho ECO" },
 		{ pTypeFan, sTypeNovy, "Novy" },
+		{ pTypeFan, sTypeOrcon, "Orcon" },
+		{ pTypeFan, sTypeIthoHRU400, "Itho HRU400" },
 
 		{ pTypeTEMP_RAIN, sTypeTR1, "Alecto WS1200" },
 
@@ -533,11 +537,6 @@ const char* RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeFS20, sTypeFS20, "FS20" },
 		{ pTypeFS20, sTypeFHT8V, "FHT 8V valve" },
 		{ pTypeFS20, sTypeFHT80, "FHT80 door/window sensor" },
-
-		{ pTypeWEATHER, sTypeWEATHER1, "Alecto ACH2010" },
-		{ pTypeWEATHER, sTypeWEATHER2, "Alecto WS5500" },
-
-		{ pTypeSOLAR, sTypeSOLAR1, "Davis" },
 
 		{ pTypeGeneralSwitch, sSwitchTypeX10, "X10" },
 		{ pTypeGeneralSwitch, sSwitchTypeARC, "ARC" },
@@ -1540,9 +1539,13 @@ void GetLightStatus(
 			switch (nValue)
 			{
 			case rfy_sUp:
+			case rfy_s05SecUp:
+			case rfy_s2SecUp:
 				lstatus = "On";
 				break;
 			case rfy_sDown:
+			case rfy_s05SecDown:
+			case rfy_s2SecDown:
 				lstatus = "Off";
 				break;
 			case rfy_sStop:

@@ -12,6 +12,10 @@ option(USE_BUILTIN_MINIZIP "Use builtin minizip library" NO)
 
 ## static libraries
 
+# iamserver
+file(GLOB iamserver_SRCS iamserver/*.cpp)
+add_library(iamserver STATIC ${iamserver_SRCS})
+
 # jsoncpp
 file(GLOB jsoncpp_SRCS jsoncpp/*.cpp)
 add_library(jsoncpp STATIC ${jsoncpp_SRCS})
@@ -32,7 +36,7 @@ include_directories(evohomeclient/src/)
 list(FILTER evohome_SRCS EXCLUDE REGEX "RESTClient")
 add_library(evohome STATIC ${evohome_SRCS})
 
-set(STATIC_LIBRARIES jsoncpp tinyxpath serial evohome)
+set(STATIC_LIBRARIES iamserver jsoncpp tinyxpath serial evohome)
 
 # openzwave control panel
 if(OpenZWave)

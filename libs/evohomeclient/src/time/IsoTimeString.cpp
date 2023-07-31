@@ -7,6 +7,7 @@
 
 #include "IsoTimeString.hpp"
 #include <cstring>
+#include <ctime>
 
 
 #ifdef _WIN32

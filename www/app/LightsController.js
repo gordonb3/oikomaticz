@@ -716,7 +716,8 @@ define(['app', 'livesocket'], function (app) {
 
 		//We only call this once. After this the widgets are being updated automatically by used of the 'jsonupdate' broadcast event.
 		RefreshLights = function () {
-			livesocket.getJson("json.htm?type=devices&filter=light&used=true&order=[Order]&lastupdate=" + $.LastUpdateTime + "&plan=" + window.myglobals.LastPlanSelected, function (data) {
+			var roomPlanId = $routeParams.room || window.myglobals.LastPlanSelected;
+			livesocket.getJson("json.htm?type=command&param=getdevices&filter=light&used=true&order=[Order]&lastupdate=" + $.LastUpdateTime + "&plan=" + roomPlanId, function (data) {
 				if (typeof data.ServerTime != 'undefined') {
 					$rootScope.SetTimeAndSun(data.Sunrise, data.Sunset, data.ServerTime);
 				}
@@ -751,7 +752,7 @@ define(['app', 'livesocket'], function (app) {
 			var roomPlanId = $routeParams.room || window.myglobals.LastPlanSelected;
 
 			$.ajax({
-				url: "json.htm?type=devices&filter=light&used=true&order=[Order]&plan=" + roomPlanId,
+				url: "json.htm?type=command&param=getdevices&filter=light&used=true&order=[Order]&plan=" + roomPlanId,
 				async: false,
 				dataType: 'json',
 				success: function (data) {
@@ -1280,7 +1281,7 @@ define(['app', 'livesocket'], function (app) {
 			WatchDescriptions();
 
 			if ($scope.config.AllowWidgetOrdering == true) {
-				if (permissions.hasPermission("Admin")) {
+				if (permissions.hasPermission("User")) {
 					if (window.myglobals.ismobileint == false) {
 						$element.find(".span4").draggable({
 							drag: function () {
@@ -1292,10 +1293,7 @@ define(['app', 'livesocket'], function (app) {
 						$element.find(".span4").droppable({
 							drop: function () {
 								var myid = $(this).attr("id");
-								var roomid = $element.find("#comboroom option:selected").val();
-								if (typeof roomid == 'undefined') {
-									roomid = 0;
-								}
+								var roomid = window.myglobals.LastPlanSelected;
 								$.ajax({
 									url: "json.htm?type=command&param=switchdeviceorder&idx1=" + myid + "&idx2=" + $.devIdx + "&roomid=" + roomid,
 									async: false,
@@ -1756,7 +1754,7 @@ define(['app', 'livesocket'], function (app) {
 				$("#dialog-addmanuallightdevice #lighting3params").hide();
 				$("#dialog-addmanuallightdevice #homeconfortparams").show();
 			}
-			else if ((lighttype >= 304) && (lighttype <= 313)) {
+			else if ((lighttype >= 304) && (lighttype <= 315)) {
 				//Fan (Itho)
 				$("#dialog-addmanuallightdevice #lighting1params").hide();
 				$("#dialog-addmanuallightdevice #lighting2params").hide();
@@ -2016,7 +2014,7 @@ define(['app', 'livesocket'], function (app) {
 				mParams += "&housecode=" + $("#dialog-addmanuallightdevice #homeconfortparams #combohousecode option:selected").val();
 				mParams += "&unitcode=" + $("#dialog-addmanuallightdevice #homeconfortparams #combounitcode option:selected").val();
 			}
-			else if ((lighttype >= 304) && (lighttype <= 313)) {
+			else if ((lighttype >= 304) && (lighttype <= 315)) {
 				//Fan
 				ID =
 					$("#dialog-addmanuallightdevice #fanparams #combocmd1 option:selected").text() +
@@ -2222,6 +2220,27 @@ define(['app', 'livesocket'], function (app) {
 				$.myglobals.WeekdayStr.push($(this).text());
 			});
 
+			//Get SwitchTypes
+			$.ajax({
+				url: "json.htm?type=command&param=getswitchtypes",
+				async: false,
+				dataType: 'json',
+				success: function (data) {
+					if (typeof data.result != 'undefined') {
+						$("#dialog-addlightdevice #comboswitchtype").html("");
+						$("#dialog-addmanuallightdevice #comboswitchtype").html("");
+						$.each(data.result, function (stcode, stdesc) {
+							if (stdesc != null) {
+								var option = $('<option />');
+								option.attr('value', stcode).text(stdesc);
+								$("#dialog-addlightdevice #comboswitchtype").append(option);
+								$("#dialog-addmanuallightdevice #comboswitchtype").append(option);
+							}
+						});
+					}
+				}
+			});
+
 			$scope.$on('device_update', function (event, deviceData) {
 				RefreshItem(deviceData);
 			});
@@ -2252,7 +2271,7 @@ define(['app', 'livesocket'], function (app) {
 						if (bValid) {
 							$(this).dialog("close");
 							$.ajax({
-								url: "json.htm?type=setused&idx=" + $.devIdx + '&name=' + encodeURIComponent($("#dialog-addlightdevice #devicename").val()) + '&switchtype=' + $("#dialog-addlightdevice #comboswitchtype").val() + '&used=true&maindeviceidx=' + MainDeviceIdx,
+								url: "json.htm?type=command&param=setused&idx=" + $.devIdx + '&name=' + encodeURIComponent($("#dialog-addlightdevice #devicename").val()) + '&switchtype=' + $("#dialog-addlightdevice #comboswitchtype").val() + '&used=true&maindeviceidx=' + MainDeviceIdx,
 								async: false,
 								dataType: 'json',
 								success: function (data) {
@@ -2381,6 +2400,7 @@ define(['app', 'livesocket'], function (app) {
 	
 			if (typeof roomPlanId != 'undefined') {
 				ctrl.roomSelected = roomPlanId;
+				window.myglobals.LastPlanSelected = roomPlanId;
 			}
 			ctrl.changeRoom = function () {
 				var idx = ctrl.roomSelected;

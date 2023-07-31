@@ -448,6 +448,7 @@ typedef struct _tUsageMeter
 		len = sizeof(_tUsageMeter) - 1;
 		type = pTypeUsage;
 		subtype = sTypeElectric;
+		rssi = 0;
 		id1 = 0;
 		id2 = 0;
 		id3 = 0;
