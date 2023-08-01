@@ -121,7 +121,7 @@ int tuyaAPI33::BuildTuyaMessage(unsigned char *buffer, const uint8_t command, st
 
 std::string tuyaAPI33::DecodeTuyaMessage(unsigned char* buffer, const int size, const std::string &encryption_key)
 {
-	std::string result;
+	std::string result = "";
 
 	int message_start = 0;
 
@@ -171,14 +171,21 @@ std::string tuyaAPI33::DecodeTuyaMessage(unsigned char* buffer, const int size, 
 					decryptedpayload[payload_len - padding] = 0;
 
 				result.append((char*)decryptedpayload);
+				if (result[0] != '{')
+				{
+					if (result.find("json obj") != std::string::npos)
+						result = "{\"msg\":\"protocol mismatch\"}";
+					else
+						result = "{\"msg\":\"unexpected response from device (wrong key?)\"}";
+				}
 			}
 			catch (const std::exception& e)
 			{
-				result.append("{\"msg\":\"error decrypting payload\"}");
+				result = "{\"msg\":\"error decrypting payload\"}";
 			}
 		}
 		else
-			result.append("{\"msg\":\"crc error\"}");
+			result = "{\"msg\":\"crc error\"}";
 
 		message_start += message_size;
 	}

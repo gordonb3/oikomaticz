@@ -158,14 +158,29 @@ void CLocalTuya::Do_Work()
 	// connect to devices
 	Log(LOG_STATUS, "Setup tuya communication threads");
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT ID,Name,DeviceID,LocalKey,IPAddress,EnergyDivider FROM TuyaDevices WHERE (HardwareID=%d)", m_HwdID);
+	result = m_sql.safe_query("SELECT ID,Name,DeviceID,LocalKey,IPAddress,ProtocolVersion,EnergyDivider FROM TuyaDevices WHERE (HardwareID=%d)", m_HwdID);
 	if (!result.empty())
 	{
 		for (const auto &sd : result)
 		{
 			uint32_t ID = atoi(sd[0].c_str());
-			int energyDivider = atoi(sd[5].c_str());
-			TuyaMonitor* tuyadevice = new TuyaMonitor(ID, sd[1], sd[2], sd[3], sd[4], energyDivider);
+			int energyDivider = atoi(sd[6].c_str());
+			std::string protocolVersion = sd[5];
+			device::tuya::protocolversion::value eProtocolVersion;
+			if (protocolVersion.empty())
+			{
+				protocolVersion = "3.3";
+				eProtocolVersion = device::tuya::protocolversion::v33;
+				m_sql.safe_query("UPDATE TuyaDevices SET ProtocolVersion='%s' WHERE ID=%d AND HardwareID=%d", protocolVersion, ID, m_HwdID);
+			}
+			else
+			{
+				if (protocolVersion == "3.3")
+					eProtocolVersion = device::tuya::protocolversion::v33;
+				else if (protocolVersion == "3.3.1")
+					eProtocolVersion = device::tuya::protocolversion::v33_1;
+			}
+			TuyaMonitor* tuyadevice = new TuyaMonitor(ID, sd[1], sd[2], sd[3], sd[4], eProtocolVersion, energyDivider);
 			tuyadevice->sigSendMeter.connect([this](auto devicedata) {SendMeter(devicedata);});
 			tuyadevice->sigSendSwitch.connect([this](auto devicedata) {SendSwitch(devicedata);});
 			tuyadevice->sigSendVoltage.connect([this](auto devicedata) {SendVoltage(devicedata);});
@@ -366,7 +381,7 @@ namespace http {
 			root["title"] = "TuyaGetDevices";
 
 			std::vector<std::vector<std::string> > result;
-			result = m_sql.safe_query("SELECT ID,Name,IPAddress,DeviceID,LocalKey,EnergyDivider FROM TuyaDevices WHERE (HardwareID=%d)", iHardwareID);
+			result = m_sql.safe_query("SELECT ID,Name,IPAddress,DeviceID,LocalKey,ProtocolVersion,EnergyDivider FROM TuyaDevices WHERE (HardwareID=%d)", iHardwareID);
 			if (!result.empty())
 			{
 				int ii = 0;
@@ -377,7 +392,8 @@ namespace http {
 					root["result"][ii]["IP"] = sd[2];
 					root["result"][ii]["Tuya_ID"] = sd[3];
 					root["result"][ii]["Local_Key"] = sd[4];
-					root["result"][ii]["EnergyDivider"] = sd[5];
+					root["result"][ii]["Protocol_Version"] = sd[5];
+					root["result"][ii]["EnergyDivider"] = sd[6];
 					ii++;
 				}
 			}
@@ -404,6 +420,7 @@ namespace http {
 			std::string tuyaID = request::findValue(&req, "tuyaid");
 			std::string localkey = request::findValue(&req, "localkey");
 			std::string IP_Address = request::findValue(&req, "ipaddr");
+			std::string protocolversion = request::findValue(&req, "protocolversion");
 			std::string sEnergyDivider = request::findValue(&req, "energydivider");
 			int iEnergyDivider = atoi(sEnergyDivider.c_str());
 
@@ -415,7 +432,7 @@ namespace http {
 			if (!result.empty())
 				nid = atoi(result[0][0].c_str()) + 1;
 
-			m_sql.safe_query("INSERT INTO TuyaDevices VALUES (%d,%d,'%s','%s','%s','%s',%d)", nid, iHardwareID, tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), iEnergyDivider);
+			m_sql.safe_query("INSERT INTO TuyaDevices VALUES (%d,%d,'%s','%s','%s','%s','%s', %d)", nid, iHardwareID, tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), protocolversion.c_str(), iEnergyDivider);
 			m_mainworker.RestartHardware(hwid);
 			root["status"] = "OK";
 		}
@@ -444,9 +461,10 @@ namespace http {
 			std::string tuyaID = request::findValue(&req, "tuyaid");
 			std::string localkey = request::findValue(&req, "localkey");
 			std::string IP_Address = request::findValue(&req, "ipaddr");
+			std::string protocolversion = request::findValue(&req, "protocolversion");
 			std::string sEnergyDivider = request::findValue(&req, "energydivider");
 			int iEnergyDivider = atoi(sEnergyDivider.c_str());
-_log.Log(LOG_STATUS,"UPDATE TuyaDevices SET DeviceID='%s', LocalKey='%s', IPAddress='%s', Name='%s', energyDivider=%d WHERE (ID=%d) AND (HardwareID=%d)", tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), iEnergyDivider,nid, iHardwareID);
+_log.Log(LOG_STATUS,"UPDATE TuyaDevices SET DeviceID='%s', LocalKey='%s', IPAddress='%s', Name='%s', ProtocolVersion='%s', energyDivider=%d WHERE (ID=%d) AND (HardwareID=%d)", tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), protocolversion.c_str(), iEnergyDivider, nid, iHardwareID);
 
 			m_sql.safe_query("UPDATE TuyaDevices SET DeviceID='%s', LocalKey='%s', IPAddress='%s', Name='%s', energyDivider=%d WHERE (ID=%d) AND (HardwareID=%d)", tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), iEnergyDivider, nid, iHardwareID);
 			m_mainworker.RestartHardware(hwid);

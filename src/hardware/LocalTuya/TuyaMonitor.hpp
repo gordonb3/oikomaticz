@@ -33,6 +33,12 @@ namespace connectstate {
 		STOPPED
 	};
 }; // namespace connectstate
+namespace protocolversion {
+	enum value {
+		v33 = 0,
+		v33_1
+	};
+}; // namespace protocolversion
 }; // namespace tuya
 }; // namespace device
 
@@ -57,7 +63,7 @@ class TuyaMonitor : public StoppableTask
 {
 
 public:
-	TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const int energyDivider);
+	TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const device::tuya::protocolversion::value eProtocolVersion, const int energyDivider);
 	~TuyaMonitor();
 
 	bool StartMonitor();
@@ -77,6 +83,7 @@ private:
 
 	tuyaAPI33 *m_tuyaclient;
 	std::string m_name, m_id, m_key, m_address;
+	device::tuya::protocolversion::value m_protocolversion;
 	unsigned char message_buffer[MAX_BUFFER_SIZE];
 	std::shared_ptr<std::thread> m_thread;
 	bool m_isPowerMeter;

@@ -40,7 +40,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#define OIKOMATICZ_DB_VERSION 2
+#define OIKOMATICZ_DB_VERSION 4
 #define DOMOTICZ_DB_VERSION 163
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
@@ -3273,6 +3273,34 @@ bool CSQLHelper::OpenDatabase()
 				
 			}
 		}
+
+		if (ozdbversion < 3)
+		{
+			// Add Local Tuya module
+			query("CREATE TABLE [TuyaDevices]([ID] INTEGER PRIMARY KEY, [HardwareID] INTEGER NOT NULL, [DeviceID] VARCHAR(30) DEFAULT '',[LocalKey] VARCHAR(30) DEFAULT '',[IPAddress] VARCHAR(60) DEFAULT '',[Name] VARCHAR(60) DEFAULT '', [EnergyDivider] INTEGER DEFAULT 0)");
+		}
+
+		if (ozdbversion < 4)
+		{
+			// extend Local Tuya module to support multiple protocol versions
+			query("ALTER TABLE TuyaDevices ADD COLUMN [ProtocolVersion] VARCHAR(8) DEFAULT ''");
+			query("ALTER TABLE TuyaDevices ADD COLUMN [NewColumn] INTEGER DEFAULT 0");
+			query("UPDATE TuyaDevices SET ProtocolVersion='3.3' WHERE 1");
+			std::vector<std::vector<std::string> > hwresult;
+			hwresult = safe_query("select ID,EnergyDivider from TuyaDevices");
+			if (!hwresult.empty())
+			{
+				for (const auto & itt : hwresult)
+				{
+					std::vector<std::string> sd = itt;
+					safe_query("UPDATE TuyaDevices SET NewColumn=%s ID=%s", sd[1].c_str(), sd[0].c_str());
+				}
+
+			}
+			query("ALTER TABLE TuyaDevices DROP COLUMN [EnergyDivider]");
+			query("ALTER TABLE TuyaDevices RENAME COLUMN [NewColumn] TO [EnergyDivider]");
+		}
+
 	}
 
 	if (bNewInstall)

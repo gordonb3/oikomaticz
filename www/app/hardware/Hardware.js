@@ -3784,6 +3784,7 @@ define(['app'], function (app) {
 								"IP": item.IP,
 								"Tuya_ID": item.Tuya_ID,
 								"Local_Key": item.Local_Key,
+								"Protocol_Version": item.Protocol_Version,
 								"EnergyDivider": item.EnergyDivider,
 								"0": item.idx,
 								"1": item.Name,
@@ -3816,6 +3817,7 @@ define(['app'], function (app) {
 						$('#tuyadeviceparams #tuyaid').val(data["Tuya_ID"]);
 						$('#tuyadeviceparams #localkey').val(data["Local_Key"]);
 						$('#tuyadeviceparams #ipaddress').val(data["IP"]);
+						$('#tuyadeviceparams #protocolversion').val(data["Protocol_Version"]);
 						$('#tuyadeviceparams #energydivider').val(data["EnergyDivider"]);
 
 						$("#tuyaupdel #tuyadeviceupdate").attr("href", "javascript:UpdateTuyaDevice(" + idx + ")");
@@ -3863,6 +3865,7 @@ define(['app'], function (app) {
 				"&tuyaid=" + $("#tuyadeviceparams #tuyaid").val() +
 				"&localkey=" + encodeURIComponent($("#tuyadeviceparams #localkey").val()) +
 				"&ipaddr=" + $("#tuyadeviceparams #ipaddress").val() +
+				"&protocolversion=" + $("#tuyadeviceparams #protocolversion").val() +
 				"&energydivider=" + $("#tuyadeviceparams #energydivider").val(),
 				async: false,
 				dataType: 'json',
@@ -3882,6 +3885,7 @@ define(['app'], function (app) {
 				"&tuyaid=" + $("#tuyadeviceparams #tuyaid").val() +
 				"&localkey=" + encodeURIComponent($("#tuyadeviceparams #localkey").val()) +
 				"&ipaddr=" + $("#tuyadeviceparams #ipaddress").val() +
+				"&protocolversion=" + $("#tuyadeviceparams #protocolversion").val() +
 				"&energydivider=" + $("#tuyadeviceparams #energydivider").val(),
 				async: false,
 				dataType: 'json',

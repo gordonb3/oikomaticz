@@ -24,11 +24,12 @@
 #include <fstream>
 
 
-TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const int energyDivider) :
+TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const device::tuya::protocolversion::value eProtocolVersion, const int energyDivider) :
 	m_name(name),
 	m_id(id),
 	m_key(key),
-	m_address(address)
+	m_address(address),
+	m_protocolversion(eProtocolVersion)
 {
 	m_devicedata = new TuyaData();
 	memset(m_devicedata, 0, sizeof(TuyaData));
@@ -59,10 +60,14 @@ bool TuyaMonitor::ConnectToDevice()
 	// request current state of the device
 	std::stringstream ss_payload;
 	long currenttime = time(NULL) ;
-	ss_payload << "{\"gwId\":\"" << m_id << "\",\"devId\":\"" << m_id << "\",\"uid\":\"" << m_id << "\",\"t\":\"" << currenttime << "\"}";
+	ss_payload << "{\"gwId\":\"" << m_id << "\",\"devId\":\"" << m_id << "\",\"uid\":\"" << m_id << "\",\"t\":\"" << currenttime << "\",\"dps\":{\"1\":null,\"19\":null,\"20\":null}}";
 	std::string payload = ss_payload.str();
 
-	int numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_DP_QUERY, payload, m_key);
+	int numbytes;
+	if (m_protocolversion == device::tuya::protocolversion::v33_1)
+		numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_CONTROL_NEW, payload, m_key);
+	else
+		numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_DP_QUERY, payload, m_key);
 	numbytes = m_tuyaclient->send(message_buffer, numbytes);
 	if (numbytes < 0)
 	{
@@ -84,6 +89,8 @@ bool TuyaMonitor::ConnectToDevice()
 	if (!jStatus.isMember("dps"))
 	{
 		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: received invalid data from %s, verify ID and local key", m_name.c_str());
+		if (jStatus.isMember("msg"))
+			_log.Log(LOG_ERROR, "client returned \"%s\"", jStatus["msg"].asString().c_str());
 		return false;
 	}
 
