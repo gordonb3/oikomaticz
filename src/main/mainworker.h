@@ -9,9 +9,7 @@
 #include <deque>
 #include "WindCalculation.h"
 #include "TrendCalculator.h"
-#include "StoppableTask.h"
 #include "tcpserver/TCPServer.h"
-#include "concurrent_queue.h"
 #include "webserver/server_settings.hpp"
 #include "iamserver/iam_settings.hpp"
 #ifdef ENABLE_PYTHON
@@ -67,12 +65,6 @@ public:
 	bool SetSetPoint(const std::string &idx, float TempValue, const std::string &newMode, const std::string &until);
 	bool SetSetPointInt(const std::vector<std::string> &sd, float TempValue);
 	bool SetThermostatState(const std::string &idx, int newState);
-	bool SetClock(const std::string &idx, const std::string &clockstr);
-	bool SetClockInt(const std::vector<std::string> &sd, const std::string &clockstr);
-	bool SetZWaveThermostatMode(const std::string &idx, int tMode);
-	bool SetZWaveThermostatFanMode(const std::string &idx, int fMode);
-	bool SetZWaveThermostatModeInt(const std::vector<std::string> &sd, int tMode);
-	bool SetZWaveThermostatFanModeInt(const std::vector<std::string> &sd, int fMode);
 
 	bool SwitchEvoModal(const std::string &idx, const std::string &status, const std::string &action, const std::string &ooc, const std::string &until);
 
@@ -226,7 +218,7 @@ private:
 	void decode_Lighting6(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_Fan(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_Curtain(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
-	void decode_BLINDS1(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_BLINDS1(const CDomoticzHardwareBase* pHardware, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult);
 	void decode_RFY(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_Security1(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_Security2(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
@@ -279,6 +271,7 @@ private:
 	void decode_Hunter(const CDomoticzHardwareBase* pHardware, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult);
 	void decode_LevelSensor(const CDomoticzHardwareBase* pHardware, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult);
 	void decode_LightningSensor(const CDomoticzHardwareBase* pHardware, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult);
+	void decode_DDxxxx(const CDomoticzHardwareBase* pHardware, const tRBUF* pResponse, _tRxMessageProcessingResult& procResult);
 };
 
 extern MainWorker m_mainworker;

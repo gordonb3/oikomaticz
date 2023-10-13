@@ -2,7 +2,6 @@
 #include "main/Logger.h"
 #include "main/Helper.h"
 #include "main/SQLHelper.h"
-#include "main/localtime_r.h"
 #include "main/RFXtrx.h"
 #include "main/mainworker.h"
 #include "hardware/DomoticzHardware.h"
@@ -303,10 +302,10 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 					break;
 			}
 			break;
-		case pTypeThermostat:
+		case pTypeSetpoint:
 			switch(cSubType) {
-				case sTypeThermSetpoint:
-					return CheckAndHandleTempHumidityNotification(DevRowIdx, sName, fValue, 0, true, false);
+				case sTypeSetpoint:
+					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, notification::type::SETPOINT, fValue);
 				default:
 					break;
 			}
@@ -459,8 +458,6 @@ bool CNotificationHelper::CheckAndHandleNotification(const uint64_t DevRowIdx, c
 						return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, notification::type::USAGE, fValue2);
 					}
 					break;
-				case sTypeZWaveAlarm:
-					return CheckAndHandleValueNotification(DevRowIdx, sName, nValue);
 				case sTypePercentage:
 					return CheckAndHandleNotification(DevRowIdx, sName, cType, cSubType, notification::type::PERCENTAGE, fValue);
 				case sTypeSoilMoisture:

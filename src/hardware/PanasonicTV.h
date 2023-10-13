@@ -2,7 +2,6 @@
 
 #include "hardware/DomoticzHardware.h"
 
-#include "main/localtime_r.h"
 #include <string>
 #include <boost/asio.hpp>
 

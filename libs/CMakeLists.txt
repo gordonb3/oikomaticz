@@ -38,14 +38,6 @@ add_library(evohome STATIC ${evohome_SRCS})
 
 set(STATIC_LIBRARIES iamserver jsoncpp tinyxpath serial evohome)
 
-# openzwave control panel
-if(OpenZWave)
-  file(GLOB_RECURSE openzwave_SRCS open-zwave-control-panel/*.cpp)
-  add_library(openzwave STATIC ${openzwave_SRCS})
-  list(APPEND STATIC_LIBRARIES openzwave)
-endif()
-
-
 
 ## included libraries that may be used to override dynamicly linked system provided libraries
 

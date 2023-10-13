@@ -13,7 +13,7 @@ define(['app'], function (app) {
 		'RFLink Gateway MQTT': ['MQTTParams', 4],
 	};
 	
-	app.controller('HardwareController', function ($scope, $rootScope, $timeout) {
+	app.controller('HardwareController', function ($scope, $rootScope, $timeout, $http) {
 
 		$scope.SerialPortStr = [];
 		$scope.calledFetch = 0;
@@ -585,6 +585,19 @@ define(['app'], function (app) {
 						Mode2 = 1;
 					username = $("#hardwarecontent #divlogin #username").val();
 					password = $("#hardwarecontent #divlogin #password").val();
+					extra = $("#hardwarecontent #divenphase #siteid").val();
+				}
+				else if (text.indexOf("Alfen") >= 0) {
+					username = $("#hardwarecontent #divlogin #username").val();
+					password = $("#hardwarecontent #divlogin #password").val();
+					
+					if (username == '') {
+						username = 'admin';
+					}
+					if (password == '') {
+						ShowNotify($.t('Please enter a Password!'), 2500, true);
+						return;
+					}
 				}
 
 				$.ajax({
@@ -1339,6 +1352,43 @@ define(['app'], function (app) {
 					}
 				});
 			}
+			else if (text.indexOf("Enever") >= 0) {
+				var access_token = $("#hardwarecontent #divenever #AccessToken").val();
+				if (access_token == "") {
+					ShowNotify($.t('Please enter an Access Token!'), 2500, true);
+					return;
+				}
+				var providerAC = $("#hardwarecontent #divenever #providerAC").find("option:selected").val()
+				if (providerAC == "") {
+					ShowNotify($.t('Please enter a Electricity Provider!'), 2500, true);
+					return;
+				}
+				var providerGas = $("#hardwarecontent #divenever #providerGas").find("option:selected").val()
+				if (providerGas == "") {
+					ShowNotify($.t('Please enter a Gas Provider!'), 2500, true);
+					return;
+				}
+				var provider = providerAC + ";" + providerGas;
+				$.ajax({
+					url: "json.htm?type=command&param=updatehardware&htype=" + hardwaretype +
+					"&loglevel=" + logLevel +
+					"&name=" + encodeURIComponent(name) +
+					"&username=" + encodeURIComponent(access_token) +
+					"&extra=" + encodeURIComponent(provider) +
+					"&enabled=" + bEnabled +
+					"&idx=" + idx +
+					"&datatimeout=" + datatimeout +
+					"&Mode2=" + Mode2 + "&Mode3=" + Mode3 + "&Mode4=" + Mode4 + "&Mode5=" + Mode5 + "&Mode6=" + Mode6,
+					async: false,
+					dataType: 'json',
+					success: function (data) {
+						RefreshHardwareTable();
+					},
+					error: function () {
+						ShowNotify($.t('Problem updating hardware!'), 2500, true);
+					}
+				});
+			}
 			else if (text.indexOf("Honeywell Lyric") >= 0) {
 				var apiKey = $("#hardwarecontent #divhoneywelllyric #hwApiKey").val();
 				var apiSecret = $("#hardwarecontent #divhoneywelllyric #hwApiSecret").val();
@@ -1747,6 +1797,18 @@ define(['app'], function (app) {
 						Mode2 = 1;
 					username = $("#hardwarecontent #divlogin #username").val();
 					password = $("#hardwarecontent #divlogin #password").val();
+					extra = $("#hardwarecontent #divenphase #siteid").val();
+				}
+				else if (text.indexOf("Alfen") >= 0) {
+					username = $("#hardwarecontent #divlogin #username").val();
+					if (username == '') {
+						username = 'admin';
+					}
+					password = $("#hardwarecontent #divlogin #password").val();
+					if (password == '') {
+						ShowNotify($.t('Please enter a Password!'), 2500, true);
+						return;
+					}
 				}
 				
 				$.ajax({
@@ -2541,6 +2603,41 @@ define(['app'], function (app) {
 					}
 				});
 			}
+			else if (text.indexOf("Enever") >= 0) {
+				var access_token = $("#hardwarecontent #divenever #AccessToken").val();
+				if (access_token == "") {
+					ShowNotify($.t('Please enter an Access Token!'), 2500, true);
+					return;
+				}
+				var providerAC = $("#hardwarecontent #divenever #providerAC").find("option:selected").val()
+				if (providerAC == "") {
+					ShowNotify($.t('Please enter a Electricity Provider!'), 2500, true);
+					return;
+				}
+				var providerGas = $("#hardwarecontent #divenever #providerGas").find("option:selected").val()
+				if (providerGas == "") {
+					ShowNotify($.t('Please enter a Gas Provider!'), 2500, true);
+					return;
+				}
+				var provider = providerAC + ";" + providerGas;
+				$.ajax({
+					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype +
+					"&loglevel=" + logLevel +
+					"&name=" + encodeURIComponent(name) +
+					"&username=" + encodeURIComponent(access_token) +
+					"&extra=" + encodeURIComponent(provider) +
+					"&enabled=" + bEnabled +
+					"&datatimeout=" + datatimeout,
+					async: false,
+					dataType: 'json',
+					success: function (data) {
+						RefreshHardwareTable();
+					},
+					error: function () {
+						ShowNotify($.t('Problem adding hardware!'), 2500, true);
+					}
+				});
+			}
 			else if (text.indexOf("Honeywell Lyric") >= 0) {
 				var apiKey = $("#hardwarecontent #divhoneywelllyric #hwApiKey").val();
 				var apiSecret = $("#hardwarecontent #divhoneywelllyric #hwApiSecret").val();
@@ -2978,8 +3075,16 @@ define(['app'], function (app) {
 		}
 
 		SetCCUSBType = function () {
-			$.post("setcurrentcostmetertype.webem", $("#hardwarecontent #ccusbtype").serialize(), function (data) {
+			$http({
+				url: "json.htm?type=command&param=setccmetertype&idx=" + $('#hardwarecontent #ccusbtype #idx').val() + "&CCBaudrate=" + $('#hardwarecontent #ccusbtype #CCBaudrate').val()
+			}).then(function successCallback(response) {
+				var data = response.data;
+				if (data.status != "OK") {
+					ShowNotify($.t(data.error), 2500, true);
+					return;
+				}
 				ShowHardware();
+				return;
 			});
 		}
 
@@ -3784,7 +3889,6 @@ define(['app'], function (app) {
 								"IP": item.IP,
 								"Tuya_ID": item.Tuya_ID,
 								"Local_Key": item.Local_Key,
-								"Protocol_Version": item.Protocol_Version,
 								"EnergyDivider": item.EnergyDivider,
 								"0": item.idx,
 								"1": item.Name,
@@ -3817,7 +3921,6 @@ define(['app'], function (app) {
 						$('#tuyadeviceparams #tuyaid').val(data["Tuya_ID"]);
 						$('#tuyadeviceparams #localkey').val(data["Local_Key"]);
 						$('#tuyadeviceparams #ipaddress').val(data["IP"]);
-						$('#tuyadeviceparams #protocolversion').val(data["Protocol_Version"]);
 						$('#tuyadeviceparams #energydivider').val(data["EnergyDivider"]);
 
 						$("#tuyaupdel #tuyadeviceupdate").attr("href", "javascript:UpdateTuyaDevice(" + idx + ")");
@@ -3863,9 +3966,8 @@ define(['app'], function (app) {
 			$.ajax({
 				url: "json.htm?type=command&param=addtuyadevice&idx=" + $.devIdx + "&name=" + encodeURIComponent($("#tuyadeviceparams #devicename").val()) +
 				"&tuyaid=" + $("#tuyadeviceparams #tuyaid").val() +
-				"&localkey=" + encodeURIComponent($("#tuyadeviceparams #localkey").val()) +
+				"&localkey=" + $("#tuyadeviceparams #localkey").val() +
 				"&ipaddr=" + $("#tuyadeviceparams #ipaddress").val() +
-				"&protocolversion=" + $("#tuyadeviceparams #protocolversion").val() +
 				"&energydivider=" + $("#tuyadeviceparams #energydivider").val(),
 				async: false,
 				dataType: 'json',
@@ -3883,9 +3985,8 @@ define(['app'], function (app) {
 				url: "json.htm?type=command&param=updatetuyadevice&idx=" + $.devIdx + "&devid=" + devid +
 				"&name=" + encodeURIComponent($("#tuyadeviceparams #devicename").val()) +
 				"&tuyaid=" + $("#tuyadeviceparams #tuyaid").val() +
-				"&localkey=" + encodeURIComponent($("#tuyadeviceparams #localkey").val()) +
+				"&localkey=" + $("#tuyadeviceparams #localkey").val() +
 				"&ipaddr=" + $("#tuyadeviceparams #ipaddress").val() +
-				"&protocolversion=" + $("#tuyadeviceparams #protocolversion").val() +
 				"&energydivider=" + $("#tuyadeviceparams #energydivider").val(),
 				async: false,
 				dataType: 'json',
@@ -4000,18 +4101,10 @@ define(['app'], function (app) {
 							else if (HwTypeStr.indexOf("Limitless") >= 0) {
 								HwTypeStr += ' <span class="label label-info lcursor" onclick="EditLimitlessType(' + item.idx + ',\'' + item.Name + '\',' + item.Mode1 + ',' + item.Mode2 + ',' + item.Mode3 + ',' + item.Mode4 + ',' + item.Mode5 + ',' + item.Mode6 + ');">' + $.t("Set Mode") + '</span>';
 							}
-							else if (HwTypeStr.indexOf("OpenZWave") >= 0) {
-								HwTypeStr += '<br>Version: ' + item.version;
-
-								if (typeof item.NodesQueried != 'undefined') {
-									var lblStatus = "label-info";
-									if (item.NodesQueried != true) {
-										lblStatus = "label-important";
-									}
-									HwTypeStr += ' <a href="#/Hardware/' + item.idx + '" class="label ' + lblStatus + ' btn-link">' + $.t("Setup") + '</a>';
-								}
-							}
 							else if (HwTypeStr.indexOf("Enphase") >= 0) {
+								HwTypeStr += '<br>Version: ' + item.version;
+							}							
+							else if (HwTypeStr.indexOf("Alfen") >= 0) {
 								HwTypeStr += '<br>Version: ' + item.version;
 							}							
 							else if (HwTypeStr.indexOf("EnOcean") >= 0 && HwTypeStr.indexOf("(ESP3)") >= 0) {
@@ -4092,7 +4185,7 @@ define(['app'], function (app) {
 								HwTypeStr += ' <span class="label label-info lcursor" onclick="EditRego6XXType(' + item.idx + ',\'' + item.Name + '\',' + item.Mode1 + ',' + item.Mode2 + ',' + item.Mode3 + ',' + item.Mode4 + ',' + item.Mode5 + ',' + item.Mode6 + ');">Change Type</span>';
 							}
 							else if (HwTypeStr.indexOf("CurrentCost Meter USB") >= 0) {
-								HwTypeStr += ' <span class="label label-info lcursor" onclick="EditCCUSB(' + item.idx + ',\'' + item.Name + '\',\'' + item.Address + '\');">' + $.t("Set Mode") + '</span>';
+								HwTypeStr += ' <span class="label label-info lcursor" onclick="EditCCUSB(' + item.idx + ',\'' + item.Name + '\',\'' + item.Mode1 + '\');">' + $.t("Set Mode") + '</span>';
 							}
 							else if (HwTypeStr.indexOf("Tellstick") >= 0) {
 								HwTypeStr += ' <span class="label label-info lcursor" onclick="TellstickSettings(' + item.idx + ',\'' + item.Name + '\',' + item.Mode1 + ',' + item.Mode2 + ');">' + $.t("Settings") + '</span>';
@@ -4354,6 +4447,7 @@ define(['app'], function (app) {
 									pollInterval=120;
 								$("#hardwarecontent #divenphase #pollinterval").val(pollInterval);
 								$("#hardwarecontent #divenphase #readinverters").prop('checked', parseInt(data["Mode2"]) != 0);
+								$("#hardwarecontent #divenphase #siteid").val(data["Extra"]);
 							}
 						}
 						else if (
@@ -4536,6 +4630,18 @@ define(['app'], function (app) {
 							$("#hardwarecontent #hardwareparamswinddelen #combomillselect").val(data["Mode1"]);
 							$("#hardwarecontent #hardwareparamswinddelen #nrofwinddelen").val(data["Port"]);
 						}
+						else if (data["Type"].indexOf("Enever") >= 0) {
+							$("#hardwarecontent #divenever #AccessToken").val(data["Username"]);
+							var ProviderParts = data["Extra"].split(";");
+							if (ProviderParts.length == 1) {
+								$("#hardwarecontent #divenever #providerAC").val(ProviderParts[0]);
+								$("#hardwarecontent #divenever #providerGas").val(ProviderParts[0]);
+							}
+							else if (ProviderParts.length == 2) {
+								$("#hardwarecontent #divenever #providerAC").val(ProviderParts[0]);
+								$("#hardwarecontent #divenever #providerGas").val(ProviderParts[1]);
+							}
+						}
 						else if (data["Type"].indexOf("Honeywell Lyric") >= 0) {
 							$("#hardwarecontent #hardwareparamshoneywelllyric #hwAccessToken").val(data["Username"]);
 							$("#hardwarecontent #hardwareparamshoneywelllyric #hwRefreshToken").val(data["Password"]);
@@ -4596,6 +4702,7 @@ define(['app'], function (app) {
 							(data["Type"].indexOf("PVOutput") >= 0) ||
 							(data["Type"].indexOf("ETH8020") >= 0) ||
 							(data["Type"].indexOf("Daikin") >= 0) ||
+							(data["Type"].indexOf("Alfen") >= 0) ||
 							(data["Type"].indexOf("Sterbox") >= 0) ||
 							(data["Type"].indexOf("Anna") >= 0) ||
 							(data["Type"].indexOf("KMTronic") >= 0) ||
@@ -4616,7 +4723,7 @@ define(['app'], function (app) {
 							$("#hardwarecontent #hardwareparamslogin #username").val(data["Username"]);
 							$("#hardwarecontent #hardwareparamslogin #password").val(data["Password"]);
 						}
-						if (data["Type"].indexOf("Evohome via Web") >= 0) {
+						else if (data["Type"].indexOf("Evohome via Web") >= 0) {
 							$("#hardwarecontent #hardwareparamslogin #username").val(data["Username"]);
 							$("#hardwarecontent #hardwareparamslogin #password").val(data["Password"]);
 
@@ -4773,6 +4880,7 @@ define(['app'], function (app) {
 			$("#hardwarecontent #divphilipshue").hide();
 			$("#hardwarecontent #divwinddelen").hide();
 			$("#hardwarecontent #divenphase").hide();
+			$("#hardwarecontent #divenever").hide();
 			$("#hardwarecontent #divhoneywelllyric").hide();
 			$("#hardwarecontent #divmqtt").hide();
 			$("#hardwarecontent #divmysensorsmqtt").hide();
@@ -4851,6 +4959,7 @@ define(['app'], function (app) {
 					$("#hardwarecontent #divbaudratemysensors").show();
 				}
 				if (text.indexOf("P1 Smart Meter") >= 0) {
+					$("#hardwarecontent #hardwareparamsratelimitp1 #ratelimitp1").val(5);
 					$("#hardwarecontent #divbaudratep1").show();
 					$("#hardwarecontent #divkeyp1p1").show();
 				}
@@ -4902,6 +5011,15 @@ define(['app'], function (app) {
 						$("#hardwarecontent #divenphase").show();
 						$("#hardwarecontent #divlogin").show();
 					}
+					else if (text.indexOf("Alfen") >= 0) {
+						$("#hardwarecontent #divlogin").show();
+						$("#hardwarecontent #hardwareparamsremote #tcpport").val(443);
+						$("#hardwarecontent #username").val("admin");
+					}
+					else if (text.indexOf("Mitsubishi WF") >= 0) {
+						$("#hardwarecontent #hardwareparamsremote #tcpport").val(51443);
+					}
+					
 			}
 			else if (
 					(text.indexOf("LAN") >= 0 || text.indexOf("MySensors Gateway with MQTT") >= 0) &&
@@ -5087,6 +5205,9 @@ define(['app'], function (app) {
 			}
 			if (text.indexOf("MySensors Gateway with MQTT") >= 0) {
 				$("#hardwarecontent #divmysensorsmqtt").show();
+			}
+			else if (text.indexOf("Enever") >= 0) {
+				$("#hardwarecontent #divenever").show();
 			}
 			else if (text.indexOf("MQTT") >= 0) {
 			    $("#hardwarecontent #divmqtt").show();

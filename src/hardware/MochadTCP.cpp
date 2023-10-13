@@ -2,7 +2,6 @@
 #include "MochadTCP.h"
 #include "main/Logger.h"
 #include "main/Helper.h"
-#include "main/localtime_r.h"
 #include "main/RFXtrx.h"
 #include <iostream>
 
@@ -128,7 +127,7 @@ void MochadTCP::OnDisconnect()
 
 void MochadTCP::OnData(const unsigned char *pData, size_t length)
 {
-	ParseData(pData, length);
+	ParseData(pData, static_cast<int>(length));
 }
 
 void MochadTCP::Do_Work()

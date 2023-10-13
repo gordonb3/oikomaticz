@@ -60,7 +60,6 @@ class CWebServer : public session_store, public std::enable_shared_from_this<CWe
 	void ReloadPiFace(WebEmSession & session, const request& req, std::string & redirect_uri);
 	void RestoreDatabase(WebEmSession & session, const request& req, std::string & redirect_uri);
 	void SBFSpotImportOldData(WebEmSession & session, const request& req, std::string & redirect_uri);
-	void SetCurrentCostUSBType(WebEmSession & session, const request& req, std::string & redirect_uri);
 
 	cWebem *m_pWebEm;
 
@@ -71,8 +70,9 @@ class CWebServer : public session_store, public std::enable_shared_from_this<CWe
 	void ClearUserPasswords();
 	bool FindAdminUser();
 	int CountAdminUsers();
-
 	int FindUser(const char* szUserName);
+	int FindClient(const char* szClientName);
+
 	void SetWebCompressionMode(_eWebCompressionMode gzmode);
 	void SetAllowPlainBasicAuth(const bool allow);
 	void SetWebTheme(const std::string &themename);
@@ -95,7 +95,7 @@ class CWebServer : public session_store, public std::enable_shared_from_this<CWe
 
 private:
 	bool HandleCommandParam(const std::string &cparam, WebEmSession & session, const request& req, Json::Value &root);
-    void GroupBy(Json::Value &root, std::string dbasetable, uint64_t idx, std::string sgroupby, std::function<std::string (std::string)> counterExpr, std::function<std::string (std::string)> valueExpr, std::function<std::string (double)> sumToResult);
+    void GroupBy(Json::Value &root, std::string dbasetable, uint64_t idx, std::string sgroupby, bool bUseValuesOrCounter, std::function<std::string (std::string)> counterExpr, std::function<std::string (std::string)> valueExpr, std::function<std::string (double)> sumToResult);
     void AddTodayValueToResult(Json::Value &root, const std::string &sgroupby, const std::string &today, const double todayValue, const std::string &formatString);
 
 	bool IsIdxForUser(const WebEmSession *pSession, int Idx);
@@ -290,6 +290,11 @@ private:
 	void Cmd_UpdateCamera(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_DeleteCamera(WebEmSession & session, const request& req, Json::Value &root);
 
+	void Cmd_GetApplications(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_AddApplication(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_UpdateApplication(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_DeleteApplication(WebEmSession & session, const request& req, Json::Value &root);
+
 	void Cmd_P1SetOptions(WebEmSession & session, const request& req, Json::Value &root);
 
 	void Cmd_TuyaGetDevices(WebEmSession & session, const request& req, Json::Value &root);
@@ -342,60 +347,15 @@ private:
 	void Cmd_RemoteWebClientsLog(WebEmSession& session, const request& req, Json::Value& root);
 	void Cmd_SetUsed(WebEmSession & session, const request& req, Json::Value &root);
 
+	//Migrated ActionCodes
+	void Cmd_SetCurrentCostUSBType(WebEmSession& session, const request& req, Json::Value& root);
+
 	void Cmd_ClearUserDevices(WebEmSession& session, const request& req, Json::Value& root);
 
 	//MQTT-AD
 	void Cmd_MQTTAD_GetConfig(WebEmSession& session, const request& req, Json::Value& root);
 	void Cmd_MQTTAD_UpdateNumber(WebEmSession& session, const request& req, Json::Value& root);
 
-#ifdef WITH_OPENZWAVE
-	//ZWave
-	void Cmd_ZWaveUpdateNode(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveDeleteNode(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveInclude(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveExclude(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveIsNodeReplaced(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveIsNodeIncluded(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveIsNodeExcluded(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveIsHasNodeFailedDone(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveSoftReset(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveHardReset(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveNetworkHeal(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveNodeHeal(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveNetworkInfo(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveRemoveGroupNode(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveAddGroupNode(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveGroupInfo(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveCancel(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ApplyZWaveNodeConfig(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveStateCheck(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveHasNodeFailed(WebEmSession& session, const request& req, Json::Value& root);
-	void Cmd_ZWaveReplaceFailedNode(WebEmSession& session, const request& req, Json::Value& root);
-	void Cmd_ZWaveRequestNodeConfig(WebEmSession& session, const request& req, Json::Value& root);
-	void Cmd_ZWaveRequestNodeInfo(WebEmSession& session, const request& req, Json::Value& root);
-	void Cmd_ZWaveReceiveConfigurationFromOtherController(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveSendConfigurationToSecondaryController(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveTransferPrimaryRole(WebEmSession & session, const request& req, Json::Value &root);
-	void ZWaveGetConfigFile(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPPollXml(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPIndex(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPNodeGetConf(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPNodeGetValues(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPNodeSetValue(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPNodeSetButton(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPAdminCommand(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPNodeChange(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPGetTopo(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPGetStats(WebEmSession & session, const request& req, reply & rep);
-	void ZWaveCPSetGroup(WebEmSession & session, const request& req, reply & rep);
-	void Cmd_ZWaveSetUserCodeEnrollmentMode(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveGetNodeUserCodes(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_ZWaveRemoveUserCode(WebEmSession & session, const request& req, Json::Value &root);
-	void ZWaveCPTestHeal(WebEmSession & session, const request& req, reply & rep);
-	void Cmd_ZWaveGetBatteryLevels(WebEmSession& session, const request& req, Json::Value& root);
-	void Cmd_GetOpenZWaveNodes(WebEmSession & session, const request& req, Json::Value &root);
-	int m_ZW_Hwidx;
-#endif
 	//EnOcean helpers cmds
 	void Cmd_EnOceanGetManufacturers(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_EnOceanGetRORGs(WebEmSession & session, const request& req, Json::Value &root);

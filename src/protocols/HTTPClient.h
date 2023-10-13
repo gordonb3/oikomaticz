@@ -22,7 +22,7 @@ class HTTPClient
 	 *									*
 	 ************************************************************************/
 
-	static bool GET(const std::string &szUrl, std::string &szResponse, const bool bIgnoreNoDataReturned = false);
+	static bool GET(const std::string &szUrl, std::string &szResponse, const bool bIgnoreNoDataReturned = false, const bool bStartNewSession = false);
 	static bool GETSingleLine(const std::string &szUrl, std::string &szResponse, const bool bIgnoreNoDataReturned = false);
 	static bool GETBinaryToFile(const std::string &szUrl, const std::string &szOutputFile);
 
@@ -34,7 +34,7 @@ class HTTPClient
 	 *									*
 	 ************************************************************************/
 
-	static bool GET(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bIgnoreNoDataReturned = false);
+	static bool GET(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bIgnoreNoDataReturned = false, const bool bStartNewSession = false);
 	static bool POST(const std::string &szUrl, const std::string &szPostdata, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bFollowRedirect = true, const bool bIgnoreNoDataReturned = false);
 	static bool PUT(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bIgnoreNoDataReturned = false);
 	static bool DELETE(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bIgnoreNoDataReturned = false);
@@ -48,7 +48,7 @@ class HTTPClient
 	 *									*
 	 ************************************************************************/
 
-	static bool GET(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned = false);
+	static bool GET(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned = false, const bool bStartNewSession = false);
 	static bool POST(const std::string &szUrl, const std::string &szPostdata, const std::vector<std::string> &ExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bFollowRedirect = true, const bool bIgnoreNoDataReturned = false);
 	static bool PUT(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &ExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned = false);
 	static bool DELETE(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &ExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned = false);
@@ -62,7 +62,7 @@ class HTTPClient
 	 *									*
 	 ************************************************************************/
 
-	static bool GETBinary(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, const long iTimeOut = -1);
+	static bool GETBinary(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, const long iTimeOut = -1, const bool bStartNewSession = false);
 	static bool GETBinarySingleLine(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, const long iTimeOut = -1);
 	static bool POSTBinary(const std::string &szUrl, const std::string &szPostdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, const bool bFollowRedirect = true, const long iTimeOut = -1);
 	static bool PUTBinary(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, const long iTimeOut = -1);
@@ -74,7 +74,7 @@ class HTTPClient
 	 *									*
 	 ************************************************************************/
 
-	static bool GETBinary(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, std::vector<std::string> &vHeaderData, const long iTimeOut = -1);
+	static bool GETBinary(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, std::vector<std::string> &vHeaderData, const long iTimeOut = -1, const bool bStartNewSession = false);
 	static bool GETBinarySingleLine(const std::string &szUrl, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, std::vector<std::string> &vHeaderData, const long iTimeOut = -1);
 	static bool POSTBinary(const std::string &szUrl, const std::string &szPostdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse, std::vector<std::string> &vHeaderData, const bool bFollowRedirect = true, const long iTimeOut = -1);
 	static bool PUTBinary(const std::string &szUrl, const std::string &szPutdata, const std::vector<std::string> &ExtraHeaders, std::vector<unsigned char> &vResponse,

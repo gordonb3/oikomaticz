@@ -3,7 +3,6 @@
 #include "main/Helper.h"
 #include "main/Logger.h"
 #include "hardware/hardwaretypes.h"
-#include "main/localtime_r.h"
 #include "main/WebServerHelper.h"
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
@@ -147,12 +146,12 @@ bool Lyric::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 			return true;
 		}
 	}
-	else if (pCmd->LIGHTING2.packettype == pTypeThermostat && pCmd->LIGHTING2.subtype == sTypeThermSetpoint)
+	else if (pCmd->ICMND.packettype == pTypeSetpoint && pCmd->LIGHTING2.subtype == sTypeSetpoint)
 	{
-		const tThermostat *therm = reinterpret_cast<const tThermostat*>(pdata);
+		const tSetpoint* therm = reinterpret_cast<const tSetpoint*>(pdata);
 		int nodeID = (int)therm->id4;
 		int devID = nodeID / 10;
-		SetSetpoint(devID, therm->temp, nodeID);
+		SetSetpoint(devID, therm->value, nodeID);
 		return true;
 	}
 	return false;
@@ -416,17 +415,15 @@ void Lyric::SendOnOffSensor(const int NodeID, const device::tswitch::type::value
 //
 void Lyric::SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
 {
-	tThermostat thermos;
-	thermos.type = pTypeThermostat;
-	thermos.subtype = sTypeThermSetpoint;
+	tSetpoint thermos;
+	thermos.type = pTypeSetpoint;
+	thermos.subtype = sTypeSetpoint;
 	thermos.id1 = 0;
 	thermos.id2 = 0;
 	thermos.id3 = 0;
 	thermos.id4 = Idx;
 	thermos.dunit = 0;
-
-	thermos.temp = Temp;
-
+	thermos.value = Temp;
 	sDecodeRXMessage(this, (const unsigned char *)&thermos, defaultname.c_str(), 255, nullptr);
 }
 

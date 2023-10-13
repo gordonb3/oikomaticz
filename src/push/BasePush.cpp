@@ -175,8 +175,8 @@ const char* RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 		{ pTypeRemote, sTypePCremote, "Status" },
 		{ pTypeRemote, sTypeATIrw2, "Status" },
 
-		{ pTypeThermostat1, sTypeDigimax, "Temperature,Set point,Mode,Status" },
-		{ pTypeThermostat1, sTypeDigimaxShort, "Temperature,Set point,Mode,Status" },
+		{ pTypeThermostat1, sTypeDigimax, "Temperature,Setpoint,Mode,Status" },
+		{ pTypeThermostat1, sTypeDigimaxShort, "Temperature,Setpoint,Mode,Status" },
 
 		{ pTypeThermostat2, sTypeHE105, "Status" },
 		{ pTypeThermostat2, sTypeRTS10, "Status" },
@@ -238,13 +238,9 @@ const char* RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 		{ pTypeGeneral, sTypeCurrent, "Current" },
 		{ pTypeGeneral, sTypePressure, "Pressure" },
 		{ pTypeGeneral, sTypeBaro, "Barometer" },
-		{ pTypeGeneral, sTypeSetPoint, "Temperature" },
+		{ pTypeGeneral, sTypeSetPoint, "Setpoint" },
 		{ pTypeGeneral, sTypeTemperature, "Temperature" },
-		{ pTypeGeneral, sTypeZWaveClock, "Thermostat Clock" },
 		{ pTypeGeneral, sTypeTextStatus, "Text" },
-		{ pTypeGeneral, sTypeZWaveThermostatMode, "Thermostat Mode" },
-		{ pTypeGeneral, sTypeZWaveThermostatFanMode, "Thermostat Fan Mode" },
-		{ pTypeGeneral, sTypeZWaveThermostatOperatingState, "Thermostat Operating State" },
 		{ pTypeGeneral, sTypeAlert, "Alert" },
 		{ pTypeGeneral, sTypeSoundLevel, "Sound Level" },
 		{ pTypeGeneral, sTypeUV, "UV,Temperature" },
@@ -253,11 +249,10 @@ const char* RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 		{ pTypeGeneral, sTypeKwh, "Instant,Usage" },
 		{ pTypeGeneral, sTypeWaterflow, "Percentage" },
 		{ pTypeGeneral, sTypeCustom, "Percentage" },
-		{ pTypeGeneral, sTypeZWaveAlarm, "Status" },
 		{ pTypeGeneral, sTypeManagedCounter, "Counter" },
 
-		{ pTypeThermostat, sTypeThermSetpoint, "Temperature" },
-		{ pTypeThermostat, sTypeThermTemperature, "Temperature" },
+		{ pTypeSetpoint, sTypeSetpoint, "Setpoint" },
+		{ pTypeSetpoint, sTypeThermTemperature, "Temperature" },
 
 		{ pTypeChime, sTypeByronSX, "Status" },
 		{ pTypeChime, sTypeByronMP001, "Status" },
@@ -285,7 +280,7 @@ const char* RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 		{ pTypeRFY, sTypeRFYext, "Status" },
 		{ pTypeRFY, sTypeASA, "Status" },
 		{ pTypeEvohome, sTypeEvohome, "Status" },
-		{ pTypeEvohomeZone, sTypeEvohomeZone, "Temperature,Set point,Status" },
+		{ pTypeEvohomeZone, sTypeEvohomeZone, "Temperature,Setpoint,Status" },
 		{ pTypeEvohomeWater, sTypeEvohomeWater, "Temperature,State,Status" },
 		{ pTypeEvohomeRelay, sTypeEvohomeRelay, "Status,Value" },
 
@@ -362,6 +357,8 @@ const char* RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 		{ pTypeGeneralSwitch, sSwitchTypeFunkbus, "Status,Level" },
 		{ pTypeGeneralSwitch, sSwitchTypeNice, "Status,Level" },
 		{ pTypeGeneralSwitch, sSwitchTypeForest, "Status,Level" },
+
+		{ pTypeDDxxxx, sTypeDDxxxx, "Status,Level" },
 
 		{ 0, 0, nullptr },
 	};
@@ -467,7 +464,7 @@ std::string CBasePush::ProcessSendValue(
 		unsigned char tempsign = m_sql.m_tempsign[0];
 		device::tmeter::type::value metertype = (device::tmeter::type::value)metertypein;
 
-		if ((vType == "Temperature") || (vType == "Temperature 1") || (vType == "Temperature 2") || (vType == "Set point"))
+		if ((vType == "Temperature") || (vType == "Temperature 1") || (vType == "Temperature 2") || (vType == "Setpoint"))
 		{
 			sprintf(szData, "%g", ConvertTemperature(std::stod(rawsendValue), tempsign));
 		}
@@ -725,7 +722,7 @@ std::string CBasePush::getUnit(const int devType, const int devSubType, const in
 	char szData[100];
 	szData[0] = 0;
 
-	if ((vType == "Temperature") || (vType == "Temperature 1") || (vType == "Temperature 2") || (vType == "Set point"))
+	if ((vType == "Temperature") || (vType == "Temperature 1") || (vType == "Temperature 2"))
 	{
 		sprintf(szData, "%c", tempsign);
 	}
@@ -881,6 +878,10 @@ std::string CBasePush::getUnit(const int devType, const int devSubType, const in
 	else if (vType == "Concentration")
 	{
 		strcpy(szData, "ppm");
+	}
+	else if (vType == "Setpoint")
+	{
+		strcpy(szData, "");
 	}
 	if (szData[0] != 0) {
 		std::string sendValue(szData);

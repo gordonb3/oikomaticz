@@ -25,10 +25,6 @@ if(NOT LIBUSB_FOUND)
   list(FILTER DZ_devices_SRCS EXCLUDE REGEX "VoltCraft")
 endif()
 
-if(NOT OpenZWave)
-  list(FILTER DZ_devices_SRCS EXCLUDE REGEX "ZWave")
-endif()
-
 if(NOT TELLDUSCORE_INCLUDE)
   list(FILTER DZ_devices_SRCS EXCLUDE REGEX "Tellstick")
 endif()

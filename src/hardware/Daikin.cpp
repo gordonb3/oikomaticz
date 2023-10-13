@@ -4,7 +4,6 @@
 #include "main/Logger.h"
 #include "protocols/HTTPClient.h"
 #include "hardware/hardwaretypes.h"
-#include "main/localtime_r.h"
 #include "main/mainworker.h"
 #include "main/SQLHelper.h"
 #include <sstream>
@@ -207,16 +206,16 @@ bool CDaikin::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 			result = SetF_DirLevel(pSwitch->level);
 		}
 	}
-	else if ((packettype == pTypeThermostat) && (subtype == sTypeThermSetpoint))
+	else if ((packettype == pTypeSetpoint) && (subtype == sTypeSetpoint))
 	{
 		// Set Point
-		const _tThermostat *pMeter = reinterpret_cast<const _tThermostat *>(pCmd);
+		const _tSetpoint* pMeter = reinterpret_cast<const _tSetpoint*>(pCmd);
 		int node_id = pMeter->id2;
 		// int child_sensor_id = pMeter->id3;
 
-		Debug(DEBUG_HARDWARE, "Worker %s, Thermostat %.1f", m_szIPAddress.c_str(), pMeter->temp);
+		Debug(DEBUG_HARDWARE, "Worker %s, Thermostat %.1f", m_szIPAddress.c_str(), pMeter->value);
 
-		result = SetSetpoint(node_id, pMeter->temp);
+		result = SetSetpoint(node_id, pMeter->value);
 	}
 	else
 	{

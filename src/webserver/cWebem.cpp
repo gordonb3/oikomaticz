@@ -17,7 +17,6 @@
 #include <sstream>
 #include <cstdlib>
 #include "main/Helper.h"
-#include "main/localtime_r.h"
 #include "main/Logger.h"
 
 #define JWT_DISABLE_BASE64
@@ -281,6 +280,138 @@ namespace http {
 			return is;
 		}
 
+		bool cWebem::ExtractPostData(request &req, const char *pContent_Type)
+		{
+			if (strstr(pContent_Type, "multipart/form-data") != nullptr)
+			{
+				std::string szContent = req.content;
+				size_t pos;
+				std::string szVariable, szContentType, szValue;
+
+				//first line is our boundary
+				pos = szContent.find("\r\n");
+				if (pos == std::string::npos)
+					return false;
+				std::string szBoundary = szContent.substr(0, pos);
+				szContent = szContent.substr(pos + 2);
+
+				while (!szContent.empty())
+				{
+					//Next line will contain our variable name
+					pos = szContent.find("\r\n");
+					if (pos == std::string::npos)
+						return false;
+					szVariable = szContent.substr(0, pos);
+					szContent = szContent.substr(pos + 2);
+					if (szVariable.find("Content-Disposition") != 0)
+						return false;
+					pos = szVariable.find("name=\"");
+					if (pos == std::string::npos)
+						return false;
+					szVariable = szVariable.substr(pos + 6);
+					pos = szVariable.find('"');
+					if (pos == std::string::npos)
+						return false;
+					szVariable = szVariable.substr(0, pos);
+					//Next line could be empty, or a Content-Type, if its empty, it is just a string
+					pos = szContent.find("\r\n");
+					if (pos == std::string::npos)
+						return false;
+					szContentType = szContent.substr(0, pos);
+					szContent = szContent.substr(pos + 2);
+					if (
+						(szContentType.find("application/octet-stream") != std::string::npos) ||
+						(szContentType.find("application/json") != std::string::npos) ||
+						(szContentType.find("application/x-zip") != std::string::npos) ||
+						(szContentType.find("application/zip") != std::string::npos) ||
+						(szContentType.find("Content-Type: text/xml") != std::string::npos) ||
+						(szContentType.find("Content-Type: text/x-hex") != std::string::npos) ||
+						(szContentType.find("Content-Type: image/") != std::string::npos)
+						)
+					{
+						//Its a file/stream, next line should be empty
+						pos = szContent.find("\r\n");
+						if (pos == std::string::npos)
+							return false;
+						szContent = szContent.substr(pos + 2);
+					}
+					else
+					{
+						//next line should be empty
+						if (!szContentType.empty())
+							return false;//dont know this one
+					}
+					pos = szContent.find(szBoundary);
+					if (pos == std::string::npos)
+						return false;
+					szValue = szContent.substr(0, pos - 2);
+					req.parameters.insert(std::pair< std::string, std::string >(szVariable, szValue));
+
+					szContent = szContent.substr(pos + szBoundary.size());
+					pos = szContent.find("\r\n");
+					if (pos == std::string::npos)
+						return false;
+					szContent = szContent.substr(pos + 2);
+				}
+			}
+			else if (strstr(pContent_Type, "application/x-www-form-urlencoded") != nullptr)
+			{
+				std::string params = req.content;
+				std::string name;
+				std::string value;
+
+				size_t q = 0;
+				size_t p = q;
+				int flag_done = 0;
+				const std::string& uri = params;
+				while (!flag_done)
+				{
+					q = uri.find('=', p);
+					if (q == std::string::npos)
+					{
+						break;
+					}
+					name = uri.substr(p, q - p);
+					p = q + 1;
+					q = uri.find('&', p);
+					if (q != std::string::npos)
+						value = uri.substr(p, q - p);
+					else
+					{
+						value = uri.substr(p);
+						flag_done = 1;
+					}
+					// the browser sends blanks as +
+					while (true)
+					{
+						size_t p = value.find('+');
+						if (p == std::string::npos)
+							break;
+						value.replace(p, 1, " ");
+					}
+
+					// now, url-decode only the value
+					std::string decoded;
+					request_handler::url_decode(value, decoded);
+					req.parameters.insert(std::pair< std::string, std::string >(name, decoded));
+					p = q + 1;
+				}
+			}
+			else if ((strstr(pContent_Type, "text/plain") != nullptr) || (strstr(pContent_Type, "application/json") != nullptr) ||
+				(strstr(pContent_Type, "application/xml") != nullptr))
+			{
+				//Raw data
+				req.parameters.insert(std::pair< std::string, std::string >("data", req.content));
+			}
+			else
+			{
+				//Unknown content type
+				_log.Debug(DEBUG_WEBSERVER, "[web:%s] Unable to process POST Data, unknown content type: %s", GetPort().c_str(), pContent_Type);
+				return false;
+			}
+			return true;
+		}
+
 		bool cWebem::IsAction(const request& req)
 		{
 			// look for cWebem form action request
@@ -319,78 +450,12 @@ namespace http {
 			{
 				req.parameters.clear();
 
-				if (strstr(pContent_Type, "multipart/form-data") != nullptr)
+				bool bExtracted = ExtractPostData(req, pContent_Type);
+
+				// parameters have been extracted, so now execute
+				// we should have at least one value
+				if (bExtracted && !req.parameters.empty())
 				{
-					std::string szContent = req.content;
-					size_t pos;
-					std::string szVariable, szContentType, szValue;
-
-					//first line is our boundary
-					pos = szContent.find("\r\n");
-					if (pos == std::string::npos)
-						return false;
-					std::string szBoundary = szContent.substr(0, pos);
-					szContent = szContent.substr(pos + 2);
-
-					while (!szContent.empty())
-					{
-						//Next line will contain our variable name
-						pos = szContent.find("\r\n");
-						if (pos == std::string::npos)
-							return false;
-						szVariable = szContent.substr(0, pos);
-						szContent = szContent.substr(pos + 2);
-						if (szVariable.find("Content-Disposition") != 0)
-							return true;
-						pos = szVariable.find("name=\"");
-						if (pos == std::string::npos)
-							return false;
-						szVariable = szVariable.substr(pos + 6);
-						pos = szVariable.find('"');
-						if (pos == std::string::npos)
-							return false;
-						szVariable = szVariable.substr(0, pos);
-						//Next line could be empty, or a Content-Type, if its empty, it is just a string
-						pos = szContent.find("\r\n");
-						if (pos == std::string::npos)
-							return false;
-						szContentType = szContent.substr(0, pos);
-						szContent = szContent.substr(pos + 2);
-						if (
-							(szContentType.find("application/octet-stream") != std::string::npos) ||
-							(szContentType.find("application/json") != std::string::npos) ||
-							(szContentType.find("Content-Type: text/xml") != std::string::npos) ||
-							(szContentType.find("Content-Type: text/x-hex") != std::string::npos) ||
-							(szContentType.find("Content-Type: image/") != std::string::npos)
-							)
-						{
-							//Its a file/stream, next line should be empty
-							pos = szContent.find("\r\n");
-							if (pos == std::string::npos)
-								return false;
-							szContent = szContent.substr(pos + 2);
-						}
-						else
-						{
-							//next line should be empty
-							if (!szContentType.empty())
-								return false;//dont know this one
-						}
-						pos = szContent.find(szBoundary);
-						if (pos == std::string::npos)
-							return false;
-						szValue = szContent.substr(0, pos - 2);
-						req.parameters.insert(std::pair< std::string, std::string >(szVariable, szValue));
-
-						szContent = szContent.substr(pos + szBoundary.size());
-						pos = szContent.find("\r\n");
-						if (pos == std::string::npos)
-							return false;
-						szContent = szContent.substr(pos + 2);
-					}
-					//we should have at least one value
-					if (req.parameters.empty())
-						return false;
 					// call the function
 					try
 					{
@@ -409,22 +474,6 @@ namespace http {
 							std::string olduri = req.uri;
 							req.uri = m_webRoot + olduri;
 						}
-					}
-					return true;
-				}
-				if ((strstr(pContent_Type, "text/plain") != nullptr) || (strstr(pContent_Type, "application/json") != nullptr) ||
-					(strstr(pContent_Type, "application/xml") != nullptr))
-				{
-					//Raw data
-					req.parameters.insert(std::pair< std::string, std::string >("data", req.content));
-					// call the function
-					try
-					{
-						pfun->second(session, req, req.uri);
-					}
-					catch (...)
-					{
-						return false;
 					}
 					return true;
 				}
@@ -509,122 +558,8 @@ namespace http {
 				const char *pContent_Type = request::get_req_header(&req, "Content-Type");
 				if (pContent_Type)
 				{
-					if (strstr(pContent_Type, "multipart/form-data") != nullptr)
-					{
-						std::string szContent = req.content;
-						size_t pos;
-						std::string szVariable, szContentType, szValue;
-
-						//first line is our boundary
-						pos = szContent.find("\r\n");
-						if (pos == std::string::npos)
-							return true;
-						std::string szBoundary = szContent.substr(0, pos);
-						szContent = szContent.substr(pos + 2);
-
-						while (!szContent.empty())
-						{
-							//Next line will contain our variable name
-							pos = szContent.find("\r\n");
-							if (pos == std::string::npos)
-								return true;
-							szVariable = szContent.substr(0, pos);
-							szContent = szContent.substr(pos + 2);
-							if (szVariable.find("Content-Disposition") != 0)
-								return true;
-							pos = szVariable.find("name=\"");
-							if (pos == std::string::npos)
-								return true;
-							szVariable = szVariable.substr(pos + 6);
-							pos = szVariable.find('"');
-							if (pos == std::string::npos)
-								return true;
-							szVariable = szVariable.substr(0, pos);
-							//Next line could be empty, or a Content-Type, if its empty, it is just a string
-							pos = szContent.find("\r\n");
-							if (pos == std::string::npos)
-								return true;
-							szContentType = szContent.substr(0, pos);
-							szContent = szContent.substr(pos + 2);
-							if (
-								(szContentType.find("application/octet-stream") != std::string::npos)
-								|| (szContentType.find("application/json") != std::string::npos)
-								|| (szContentType.find("application/x-zip") != std::string::npos)
-								|| (szContentType.find("application/zip") != std::string::npos)
-								|| (szContentType.find("Content-Type: text/xml") != std::string::npos)
-								)
-							{
-								//Its a file/stream, next line should be empty
-								pos = szContent.find("\r\n");
-								if (pos == std::string::npos)
-									return true;
-								szContent = szContent.substr(pos + 2);
-							}
-							else
-							{
-								//next line should be empty
-								if (!szContentType.empty())
-									return true;//dont know this one
-							}
-							pos = szContent.find(szBoundary);
-							if (pos == std::string::npos)
-								return true;
-							szValue = szContent.substr(0, pos - 2);
-							req.parameters.insert(std::pair< std::string, std::string >(szVariable, szValue));
-
-							szContent = szContent.substr(pos + szBoundary.size());
-							pos = szContent.find("\r\n");
-							if (pos == std::string::npos)
-								return true;
-							szContent = szContent.substr(pos + 2);
-						}
-						//we should have at least one value
-						if (req.parameters.empty())
-							return true;
-					} // if (strstr(pContent_Type, "multipart/form-data") != NULL)
-					else if (strstr(pContent_Type, "application/x-www-form-urlencoded") != nullptr)
-					{
-						std::string params = req.content;
-						std::string name;
-						std::string value;
-
-						size_t q = 0;
-						size_t p = q;
-						int flag_done = 0;
-						const std::string &uri = params;
-						while (!flag_done)
-						{
-							q = uri.find('=', p);
-							if (q == std::string::npos)
-							{
-								break;
-							}
-							name = uri.substr(p, q - p);
-							p = q + 1;
-							q = uri.find('&', p);
-							if (q != std::string::npos)
-								value = uri.substr(p, q - p);
-							else
-							{
-								value = uri.substr(p);
-								flag_done = 1;
-							}
-							// the browser sends blanks as +
-							while (true)
-							{
-								size_t p = value.find('+');
-								if (p == std::string::npos)
-									break;
-								value.replace(p, 1, " ");
-							}
-
-							// now, url-decode only the value
-							std::string decoded;
-							request_handler::url_decode(value, decoded);
-							req.parameters.insert(std::pair< std::string, std::string >(name, decoded));
-							p = q + 1;
-						}
-					}
+					// Extract the POST data into the parameters
+					bool bExtracted = ExtractPostData(req, pContent_Type);
 				}
 			}
 
@@ -1062,6 +997,12 @@ namespace http {
 				{
 					cleanIP = cleanIP.substr(1,cleanIP.size()-2);	// Remove brackets from begin and end
 				}
+				// Link-local IPv6 addresses could have a 'zone-index' identifiyng which interface is used
+				// on a machine which has multiple interface. Can be discarded for checking
+				if ((cleanIP.find("fe80::") == 0) && (cleanIP.find('%') != std::string::npos))
+				{
+					cleanIP = cleanIP.substr(0,cleanIP.find('%'));
+				}
 			}
 		#ifndef WIN32
 			else
@@ -1162,8 +1103,18 @@ namespace http {
 				StringSplit(sLine, ",", vLineParts);
 				for (std::string sPart : vLineParts)
 				{
-					if(isValidIP(sPart))
+					if (isValidIP(sPart))
 						vHosts.push_back(sPart);
+					else {
+						size_t dpos = sPart.find_last_of(':');
+						if (dpos != std::string::npos)
+						{
+							//Strip off the port number
+							sPart = sPart.substr(0, dpos);
+							if (isValidIP(sPart))
+								vHosts.push_back(sPart);
+						}
+					}
 				}
 			}
 
@@ -1654,16 +1605,15 @@ namespace http {
 				return false;
 
 			//Is the given 'host' a valid IP address?
-			bool bIsIPv6 = (sHost.find(':') != std::string::npos);
-			uint8_t IP[16] = { 0 };
-			if ( (sHost.size() < 3) || (inet_pton((!bIsIPv6) ? AF_INET : AF_INET6, sHost.c_str(), &IP) != 1) )
-			{
+			std::string sCleanHost = sHost;
+			if (!cWebem::isValidIP(sCleanHost))			{
 				_log.Log(LOG_STATUS,"[web:%s] Given host (%s) is not a valid Ipv4 or IPv6 address! Unable to check if in Trusted Network!", myWebem->GetPort().c_str() ,sHost.c_str());
 				return false;	// The IP address is not a valid IPv4 or IPv6 address
 			}
+			bool bIsIPv6 = (sCleanHost.find(':') != std::string::npos);
 
 			return std::any_of(myWebem->m_localnetworks.begin(), myWebem->m_localnetworks.end(),
-					   [&](const _tIPNetwork &my) { return IsIPInRange(sHost, my, bIsIPv6); });
+					   [&](const _tIPNetwork &my) { return IsIPInRange(sCleanHost, my, bIsIPv6); });
 		}
 
 		std::string cWebemRequestHandler::generateSessionID()

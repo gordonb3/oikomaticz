@@ -26,7 +26,7 @@ enum value {
 	OpenThermGateway,		//18
 	TeleinfoMeter,			//19
 	OpenThermGatewayTCP,		//20
-	OpenZWave,			//21
+	FREETOUSE,			//21
 	LimitlessLights,		//22
 	System,				//23
 	EnOceanESP2,			//24
@@ -89,7 +89,7 @@ enum value {
 	Ec3kMeterTCP,			//81
 	BleBox,          		//82
 	OpenWeatherMap,  		//83
-	GoodweAPI,			//84
+	AlfenEveCharger,		//84
 	RaspberryTSL2561,		//85
 	Daikin,				//86
 	HEOS,				//87
@@ -110,7 +110,7 @@ enum value {
 	SysfsGpio,			//102
 	Rtl433,				//103
 	OnkyoAVTCP,			//104
-	UNUSED_2,		//105
+	EneverPriceFeeds,		//105
 	EVOHOME_TCP,			//106
 	USBtinGateway,			//107
 	EnphaseAPI,			//108
@@ -133,6 +133,7 @@ enum value {
 	MQTTAutoDiscovery,		//125
 	RFLINKMQTT,			//126
 	VisualCrossing,			//127
+	MitsubishiWF,			//128
 	LocalTuya = 501,		//501
 	END
 };
@@ -171,7 +172,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ OpenThermGateway,		"OpenTherm Gateway USB",					"OpenTherm"		},
 	{ TeleinfoMeter,		"Teleinfo EDF",							"TeleInfo"		},
 	{ OpenThermGatewayTCP,		"OpenTherm Gateway with LAN interface",				"OpenTherm"		},
-	{ OpenZWave,			"OpenZWave USB",						"OpenZWave"		},
+	{ EneverPriceFeeds,		"Enever Dutch Electricity/Gas Price Feed",			"Enever"		},
 	{ LimitlessLights,		"Limitless/AppLamp/Mi Light with LAN/WiFi interface",		"Limitless"		},
 	{ System,			"Motherboard sensors",						"HardwareMonitor"	},
 	{ EnOceanESP2,			"EnOcean USB (ESP2)",						"EnOcean"		},
@@ -231,7 +232,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ BleBox,			"BleBox devices",						"BleBox"		},
 	{ Ec3kMeterTCP,			"Energy Count 3000/ NETBSEM4/ La Crosse RT-10 LAN",		"Ec3kMeter"		},
 	{ OpenWeatherMap,		"Open Weather Map",						"OpenWeatherMap"	},
-	{ GoodweAPI,			"Goodwe solar inverter via Web API",				"Goodwe"		},
+	{ AlfenEveCharger,		"Alfen Eve Charger LAN",					"Alfen"			},
 	{ Daikin,			"Daikin Airconditioning with LAN (HTTP) interface",		"Daikin"		},
 	{ HEOS,				"HEOS by DENON",						"HEOS"			},
 	{ MultiFun,			"MultiFun LAN",							"Multifun"		},
@@ -272,6 +273,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ TeleinfoMeterTCP,		"Teleinfo EDF with LAN interface",				"TeleInfo"		},
 	{ MQTTAutoDiscovery,		"MQTT Auto Discovery Client Gateway with LAN interface",	"MQTT-AD"		},
 	{ RFLINKMQTT,			"RFLink Gateway MQTT",						"RFLink"		},
+	{ MitsubishiWF,			"Mitsubishi WF RAC Airco with LAN (HTTP) interface",		"MitsubishiWF"		},
 	{ LocalTuya,			"Local Tuya provider",						"LocalTuya"		},
 	{ 0, nullptr, nullptr }
 };

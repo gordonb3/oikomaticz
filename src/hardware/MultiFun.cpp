@@ -6,7 +6,6 @@
 #include "main/Logger.h"
 #include "main/RFXtrx.h"
 #include "main/Helper.h"
-#include "main/localtime_r.h"
 #include "main/mainworker.h"
 #include "main/SQLHelper.h"
 #include "protocols/csocket.h"
@@ -236,11 +235,11 @@ bool MultiFun::WriteToHardware(const char *pdata, const unsigned char /*length*/
 		}
 	}
 
-	if (output->ICMND.packettype == pTypeThermostat && output->LIGHTING2.subtype == sTypeThermSetpoint)
+	if (output->ICMND.packettype == pTypeSetpoint && output->LIGHTING2.subtype == sTypeSetpoint)
 	{
-		const _tThermostat *therm = reinterpret_cast<const _tThermostat*>(pdata);
+		const _tSetpoint* therm = reinterpret_cast<const _tSetpoint*>(pdata);
 
-		float temp = therm->temp;
+		float temp = therm->value;
 		int calculatedTemp = (int)temp;
 
 		if ((therm->id2 == 0x1F || therm->id2 == 0x20) ||

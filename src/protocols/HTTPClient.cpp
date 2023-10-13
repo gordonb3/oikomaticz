@@ -16,7 +16,7 @@
  *									*
  ************************************************************************/
 
-bool HTTPClient::GETBinary(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::vector<unsigned char> &vResponse, std::vector<std::string> &vHeaderData, const long iTimeOut)
+bool HTTPClient::GETBinary(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::vector<unsigned char> &vResponse, std::vector<std::string> &vHeaderData, const long iTimeOut, const bool bStartNewSession)
 {
 	return RESTClient::ExecuteBinary((connection::HTTP::method::value)(connection::HTTP::method::GET | connection::HTTP::method::HEAD), szUrl, "", vExtraHeaders, vResponse, vHeaderData, true, iTimeOut);
 }
@@ -52,7 +52,7 @@ std::vector<std::string> &vHeaderData, const long iTimeOut)
  *									*
  ************************************************************************/
 
-bool HTTPClient::GETBinary(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::vector<unsigned char> &vResponse, const long iTimeOut)
+bool HTTPClient::GETBinary(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::vector<unsigned char> &vResponse, const long iTimeOut, const bool bStartNewSession)
 {
 	std::vector<std::string> vHeaderData;
 	return RESTClient::ExecuteBinary(connection::HTTP::method::GET, szUrl, "", vExtraHeaders, vResponse, vHeaderData, true, iTimeOut);
@@ -90,7 +90,7 @@ bool HTTPClient::DELETEBinary(const std::string &szUrl, const std::string &szPut
  *									*
  ************************************************************************/
 
-bool HTTPClient::GET(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned)
+bool HTTPClient::GET(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, std::vector<std::string> &vHeaderData, const bool bIgnoreNoDataReturned, const bool bStartNewSession)
 {
 	return RESTClient::Execute((connection::HTTP::method::value)(connection::HTTP::method::GET | connection::HTTP::method::HEAD), szUrl, "", vExtraHeaders, szResponse, vHeaderData, true, -1, bIgnoreNoDataReturned);
 }
@@ -121,7 +121,7 @@ bool HTTPClient::PATCH(const std::string &szUrl, const std::string &szPutdata, c
  *									*
  ************************************************************************/
 
-bool HTTPClient::GET(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bIgnoreNoDataReturned)
+bool HTTPClient::GET(const std::string &szUrl, const std::vector<std::string> &vExtraHeaders, std::string &szResponse, const bool bIgnoreNoDataReturned, const bool bStartNewSession)
 {
 	std::vector<std::string> vHeaderData;
 	return RESTClient::Execute(connection::HTTP::method::GET, szUrl, "", vExtraHeaders, szResponse, vHeaderData, true, -1, bIgnoreNoDataReturned);
@@ -152,7 +152,7 @@ bool HTTPClient::DELETE(const std::string &szUrl, const std::string &szPutdata, 
  *									*
  ************************************************************************/
 
-bool HTTPClient::GET(const std::string &szUrl, std::string &szResponse, const bool bIgnoreNoDataReturned)
+bool HTTPClient::GET(const std::string &szUrl, std::string &szResponse, const bool bIgnoreNoDataReturned, const bool bStartNewSession)
 {
 	std::vector<std::string> vHeaderData;
 	std::vector<std::string> vExtraHeaders;

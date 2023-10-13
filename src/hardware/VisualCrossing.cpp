@@ -10,7 +10,6 @@
 #include "protocols/UrlEncode.h"
 #include "main/Helper.h"
 #include "main/json_helper.h"
-#include "main/localtime_r.h"
 #include "main/Logger.h"
 #include "main/SQLHelper.h"
 

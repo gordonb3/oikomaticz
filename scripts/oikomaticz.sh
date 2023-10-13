@@ -55,12 +55,12 @@ pidof_oikomaticz() {
 #
 do_start()
 {
-	# Script that waits for time synchronisation before starting Oikomaticz to prevent a crash
+	# Script that waits for time synchronisation before starting Domoticz to prevent a crash
 	# on a cold boot when no real time clock is available.
 
 	# Check if systemd-timesyncd is enabled and running, otherwise ignore script
 	if systemctl --quiet is-enabled systemd-timesyncd && systemctl --quiet is-active systemd-timesyncd; then
-	    # Check if time is already synced, if so start Oikomaticz immediately
+	    # Check if time is already synced, if so start Domoticz immediately
 	    if [ -f "/run/systemd/timesync/synchronized" ]; then
 		printf "Time synchronized, starting Domoticz...\n"
 	    else
@@ -69,14 +69,14 @@ do_start()
 		    printf "INFO: No time server(s) defined in /etc/systemd/timesyncd.conf, using default fallback server(s)\n"
 		fi
 		# Wait a maximum of 30 seconds until sync file is generated indicating successful time sync
-		printf "Waiting for time synchronization before starting Oikomaticz"
+		printf "Waiting for time synchronization before starting Domoticz"
 		count=30
 		while [ ! -f "/run/systemd/timesync/synchronized" ]
 		do
 		    count=$((count-1))
 		    if [ $((count)) -lt 1 ]
 		    then
-			# If failed, print error message, exit loop and start Oikomaticz anyway
+			# If failed, print error message, exit loop and start Domoticz anyway
 			printf "\nWARNING: Time synchronization failed, check network and /etc/systemd/timesyncd.conf\n"
 			printf "Starting Domoticz without successful time synchronization...\n"
 			break
@@ -84,10 +84,10 @@ do_start()
 		    printf "."
 		    sleep 1
 		done
-		#If the file was found in time, sync was successful and Oikomaticz will start immediately
+		#If the file was found in time, sync was successful and Domoticz will start immediately
 		if [ -f "/run/systemd/timesync/synchronized" ]
 		then
-		    printf "\nTime synchronization successful, starting Oikomaticz...\n"
+		    printf "\nTime synchronization successful, starting Domoticz...\n"
 		fi
 	    fi
 	fi

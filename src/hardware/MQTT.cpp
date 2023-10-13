@@ -3,7 +3,6 @@
 #include "main/Logger.h"
 #include "main/Helper.h"
 #include <iostream>
-#include "main/localtime_r.h"
 #include "main/mainworker.h"
 #include "main/SQLHelper.h"
 #include "main/json_helper.h"
@@ -747,7 +746,7 @@ void MQTT::SendMessageEx(const std::string& Topic, const std::string& Message, i
 		return;
 	try
 	{
-		publish(nullptr, Topic.c_str(), Message.size(), Message.c_str(), qos, retain);
+		publish(nullptr, Topic.c_str(), static_cast<int>(Message.size()), Message.c_str(), qos, retain);
 	}
 	catch (...)
 	{

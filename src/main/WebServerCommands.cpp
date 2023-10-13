@@ -2,7 +2,6 @@
  * WebServerCommands.cpp
  *
  *  Created on: 23 May 2023
- *      Author: kiddigital
  *
  * !! DEPRICATED !! No modifications should be made to this file, it is only here as it
  * contains some code that is still used by the WebServer class, but has not been moved to
@@ -26,7 +25,6 @@
 
 #include "mainworker.h"
 #include "Helper.h"
-#include "localtime_r.h"
 #include "EventSystem.h"
 #include "HTMLSanitizer.h"
 #include "main/json_helper.h"
@@ -331,6 +329,7 @@ namespace http
 						case pTypeHomeConfort:
 						case pTypeFS20:
 						case pTypeHunter:
+						case pTypeDDxxxx:
 							bdoAdd = true;
 							if (!used)
 							{
@@ -461,6 +460,7 @@ namespace http
 							case pTypeHomeConfort:
 							case pTypeFS20:
 							case pTypeHunter:
+							case pTypeDDxxxx:
 								root["result"][ii]["type"] = 0;
 								root["result"][ii]["idx"] = ID;
 								root["result"][ii]["Name"] = "[Light/Switch] " + Name;
@@ -1624,6 +1624,18 @@ namespace http
 					devid = id;
 					sunitcode = "0";
 				}
+				else if (lighttype == 316)
+				{
+					// DDxxxx Brel
+					dtype = pTypeDDxxxx;
+					subtype = sTypeDDxxxx;
+					std::string id = request::findValue(&req, "id");
+					sunitcode = request::findValue(&req, "unitcode");
+					if (id.empty() || sunitcode.empty())
+						return false;
+					switchtype = device::tswitch::type::BlindsPercentageWithStop;
+					devid = "0" + id;
+				}
 				else if (lighttype == 400)
 				{
 					// Openwebnet Bus Blinds
@@ -2355,6 +2367,40 @@ namespace http
 					devid = id;
 					sunitcode = "0";
 				}
+				else if (lighttype == 314)
+				{
+					// Orcon
+					dtype = pTypeFan;
+					subtype = sTypeOrcon;
+					std::string id = request::findValue(&req, "id");
+					if (id.empty())
+						return false;
+					devid = id;
+					sunitcode = "0";
+				}
+				else if (lighttype == 315)
+				{
+					// Itho HRU400
+					dtype = pTypeFan;
+					subtype = sTypeIthoHRU400;
+					std::string id = request::findValue(&req, "id");
+					if (id.empty())
+						return false;
+					devid = id;
+					sunitcode = "0";
+				}
+				else if (lighttype == 316)
+				{
+					// DDxxxx Brel
+					dtype = pTypeDDxxxx;
+					subtype = sTypeDDxxxx;
+					std::string id = request::findValue(&req, "id");
+					sunitcode = request::findValue(&req, "unitcode");
+					if (id.empty() || sunitcode.empty())
+						return false;
+					switchtype = device::tswitch::type::BlindsPercentageWithStop;
+					devid = "0" + id;
+				}
 				else if (lighttype == 400)
 				{
 					// Openwebnet Bus Blinds
@@ -2519,11 +2565,13 @@ namespace http
 				unsigned char switchtype = atoi(result[0][2].c_str());
 
 				int ii = 0;
-				if ((dType == pTypeLighting1) || (dType == pTypeLighting2) || (dType == pTypeLighting3) || (dType == pTypeLighting4) || (dType == pTypeLighting5) ||
+				if (
+					(dType == pTypeLighting1) || (dType == pTypeLighting2) || (dType == pTypeLighting3) || (dType == pTypeLighting4) || (dType == pTypeLighting5) ||
 					(dType == pTypeLighting6) || (dType == pTypeColorSwitch) || (dType == pTypeSecurity1) || (dType == pTypeSecurity2) || (dType == pTypeEvohome) ||
 					(dType == pTypeEvohomeRelay) || (dType == pTypeCurtain) || (dType == pTypeBlinds) || (dType == pTypeRFY) || (dType == pTypeChime) || (dType == pTypeThermostat2) ||
 					(dType == pTypeThermostat3) || (dType == pTypeThermostat4) || (dType == pTypeRemote) || (dType == pTypeGeneralSwitch) || (dType == pTypeHomeConfort) ||
-					(dType == pTypeFS20) || ((dType == pTypeRadiator1) && (dSubType == sTypeSmartwaresSwitchRadiator)))
+					(dType == pTypeFS20) || ((dType == pTypeRadiator1) && (dSubType == sTypeSmartwaresSwitchRadiator)) || (dType == pTypeDDxxxx)
+					)
 				{
 					if (switchtype != device::tswitch::type::PushOff)
 					{
@@ -2838,17 +2886,17 @@ namespace http
 					root["result"][ii]["ptag"] = notification::type::Description(notification::type::TODAYGAS, 1);
 					ii++;
 				}
-				if ((dType == pTypeThermostat) && (dSubType == sTypeThermSetpoint))
+				if ((dType == pTypeSetpoint) && (dSubType == sTypeSetpoint))
 				{
-					root["result"][ii]["val"] = notification::type::TEMPERATURE;
-					root["result"][ii]["text"] = notification::type::Description(notification::type::TEMPERATURE, 0);
-					root["result"][ii]["ptag"] = notification::type::Description(notification::type::TEMPERATURE, 1);
+					root["result"][ii]["val"] = notification::type::SETPOINT;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::SETPOINT, 0);
+					root["result"][ii]["ptag"] = notification::type::Description(notification::type::SETPOINT, 1);
 					ii++;
 				}
 				if (dType == pTypeEvohomeZone)
 				{
-					root["result"][ii]["val"] = notification::type::TEMPERATURE;
-					root["result"][ii]["text"] = notification::type::Description(notification::type::SETPOINT, 0); // FIXME notification::type::SETPOINT implementation?
+					root["result"][ii]["val"] = notification::type::SETPOINT;
+					root["result"][ii]["text"] = notification::type::Description(notification::type::SETPOINT, 0);
 					root["result"][ii]["ptag"] = notification::type::Description(notification::type::SETPOINT, 1);
 					ii++;
 				}
@@ -2892,13 +2940,6 @@ namespace http
 					root["result"][ii]["val"] = notification::type::USAGE;
 					root["result"][ii]["text"] = notification::type::Description(notification::type::USAGE, 0);
 					root["result"][ii]["ptag"] = notification::type::Description(notification::type::USAGE, 1);
-					ii++;
-				}
-				if ((dType == pTypeGeneral) && (dSubType == sTypeZWaveAlarm))
-				{
-					root["result"][ii]["val"] = notification::type::VALUE;
-					root["result"][ii]["text"] = notification::type::Description(notification::type::VALUE, 0);
-					root["result"][ii]["ptag"] = notification::type::Description(notification::type::VALUE, 1);
 					ii++;
 				}
 				if ((dType == pTypeRego6XXValue) && (dSubType == sTypeRego6XXStatus))
@@ -3368,111 +3409,6 @@ namespace http
 				LoadUsers();
 				root["status"] = "OK";
 			}
-			else if (cparam == "getapplications" || cparam == "addapplication" || cparam == "updateapplication" || cparam == "deleteapplication")
-			{	// CRUD operations for Applications
-				root["title"] = "Applications";
-				if (session.rights < 2)
-				{
-					session.reply_status = reply::forbidden;
-					return false; // Only admin user allowed
-				}
-				if (cparam == "getapplications")
-				{
-					root["title"] = "GetApplications";
-					std::vector<std::vector<std::string>> result;
-					result = m_sql.safe_query("SELECT ID, Active, Public, Applicationname, Secret, Pemfile, LastSeen FROM Applications ORDER BY ID ASC");
-					if (!result.empty())
-					{
-						int ii = 0;
-						for (const auto& sd : result)
-						{
-							root["result"][ii]["idx"] = sd[0];
-							root["result"][ii]["Enabled"] = (sd[1] == "1") ? "true" : "false";
-							root["result"][ii]["Public"] = (sd[2] == "1") ? "true" : "false";
-							root["result"][ii]["Applicationname"] = sd[3];
-							root["result"][ii]["Secret"] = sd[4];
-							root["result"][ii]["Pemfile"] = sd[5];
-							root["result"][ii]["LastSeen"] = sd[6];
-							ii++;
-						}
-					}
-				}
-				else if (cparam == "addapplication" || cparam == "updateapplication")
-				{
-					root["title"] = "AddUpdateApplication";
-					std::string senabled = request::findValue(&req, "enabled");
-					std::string spublic = request::findValue(&req, "public");
-					std::string applicationname = request::findValue(&req, "applicationname");
-					std::string secret = request::findValue(&req, "secret");
-					std::string pemfile = request::findValue(&req, "pemfile");
-					std::string idx = request::findValue(&req, "idx");
-					if (senabled.empty() || applicationname.empty() || spublic.empty())
-					{
-						session.reply_status = reply::bad_request;
-						return false;
-					}
-					if ((spublic != "true") && secret.empty())
-					{
-						root["statustext"] = "Secret's can only be empty for Public Clients!";
-						return false;
-					}
-					if ((spublic == "true") && pemfile.empty())
-					{
-						root["statustext"] = "A PEM file containing private and public key must be given for Public Clients!";
-						return false;
-					}
-					// Check for duplicate application name
-					result = m_sql.safe_query("SELECT ID FROM Applications WHERE (Applicationname == '%q')", applicationname.c_str());
-					if (!result.empty())
-					{
-						std::string oidx = result[0][0];
-						if (cparam == "addapplication" || (!idx.empty() && oidx != idx))
-						{
-							root["statustext"] = "Duplicate Applicationname!";
-							return false;
-						}
-					}
-					if (cparam == "addapplication")
-					{
-						root["title"] = "AddApplication";
-						m_sql.safe_query("INSERT INTO Applications (Active, Public, Applicationname, Secret, Pemfile) VALUES (%d,%d,'%q','%q','%q')",
-							(senabled == "true") ? 1 : 0, (spublic == "true") ? 1 : 0, applicationname.c_str(), secret.c_str(), pemfile.c_str());
-					}
-					else if (cparam == "updateapplication")
-					{
-						root["title"] = "UpdateApplication";
-						if (idx.empty())
-						{
-							session.reply_status = reply::bad_request;
-							return false;
-						}
-						m_sql.safe_query("UPDATE Applications SET Active=%d, Public=%d, Applicationname='%q', Secret='%q', Pemfile='%q' WHERE (ID == '%q')",
-							(senabled == "true") ? 1 : 0, (spublic == "true") ? 1 : 0, applicationname.c_str(), secret.c_str(), pemfile.c_str(), idx.c_str());
-					}
-				}
-				else if (cparam == "deleteapplication")
-				{
-					root["title"] = "DeleteApplication";
-					std::string idx = request::findValue(&req, "idx");
-					if (idx.empty())
-					{
-						session.reply_status = reply::bad_request;
-						return false;
-					}
-
-					// Remove Application
-					result = m_sql.safe_query("SELECT ID FROM Applications WHERE (ID == '%q')", idx.c_str());
-					if (result.size() != 1)
-					{
-						session.reply_status = reply::bad_request;
-						return false;
-					}
-					m_sql.safe_query("DELETE FROM Applications WHERE (ID == '%q')", idx.c_str());
-				}
-				root["status"] = "OK";
-				if (cparam != "getapplications")
-					LoadUsers();
-			}
 			else if (cparam == "clearlightlog")
 			{
 				if (session.rights < 2)
@@ -3492,12 +3428,14 @@ namespace http
 				unsigned char dType = atoi(result[0][0].c_str());
 				unsigned char dSubType = atoi(result[0][1].c_str());
 
-				if ((dType != pTypeLighting1) && (dType != pTypeLighting2) && (dType != pTypeLighting3) && (dType != pTypeLighting4) && (dType != pTypeLighting5) &&
+				if (
+					(dType != pTypeLighting1) && (dType != pTypeLighting2) && (dType != pTypeLighting3) && (dType != pTypeLighting4) && (dType != pTypeLighting5) &&
 					(dType != pTypeLighting6) && (dType != pTypeFan) && (dType != pTypeColorSwitch) && (dType != pTypeSecurity1) && (dType != pTypeSecurity2) &&
 					(dType != pTypeEvohome) && (dType != pTypeEvohomeRelay) && (dType != pTypeCurtain) && (dType != pTypeBlinds) && (dType != pTypeRFY) && (dType != pTypeChime) &&
-					(dType != pTypeThermostat2) && (dType != pTypeThermostat3) && (dType != pTypeThermostat4) && (dType != pTypeRemote) && (dType != pTypeGeneralSwitch) &&
+					(dType != pTypeThermostat2) && (dType != pTypeThermostat4) && (dType != pTypeThermostat4) && (dType != pTypeRemote) && (dType != pTypeGeneralSwitch) &&
 					(dType != pTypeHomeConfort) && (dType != pTypeFS20) && (!((dType == pTypeRadiator1) && (dSubType == sTypeSmartwaresSwitchRadiator))) &&
-					(!((dType == pTypeGeneral) && (dSubType == sTypeTextStatus))) && (!((dType == pTypeGeneral) && (dSubType == sTypeAlert))) && (dType != pTypeHunter))
+					(!((dType == pTypeGeneral) && (dSubType == sTypeTextStatus))) && (!((dType == pTypeGeneral) && (dSubType == sTypeAlert))) && (dType != pTypeHunter) && (dType != pTypeDDxxxx)
+					)
 					return false; // no light device! we should not be here!
 
 				root["status"] = "OK";

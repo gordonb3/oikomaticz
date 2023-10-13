@@ -842,7 +842,7 @@
 			<tr valign="top">
 				<td align="right" style="width:110px"><label for="ratelimitp1"><span data-i18n="Rate Limit">Rate Limit</span>: </label></td>
 				<td>
-					<input type="text" id="ratelimitp1" style="width: 50px; padding: .2em;" class="text ui-widget-content ui-corner-all">&nbsp;<span data-i18n="(Seconds) 0 = Disabled">Seconds</span>
+					<input type="text" id="ratelimitp1" style="width: 50px; padding: .2em;" class="text ui-widget-content ui-corner-all">&nbsp;Seconds&nbsp;<span data-i18n="(0 = Application default)"></span>
 					<br>
 					<span data-i18n="This limits the amount of meter updates.">This limits the amount of meter updates.</span><br>
 					<strong><font class="warning-text"><span data-i18n="A high update rate could result in performance loss">A high update rate could result in performance loss</span>.</font></strong>
@@ -1314,6 +1314,70 @@
 				</td>
 			
 			</tr>
+			<tr>
+				<td align="right" style="width:110px">
+					<label><span data-i18n="Site ID">Site ID</span>: </label>
+				</td>
+				<td>
+					<input type="text" id="siteid" style="width: 250px; padding: .2em;" class="text ui-widget-content ui-corner-all"><br>
+					<span data-i18n="ONLY enter this when using a Installer account. This is needed to check/set Power state. Otherwise leave empty!">ONLY enter this when using a Installer account. This is needed to check/set Power state. Otherwise leave empty!</span>.<br>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div id="divenever">
+		<br>
+		<table class="display" id="hardwareparamsenever" border="0" cellpadding="0" cellspacing="20">
+			<tr>
+				<td align="right" style="width:140px"><label><span data-i18n="Access token">Access token</span>:</label></td>
+				<td><input type="text" id="AccessToken" style="width: 300px; padding: .2em;" class="text ui-widget-content ui-corner-all"></td>
+			</tr>
+			<tr>
+				<td align="right" <label><span data-i18n="Provider Electricity"></span>:</label></td>
+				<td>
+					<select id="providerAC" name="providerAC" style="width:200px" class="combobox ui-corner-all">
+						<option value="AA">Atoom Alliantie</option>
+						<option value="AIP">All in power</option>
+						<option value="ANWB">ANWB Energie</option>
+						<option value="EE">EasyEnergy</option>
+						<option value="EVO">Energie van Ons</option>
+						<option value="EZ">Energy Zero</option>
+						<option value="FR">Frank Energie</option>
+						<option value="GSL">Groenestroom Lokaal</option>
+						<option value="MDE">Mijndomein Energie</option>
+						<option value="NE">NextEnergy</option>
+						<option value="TI">Tibber</option>
+						<option value="VDB">Vandebron</option>
+						<option value="VON">Vrij op naam</option>
+						<option value="WE">Wout Energie</option>
+						<option value="ZG">ZonderGas</option>
+						<option value="ZP">Zonneplan</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td align="right" <label><span data-i18n="Provider Gas"></span>:</label></td>
+				<td>
+					<select id="providerGas" name="providerGas" style="width:200px" class="combobox ui-corner-all">
+						<option value="AA">Atoom Alliantie</option>
+						<option value="AIP">All in power</option>
+						<option value="ANWB">ANWB Energie</option>
+						<option value="EE">EasyEnergy</option>
+						<option value="EVO">Energie van Ons</option>
+						<option value="EZ">Energy Zero</option>
+						<option value="FR">Frank Energie</option>
+						<option value="GSL">Groenestroom Lokaal</option>
+						<option value="MDE">Mijndomein Energie</option>
+						<option value="NE">NextEnergy</option>
+						<option value="TI">Tibber</option>
+						<option value="VDB">Vandebron</option>
+						<option value="VON">Vrij op naam</option>
+						<option value="WE">Wout Energie</option>
+						<option value="ZG">ZonderGas</option>
+						<option value="ZP">Zonneplan</option>
+					</select>
+				</td>
+			</tr>
 		</table>
 	</div>
 	<div id="divhoneywelllyric">
@@ -1561,6 +1625,7 @@
 						<option value="0xF107" data-i18n="RGBWWZ Switch">RGBWWZ Switch</option>
 						<option value="0x5D01" data-i18n="Scale">Scale (Weight)</option>
 						<option value="0xF43E" data-i18n="Selector Switch">Selector Switch</option>
+						<option value="0xF201" data-i18n="Setpoint">Setpoint</option>
 						<option value="0xF303" data-i18n="Soil Moisture">Soil Moisture</option>
 						<option value="0xF302" data-i18n="Solar Radiation">Solar Radiation</option>
 						<option value="0xF318" data-i18n="Sound Level">Sound Level</option>
@@ -1772,16 +1837,6 @@
 		<tr>
 			<td align="right" style="width:110px"><label><span data-i18n="IP Address">IP Address</span>:</label></td>
 			<td><input type="text" id="ipaddress" style="width: 250px; padding: .2em;" class="text ui-widget-content ui-corner-all"></td>
-		</tr>
-		<tr>
-			<td align="right" style="width:110px"><label><span data-i18n="Protocol Version">Protocol Version</span>:</label></td>
-			<td>
-				<select id="protocolversion" style="width:110px" class="combobox ui-corner-all">
-					<option value="3.3">3.3</option>
-					<option value="3.3.1">3.3 revision 1</option>
-				</select>
-			</td>
-
 		</tr>
 		<tr valign="top">
 			<td align="right" style="width:110px"><label><span data-i18n="Energy Divider">Energy Divider</span>:</label></td>

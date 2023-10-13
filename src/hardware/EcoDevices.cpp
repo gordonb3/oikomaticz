@@ -34,7 +34,6 @@ Version history
 #include "main/SQLHelper.h"
 #include "main/Logger.h"
 #include "hardware/hardwaretypes.h"
-#include "main/localtime_r.h"
 #include "protocols/HTTPClient.h"
 #include "tinyxpath/tinyxml.h"
 #include "tinyxpath/xpath_static.h"

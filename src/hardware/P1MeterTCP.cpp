@@ -2,7 +2,6 @@
 #include "P1MeterTCP.h"
 #include "main/Logger.h"
 #include "main/Helper.h"
-#include "main/localtime_r.h"
 
 P1MeterTCP::P1MeterTCP(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const bool disable_crc, const int ratelimit, const int gasmeterchannel, const std::string& DecryptionKey):
 	m_szIPAddress(IPAddress),
@@ -86,7 +85,7 @@ void P1MeterTCP::OnDisconnect()
 
 void P1MeterTCP::OnData(const unsigned char *pData, size_t length)
 {
-	ParseP1Data((const unsigned char*)pData, length, m_bDisableCRC, m_ratelimit);
+	ParseP1Data((const unsigned char*)pData, static_cast<int>(length), m_bDisableCRC, m_ratelimit);
 }
 
 

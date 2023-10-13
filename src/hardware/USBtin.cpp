@@ -24,7 +24,6 @@ History :
 #include "stdafx.h"
 #include "USBtin.h"
 #include "hardware/hardwaretypes.h"
-#include "main/localtime_r.h"
 #include "main/Logger.h"
 #include "main/RFXtrx.h"
 #include "main/Helper.h"

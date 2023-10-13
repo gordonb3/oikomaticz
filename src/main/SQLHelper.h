@@ -6,7 +6,6 @@
 #include "Helper.h"
 #include "protocols/UrlEncode.h"
 #include "protocols/HTTPClient.h"
-#include "StoppableTask.h"
 
 #define timer_resolution_hz 25
 
@@ -531,6 +530,9 @@ class CSQLHelper : public StoppableTask
 	// Returns DeviceRowID
 	uint64_t UpdateValueInt(int HardwareID, const char *ID, unsigned char unit, unsigned char devType, unsigned char subType, unsigned char signallevel, unsigned char batterylevel, int nValue,
 				const char *sValue, std::string &devname, bool bUseOnOffAction, const char* User = nullptr);
+
+	uint64_t UpdateManagedValueInt(int HardwareID, const char* ID, unsigned char unit, unsigned char devType, unsigned char subType, unsigned char signallevel, unsigned char batterylevel, int nValue,
+		const char* sValue, std::string& devname, bool bUseOnOffAction, const char* User = nullptr);
 
 	bool UpdateCalendarMeter(int HardwareID, const char *DeviceID, unsigned char unit, unsigned char devType, unsigned char subType, bool shortLog, bool multiMeter, const char *date,
 				 int64_t value1 = 0, int64_t value2 = 0, int64_t value3 = 0, int64_t value4 = 0, int64_t value5 = 0, int64_t value6 = 0, int64_t counter1 = 0,

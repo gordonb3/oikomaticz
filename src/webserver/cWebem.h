@@ -181,6 +181,8 @@ namespace http
 
 			void DebugRegistrations();
 
+			bool ExtractPostData(request &req, const char *pContent_Type);
+
 			bool IsAction(const request &req);
 			bool CheckForAction(WebEmSession &session, request &req);
 
@@ -198,6 +200,7 @@ namespace http
 			bool FindAuthenticatedUser(std::string &user, const request &req, reply &rep);
 			bool CheckVHost(const request &req);
 			bool findRealHostBehindProxies(const request &req, std::string &realhost);
+			static bool isValidIP(std::string& ip);
 
 			void ClearUserPasswords();
 			std::vector<_tWebUserPassword> m_userpasswords;
@@ -242,8 +245,6 @@ namespace http
 			std::map<std::string, webem_action_function> myActions;
 			/// store name walue pairs for form submit action
 			std::map<std::string, webem_page_function> myPages;
-
-			static bool isValidIP(std::string& ip);
 
 			void CleanSessions();
 			bool sumProxyHeader(const std::string &sHeader, const request &req, std::vector<std::string> &vHeaderLines);

@@ -19,10 +19,6 @@ const char* BMP_Forecast_Desc(unsigned char Forecast);
 const char* Security_Status_Desc(unsigned char status);
 const char* Get_Moisture_Desc(int moisture);
 const char* Get_Alert_Desc(int level);
-const char* ZWave_Clock_Days(unsigned char Day);
-extern const char* ZWave_Thermostat_Fan_Modes[];
-int Lookup_ZWave_Thermostat_Modes(const std::vector<std::string>& Modes, const std::string& sMode);
-int Lookup_ZWave_Thermostat_Fan_Modes(const std::string& sMode);
 
 void GetLightStatus(unsigned char dType, unsigned char dSubType, device::tswitch::type::value switchtype, unsigned char nValue, const std::string& sValue, std::string& lstatus, int& llevel, bool& bHaveDimmer,
 	int& maxDimLevel, bool& bHaveGroupCmd);

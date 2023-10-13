@@ -3,7 +3,6 @@
 #include "main/Helper.h"
 #include "main/Logger.h"
 #include "hardware/hardwaretypes.h"
-#include "main/localtime_r.h"
 #include "main/RFXtrx.h"
 #include "main/SQLHelper.h"
 #include "protocols/HTTPClient.h"
@@ -120,16 +119,15 @@ void CNest::Do_Work()
 
 void CNest::SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
 {
-	_tThermostat thermos;
-	thermos.type = pTypeThermostat;
-	thermos.subtype = sTypeThermSetpoint;
+	_tSetpoint thermos;
+	thermos.type = pTypeSetpoint;
+	thermos.subtype = sTypeSetpoint;
 	thermos.id1 = 0;
 	thermos.id2 = 0;
 	thermos.id3 = 0;
 	thermos.id4 = Idx;
 	thermos.dunit = 0;
-	thermos.temp = Temp;
-
+	thermos.value = Temp;
 	sDecodeRXMessage(this, (const unsigned char *)&thermos, defaultname.c_str(), 255, nullptr);
 }
 
@@ -530,7 +528,7 @@ void CNest::GetMeterDetails()
 		return;
 	}
 
-	size_t iThermostat = 0;
+	int iThermostat = 0;
 	for (auto ittStructure = root["structure"].begin(); ittStructure != root["structure"].end(); ++ittStructure)
 	{
 		Json::Value nstructure = *ittStructure;

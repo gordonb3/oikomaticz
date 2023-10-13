@@ -18,12 +18,10 @@ option(WITH_SPI "Include SPI support" NO)
 option(WITH_GPIO "Include GPIO support" NO)
 option(WITH_LIBUSB "Enable libusb support" NO)
 option(WITH_PYTHON "Use Python for Plugins and Event-Scripts" NO)
-option(WITH_OPENZWAVE "Include OpenZwave support" NO)
 
 option(USE_STATIC_BOOST "Build with static BOOST libraries" NO)
 option(USE_STATIC_OPENSSL "Build with static OpenSSL libraries" NO)
 option(USE_STATIC_LIBSTDCXX "Build with static libgcc/libstdc++ libraries" NO)
-option(USE_STATIC_OPENZWAVE "Build with static OpenZwave libraries" NO)
 
 option(WITHOUT_OLDDB_SUPPORT "Disable support for importing an ancient Domoticz database" NO)
 
@@ -187,35 +185,6 @@ endif(WITH_LIBUSB)
 
 
 #
-# OpenZWave support
-#
-if(WITH_OPENZWAVE)
-  if(USE_STATIC_OPENZWAVE)
-    find_library(OpenZWave NAMES libopenzwave.a HINTS "../open-zwave-read-only" "../open-zwave-read-only/cpp/build")
-    set(OPENZWAVE_LIB ${OpenZWave})
-  else(USE_STATIC_OPENZWAVE)
-    pkg_check_modules(OPENZWAVE libopenzwave)
-    if(OPENZWAVE_FOUND)
-      find_library(OpenZWave NAMES libopenzwave.so HINTS ${OPENZWAVE_LIBRARY_DIRS})
-    endif(OPENZWAVE_FOUND)
-  endif(USE_STATIC_OPENZWAVE)
-  if(OpenZWave)
-    message(STATUS "OpenZWave found at: ${OpenZWave}")
-    include_directories(${OPENZWAVE_INCLUDE_DIRS})
-    add_definitions(-DWITH_OPENZWAVE)
-    pkg_get_variable(OpenZWave_Config_Path libopenzwave sysconfdir)
-    if(OpenZWave_Config_Path)
-      file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/src/hardware/OpenZWave/ZWaveConfig.h "#pragma once\n#define ZWAVE_CONFIG_PATH \"${OpenZWave_Config_Path}\"\n")
-    endif(OpenZWave_Config_Path)
-  else(OpenZWave)
-    message(WARNING "==== OpenZWave not found, support disabled!")
-  endif(OpenZWave)
-else(WITH_OPENZWAVE)
-  message(STATUS "Building without OpenZWave support")
-endif(WITH_OPENZWAVE)
-
-
-#
 # Tellstick support
 #
 find_path(TELLDUSCORE_INCLUDE NAMES telldus-core.h)
@@ -376,12 +345,6 @@ if(LIBUSB_FOUND)
   target_link_libraries(oikomaticz ${LIBUSB_LIBRARIES})
 endif(LIBUSB_FOUND)
 
-if(OpenZWave)
-    target_link_libraries(oikomaticz ${OpenZWave})
-endif(OpenZWave)
-
-
-
 
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
@@ -513,13 +476,6 @@ endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 install(TARGETS oikomaticz DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/www DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/License.txt DESTINATION ${CMAKE_INSTALL_PREFIX})
-if(OpenZWave)
-  if(NOT OpenZWave_Config_Path)
-    message(WARNING "==== Openzwave config files could not be found")
-    make_directory(${CMAKE_CURRENT_SOURCE_DIR}/libs/openzwave/Config)
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libs/openzwave/Config DESTINATION ${CMAKE_INSTALL_PREFIX})
-  endif(NOT OpenZWave_Config_Path)
-endif(OpenZWave)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dzVents DESTINATION ${CMAKE_INSTALL_PREFIX} PATTERN ".gitignore" EXCLUDE)
 
 set(CMAKE_INSTALL_DATAPATH "/var/lib/oikomaticz" CACHE PATH "Data path prefix, prepended onto install directories.")
