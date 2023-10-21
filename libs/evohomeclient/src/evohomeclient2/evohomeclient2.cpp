@@ -774,7 +774,7 @@ std::string EvohomeClient2::get_next_switchpoint(evohome::device::zone *zone, st
 	std::string szNextTime = (*jSchedule)["nextSwitchpoint"].asString();
 	if (szCurrentTime <= szNextTime) // our current cached values are still valid
 	{
-		szCurrentSetpoint = (*jSchedule)["currentSetpoint"].asString();
+		szCurrentSetpoint = (*jSchedule)["heatSetpoint"].asString();
 		if (!bLocaltime)
 			return IsoTimeString::local_to_utc(szNextTime);
 		return szNextTime;
@@ -856,7 +856,7 @@ std::string EvohomeClient2::get_next_switchpoint(evohome::device::zone *zone, st
 
 	sprintf_s(cDate, 30, "%04d-%02d-%02dT%sA", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, szTime.c_str()); // localtime => use CET to indicate that it is not UTC
 	szNextTime = std::string(cDate);
-	(*jSchedule)["currentSetpoint"] = szCurrentSetpoint;
+	(*jSchedule)["heatSetpoint"] = szCurrentSetpoint;
 	(*jSchedule)["nextSwitchpoint"] = szNextTime;
 	if (!bLocaltime)
 		return IsoTimeString::local_to_utc(szNextTime);
