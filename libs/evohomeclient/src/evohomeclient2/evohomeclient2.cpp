@@ -774,7 +774,7 @@ std::string EvohomeClient2::get_next_switchpoint(evohome::device::zone *zone, st
 	std::string szNextTime = (*jSchedule)["nextSwitchpoint"].asString();
 	if (szCurrentTime <= szNextTime) // our current cached values are still valid
 	{
-		szCurrentSetpoint = (*jSchedule)["heatSetpoint"].asString();
+		szCurrentSetpoint = (*jSchedule)["currentSetpoint"].asString();
 		if (!bLocaltime)
 			return IsoTimeString::local_to_utc(szNextTime);
 		return szNextTime;
@@ -842,8 +842,8 @@ std::string EvohomeClient2::get_next_switchpoint(evohome::device::zone *zone, st
 			if (j > 0)
 			{
 				j--;
-				if ((*jDaySchedule)["switchpoints"][j].isMember("temperature"))
-					szCurrentSetpoint = (*jDaySchedule)["switchpoints"][j]["temperature"].asString();
+				if ((*jDaySchedule)["switchpoints"][j].isMember("heatSetpoint"))
+					szCurrentSetpoint = (*jDaySchedule)["switchpoints"][j]["heatSetpoint"].asString();
 				else
 					szCurrentSetpoint = (*jDaySchedule)["switchpoints"][j]["dhwState"].asString();
 				found = true;
@@ -856,7 +856,7 @@ std::string EvohomeClient2::get_next_switchpoint(evohome::device::zone *zone, st
 
 	sprintf_s(cDate, 30, "%04d-%02d-%02dT%sA", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, szTime.c_str()); // localtime => use CET to indicate that it is not UTC
 	szNextTime = std::string(cDate);
-	(*jSchedule)["heatSetpoint"] = szCurrentSetpoint;
+	(*jSchedule)["currentSetpoint"] = szCurrentSetpoint;
 	(*jSchedule)["nextSwitchpoint"] = szNextTime;
 	if (!bLocaltime)
 		return IsoTimeString::local_to_utc(szNextTime);
