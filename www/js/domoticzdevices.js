@@ -863,12 +863,15 @@ Device.create = function (item) {
         (item.SwitchType === 'Selector')
 	  ) {
         type = item.SwitchType.toLowerCase()
+    } else if (item.Type === 'RFXMeter') {
+        type = 'counter'; 
     } else {
         type = item.TypeImg.toLowerCase();
         if (item.CustomImage !== 0) {
 			if (
 				(item.Type != 'General')
 				&&(item.Type != 'P1 Smart Meter')
+				&&(type != 'push')
 				) {
 				if (typeof item.Image !== 'undefined') {
 					type = item.Image.toLowerCase();
@@ -1177,21 +1180,25 @@ function Sensor(item) {
         this.image = "images/";
 		
         if ((item.Type == "RFXMeter") || (item.Type == "YouLess Meter") || (item.SubType == "Counter Incremental") || (item.SubType == "Managed Counter")) {
-          if (item.SwitchTypeVal == 1) {
-            this.image += (item.CustomImage == 0)  ? 'Gas48.png' : item.TypeImg + '48.png';
-          }
-          else if (item.SwitchTypeVal == 2) {
-            this.image += (item.CustomImage == 0)  ? 'Water48.png' : item.TypeImg + '48.png';
-          }
-          else if (item.SwitchTypeVal == 3) {
-            this.image += (item.CustomImage == 0)  ? 'Counter48.png' : item.TypeImg + '48.png';
-          }
-          else if (item.SwitchTypeVal == 4) {
-            this.image += (item.CustomImage == 0)  ? 'PV48.png' : item.TypeImg + '48.png';
-          }
-          else {
-            this.image += item.TypeImg + "48.png";
-          }
+			if (item.CustomImage == 0)  {
+				if (item.SwitchTypeVal == 1) {
+					this.image += (item.CustomImage == 0)  ? 'Gas48.png' : item.TypeImg + '48.png';
+				}
+				else if (item.SwitchTypeVal == 2) {
+					this.image += (item.CustomImage == 0)  ? 'Water48.png' : item.TypeImg + '48.png';
+				}
+				else if (item.SwitchTypeVal == 3) {
+					this.image += (item.CustomImage == 0)  ? 'Counter48.png' : item.TypeImg + '48.png';
+				}
+				else if (item.SwitchTypeVal == 4) {
+					this.image += (item.CustomImage == 0)  ? 'PV48.png' : item.TypeImg + '48.png';
+				}
+				else {
+					this.image += item.TypeImg + "48.png";
+				}
+			} else {
+				this.image += item.Image + '48_On.png';
+			}
 		} else if ((item.Type == "General") && (item.SubType == "kWh")) {
           if (item.SwitchTypeVal == 4) {
             this.image += (item.CustomImage == 0)  ? 'PV48.png' : item.TypeImg + '48.png';
@@ -1213,7 +1220,10 @@ function Sensor(item) {
 		) {
             this.LogLink = "window.location.href = '#/Devices/" + this.index + "/Log'";
         } else {
-            this.LogLink = this.onClick = "Show" + sensorType + "Log('#" + Device.contentTag + "','" + Device.backFunction + "','" + this.index + "','" + this.name + "', '" + this.switchTypeVal + "');";
+            if (sensorType === 'RFXMeter')	
+	        this.LogLink = this.onClick = "window.location.href = '#/Devices/" + this.index + "/Log'";
+	    else
+                this.LogLink = this.onClick = "Show" + sensorType + "Log('#" + Device.contentTag + "','" + Device.backFunction + "','" + this.index + "','" + this.name + "', '" + this.switchTypeVal + "');";
         }
 
         this.imagetext = "Show graph";
@@ -1436,19 +1446,21 @@ function Counter(item) {
             if (item.SubType == "Gas") {
               this.image = "images/Gas48.png";
             } else {
-              this.image = "images/"+item.Image+".png";
+              this.image = "images/"+item.Image+"48_On.png";
             }
         }
         this.LogLink = this.onClick = "window.location.href = '#/Devices/" + this.index + "/Log'";
 
         if (typeof item.CounterToday != 'undefined') {
-            this.status += ' ' + $.t("Today") + ': ' + item.CounterToday;
-            this.smallStatus = item.CounterToday;
+			this.status = this.data;
+			this.data = item.CounterToday;
         }
         if (typeof item.CounterDeliv != 'undefined') {
+			this.data = this.status;
+			this.status = $.t("Usage") + ': ' + item.CounterToday;
             if (item.CounterDeliv != 0) {
                 if (item.UsageDeliv.charAt(0) != 0) {
-                    this.status += '-' + item.UsageDeliv;
+                    this.data += '-' + item.UsageDeliv;
                 }
                 this.status += ', ' + $.t("Return") + ': ' + item.CounterDelivToday;
             }
@@ -1501,6 +1513,10 @@ function Current(item) {
                         this.smallStatus = this.data;
                         break;
                     case "Voltage":
+                        this.LogLink = this.onClick = "window.location.href = '#/Devices/" + this.index + "/Log'";
+                        this.smallStatus = this.data;
+                        break;
+                    case "Current":		
                         this.LogLink = this.onClick = "window.location.href = '#/Devices/" + this.index + "/Log'";
                         this.smallStatus = this.data;
                         break;

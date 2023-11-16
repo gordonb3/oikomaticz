@@ -4959,7 +4959,6 @@ define(['app'], function (app) {
 					$("#hardwarecontent #divbaudratemysensors").show();
 				}
 				if (text.indexOf("P1 Smart Meter") >= 0) {
-					$("#hardwarecontent #hardwareparamsratelimitp1 #ratelimitp1").val(5);
 					$("#hardwarecontent #divbaudratep1").show();
 					$("#hardwarecontent #divkeyp1p1").show();
 				}

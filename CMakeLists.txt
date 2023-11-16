@@ -347,6 +347,7 @@ endif(LIBUSB_FOUND)
 
 
 
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   target_link_libraries(oikomaticz )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")

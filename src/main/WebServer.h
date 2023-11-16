@@ -290,12 +290,12 @@ private:
 	void Cmd_UpdateCamera(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_DeleteCamera(WebEmSession & session, const request& req, Json::Value &root);
 
+	void Cmd_P1SetOptions(WebEmSession & session, const request& req, Json::Value &root);
+
 	void Cmd_GetApplications(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_AddApplication(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_UpdateApplication(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_DeleteApplication(WebEmSession & session, const request& req, Json::Value &root);
-
-	void Cmd_P1SetOptions(WebEmSession & session, const request& req, Json::Value &root);
 
 	void Cmd_TuyaGetDevices(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_AddTuyaDevice(WebEmSession & session, const request& req, Json::Value &root);
