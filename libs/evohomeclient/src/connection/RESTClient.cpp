@@ -195,7 +195,7 @@ bool RESTClient::ExecuteBinary(const connection::HTTP::method::value eMethod, co
 					curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
 				else if (eMethod & connection::HTTP::method::DELETE)
 					curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-				else if (eMethod & connection::HTTP::method::DELETE)
+				else if (eMethod & connection::HTTP::method::PATCH)
 					curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
 				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, szPostdata.c_str());
 			}

@@ -32,8 +32,8 @@ std::string configfile;
 
 bool verbose;
 
-std::string ERROR = "ERROR: ";
-std::string WARN = "WARNING: ";
+std::string szERROR = "ERROR: ";
+std::string szWARN = "WARNING: ";
 
 bool highdef = true;
 
@@ -43,7 +43,6 @@ void exit_error(std::string message)
 	cerr << message << endl;
 	exit(1);
 }
-
 
 /*
  * Create an associative array with the zone information we need
@@ -131,26 +130,49 @@ int main(int argc, char** argv)
 	int gatewayIdx = 0;
 	int systemIdx = 0;
 
-	if ( evoconfig.find("locationId") != evoconfig.end() )
-	{
-		while ( (eclient->m_vLocations[locationIdx].szLocationId != evoconfig["locationId"])  && (locationIdx < (int)eclient->m_vLocations.size()) )
-			locationIdx++;
-		if (locationIdx == (int)eclient->m_vLocations.size())
-			exit_error(ERROR+"the Evohome location ID specified in "+CONF_FILE+" cannot be found");
-	}
-	if ( evoconfig.find("gatewayId") != evoconfig.end() )
-	{
-		while ( (eclient->m_vLocations[locationIdx].gateways[gatewayIdx].szGatewayId != evoconfig["gatewayId"])  && (gatewayIdx < (int)eclient->m_vLocations[locationIdx].gateways.size()) )
-			gatewayIdx++;
-		if (gatewayIdx == (int)eclient->m_vLocations[locationIdx].gateways.size())
-			exit_error(ERROR+"the Evohome gateway ID specified in "+CONF_FILE+" cannot be found");
-	}
 	if ( evoconfig.find("systemId") != evoconfig.end() )
 	{
-		while ( (eclient->m_vLocations[locationIdx].gateways[gatewayIdx].temperatureControlSystems[systemIdx].szSystemId != evoconfig["systemId"])  && (systemIdx < (int)eclient->m_vLocations[locationIdx].gateways[gatewayIdx].temperatureControlSystems.size()) )
-			systemIdx++;
-		if (systemIdx == (int)eclient->m_vLocations[locationIdx].gateways[gatewayIdx].temperatureControlSystems.size())
-			exit_error(ERROR+"the Evohome system ID specified in "+CONF_FILE+" cannot be found");
+		bool found = false;
+		while (!found && (locationIdx < (int)eclient->m_vLocations.size()))
+		{
+			gatewayIdx = 0;
+			while (!found && (gatewayIdx < (int)eclient->m_vLocations[locationIdx].gateways.size()))
+			{
+				systemIdx = 0;
+				while (!found && (systemIdx < (int)eclient->m_vLocations[locationIdx].gateways[gatewayIdx].temperatureControlSystems.size()))
+				{
+					evohome::device::temperatureControlSystem *tcs = &eclient->m_vLocations[locationIdx].gateways[gatewayIdx].temperatureControlSystems[systemIdx];
+					found = ((*tcs->jInstallationInfo)["systemId"] == evoconfig["systemId"]);
+					if (!found) systemIdx++;
+				}
+				if (!found) gatewayIdx++;
+			}
+			if (!found) locationIdx++;
+		}
+		if (!found) 
+			exit_error(szERROR+"the Evohome system ID specified in "+CONF_FILE+" cannot be found");
+	}
+	else
+	{
+
+		if ( evoconfig.find("location") != evoconfig.end() )
+		{
+			locationIdx = atoi(evoconfig["location"].c_str());
+			if (locationIdx >= (int)eclient->m_vLocations.size())
+				exit_error(szERROR+"the Evohome location index specified in "+CONF_FILE+" cannot be found");
+		}
+		if ( evoconfig.find("gateway") != evoconfig.end() )
+		{
+			gatewayIdx = atoi(evoconfig["gateway"].c_str());
+			if (gatewayIdx >= (int)eclient->m_vLocations[locationIdx].gateways.size())
+				exit_error(szERROR+"the Evohome gateway index specified in "+CONF_FILE+" cannot be found");
+		}
+		if ( evoconfig.find("controlsystem") != evoconfig.end() )
+		{
+			systemIdx = atoi(evoconfig["controlsystem"].c_str());
+			if (systemIdx >= (int)eclient->m_vLocations[locationIdx].gateways[gatewayIdx].temperatureControlSystems.size())
+				exit_error(szERROR+"the Evohome system index specified in "+CONF_FILE+" cannot be found");
+		}
 	}
 	evohome::device::temperatureControlSystem *tcs = &eclient->m_vLocations[locationIdx].gateways[gatewayIdx].temperatureControlSystems[systemIdx];
 
@@ -167,7 +189,7 @@ int main(int argc, char** argv)
 	{
 		std::cout << "create local copy of schedules" << "\n";
 		if ( ! eclient->schedules_backup(SCHEDULE_CACHE) )
-			exit_error(ERROR+"failed to open schedule cache file '"+SCHEDULE_CACHE+"'");
+			exit_error(szERROR+"failed to open schedule cache file '"+SCHEDULE_CACHE+"'");
 		eclient->load_schedules_from_file(SCHEDULE_CACHE);
 	}
 
@@ -249,9 +271,9 @@ int main(int argc, char** argv)
 
 /*
 	std::cout << "\nDump of full installationinfo\n";
-	std::cout << eclient->m_vLocations[0].jInstallationInfo->toStyledString() << "\n";
+	std::cout << eclient->m_vLocations[locationIdx].jInstallationInfo->toStyledString() << "\n";
 	std::cout << "\nDump of full status\n";
-	std::cout << eclient->m_vLocations[0].jStatus.toStyledString() << "\n";
+	std::cout << eclient->m_vLocations[locationIdx].jStatus.toStyledString() << "\n";
 */
 
 

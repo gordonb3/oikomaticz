@@ -768,7 +768,7 @@ std::string EvohomeClient2::get_next_switchpoint(evohome::device::zone *zone, st
 	int currentDay = ltime.tm_mday;
 	int currentWeekday = (force_weekday >= 0) ? (force_weekday % 7) : ltime.tm_wday;
 	char cDate[30];
-	sprintf_s(cDate, 30, "%04d-%02d-%02dT%02d:%02d:%02dA", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
+	sprintf_s(cDate, 30, "%04d-%02d-%02dT%02d:%02d:%02dA", (ltime.tm_year&0xFFF) + 1900, (ltime.tm_mon&0xF) + 1, ltime.tm_mday&0x3F, ltime.tm_hour&0x3F, ltime.tm_min&0x3F, ltime.tm_sec&0x3F);
 	std::string szCurrentTime = std::string(cDate);
 
 	std::string szNextTime = (*jSchedule)["nextSwitchpoint"].asString();
@@ -854,7 +854,7 @@ std::string EvohomeClient2::get_next_switchpoint(evohome::device::zone *zone, st
 	if (!found)
 		return m_szEmptyFieldResponse;
 
-	sprintf_s(cDate, 30, "%04d-%02d-%02dT%sA", ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, szTime.c_str()); // localtime => use CET to indicate that it is not UTC
+	sprintf_s(cDate, 30, "%04d-%02d-%02dT%sA", (ltime.tm_year&0xFFF) + 1900, (ltime.tm_mon&0xF) + 1, ltime.tm_mday&0x3F, szTime.c_str()); // localtime => use CET to indicate that it is not UTC
 	szNextTime = std::string(cDate);
 	(*jSchedule)["currentSetpoint"] = szCurrentSetpoint;
 	(*jSchedule)["nextSwitchpoint"] = szNextTime;

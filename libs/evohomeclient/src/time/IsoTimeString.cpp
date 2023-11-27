@@ -43,7 +43,7 @@ bool IsoTimeString::verify_date(const std::string szDateTime)
 	if (ntime == -1)
 		return false;
 	char cDate[12];
-	sprintf_s(cDate, 12, "%04d-%02d-%02d", mtime.tm_year+1900, mtime.tm_mon+1, mtime.tm_mday);
+	sprintf_s(cDate, 12, "%04d-%02d-%02d", (mtime.tm_year&0xFFF)+1900, (mtime.tm_mon&0x3F)+1, mtime.tm_mday&0x3F);
 	return (szDate == std::string(cDate));
 }
 
@@ -66,9 +66,9 @@ bool IsoTimeString::verify_datetime(const std::string szDateTime)
 	if (ntime == -1)
 		return false;
 	char cDate[12];
-	sprintf_s(cDate, 12, "%04d-%02d-%02d", mtime.tm_year+1900, mtime.tm_mon+1, mtime.tm_mday);
+	sprintf_s(cDate, 12, "%04d-%02d-%02d", (mtime.tm_year&0xFFF)+1900, (mtime.tm_mon&0x3F)+1, mtime.tm_mday&0x3F);
 	char cTime[12];
-	sprintf_s(cTime, 12, "%02d:%02d:%02d", mtime.tm_hour, mtime.tm_min, mtime.tm_sec);
+	sprintf_s(cTime, 12, "%02d:%02d:%02d", mtime.tm_hour&0x3F, mtime.tm_min&0x3F, mtime.tm_sec&0x3F);
 	return ( (szDate == std::string(cDate)) && (szTime == std::string(cTime)) );
 }
 
@@ -107,7 +107,7 @@ std::string IsoTimeString::local_to_utc(const std::string szLocalTime)
 		m_tzoffset = -1;
 	}
 	char cUntil[22];
-	sprintf_s(cUntil, 22, "%04d-%02d-%02dT%02d:%02d:%02dZ", ltime.tm_year+1900, ltime.tm_mon+1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
+	sprintf_s(cUntil, 22, "%04d-%02d-%02dT%02d:%02d:%02dZ", (ltime.tm_year&0xFFF) + 1900, (ltime.tm_mon&0xF) + 1, ltime.tm_mday&0x3F, ltime.tm_hour&0x3F, ltime.tm_min&0x3F, ltime.tm_sec&0x3F);
 	return std::string(cUntil);
 }
 
@@ -145,8 +145,8 @@ std::string IsoTimeString::utc_to_local(const std::string szUTCTime)
 		m_lastDST = ltime.tm_isdst;
 		m_tzoffset = -1;
 	}
-	char cUntil[40];
-	sprintf_s(cUntil, 40, "%04d-%02d-%02dT%02d:%02d:%02dA", ltime.tm_year+1900, ltime.tm_mon+1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
+	char cUntil[22];
+	sprintf_s(cUntil, 22, "%04d-%02d-%02dT%02d:%02d:%02dZ", (ltime.tm_year&0xFFF) + 1900, (ltime.tm_mon&0xF) + 1, ltime.tm_mday&0x3F, ltime.tm_hour&0x3F, ltime.tm_min&0x3F, ltime.tm_sec&0x3F);
 	return std::string(cUntil);
 }
 

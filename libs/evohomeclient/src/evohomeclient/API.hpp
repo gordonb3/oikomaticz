@@ -9,6 +9,7 @@
 
 #pragma once
 #include <string>
+#include <cstdint>
 
 #define EVOHOME_HOST "https://tccna.honeywell.com"
 

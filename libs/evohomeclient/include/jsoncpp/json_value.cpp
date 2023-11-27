@@ -2,6 +2,7 @@
 // Distributed under MIT license, or public domain if desired and
 // recognized in your jurisdiction.
 // See file LICENSE for detail or copy at http://jsoncpp.sourceforge.net/LICENSE
+
 #if !defined(JSON_IS_AMALGAMATION)
 #include "assertions.h"
 #include "value.h"
@@ -12,6 +13,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
+#include <iostream>
 #include <sstream>
 #include <utility>
 
@@ -116,7 +118,7 @@ static inline char* duplicateStringValue(const char* value, size_t length) {
   if (length >= static_cast<size_t>(Value::maxInt))
     length = Value::maxInt - 1;
 
-  char* newString = static_cast<char*>(malloc(length + 1));
+  auto newString = static_cast<char*>(malloc(length + 1));
   if (newString == nullptr) {
     throwRuntimeError("in Json::Value::duplicateStringValue(): "
                       "Failed to allocate string value buffer");
@@ -136,8 +138,8 @@ static inline char* duplicateAndPrefixStringValue(const char* value,
                                     sizeof(unsigned) - 1U,
                       "in Json::Value::duplicateAndPrefixStringValue(): "
                       "length too big for prefixing");
-  unsigned actualLength = length + static_cast<unsigned>(sizeof(unsigned)) + 1U;
-  char* newString = static_cast<char*>(malloc(actualLength));
+  size_t actualLength = sizeof(length) + length + 1;
+  auto newString = static_cast<char*>(malloc(actualLength));
   if (newString == nullptr) {
     throwRuntimeError("in Json::Value::duplicateAndPrefixStringValue(): "
                       "Failed to allocate string value buffer");
@@ -199,8 +201,8 @@ namespace Json {
 
 #if JSON_USE_EXCEPTION
 Exception::Exception(String msg) : msg_(std::move(msg)) {}
-Exception::~Exception() JSONCPP_NOEXCEPT = default;
-char const* Exception::what() const JSONCPP_NOEXCEPT { return msg_.c_str(); }
+Exception::~Exception() noexcept = default;
+char const* Exception::what() const noexcept { return msg_.c_str(); }
 RuntimeError::RuntimeError(String const& msg) : Exception(msg) {}
 LogicError::LogicError(String const& msg) : Exception(msg) {}
 JSONCPP_NORETURN void throwRuntimeError(String const& msg) {
@@ -210,8 +212,14 @@ JSONCPP_NORETURN void throwLogicError(String const& msg) {
   throw LogicError(msg);
 }
 #else // !JSON_USE_EXCEPTION
-JSONCPP_NORETURN void throwRuntimeError(String const& msg) { abort(); }
-JSONCPP_NORETURN void throwLogicError(String const& msg) { abort(); }
+JSONCPP_NORETURN void throwRuntimeError(String const& msg) {
+  std::cerr << msg << std::endl;
+  abort();
+}
+JSONCPP_NORETURN void throwLogicError(String const& msg) {
+  std::cerr << msg << std::endl;
+  abort();
+}
 #endif
 
 // //////////////////////////////////////////////////////////////////
@@ -251,7 +259,7 @@ Value::CZString::CZString(const CZString& other) {
   storage_.length_ = other.storage_.length_;
 }
 
-Value::CZString::CZString(CZString&& other)
+Value::CZString::CZString(CZString&& other) noexcept
     : cstr_(other.cstr_), index_(other.index_) {
   other.cstr_ = nullptr;
 }
@@ -277,7 +285,7 @@ Value::CZString& Value::CZString::operator=(const CZString& other) {
   return *this;
 }
 
-Value::CZString& Value::CZString::operator=(CZString&& other) {
+Value::CZString& Value::CZString::operator=(CZString&& other) noexcept {
   cstr_ = other.cstr_;
   index_ = other.index_;
   other.cstr_ = nullptr;
@@ -425,7 +433,7 @@ Value::Value(const Value& other) {
   dupMeta(other);
 }
 
-Value::Value(Value&& other) {
+Value::Value(Value&& other) noexcept {
   initBasic(nullValue);
   swap(other);
 }
@@ -440,7 +448,7 @@ Value& Value::operator=(const Value& other) {
   return *this;
 }
 
-Value& Value::operator=(Value&& other) {
+Value& Value::operator=(Value&& other) noexcept {
   other.swap(*this);
   return *this;
 }
@@ -517,9 +525,10 @@ bool Value::operator<(const Value& other) const {
   }
   case arrayValue:
   case objectValue: {
-    int delta = int(value_.map_->size() - other.value_.map_->size());
-    if (delta)
-      return delta < 0;
+    auto thisSize = value_.map_->size();
+    auto otherSize = other.value_.map_->size();
+    if (thisSize != otherSize)
+      return thisSize < otherSize;
     return (*value_.map_) < (*other.value_.map_);
   }
   default:
@@ -873,8 +882,7 @@ ArrayIndex Value::size() const {
 bool Value::empty() const {
   if (isNull() || isArray() || isObject())
     return size() == 0U;
-  else
-    return false;
+  return false;
 }
 
 Value::operator bool() const { return !isNull(); }
@@ -904,7 +912,8 @@ void Value::resize(ArrayIndex newSize) {
   if (newSize == 0)
     clear();
   else if (newSize > oldSize)
-    this->operator[](newSize - 1);
+    for (ArrayIndex i = oldSize; i < newSize; ++i)
+      (*this)[i];
   else {
     for (ArrayIndex index = newSize; index < oldSize; ++index) {
       value_.map_->erase(index);
@@ -1125,19 +1134,22 @@ Value& Value::append(Value&& value) {
   return this->value_.map_->emplace(size(), std::move(value)).first->second;
 }
 
-bool Value::insert(ArrayIndex index, Value newValue) {
+bool Value::insert(ArrayIndex index, const Value& newValue) {
+  return insert(index, Value(newValue));
+}
+
+bool Value::insert(ArrayIndex index, Value&& newValue) {
   JSON_ASSERT_MESSAGE(type() == nullValue || type() == arrayValue,
                       "in Json::Value::insert: requires arrayValue");
   ArrayIndex length = size();
   if (index > length) {
     return false;
-  } else {
-    for (ArrayIndex i = length; i > index; i--) {
-      (*this)[i] = std::move((*this)[i - 1]);
-    }
-    (*this)[index] = std::move(newValue);
-    return true;
   }
+  for (ArrayIndex i = length; i > index; i--) {
+    (*this)[i] = std::move((*this)[i - 1]);
+  }
+  (*this)[index] = std::move(newValue);
+  return true;
 }
 
 Value Value::get(char const* begin, char const* end,
@@ -1362,14 +1374,15 @@ bool Value::isObject() const { return type() == objectValue; }
 Value::Comments::Comments(const Comments& that)
     : ptr_{cloneUnique(that.ptr_)} {}
 
-Value::Comments::Comments(Comments&& that) : ptr_{std::move(that.ptr_)} {}
+Value::Comments::Comments(Comments&& that) noexcept
+    : ptr_{std::move(that.ptr_)} {}
 
 Value::Comments& Value::Comments::operator=(const Comments& that) {
   ptr_ = cloneUnique(that.ptr_);
   return *this;
 }
 
-Value::Comments& Value::Comments::operator=(Comments&& that) {
+Value::Comments& Value::Comments::operator=(Comments&& that) noexcept {
   ptr_ = std::move(that.ptr_);
   return *this;
 }
@@ -1385,13 +1398,11 @@ String Value::Comments::get(CommentPlacement slot) const {
 }
 
 void Value::Comments::set(CommentPlacement slot, String comment) {
-  if (!ptr_) {
+  if (slot >= CommentPlacement::numberOfCommentPlacement)
+    return;
+  if (!ptr_)
     ptr_ = std::unique_ptr<Array>(new Array());
-  }
-  // check comments array boundry.
-  if (slot < CommentPlacement::numberOfCommentPlacement) {
-    (*ptr_)[slot] = std::move(comment);
-  }
+  (*ptr_)[slot] = std::move(comment);
 }
 
 void Value::setComment(String comment, CommentPlacement placement) {

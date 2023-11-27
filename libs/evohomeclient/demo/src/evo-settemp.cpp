@@ -21,8 +21,8 @@ using namespace std;
 
 bool verbose;
 
-std::string ERROR = "ERROR: ";
-std::string WARN = "WARNING: ";
+std::string szERROR = "ERROR: ";
+std::string szWARN = "WARNING: ";
 
 std::string configfile;
 time_t now;
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 	parse_args(argc, argv);
 
 	if ( ! read_evoconfig() )
-		exit_error(ERROR+"can't read config file");
+		exit_error(szERROR+"can't read config file");
 
 	EvohomeClient2 eclient = EvohomeClient2();
 
@@ -155,7 +155,7 @@ int main(int argc, char** argv)
 	if (setpointmode == "0") {
 		// cancel override
 		if ( ! eclient.cancel_temperature_override(zoneid) )
-			exit_error(ERROR+"failed to cancel override for zone "+zoneid);
+			exit_error(szERROR+"failed to cancel override for zone "+zoneid);
 
 		eclient.cleanup();
 		return 0;
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
 	{
 		// until set
 		if (utc_time.length() < 19)
-			exit_error(ERROR+"bad timestamp value on command line");
+			exit_error(szERROR+"bad timestamp value on command line");
 		struct tm ltime;
 		ltime.tm_isdst = -1;
 		ltime.tm_year = atoi(utc_time.substr(0, 4).c_str()) - 1900;
@@ -177,14 +177,14 @@ int main(int argc, char** argv)
 		ltime.tm_sec = atoi(utc_time.substr(17, 2).c_str());
 		time_t ntime = mktime(&ltime);
 		if ( ntime == -1)
-			exit_error(ERROR+"bad timestamp value on command line");
+			exit_error(szERROR+"bad timestamp value on command line");
 		char c_until[40];
 		sprintf(c_until,"%04d-%02d-%02dT%02d:%02d:%02dZ",ltime.tm_year+1900,ltime.tm_mon+1,ltime.tm_mday,ltime.tm_hour,ltime.tm_min,ltime.tm_sec);
 		s_until = string(c_until);
 	}
 
 	if ( ! eclient.set_temperature(zoneid, setpoint, s_until) )
-		exit_error(ERROR+"failed to set override for zone "+zoneid);
+		exit_error(szERROR+"failed to set override for zone "+zoneid);
 
 	eclient.cleanup();
 	return 0;

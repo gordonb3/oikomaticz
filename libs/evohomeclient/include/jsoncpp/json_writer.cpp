@@ -2,11 +2,14 @@
 // Distributed under MIT license, or public domain if desired and
 // recognized in your jurisdiction.
 // See file LICENSE for detail or copy at http://jsoncpp.sourceforge.net/LICENSE
+
 #if !defined(JSON_IS_AMALGAMATION)
 #include "json_tool.h"
 #include "writer.h"
 #endif // if !defined(JSON_IS_AMALGAMATION)
+#include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <cstring>
 #include <iomanip>
 #include <memory>
@@ -65,7 +68,7 @@
 
 #if !defined(isnan)
 // IEEE standard states that NaN values will not compare to themselves
-#define isnan(x) (x != x)
+#define isnan(x) ((x) != (x))
 #endif
 
 #if !defined(__APPLE__)
@@ -85,7 +88,7 @@ namespace Json {
 #if __cplusplus >= 201103L || (defined(_CPPLIB_VER) && _CPPLIB_VER >= 520)
 using StreamWriterPtr = std::unique_ptr<StreamWriter>;
 #else
-typedef std::auto_ptr<StreamWriter> StreamWriterPtr;
+using StreamWriterPtr = std::auto_ptr<StreamWriter>;
 #endif
 
 String valueToString(LargestInt value) {
@@ -151,16 +154,18 @@ String valueToString(double value, bool useSpecialFloats,
 
   buffer.erase(fixNumericLocale(buffer.begin(), buffer.end()), buffer.end());
 
-  // strip the zero padding from the right
-  if (precisionType == PrecisionType::decimalPlaces) {
-    buffer.erase(fixZerosInTheEnd(buffer.begin(), buffer.end()), buffer.end());
-  }
-
   // try to ensure we preserve the fact that this was given to us as a double on
   // input
   if (buffer.find('.') == buffer.npos && buffer.find('e') == buffer.npos) {
     buffer += ".0";
   }
+
+  // strip the zero padding from the right
+  if (precisionType == PrecisionType::decimalPlaces) {
+    buffer.erase(fixZerosInTheEnd(buffer.begin(), buffer.end(), precision),
+                 buffer.end());
+  }
+
   return buffer;
 }
 } // namespace
@@ -172,16 +177,12 @@ String valueToString(double value, unsigned int precision,
 
 String valueToString(bool value) { return value ? "true" : "false"; }
 
-static bool isAnyCharRequiredQuoting(char const* s, size_t n) {
+static bool doesAnyCharRequireEscaping(char const* s, size_t n) {
   assert(s || !n);
 
-  char const* const end = s + n;
-  for (char const* cur = s; cur < end; ++cur) {
-    if (*cur == '\\' || *cur == '\"' || *cur < ' ' ||
-        static_cast<unsigned char>(*cur) < 0x80)
-      return true;
-  }
-  return false;
+  return std::any_of(s, s + n, [](unsigned char c) {
+    return c == '\\' || c == '"' || c < 0x20 || c > 0x7F;
+  });
 }
 
 static unsigned int utf8ToCodepoint(const char*& s, const char* e) {
@@ -263,12 +264,20 @@ static String toHex16Bit(unsigned int x) {
   return result;
 }
 
-static String valueToQuotedStringN(const char* value, unsigned length,
+static void appendRaw(String& result, unsigned ch) {
+  result += static_cast<char>(ch);
+}
+
+static void appendHex(String& result, unsigned ch) {
+  result.append("\\u").append(toHex16Bit(ch));
+}
+
+static String valueToQuotedStringN(const char* value, size_t length,
                                    bool emitUTF8 = false) {
   if (value == nullptr)
     return "";
 
-  if (!isAnyCharRequiredQuoting(value, length))
+  if (!doesAnyCharRequireEscaping(value, length))
     return String("\"") + value + "\"";
   // We have to walk value and escape any special characters.
   // Appending to String is not efficient, but this should be rare.
@@ -311,29 +320,26 @@ static String valueToQuotedStringN(const char* value, unsigned length,
     // sequence from occurring.
     default: {
       if (emitUTF8) {
-        result += *c;
+        unsigned codepoint = static_cast<unsigned char>(*c);
+        if (codepoint < 0x20) {
+          appendHex(result, codepoint);
+        } else {
+          appendRaw(result, codepoint);
+        }
       } else {
-        unsigned int codepoint = utf8ToCodepoint(c, end);
-        const unsigned int FIRST_NON_CONTROL_CODEPOINT = 0x20;
-        const unsigned int LAST_NON_CONTROL_CODEPOINT = 0x7F;
-        const unsigned int FIRST_SURROGATE_PAIR_CODEPOINT = 0x10000;
-        // don't escape non-control characters
-        // (short escape sequence are applied above)
-        if (FIRST_NON_CONTROL_CODEPOINT <= codepoint &&
-            codepoint <= LAST_NON_CONTROL_CODEPOINT) {
-          result += static_cast<char>(codepoint);
-        } else if (codepoint <
-                   FIRST_SURROGATE_PAIR_CODEPOINT) { // codepoint is in Basic
-                                                     // Multilingual Plane
-          result += "\\u";
-          result += toHex16Bit(codepoint);
-        } else { // codepoint is not in Basic Multilingual Plane
-                 // convert to surrogate pair first
-          codepoint -= FIRST_SURROGATE_PAIR_CODEPOINT;
-          result += "\\u";
-          result += toHex16Bit((codepoint >> 10) + 0xD800);
-          result += "\\u";
-          result += toHex16Bit((codepoint & 0x3FF) + 0xDC00);
+        unsigned codepoint = utf8ToCodepoint(c, end); // modifies `c`
+        if (codepoint < 0x20) {
+          appendHex(result, codepoint);
+        } else if (codepoint < 0x80) {
+          appendRaw(result, codepoint);
+        } else if (codepoint < 0x10000) {
+          // Basic Multilingual Plane
+          appendHex(result, codepoint);
+        } else {
+          // Extended Unicode. Encode 20 bits as a surrogate pair.
+          codepoint -= 0x10000;
+          appendHex(result, 0xd800 + ((codepoint >> 10) & 0x3ff));
+          appendHex(result, 0xdc00 + (codepoint & 0x3ff));
         }
       }
     } break;
@@ -344,7 +350,7 @@ static String valueToQuotedStringN(const char* value, unsigned length,
 }
 
 String valueToQuotedString(const char* value) {
-  return valueToQuotedStringN(value, static_cast<unsigned int>(strlen(value)));
+  return valueToQuotedStringN(value, strlen(value));
 }
 
 // Class Writer
@@ -393,7 +399,7 @@ void FastWriter::writeValue(const Value& value) {
     char const* end;
     bool ok = value.getString(&str, &end);
     if (ok)
-      document_ += valueToQuotedStringN(str, static_cast<unsigned>(end - str));
+      document_ += valueToQuotedStringN(str, static_cast<size_t>(end - str));
     break;
   }
   case booleanValue:
@@ -416,8 +422,7 @@ void FastWriter::writeValue(const Value& value) {
       const String& name = *it;
       if (it != members.begin())
         document_ += ',';
-      document_ += valueToQuotedStringN(name.data(),
-                                        static_cast<unsigned>(name.length()));
+      document_ += valueToQuotedStringN(name.data(), name.length());
       document_ += yamlCompatibilityEnabled_ ? ": " : ":";
       writeValue(value[name]);
     }
@@ -462,7 +467,7 @@ void StyledWriter::writeValue(const Value& value) {
     char const* end;
     bool ok = value.getString(&str, &end);
     if (ok)
-      pushValue(valueToQuotedStringN(str, static_cast<unsigned>(end - str)));
+      pushValue(valueToQuotedStringN(str, static_cast<size_t>(end - str)));
     else
       pushValue("");
     break;
@@ -503,7 +508,7 @@ void StyledWriter::writeValue(const Value& value) {
 }
 
 void StyledWriter::writeArrayValue(const Value& value) {
-  unsigned size = value.size();
+  size_t size = value.size();
   if (size == 0)
     pushValue("[]");
   else {
@@ -512,7 +517,7 @@ void StyledWriter::writeArrayValue(const Value& value) {
       writeWithIndent("[");
       indent();
       bool hasChildValue = !childValues_.empty();
-      unsigned index = 0;
+      ArrayIndex index = 0;
       for (;;) {
         const Value& childValue = value[index];
         writeCommentBeforeValue(childValue);
@@ -535,7 +540,7 @@ void StyledWriter::writeArrayValue(const Value& value) {
     {
       assert(childValues_.size() == size);
       document_ += "[ ";
-      for (unsigned index = 0; index < size; ++index) {
+      for (size_t index = 0; index < size; ++index) {
         if (index > 0)
           document_ += ", ";
         document_ += childValues_[index];
@@ -680,7 +685,7 @@ void StyledStreamWriter::writeValue(const Value& value) {
     char const* end;
     bool ok = value.getString(&str, &end);
     if (ok)
-      pushValue(valueToQuotedStringN(str, static_cast<unsigned>(end - str)));
+      pushValue(valueToQuotedStringN(str, static_cast<size_t>(end - str)));
     else
       pushValue("");
     break;
@@ -954,8 +959,8 @@ void BuiltStyledStreamWriter::writeValue(Value const& value) {
     char const* end;
     bool ok = value.getString(&str, &end);
     if (ok)
-      pushValue(valueToQuotedStringN(str, static_cast<unsigned>(end - str),
-                                     emitUTF8_));
+      pushValue(
+          valueToQuotedStringN(str, static_cast<size_t>(end - str), emitUTF8_));
     else
       pushValue("");
     break;
@@ -978,8 +983,8 @@ void BuiltStyledStreamWriter::writeValue(Value const& value) {
         String const& name = *it;
         Value const& childValue = value[name];
         writeCommentBeforeValue(childValue);
-        writeWithIndent(valueToQuotedStringN(
-            name.data(), static_cast<unsigned>(name.length()), emitUTF8_));
+        writeWithIndent(
+            valueToQuotedStringN(name.data(), name.length(), emitUTF8_));
         *sout_ << colonSymbol_;
         writeValue(childValue);
         if (++it == members.end()) {
@@ -1196,34 +1201,30 @@ StreamWriter* StreamWriterBuilder::newStreamWriter() const {
                                      endingLineFeedSymbol, usf, emitUTF8, pre,
                                      precisionType);
 }
-static void getValidWriterKeys(std::set<String>* valid_keys) {
-  valid_keys->clear();
-  valid_keys->insert("indentation");
-  valid_keys->insert("commentStyle");
-  valid_keys->insert("enableYAMLCompatibility");
-  valid_keys->insert("dropNullPlaceholders");
-  valid_keys->insert("useSpecialFloats");
-  valid_keys->insert("emitUTF8");
-  valid_keys->insert("precision");
-  valid_keys->insert("precisionType");
-}
+
 bool StreamWriterBuilder::validate(Json::Value* invalid) const {
-  Json::Value my_invalid;
-  if (!invalid)
-    invalid = &my_invalid; // so we do not need to test for NULL
-  Json::Value& inv = *invalid;
-  std::set<String> valid_keys;
-  getValidWriterKeys(&valid_keys);
-  Value::Members keys = settings_.getMemberNames();
-  size_t n = keys.size();
-  for (size_t i = 0; i < n; ++i) {
-    String const& key = keys[i];
-    if (valid_keys.find(key) == valid_keys.end()) {
-      inv[key] = settings_[key];
-    }
+  static const auto& valid_keys = *new std::set<String>{
+      "indentation",
+      "commentStyle",
+      "enableYAMLCompatibility",
+      "dropNullPlaceholders",
+      "useSpecialFloats",
+      "emitUTF8",
+      "precision",
+      "precisionType",
+  };
+  for (auto si = settings_.begin(); si != settings_.end(); ++si) {
+    auto key = si.name();
+    if (valid_keys.count(key))
+      continue;
+    if (invalid)
+      (*invalid)[key] = *si;
+    else
+      return false;
   }
-  return inv.empty();
+  return invalid ? invalid->empty() : true;
 }
+
 Value& StreamWriterBuilder::operator[](const String& key) {
   return settings_[key];
 }

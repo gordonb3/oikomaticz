@@ -357,12 +357,9 @@ bool EvohomeClient::full_installation()
 	EvoHTTPBridge::SafeGET(szUrl, m_vEvoHeader, m_szResponse, -1);
 	m_tLastWebCall = time(NULL);
 
-	if (m_szResponse[0] == '[')
-	{
-		// evohome old API returns an unnamed json array which is not accepted by our parser
-		m_szResponse.insert(0, "{\"locations\": ");
-		m_szResponse.append("}");
-	};
+	// evohome old API returns an unnamed json array which is not accepted by our parser
+	m_szResponse.insert(0, "{\"locations\": ");
+	m_szResponse.append("}");
 
 	m_jFullInstallation.clear();
 	if (evohome::parse_json_string(m_szResponse, m_jFullInstallation) < 0)

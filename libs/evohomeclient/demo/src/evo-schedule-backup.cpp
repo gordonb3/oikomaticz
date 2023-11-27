@@ -32,8 +32,8 @@ bool dobackup = true;
 bool verbose;
 
 
-std::string ERROR = "ERROR: ";
-std::string WARN = "WARNING: ";
+std::string szERROR = "ERROR: ";
+std::string szWARN = "WARNING: ";
 
 
 void exit_error(std::string message)
@@ -157,14 +157,14 @@ int main(int argc, char** argv)
 	{
 		cout << "Start backup of Evohome schedules\n";
 		if ( ! eclient.schedules_backup(backupfile) )
-			exit_error(ERROR+"failed to open backup file '"+backupfile+"'");
+			exit_error(szERROR+"failed to open backup file '"+backupfile+"'");
 		cout << "Done!\n";
 	}
 	else		// restore
 	{
 		cout << "Start restore of Evohome schedules\n";
 		if ( ! eclient.schedules_restore(backupfile) )
-			exit_error(ERROR+"failed to open backup file '"+backupfile+"'");
+			exit_error(szERROR+"failed to open backup file '"+backupfile+"'");
 		cout << "Done!\n";
 	}
 
