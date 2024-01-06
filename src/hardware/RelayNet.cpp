@@ -155,7 +155,7 @@ bool RelayNet::StartHardware()
 {
 	RequestStart();
 
-	bool bOk = false;;
+	bool bOk = false;
 	m_bIsStarted = false;
 	m_setup_devices = false;
 	m_bIsStarted = false;
@@ -311,7 +311,7 @@ void RelayNet::SetupDevices()
 			{
 				Log(LOG_STATUS, "Create %s/Relay%i", m_szIPAddress.c_str(), relayNumber);
 
-				m_sql.InsertDevice(m_HwdID, szIdx, relayNumber, pTypeLighting2, sTypeAC, device::tswitch::type::OnOff, 0, " ", "Relay");
+				m_sql.InsertDevice(m_HwdID, 0, szIdx, relayNumber, pTypeLighting2, sTypeAC, device::tswitch::type::OnOff, 0, " ", "Relay");
 			}
 		}
 	}
@@ -326,7 +326,7 @@ void RelayNet::SetupDevices()
 			{
 				Log(LOG_STATUS, "Create %s/Input%i", m_szIPAddress.c_str(), inputNumber);
 
-				m_sql.InsertDevice(m_HwdID, szIdx, 100 + inputNumber, pTypeLighting2, sTypeAC, int(device::tswitch::type::Contact), 0, " ", "Input");
+				m_sql.InsertDevice(m_HwdID, 0, szIdx, 100 + inputNumber, pTypeLighting2, sTypeAC, int(device::tswitch::type::Contact), 0, " ", "Input");
 			}
 		}
 	}
@@ -697,7 +697,7 @@ void RelayNet::OnDisconnect()
 
 void RelayNet::OnData(const unsigned char *pData, size_t length)
 {
-	ParseData(pData, length);
+	ParseData(pData, static_cast<int>(length));
 }
 
 //===========================================================================

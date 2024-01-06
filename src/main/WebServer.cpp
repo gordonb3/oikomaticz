@@ -45,6 +45,9 @@
 #include "hardware/Meteorologisk.h"
 #include "hardware/OpenWeatherMap.h"
 #include "hardware/Wunderground.h"
+#ifdef WITH_OPENZWAVE
+#include "hardware/OpenZWave.h"
+#endif
 
 #include "hardware/Limitless.h"
 
@@ -79,6 +82,9 @@ namespace http
 			m_pWebEm = nullptr;
 			m_bDoStop = false;
 			m_failcount = 0;
+#ifdef WITH_OPENZWAVE
+			m_ZW_Hwidx = -1;
+#endif
 		}
 
 		CWebServer::~CWebServer()
@@ -234,7 +240,6 @@ namespace http
 			// End of 'Pages' to be moved...
 
 			m_pWebEm->RegisterActionCode("setrfxcommode", [this](auto&& session, auto&& req, auto&& redirect_uri) { SetRFXCOMMode(session, req, redirect_uri); });
-			m_pWebEm->RegisterActionCode("rfxupgradefirmware", [this](auto&& session, auto&& req, auto&& redirect_uri) { RFXComUpgradeFirmware(session, req, redirect_uri); });
 			m_pWebEm->RegisterActionCode("setrego6xxtype", [this](auto&& session, auto&& req, auto&& redirect_uri) { SetRego6XXType(session, req, redirect_uri); });
 			m_pWebEm->RegisterActionCode("sets0metertype", [this](auto&& session, auto&& req, auto&& redirect_uri) { SetS0MeterType(session, req, redirect_uri); });
 			m_pWebEm->RegisterActionCode("setlimitlesstype", [this](auto&& session, auto&& req, auto&& redirect_uri) { SetLimitlessType(session, req, redirect_uri); });
@@ -260,8 +265,6 @@ namespace http
 			RegisterCommandCode("getauth", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetAuth(session, req, root); }, true);
 			RegisterCommandCode("getuptime", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetUptime(session, req, root); }, true);
 			RegisterCommandCode("getconfig", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetConfig(session, req, root); }, true);
-
-			RegisterCommandCode("rfxfirmwaregetpercentage", [this](auto&& session, auto&& req, auto&& root) { Cmd_RFXComGetFirmwarePercentage(session, req, root); }, true);
 
 			// Commands that require authentication
 			RegisterCommandCode("sendopenthermcommand", [this](auto&& session, auto&& req, auto&& root) { Cmd_SendOpenThermCommand(session, req, root); });
@@ -361,6 +364,12 @@ namespace http
 			RegisterCommandCode("getgooglepubsublinks", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetGooglePubSubLinks(session, req, root); });
 			RegisterCommandCode("savegooglepubsublink", [this](auto&& session, auto&& req, auto&& root) { Cmd_SaveGooglePubSubLink(session, req, root); });
 			RegisterCommandCode("deletegooglepubsublink", [this](auto&& session, auto&& req, auto&& root) { Cmd_DeleteGooglePubSubLink(session, req, root); });
+
+			RegisterCommandCode("savemqttlinkconfig", [this](auto&& session, auto&& req, auto&& root) { Cmd_SaveMQTTLinkConfig(session, req, root); });
+			RegisterCommandCode("getmqttlinkconfig", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetMQTTLinkConfig(session, req, root); });
+			RegisterCommandCode("getmqttlinks", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetMQTTLinks(session, req, root); });
+			RegisterCommandCode("savemqttlink", [this](auto&& session, auto&& req, auto&& root) { Cmd_SaveMQTTLink(session, req, root); });
+			RegisterCommandCode("deletemqttlink", [this](auto&& session, auto&& req, auto&& root) { Cmd_DeleteMQTTLink(session, req, root); });
 
 			RegisterCommandCode("getdevicevalueoptions", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetDeviceValueOptions(session, req, root); });
 			RegisterCommandCode("getdevicevalueoptionwording", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetDeviceValueOptionWording(session, req, root); });
@@ -507,8 +516,6 @@ namespace http
 			RegisterCommandCode("bindevohome", [this](auto&& session, auto&& req, auto&& root) { Cmd_BindEvohome(session, req, root); });
 			RegisterCommandCode("custom_light_icons", [this](auto&& session, auto&& req, auto&& root) { Cmd_CustomLightIcons(session, req, root); });
 			RegisterCommandCode("deletedevice", [this](auto&& session, auto&& req, auto&& root) { Cmd_DeleteDevice(session, req, root); });
-			RegisterCommandCode("getshareduserdevices", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetSharedUserDevices(session, req, root); });
-			RegisterCommandCode("setshareduserdevices", [this](auto&& session, auto&& req, auto&& root) { Cmd_SetSharedUserDevices(session, req, root); });
 			RegisterCommandCode("graph", [this](auto&& session, auto&& req, auto&& root) { Cmd_HandleGraph(session, req, root); });
 			RegisterCommandCode("rclientslog", [this](auto&& session, auto&& req, auto&& root) { Cmd_RemoteWebClientsLog(session, req, root); });
 			RegisterCommandCode("setused", [this](auto&& session, auto&& req, auto&& root) { Cmd_SetUsed(session, req, root); });
@@ -516,11 +523,74 @@ namespace http
 			// Migrated ActionCodes to regular commands
 			RegisterCommandCode("setccmetertype", [this](auto&& session, auto&& req, auto&& root) { Cmd_SetCurrentCostUSBType(session, req, root); });
 
-			RegisterCommandCode("clearuserdevices", [this](auto&& session, auto&& req, auto&& root) { Cmd_ClearUserDevices(session, req, root); });
+			//Shared User Devices
+			RegisterCommandCode("getshareduserdevices", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetSharedUserDevices(session, req, root); });
+			RegisterCommandCode("setshareduserdevices", [this](auto&& session, auto&& req, auto&& root) { Cmd_SetSharedUserDevices(session, req, root); });
+			RegisterCommandCode("clearshareduserdevices", [this](auto&& session, auto&& req, auto&& root) { Cmd_ClearSharedUserDevices(session, req, root); });
+
+			//Shared MQTT Devices
+			RegisterCommandCode("getsharedmqttdevices", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetSharedMQTTDevices(session, req, root); });
+			RegisterCommandCode("setsharedmqttdevices", [this](auto&& session, auto&& req, auto&& root) { Cmd_SetSharedMQTTDevices(session, req, root); });
+			RegisterCommandCode("clearsharedmqttdevices", [this](auto&& session, auto&& req, auto&& root) { Cmd_ClearSharedMQTTDevices(session, req, root); });
 
 			//MQTT-AD
 			RegisterCommandCode("mqttadgetconfig", [this](auto&& session, auto&& req, auto&& root) { Cmd_MQTTAD_GetConfig(session, req, root); });
 			RegisterCommandCode("mqttupdatenumber", [this](auto&& session, auto&& req, auto&& root) { Cmd_MQTTAD_UpdateNumber(session, req, root); });
+
+#ifdef WITH_OPENZWAVE
+			// ZWave
+			RegisterCommandCode("updatezwavenode", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveUpdateNode(session, req, root); });
+			RegisterCommandCode("deletezwavenode", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveDeleteNode(session, req, root); });
+			RegisterCommandCode("zwaveinclude", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveInclude(session, req, root); });
+			RegisterCommandCode("zwaveexclude", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveExclude(session, req, root); });
+
+			RegisterCommandCode("zwaveisnodeincluded", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveIsNodeIncluded(session, req, root); });
+			RegisterCommandCode("zwaveisnodeexcluded", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveIsNodeExcluded(session, req, root); });
+			RegisterCommandCode("zwaveisnodereplaced", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveIsNodeReplaced(session, req, root); });
+			RegisterCommandCode("zwaveishasnodefaileddone", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveIsHasNodeFailedDone(session, req, root); });
+
+			RegisterCommandCode("zwavesoftreset", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveSoftReset(session, req, root); });
+			RegisterCommandCode("zwavehardreset", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveHardReset(session, req, root); });
+			RegisterCommandCode("zwavenetworkheal", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveNetworkHeal(session, req, root); });
+			RegisterCommandCode("zwavenodeheal", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveNodeHeal(session, req, root); });
+			RegisterCommandCode("zwavenetworkinfo", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveNetworkInfo(session, req, root); });
+			RegisterCommandCode("zwaveremovegroupnode", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveRemoveGroupNode(session, req, root); });
+			RegisterCommandCode("zwaveaddgroupnode", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveAddGroupNode(session, req, root); });
+			RegisterCommandCode("zwavegroupinfo", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveGroupInfo(session, req, root); });
+			RegisterCommandCode("zwavecancel", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveCancel(session, req, root); });
+			RegisterCommandCode("applyzwavenodeconfig", [this](auto&& session, auto&& req, auto&& root) { Cmd_ApplyZWaveNodeConfig(session, req, root); });
+			RegisterCommandCode("zwavehasnodefailed", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveHasNodeFailed(session, req, root); });
+			RegisterCommandCode("zwavereplacefailednode", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveReplaceFailedNode(session, req, root); });
+			RegisterCommandCode("requestzwavenodeconfig", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveRequestNodeConfig(session, req, root); });
+			RegisterCommandCode("requestzwavenodeinfo", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveRequestNodeInfo(session, req, root); });
+			RegisterCommandCode("zwavestatecheck", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveStateCheck(session, req, root); });
+			RegisterCommandCode("zwavereceiveconfigurationfromothercontroller",
+				[this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveReceiveConfigurationFromOtherController(session, req, root); });
+			RegisterCommandCode("zwavesendconfigurationtosecondcontroller",
+				[this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveSendConfigurationToSecondaryController(session, req, root); });
+			RegisterCommandCode("zwavetransferprimaryrole", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveTransferPrimaryRole(session, req, root); });
+			RegisterCommandCode("zwavestartusercodeenrollmentmode", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveSetUserCodeEnrollmentMode(session, req, root); });
+			RegisterCommandCode("zwavegetusercodes", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveGetNodeUserCodes(session, req, root); });
+			RegisterCommandCode("zwaveremoveusercode", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveRemoveUserCode(session, req, root); });
+			RegisterCommandCode("zwavegetbatterylevels", [this](auto&& session, auto&& req, auto&& root) { Cmd_ZWaveGetBatteryLevels(session, req, root); });
+
+			m_pWebEm->RegisterPageCode("/zwavegetconfig.php", [this](auto&& session, auto&& req, auto&& rep) { ZWaveGetConfigFile(session, req, rep); });
+
+			m_pWebEm->RegisterPageCode("/ozwcp/poll.xml", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPPollXml(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/cp.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPIndex(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/confparmpost.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPNodeGetConf(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/refreshpost.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPNodeGetValues(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/valuepost.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPNodeSetValue(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/buttonpost.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPNodeSetButton(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/admpost.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPAdminCommand(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/nodepost.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPNodeChange(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/thpost.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPTestHeal(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/topopost.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPGetTopo(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/statpost.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPGetStats(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/ozwcp/grouppost.html", [this](auto&& session, auto&& req, auto&& rep) { ZWaveCPSetGroup(session, req, rep); });
+			//
+			RegisterCommandCode("getopenzwavenodes", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetOpenZWaveNodes(session, req, root); });
+#endif
 
 			// EnOcean helpers cmds
 			RegisterCommandCode("enoceangetmanufacturers", [this](auto&& session, auto&& req, auto&& root) { Cmd_EnOceanGetManufacturers(session, req, root); });
@@ -1658,6 +1728,21 @@ namespace http
 						bHasTimers = m_sql.HasTimers(sd[0]);
 
 						bHaveTimeout = false;
+#ifdef WITH_OPENZWAVE
+						if (pHardware != nullptr)
+						{
+							if (pHardware->HwdType == hardware::type::OpenZWave)
+							{
+								COpenZWave* pZWave = dynamic_cast<COpenZWave*>(pHardware);
+								unsigned long ID;
+								std::stringstream s_strid;
+								s_strid << std::hex << sd[1];
+								s_strid >> ID;
+								int nodeID = (ID & 0x0000FF00) >> 8;
+								bHaveTimeout = pZWave->HasNodeFailed(nodeID);
+							}
+						}
+#endif
 						root["result"][ii]["HaveTimeout"] = bHaveTimeout;
 
 						std::string lstatus;
@@ -2153,7 +2238,7 @@ namespace http
 						{
 							double tempCelcius = atof(strarray[0].c_str());
 							double temp = ConvertTemperature(tempCelcius, tempsign);
-							int humidity = atoi(strarray[1].c_str());
+							double humidity = atoi(strarray[1].c_str());
 
 							root["result"][ii]["Temp"] = temp;
 							root["result"][ii]["Humidity"] = humidity;
@@ -2164,7 +2249,7 @@ namespace http
 
 							// Calculate dew point
 
-							sprintf(szTmp, "%.2f", ConvertTemperature(CalculateDewPoint(tempCelcius, humidity), tempsign));
+							sprintf(szTmp, "%.2f", ConvertTemperature(CalculateDewPoint(tempCelcius, round(humidity)), tempsign));
 							root["result"][ii]["DewPoint"] = szTmp;
 
 							_tTrendCalculator::_eTendencyType tstate = _tTrendCalculator::_eTendencyType::TENDENCY_UNKNOWN;
@@ -2184,14 +2269,14 @@ namespace http
 						{
 							double tempCelcius = atof(strarray[0].c_str());
 							double temp = ConvertTemperature(tempCelcius, tempsign);
-							int humidity = atoi(strarray[1].c_str());
+							double humidity = atof(strarray[1].c_str());
 
 							root["result"][ii]["Temp"] = temp;
 							root["result"][ii]["Humidity"] = humidity;
 							root["result"][ii]["HumidityStatus"] = RFX_Humidity_Status_Desc(atoi(strarray[2].c_str()));
 							root["result"][ii]["Forecast"] = atoi(strarray[4].c_str());
 
-							sprintf(szTmp, "%.2f", ConvertTemperature(CalculateDewPoint(tempCelcius, humidity), tempsign));
+							sprintf(szTmp, "%.2f", ConvertTemperature(CalculateDewPoint(tempCelcius, round(humidity)), tempsign));
 							root["result"][ii]["DewPoint"] = szTmp;
 
 							if (dSubType == sTypeTHBFloat)
@@ -3029,7 +3114,7 @@ namespace http
 
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["SetPoint"] = szTmp;
-							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
+							root["result"][ii]["HaveTimeout"] = false;
 							root["result"][ii]["step"] = valuestep;
 							root["result"][ii]["min"] = valuemin;
 							root["result"][ii]["max"] = valuemax;
@@ -3255,6 +3340,112 @@ namespace http
 								root["result"][ii]["ForecastStr"] = BMP_Forecast_Desc(forecast);
 							}
 						}
+#ifdef WITH_OPENZWAVE
+						else if (dSubType == sTypeZWaveThermostatMode)
+						{
+							strcpy(szData, "");
+							root["result"][ii]["Mode"] = nValue;
+							root["result"][ii]["TypeImg"] = "mode";
+							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
+							std::string modes;
+							// Add supported modes
+							if (pHardware)
+							{
+								if (pHardware->HwdType == hardware::type::OpenZWave)
+								{
+									COpenZWave* pZWave = dynamic_cast<COpenZWave*>(pHardware);
+									unsigned long ID;
+									std::stringstream s_strid;
+									s_strid << std::hex << sd[1];
+									s_strid >> ID;
+									std::vector<std::string> vmodes = pZWave->GetSupportedThermostatModes(ID);
+									int smode = 0;
+									char szTmp[200];
+									for (const auto& mode : vmodes)
+									{
+										// Value supported
+										sprintf(szTmp, "%d;%s;", smode, mode.c_str());
+										modes += szTmp;
+										smode++;
+									}
+
+									if (!vmodes.empty())
+									{
+										if (nValue < (int)vmodes.size())
+										{
+											sprintf(szData, "%s", vmodes[nValue].c_str());
+										}
+									}
+								}
+							}
+							root["result"][ii]["Data"] = szData;
+							root["result"][ii]["Modes"] = modes;
+						}
+						else if (dSubType == sTypeZWaveThermostatFanMode)
+						{
+							sprintf(szData, "%s", ZWave_Thermostat_Fan_Modes[nValue]);
+							root["result"][ii]["Data"] = szData;
+							root["result"][ii]["Mode"] = nValue;
+							root["result"][ii]["TypeImg"] = "mode";
+							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
+							// Add supported modes (add all for now)
+							bool bAddedSupportedModes = false;
+							std::string modes;
+							// Add supported modes
+							if (pHardware)
+							{
+								if (pHardware->HwdType == hardware::type::OpenZWave)
+								{
+									COpenZWave* pZWave = dynamic_cast<COpenZWave*>(pHardware);
+									unsigned long ID;
+									std::stringstream s_strid;
+									s_strid << std::hex << sd[1];
+									s_strid >> ID;
+									modes = pZWave->GetSupportedThermostatFanModes(ID);
+									bAddedSupportedModes = !modes.empty();
+								}
+							}
+							if (!bAddedSupportedModes)
+							{
+								int smode = 0;
+								while (ZWave_Thermostat_Fan_Modes[smode] != nullptr)
+								{
+									sprintf(szTmp, "%d;%s;", smode, ZWave_Thermostat_Fan_Modes[smode]);
+									modes += szTmp;
+									smode++;
+								}
+							}
+							root["result"][ii]["Modes"] = modes;
+						}
+						else if (dSubType == sTypeZWaveThermostatOperatingState)
+						{
+							strcpy(szData, "");
+							root["result"][ii]["State"] = nValue;
+							root["result"][ii]["TypeImg"] = "Fan";
+							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
+							if (nValue == 1)
+							{
+								sprintf(szData, "%s", "Cooling");
+							}
+							else if (nValue == 2)
+							{
+								sprintf(szData, "%s", "Heating");
+							}
+							else
+							{
+								sprintf(szData, "%s", "Idle");
+							}
+							root["result"][ii]["Data"] = szData;
+						}
+						else if (dSubType == sTypeZWaveAlarm)
+						{
+							sprintf(szData, "Event: 0x%02X (%d)", nValue, nValue);
+							root["result"][ii]["Data"] = szData;
+							root["result"][ii]["TypeImg"] = "Alert";
+							root["result"][ii]["Level"] = nValue;
+							root["result"][ii]["HaveTimeout"] = false;
+						}
+#endif
 						else if (dSubType == sTypeCounterIncremental)
 						{
 							std::string ValueQuantity = options["ValueQuantity"];
@@ -3566,6 +3757,57 @@ namespace http
 				}
 			}
 		}
+
+		void CWebServer::MakeCompareDataSensor(Json::Value& root, const std::string& sgroupby, const std::string& dbasetable, uint64_t deviceidx, const std::string& dfield, const double divider, const bool isCounter)
+		{
+			std::string queryString;
+			queryString.append("SELECT strftime('%Y', Date) as y,");
+			if ((sgroupby == "month") || (sgroupby == "year"))
+				queryString.append("strftime('%m', Date) as m");
+			else if (sgroupby == "quarter")
+				queryString.append("case when cast(strftime('%m', Date) as integer) between 1 and 3 then 'Q1' when cast(strftime('%m', Date) as integer) between 4 and 6 then 'Q2' when cast(strftime('%m', Date) as integer) between 7 and 9 then 'Q3' else 'Q4' end as Q");
+
+			queryString.append(", ");
+			if (!isCounter)
+				queryString.append("AVG(" + dfield + ")");
+			else
+				queryString.append("SUM(" + dfield + ")");
+			queryString.append("/" + std::to_string(divider));
+			queryString.append(" as s FROM " + dbasetable + " WHERE DeviceRowID == " + std::to_string(deviceidx) + " GROUP BY strftime('%Y', Date), ");
+			if ((sgroupby == "month") || (sgroupby == "year"))
+				queryString.append("strftime('%m', Date)");
+			else if (sgroupby == "quarter")
+				queryString.append("case when cast(strftime('%m', Date) as integer) between 1 and 3 then 'Q1' when cast(strftime('%m', Date) as integer) between 4 and 6 then 'Q2' when cast(strftime('%m', Date) as integer) between 7 and 9 then 'Q3' else 'Q4' end");
+			auto result = m_sql.unsafe_query(queryString.c_str());
+
+			int firstYearCounting = 0;
+			double yearSumPrevious[12] = { 0 };
+			int yearPrevious[12] = { 0 };
+
+			for (const auto& sd : result)
+			{
+				const int year = atoi(sd[0].c_str());
+				const double value = atof(sd[2].c_str());
+
+				const int previousIndex = sgroupby == "year" ? 0 : sgroupby == "quarter" ? sd[1][1] - '0' - 1 : atoi(sd[1].c_str()) - 1;
+				const double* sumPrevious = year - 1 != yearPrevious[previousIndex] ? NULL : &yearSumPrevious[previousIndex];
+				const char* trend = !sumPrevious ? "" : *sumPrevious < value ? "up" : *sumPrevious > value ? "down" : "equal";
+				const int ii = root["result"].size();
+				if (firstYearCounting == 0 || year < firstYearCounting)
+				{
+					firstYearCounting = year;
+				}
+
+				root["result"][ii]["y"] = year;
+				root["result"][ii]["c"] = (sgroupby == "year") ? sd[0] : sd[1];
+				root["result"][ii]["s"] = value;
+				root["result"][ii]["t"] = trend;
+				yearSumPrevious[previousIndex] = value;
+				yearPrevious[previousIndex] = year;
+			}
+			root["firstYear"] = firstYearCounting;
+		}
+
 
 		/*
 		 * Takes root["result"] and groups all items according to sgroupby, summing all values for each category, then creating new items in root["result"]

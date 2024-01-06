@@ -446,6 +446,12 @@ const char* RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeGeneral, sTypeSetPoint, "Setpoint" },
 		{ pTypeGeneral, sTypeTemperature, "Temperature" },
 		{ pTypeGeneral, sTypeTextStatus, "Text" },
+#ifdef WITH_OPENZWAVE
+		{ pTypeGeneral, sTypeZWaveThermostatMode, "Thermostat Mode" },
+		{ pTypeGeneral, sTypeZWaveThermostatFanMode, "Thermostat Fan Mode" },
+		{ pTypeGeneral, sTypeZWaveThermostatOperatingState, "Thermostat Operating State" },
+		{ pTypeGeneral, sTypeZWaveAlarm, "Alarm" },
+#endif
 		{ pTypeGeneral, sTypeAlert, "Alert" },
 		{ pTypeGeneral, sTypeSoundLevel, "Sound Level" },
 		{ pTypeGeneral, sTypeUV, "UV" },
@@ -3579,6 +3585,7 @@ bool IsSerialDevice(const hardware::type::value htype)
 	case hardware::type::S0SmartMeterUSB:
 	case hardware::type::OpenThermGateway:
 	case hardware::type::TeleinfoMeter:
+	case hardware::type::OpenZWave:
 	case hardware::type::EnOceanESP2:
 	case hardware::type::EnOceanESP3:
 	case hardware::type::Meteostick:

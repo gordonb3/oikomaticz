@@ -51,7 +51,7 @@ class P1MeterBase : public CDomoticzHardwareBase
 
 	P1PhaseData m_phasedata;
 
-	unsigned char m_buffer[1400];
+	unsigned char m_buffer[2000];
 	int m_bufferpos;
 	unsigned char m_exclmarkfound;
 

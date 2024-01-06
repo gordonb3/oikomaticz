@@ -26,7 +26,7 @@ enum value {
 	OpenThermGateway,		//18
 	TeleinfoMeter,			//19
 	OpenThermGatewayTCP,		//20
-	FREETOUSE,			//21
+	OpenZWave,			//21
 	LimitlessLights,		//22
 	System,				//23
 	EnOceanESP2,			//24
@@ -172,6 +172,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ OpenThermGateway,		"OpenTherm Gateway USB",					"OpenTherm"		},
 	{ TeleinfoMeter,		"Teleinfo EDF",							"TeleInfo"		},
 	{ OpenThermGatewayTCP,		"OpenTherm Gateway with LAN interface",				"OpenTherm"		},
+	{ OpenZWave,			"OpenZWave USB",						"OpenZWave"		},
 	{ EneverPriceFeeds,		"Enever Dutch Electricity/Gas Price Feed",			"Enever"		},
 	{ LimitlessLights,		"Limitless/AppLamp/Mi Light with LAN/WiFi interface",		"Limitless"		},
 	{ System,			"Motherboard sensors",						"HardwareMonitor"	},

@@ -33,6 +33,7 @@ namespace Plugins {
 		Py_XDECREF(self->Base);
 		Py_XDECREF(self->Name);
 		Py_XDECREF(self->Description);
+		Py_XDECREF(self->Filename);
 
 		PyNewRef	pType = PyObject_Type((PyObject*)self);
 		freefunc pFree = (freefunc)PyType_GetSlot(pType, Py_tp_free);
@@ -190,6 +191,7 @@ namespace Plugins {
 								PyObject*	pKey = PyUnicode_FromString(sd[1].c_str());
 								if (PyDict_SetItem((PyObject*)self->pPlugin->m_ImageDict, pKey, (PyObject*)pImage) == -1)
 								{
+									Py_DECREF(pKey);
 									_log.Log(LOG_ERROR, "(%s) failed to add ID '%s' to image dictionary.", self->pPlugin->m_PluginKey.c_str(), sd[0].c_str());
 									break;
 								}
@@ -198,6 +200,7 @@ namespace Plugins {
 								pImage->Name = PyUnicode_FromString(sd[2].c_str());
 								pImage->Description = PyUnicode_FromString(sd[3].c_str());
 								Py_DECREF(pImage);
+								Py_DECREF(pKey);
 							}
 						}
 					}
@@ -775,16 +778,16 @@ namespace Plugins {
 								sOptionValue = PyUnicode_AsUTF8(pValueDict);
 
 							m_sql.safe_query(
-								"INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, CustomImage, Description, Color, Options) "
-								"VALUES (%d, '%q', %d, %d, %d, %d, %d, 12, 255, '%q', 0, '%q', %d, '%q', '%q', '%q')",
-								self->HwdID, sDeviceID.c_str(), self->Unit, self->Type, self->SubType, self->SwitchType, self->Used, sLongName.c_str(), sValue.c_str(), self->Image, sDescription.c_str(), sColor.c_str(), sOptionValue.c_str());
+								"INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, CustomImage, Description, Color, Options) "
+								"VALUES (%d, %d, '%q', %d, %d, %d, %d, %d, 12, 255, '%q', 0, '%q', %d, '%q', '%q', '%q')",
+								self->HwdID, 0, sDeviceID.c_str(), self->Unit, self->Type, self->SubType, self->SwitchType, self->Used, sLongName.c_str(), sValue.c_str(), self->Image, sDescription.c_str(), sColor.c_str(), sOptionValue.c_str());
 						}
 						else
 						{
 							m_sql.safe_query(
-								"INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, CustomImage, Description, Color) "
-								"VALUES (%d, '%q', %d, %d, %d, %d, %d, 12, 255, '%q', 0, '%q', %d, '%q', '%q')",
-								self->HwdID, sDeviceID.c_str(), self->Unit, self->Type, self->SubType, self->SwitchType, self->Used, sLongName.c_str(), sValue.c_str(), self->Image, sDescription.c_str(), sColor.c_str());
+								"INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, CustomImage, Description, Color) "
+								"VALUES (%d, %d, '%q', %d, %d, %d, %d, %d, 12, 255, '%q', 0, '%q', %d, '%q', '%q')",
+								self->HwdID, 0, sDeviceID.c_str(), self->Unit, self->Type, self->SubType, self->SwitchType, self->Used, sLongName.c_str(), sValue.c_str(), self->Image, sDescription.c_str(), sColor.c_str());
 						}
 
 						result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (Unit==%d)", self->HwdID, self->Unit);
@@ -1029,7 +1032,7 @@ namespace Plugins {
 					_log.Log(LOG_NORM, "(%s) Updating device from %d:'%s' to have values %d:'%s'.", sName.c_str(), self->nValue, PyUnicode_AsUTF8(self->sValue), nValue, sValue);
 				}
 				Py_BEGIN_ALLOW_THREADS
-				DevRowIdx = m_sql.UpdateValue(self->HwdID, sDeviceID.c_str(), (const unsigned char)self->Unit, (const unsigned char)iType, (const unsigned char)iSubType, iSignalLevel, iBatteryLevel, nValue, sValue, sName, true);
+				DevRowIdx = m_sql.UpdateValue(self->HwdID, 0, sDeviceID.c_str(), (const unsigned char)self->Unit, (const unsigned char)iType, (const unsigned char)iSubType, iSignalLevel, iBatteryLevel, nValue, sValue, sName, true);
 				Py_END_ALLOW_THREADS
 				// if this is an internal Security Panel then there are some extra updates required if state has changed
 				if ((self->Type == pTypeSecurity1) && (self->SubType == sTypeDomoticzSecurity) && (self->nValue != nValue))
@@ -1134,8 +1137,7 @@ namespace Plugins {
 		{
 			self->pPlugin->SetHeartbeatReceived();
 			std::string sID = std::to_string(self->ID);
-			m_sql.safe_query("UPDATE DeviceStatus SET LastUpdate='%q' WHERE (ID == %s )",
-					 TimeToString(nullptr, TF_DateTime).c_str(), sID.c_str());
+			m_sql.UpdateLastUpdate(sID);
 		}
 		else
 		{
@@ -1163,6 +1165,7 @@ namespace Plugins {
 			pPlugin->Log(LOG_NORM, "Deallocating connection object '%s' (%s:%s).", PyUnicode_AsUTF8(self->Name), PyUnicode_AsUTF8(self->Address), PyUnicode_AsUTF8(self->Port));
 		}
 
+		Py_XDECREF(self->Name);
 		Py_XDECREF(self->Target);
 		Py_XDECREF(self->Address);
 		Py_XDECREF(self->Port);

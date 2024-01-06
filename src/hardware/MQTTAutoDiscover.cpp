@@ -76,7 +76,7 @@ void MQTTAutoDiscover::on_message(const struct mosquitto_message* message)
 			return;
 
 		if (
-			(topic.substr(0, topic.find('/')) == m_TopicDiscoveryPrefix)
+			topic.find(m_TopicDiscoveryPrefix) == 0
 			&& (topic.find("/config") != std::string::npos)
 			)
 		{
@@ -170,6 +170,7 @@ void MQTTAutoDiscover::CleanValueTemplate(std::string& szValueTemplate)
 
 	szValueTemplate = szValueTemplate.substr(0, szValueTemplate.find("|"));
 	szValueTemplate = szValueTemplate.substr(0, szValueTemplate.find(".split("));
+	szValueTemplate = szValueTemplate.substr(0, szValueTemplate.find("if value_json."));
 
 	stdstring_trim(szValueTemplate);
 
@@ -638,6 +639,7 @@ void MQTTAutoDiscover::on_auto_discovery_message(const struct mosquitto_message*
 			|| (object_id.find("max_") == 0)
 			|| (object_id.find("_sensitivity") != std::string::npos)
 			|| (object_id.find("_alarm") != std::string::npos)
+			|| (object_id.find("_calibration") != std::string::npos)
 			)
 		{
 			return;
@@ -1237,6 +1239,23 @@ void MQTTAutoDiscover::on_auto_discovery_message(const struct mosquitto_message*
 			pSensor->temperature_unit = root["temperature_unit"].asString();
 		if (!root["temp_unit"].empty())
 			pSensor->temperature_unit = root["temp_unit"].asString();
+		//Set default min/max temperature based on unit
+		if (pSensor->temperature_unit == "C")
+		{
+			pSensor->temp_max = 35;
+			pSensor->temp_min = 7;
+		}
+		else
+		{
+			pSensor->temp_max = 95;
+			pSensor->temp_min = 44.6;
+		}
+		if (!root["min_temp"].empty())
+			pSensor->temp_min = atof(root["min_temp"].asString().c_str());
+		if (!root["max_temp"].empty())
+			pSensor->temp_max = atof(root["max_temp"].asString().c_str());
+		if (!root["temp_step"].empty())
+			pSensor->temp_step = atof(root["temp_step"].asString().c_str());
 		if (!root["current_temperature_topic"].empty())
 			pSensor->current_temperature_topic = root["current_temperature_topic"].asString();
 		if (!root["curr_temp_t"].empty())
@@ -1275,6 +1294,28 @@ void MQTTAutoDiscover::on_auto_discovery_message(const struct mosquitto_message*
 			pSensor->preset_mode_state_topic = root["pr_mode_stat_t"].asString();
 		if (!root["pr_mode_val_tpl"].empty())
 			pSensor->preset_mode_value_template = root["pr_mode_val_tpl"].asString();
+
+		//Special case for Fan percentage_command_template
+		if (pSensor->component_type == "fan")
+		{
+			if (!pSensor->percentage_command_template.empty())
+			{
+				std::string tstring(pSensor->percentage_command_template);
+				stdreplace(tstring, "[value]", "");
+				std::vector<std::string> strarray;
+				StringSplit(tstring, ",", strarray);
+
+				for (const auto& ittMode : strarray)
+				{
+					std::vector<std::string> strarray2;
+					StringSplit(ittMode, ":", strarray2);
+					if (strarray2.size() == 2)
+					{
+						pSensor->preset_modes.push_back(strarray2[1]);
+					}
+				}
+			}
+		}
 
 		CleanValueTemplate(pSensor->mode_state_template);
 		CleanValueTemplate(pSensor->mode_command_template);
@@ -1580,7 +1621,7 @@ void MQTTAutoDiscover::handle_auto_discovery_sensor_message(const struct mosquit
 uint64_t MQTTAutoDiscover::UpdateValueInt(int HardwareID, const char* ID, unsigned char unit, unsigned char devType, unsigned char subType, unsigned char signallevel, unsigned char batterylevel, int nValue,
 	const char* sValue, std::string& devname, bool bUseOnOffAction, const std::string& user)
 {
-	uint64_t DeviceRowIdx = m_sql.UpdateValue(HardwareID, ID, unit, devType, subType, signallevel, batterylevel, nValue, sValue, devname, bUseOnOffAction, (!user.empty()) ? user.c_str() : m_Name.c_str());
+	uint64_t DeviceRowIdx = m_sql.UpdateValue(HardwareID, 0, ID, unit, devType, subType, signallevel, batterylevel, nValue, sValue, devname, bUseOnOffAction, (!user.empty()) ? user.c_str() : m_Name.c_str());
 	if (DeviceRowIdx == (uint64_t)-1)
 		return -1;
 	if (m_bOutputLog)
@@ -1842,6 +1883,15 @@ bool MQTTAutoDiscover::GuessSensorTypeValue(const _tMQTTASensor* pSensor, uint8_
 		subType = sTypeTextStatus;
 		sValue = pSensor->last_value;
 	}
+	else if (szUnit == "variable")
+	{
+		std::string errorMessage;
+		_eUsrVariableType varType = USERVARTYPE_STRING;
+		if (is_number(pSensor->last_value))
+			varType = USERVARTYPE_FLOAT;
+		m_sql.AddUserVariableEx(pSensor->name, varType, pSensor->last_value, true, errorMessage);
+		return false;
+	}
 	else if (
 		(szUnit == "m³")
 		|| (szUnit == "m\xB3")
@@ -1993,20 +2043,10 @@ bool MQTTAutoDiscover::GuessSensorTypeValue(const _tMQTTASensor* pSensor, uint8_
 	*/
 	else
 	{
-		//Unknown unit, try to guess the type
-		if (pSensor->unique_id.find("voc") != std::string::npos)
-		{
-			devType = pTypeAirQuality;
-			subType = sTypeVoc;
-			nValue = atoi(pSensor->last_value.c_str());
-		}
-		else
-		{
-			devType = pTypeGeneral;
-			subType = sTypeCustom;
-			szOptions = pSensor->unit_of_measurement;
-			sValue = pSensor->last_value;
-		}
+		devType = pTypeGeneral;
+		subType = sTypeCustom;
+		szOptions = pSensor->unit_of_measurement;
+		sValue = pSensor->last_value;
 	}
 
 	if ((devType == pTypeGeneral) && (subType == sTypeCustom) && pSensor->szOptions.empty())
@@ -2233,6 +2273,8 @@ bool MQTTAutoDiscover::HaveSingleTempHumBaro(const std::string& device_identifie
 			continue;
 
 		_tMQTTASensor* pSensor = &pSensorBase->second;
+		if (pSensor->component_type == "number")
+			continue; //ignore number sensors
 
 		uint8_t devType, subType;
 		std::string szOptions, sValue;
@@ -2465,9 +2507,9 @@ void MQTTAutoDiscover::handle_auto_discovery_sensor(_tMQTTASensor* pSensor, cons
 				return;
 			}
 			int iUsed = (pSensor->bEnabled_by_default) ? 1 : 0;
-			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
-				"VALUES (%d, '%q', 1, %d, %d, %d, %d, '%q', %d, %d, '%q')",
-				m_HwdID, szDeviceID.c_str(), devType, subType, pSensor->SignalLevel, pSensor->BatteryLevel, sDeviceName.c_str(), iUsed, nValue, sValue.c_str());
+			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
+				"VALUES (%d, %d, '%q', 1, %d, %d, %d, %d, '%q', %d, %d, '%q')",
+				m_HwdID, 0, szDeviceID.c_str(), devType, subType, pSensor->SignalLevel, pSensor->BatteryLevel, sDeviceName.c_str(), iUsed, nValue, sValue.c_str());
 		}
 		else
 		{
@@ -2505,9 +2547,9 @@ void MQTTAutoDiscover::handle_auto_discovery_sensor(_tMQTTASensor* pSensor, cons
 					)
 					SwitchType = device::tmeter::type::WATER;
 			}
-			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SwitchType, SignalLevel, BatteryLevel, Name, Used, Options, nValue, sValue) "
-				"VALUES (%d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, '1;%q', %d, '%q')",
-				m_HwdID, pSensor->unique_id.c_str(), pSensor->devUnit, pSensor->devType, pSensor->subType, SwitchType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed,
+			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, SwitchType, SignalLevel, BatteryLevel, Name, Used, Options, nValue, sValue) "
+				"VALUES (%d, %d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, '1;%q', %d, '%q')",
+				m_HwdID, 0, pSensor->unique_id.c_str(), pSensor->devUnit, pSensor->devType, pSensor->subType, SwitchType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed,
 				pSensor->szOptions.c_str(), pSensor->nValue, pSensor->sValue.c_str());
 		}
 		else
@@ -2570,9 +2612,9 @@ void MQTTAutoDiscover::handle_auto_discovery_fan(_tMQTTASensor* pSensor, const s
 			}
 			bIsNewDevice = true;
 			int iUsed = (pSensor->bEnabled_by_default) ? 1 : 0;
-			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue, Options) "
-				"VALUES (%d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, %d, '0', null)",
-				m_HwdID, pSensor->unique_id.c_str(), unit, pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed, 0);
+			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue, Options) "
+				"VALUES (%s, %d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, %d, '0', null)",
+				m_HwdID, 0, pSensor->unique_id.c_str(), unit, pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed, 0);
 			result = m_sql.safe_query("SELECT ID,Name,nValue,sValue,Options FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Type==%d) AND (SubType==%d) AND (Unit==%d)", m_HwdID, pSensor->unique_id.c_str(), pSensor->devType, pSensor->subType, unit);
 			if (result.empty())
 				return; // should not happen!
@@ -2736,9 +2778,9 @@ void MQTTAutoDiscover::handle_auto_discovery_select(_tMQTTASensor* pSensor, cons
 			return;
 		}
 		int iUsed = (pSensor->bEnabled_by_default) ? 1 : 0;
-		m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue, Options) "
-			"VALUES (%d, '%q', 1, %d, %d, %d, %d, %d, '%q', %d, %d, '0', null)",
-			m_HwdID, pSensor->unique_id.c_str(), pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed, 0);
+		m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue, Options) "
+			"VALUES (%d, %d, '%q', 1, %d, %d, %d, %d, %d, '%q', %d, %d, '0', null)",
+			m_HwdID, 0, pSensor->unique_id.c_str(), pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed, 0);
 		result = m_sql.safe_query("SELECT ID,Name,nValue,sValue,Options FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Type==%d) AND (SubType==%d)", m_HwdID, pSensor->unique_id.c_str(), pSensor->devType,
 			pSensor->subType);
 		if (result.empty())
@@ -2747,6 +2789,13 @@ void MQTTAutoDiscover::handle_auto_discovery_select(_tMQTTASensor* pSensor, cons
 	else {
 		if (pSensor->last_value.empty())
 			return;
+		if (pSensor->select_options.size() == 1)
+		{
+			// Assume the only one option is the current value (used as a push button for some sensors)
+			std::string szIdx = result[0][0];
+			m_sql.UpdateLastUpdate(szIdx);
+			return;
+		}
 	}
 
 	std::string szIdx = result[0][0];
@@ -2774,7 +2823,7 @@ void MQTTAutoDiscover::handle_auto_discovery_select(_tMQTTASensor* pSensor, cons
 	}
 
 	if (iActualIndex == -1) {
-		Log(LOG_ERROR, "Select device doesn't have the option for received STATE \"%s\")", current_mode.c_str());
+		Log(LOG_ERROR, "Select device \"%s\" doesn't have the option for received STATE \"%s\")", szDeviceName.c_str(), current_mode.c_str());
 		iActualIndex = atoi(sValue.c_str());
 	}
 
@@ -2864,9 +2913,9 @@ void MQTTAutoDiscover::handle_auto_discovery_climate(_tMQTTASensor* pSensor, con
 			}
 			bIsNewDevice = true;
 			int iUsed = (pSensor->bEnabled_by_default) ? 1 : 0;
-			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue, Options) "
-				"VALUES (%d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, %d, '0', null)",
-				m_HwdID, pSensor->unique_id.c_str(), unit, pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed, 0);
+			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue, Options) "
+				"VALUES (%d, %d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, %d, '0', null)",
+				m_HwdID, 0, pSensor->unique_id.c_str(), unit, pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed, 0);
 			result = m_sql.safe_query("SELECT ID,Name,nValue,sValue,Options FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Type==%d) AND (SubType==%d) AND (Unit==%d)", m_HwdID, pSensor->unique_id.c_str(), pSensor->devType, pSensor->subType, unit);
 			if (result.empty())
 				return; // should not happen!
@@ -2886,7 +2935,8 @@ void MQTTAutoDiscover::handle_auto_discovery_climate(_tMQTTASensor* pSensor, con
 					current_mode = GetValueFromTemplate(root, pSensor->mode_state_template);
 					if ((pSensor->mode_state_topic == topic) && current_mode.empty())
 					{
-						Log(LOG_ERROR, "Climate device no idea how to interpretate state values (%s)", pSensor->unique_id.c_str());
+						//Mode not provided
+						//Log(LOG_ERROR, "Climate device no idea how to interpretate state values (%s)", pSensor->unique_id.c_str());
 						bValid = false;
 					}
 				}
@@ -2992,9 +3042,9 @@ void MQTTAutoDiscover::handle_auto_discovery_climate(_tMQTTASensor* pSensor, con
 			}
 			bIsNewDevice = true;
 			int iUsed = (pSensor->bEnabled_by_default) ? 1 : 0;
-			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue, Options) "
-				"VALUES (%d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, %d, '0', null)",
-				m_HwdID, pSensor->unique_id.c_str(), unit, pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed, 0);
+			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue, Options) "
+				"VALUES (%d, %d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, %d, '0', null)",
+				m_HwdID, 0, pSensor->unique_id.c_str(), unit, pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed, 0);
 			result = m_sql.safe_query("SELECT ID,Name,nValue,sValue,Options FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Type==%d) AND (SubType==%d) AND (Unit==%d)", m_HwdID, pSensor->unique_id.c_str(), pSensor->devType, pSensor->subType, unit);
 			if (result.empty())
 				return; // should not happen!
@@ -3014,7 +3064,8 @@ void MQTTAutoDiscover::handle_auto_discovery_climate(_tMQTTASensor* pSensor, con
 				current_mode = GetValueFromTemplate(root, pSensor->preset_mode_value_template);
 				if ((pSensor->preset_mode_state_topic == topic) && current_mode.empty())
 				{
-					Log(LOG_ERROR, "Climate device no idea how to interpretate preset_mode_state value (%s)", pSensor->unique_id.c_str());
+					//No preset mode provided
+					//Log(LOG_ERROR, "Climate device no idea how to interpretate preset_mode_state value (%s)", pSensor->unique_id.c_str());
 					bValid = false;
 				}
 			}
@@ -3114,7 +3165,7 @@ void MQTTAutoDiscover::handle_auto_discovery_climate(_tMQTTASensor* pSensor, con
 			pSensor->devType = pTypeSetpoint;
 			pSensor->subType = sTypeSetpoint;
 			std::vector<std::vector<std::string>> result;
-			result = m_sql.safe_query("SELECT Name,nValue,sValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit == %d) AND (Type==%d) AND (Subtype==%d)", m_HwdID,
+			result = m_sql.safe_query("SELECT ID, Name, sValue FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit == %d) AND (Type==%d) AND (Subtype==%d)", m_HwdID,
 				pSensor->unique_id.c_str(), 1, pSensor->devType, pSensor->subType);
 			if (result.empty())
 			{
@@ -3125,19 +3176,34 @@ void MQTTAutoDiscover::handle_auto_discovery_climate(_tMQTTASensor* pSensor, con
 					return;
 				}
 				int iUsed = (pSensor->bEnabled_by_default) ? 1 : 0;
-				m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
-					"VALUES (%d, '%q', 1, %d, %d, %d, %d, '%q', %d, %d, '%q')",
-					m_HwdID, pSensor->unique_id.c_str(), pSensor->devType, pSensor->subType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed,
+				m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
+					"VALUES (%d, %d, '%q', 1, %d, %d, %d, %d, '%q', %d, %d, '%q')",
+					m_HwdID, 0, pSensor->unique_id.c_str(), pSensor->devType, pSensor->subType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed,
 					pSensor->nValue, pSensor->sValue.c_str());
+				result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit == %d) AND (Type==%d) AND (Subtype==%d)", m_HwdID,
+					pSensor->unique_id.c_str(), 1, pSensor->devType, pSensor->subType);
+				//Set options
+				std::string new_options = std_format("ValueStep:%g;ValueMin:%g;ValueMax:%g;ValueUnit:%s;", pSensor->temp_step, pSensor->temp_min, pSensor->temp_max, pSensor->temperature_unit.c_str());
+				uint64_t ullidx = std::stoull(result[0][0]);
+				m_sql.SetDeviceOptions(ullidx, m_sql.BuildDeviceOptions(new_options, false));
 			}
 			else
 			{
 				// Update
 				if (bHaveReceiveValue)
 				{
-					UpdateValueInt(m_HwdID, pSensor->unique_id.c_str(), 1, pSensor->devType, pSensor->subType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->nValue,
-						pSensor->sValue.c_str(),
-						result[0][0]);
+					std::string sID = result[0][0];
+					std::string sName = result[0][1];
+					std::string old_value = result[0][2];
+					//check if different
+					if (old_value != pSensor->sValue)
+					{
+						UpdateValueInt(m_HwdID, pSensor->unique_id.c_str(), 1, pSensor->devType, pSensor->subType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->nValue,
+							pSensor->sValue.c_str(),
+							sName);
+					}
+					else
+						m_sql.UpdateLastUpdate(sID);
 				}
 			}
 		}
@@ -3156,7 +3222,8 @@ void MQTTAutoDiscover::handle_auto_discovery_climate(_tMQTTASensor* pSensor, con
 				std::string tstring = GetValueFromTemplate(root, pSensor->current_temperature_template);
 				if (tstring.empty())
 				{
-					Log(LOG_ERROR, "Climate device unhandled current_temperature_template (%s)", pSensor->unique_id.c_str());
+					//No current temperature provided
+					//Log(LOG_ERROR, "Climate device unhandled current_temperature_template (%s)", pSensor->unique_id.c_str());
 					bValid = false;
 				}
 				temp_current = static_cast<double>(atof(tstring.c_str()));
@@ -3198,9 +3265,9 @@ void MQTTAutoDiscover::handle_auto_discovery_climate(_tMQTTASensor* pSensor, con
 					return;
 				}
 				int iUsed = (pSensor->bEnabled_by_default) ? 1 : 0;
-				m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
-					"VALUES (%d, '%q', 1, %d, %d, %d, %d, '%q', %d, %d, '%q')",
-					m_HwdID, pSensor->unique_id.c_str(), pSensor->devType, pSensor->subType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed,
+				m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
+					"VALUES (%d, %d, '%q', 1, %d, %d, %d, %d, '%q', %d, %d, '%q')",
+					m_HwdID, 0, pSensor->unique_id.c_str(), pSensor->devType, pSensor->subType, pSensor->SignalLevel, pSensor->BatteryLevel, pSensor->name.c_str(), iUsed,
 					pSensor->nValue, pSensor->sValue.c_str());
 			}
 			else
@@ -3416,6 +3483,15 @@ void MQTTAutoDiscover::InsertUpdateSwitch(_tMQTTASensor* pSensor)
 		else
 			szSwitchCmd = "on";
 	}
+	if (
+		(pSensor->unique_id.find("child_lock") != std::string::npos)
+		|| (pSensor->unique_id.find("indicator_mode") != std::string::npos)
+		)
+	{
+		//don't add these as used by default
+		iUsed = 0;
+	}
+
 
 	std::vector<std::vector<std::string>> result;
 	result = m_sql.safe_query("SELECT ID, Name, nValue, sValue, Color, SubType, SwitchType FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit==%d)", m_HwdID, pSensor->unique_id.c_str(), pSensor->devUnit);
@@ -3427,9 +3503,9 @@ void MQTTAutoDiscover::InsertUpdateSwitch(_tMQTTASensor* pSensor)
 			Log(LOG_NORM, "Accept new hardware disabled. Ignoring new sensor %s", pSensor->name.c_str());
 			return;
 		}
-		m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
-			"VALUES (%d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, %d, '%q')",
-			m_HwdID, pSensor->unique_id.c_str(), pSensor->devUnit, pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, szSensorName.c_str(), iUsed, 0, "0");
+		m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
+			"VALUES (%d, %d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, %d, '%q')",
+			m_HwdID, 0, pSensor->unique_id.c_str(), pSensor->devUnit, pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, szSensorName.c_str(), iUsed, 0, "0");
 		result = m_sql.safe_query("SELECT ID,Name,nValue,sValue,Color,SubType, SwitchType FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit==%d)", m_HwdID, pSensor->unique_id.c_str(), pSensor->devUnit);
 	}
 	if (result.empty())
@@ -4310,9 +4386,9 @@ void MQTTAutoDiscover::UpdateBlindPosition(_tMQTTASensor* pSensor)
 			Log(LOG_NORM, "Accept new hardware disabled. Ignoring new sensor %s", pSensor->name.c_str());
 			return;
 		}
-		m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
-			"VALUES (%d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, %d, '%q')",
-			m_HwdID, pSensor->unique_id.c_str(), pSensor->devUnit, pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, szSensorName.c_str(), iUsed, 0, "0");
+		m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, switchType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
+			"VALUES (%d, %d, '%q', %d, %d, %d, %d, %d, %d, '%q', %d, %d, '%q')",
+			m_HwdID, 0, pSensor->unique_id.c_str(), pSensor->devUnit, pSensor->devType, pSensor->subType, switchType, pSensor->SignalLevel, pSensor->BatteryLevel, szSensorName.c_str(), iUsed, 0, "0");
 		result = m_sql.safe_query("SELECT ID,Name,nValue,sValue,SubType, SwitchType FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q') AND (Unit==%d)", m_HwdID, pSensor->unique_id.c_str(), pSensor->devUnit);
 	}
 	if (result.empty())

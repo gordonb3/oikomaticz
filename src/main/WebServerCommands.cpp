@@ -1797,7 +1797,7 @@ namespace http
 					bool bActEnabledState = m_sql.m_bAcceptNewHardware;
 					m_sql.m_bAcceptNewHardware = true;
 					std::string devname;
-					m_sql.UpdateValue(atoi(hwdid.c_str()), devid.c_str(), atoi(sunitcode.c_str()), dtype, subtype, 0, -1, 0, devname, true, szSwitchUser.c_str());
+					m_sql.UpdateValue(atoi(hwdid.c_str()), 0, devid.c_str(), atoi(sunitcode.c_str()), dtype, subtype, 0, -1, 0, devname, true, szSwitchUser.c_str());
 					m_sql.m_bAcceptNewHardware = bActEnabledState;
 
 					// set name and switchtype
@@ -2202,7 +2202,7 @@ namespace http
 					bool bActEnabledState = m_sql.m_bAcceptNewHardware;
 					m_sql.m_bAcceptNewHardware = true;
 					std::string devname;
-					m_sql.UpdateValue(atoi(hwdid.c_str()), devid.c_str(), atoi(sunitcode.c_str()), dtype, subtype, 0, -1, 0, "20.5", devname, true, szSwitchUser.c_str());
+					m_sql.UpdateValue(atoi(hwdid.c_str()), 0, devid.c_str(), atoi(sunitcode.c_str()), dtype, subtype, 0, -1, 0, "20.5", devname, true, szSwitchUser.c_str());
 					m_sql.m_bAcceptNewHardware = bActEnabledState;
 
 					// set name and switchtype
@@ -2498,7 +2498,7 @@ namespace http
 				bool bActEnabledState = m_sql.m_bAcceptNewHardware;
 				m_sql.m_bAcceptNewHardware = true;
 				std::string devname;
-				m_sql.UpdateValue(atoi(hwdid.c_str()), devid.c_str(), atoi(sunitcode.c_str()), dtype, subtype, 0, -1, 0, devname, true, szSwitchUser.c_str());
+				m_sql.UpdateValue(atoi(hwdid.c_str()), 0, devid.c_str(), atoi(sunitcode.c_str()), dtype, subtype, 0, -1, 0, devname, true, szSwitchUser.c_str());
 				m_sql.m_bAcceptNewHardware = bActEnabledState;
 
 				// set name and switchtype
@@ -3671,7 +3671,7 @@ namespace http
 				std::string szSwitchMsg = std_format("User: %s initiated a switch command (%s/%s/%s)", szSwitchUser.c_str(), idx.c_str(), sSwitchName.c_str(), switchcmd.c_str());
 
 				if (!bIsOOC)
-					_log.Log(LOG_STATUS, szSwitchMsg.c_str());
+					_log.Log(LOG_STATUS, "%s", szSwitchMsg.c_str());
 
 				MainWorker::eSwitchLightReturnCode sRet;
 				sRet = m_mainworker.SwitchLight(idx, switchcmd, level, "-1", onlyonchange, 0, szSwitchUser);
@@ -3681,13 +3681,13 @@ namespace http
 						(bIsOOC)
 						&& (sRet != MainWorker::SL_OK_NO_ACTION)
 						)
-						_log.Log(LOG_STATUS, szSwitchMsg.c_str());
+						_log.Log(LOG_STATUS, "%s", szSwitchMsg.c_str());
 					root["status"] = "OK";
 				}
 				else
 				{
 					if (bIsOOC)
-						_log.Log(LOG_STATUS, szSwitchMsg.c_str());
+						_log.Log(LOG_STATUS, "%s", szSwitchMsg.c_str());
 					root["status"] = "ERROR";
 					root["message"] = "Error sending switch command, check device/hardware (idx=" + idx + ") !";
 				}

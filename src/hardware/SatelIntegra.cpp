@@ -750,7 +750,7 @@ void SatelIntegra::ReportOutputState(const int Idx, const bool state)
 		std::string sTmp = std_format("%08X", Idx);
 		std::string devname;
 
-		m_sql.UpdateValue(m_HwdID, sTmp.c_str(), 1, pTypeGeneral, sTypeTextStatus, 12, 255, 0, state ? "On" : "Off", devname, true, m_Name.c_str());
+		m_sql.UpdateValue(m_HwdID, 0, sTmp.c_str(), 1, pTypeGeneral, sTypeTextStatus, 12, 255, 0, state ? "On" : "Off", devname, true, m_Name.c_str());
 	}
 }
 
@@ -767,7 +767,7 @@ void SatelIntegra::ReportAlarm(const bool isAlarm)
 
 	std::string devname;
 
-	m_sql.UpdateValue(m_HwdID, "Alarm", 2, pTypeGeneral, sTypeAlert, 12, 255, isAlarm ? 4 : 1, isAlarm ? "Alarm !" : "Normal", devname, true, m_Name.c_str());
+	m_sql.UpdateValue(m_HwdID, 0, "Alarm", 2, pTypeGeneral, sTypeAlert, 12, 255, isAlarm ? 4 : 1, isAlarm ? "Alarm !" : "Normal", devname, true, m_Name.c_str());
 }
 
 void SatelIntegra::ReportTemperature(const int Idx, const int temp)
@@ -1116,7 +1116,7 @@ int SatelIntegra::SendCommand(const unsigned char* cmd, const unsigned int cmdLe
 	struct timeval tv;
 	tv.tv_sec = 3;
 	tv.tv_usec = 0;
-	if (select(m_socket + 1, &rfds, nullptr, nullptr, &tv) < 0)
+	if (select((int)m_socket + 1, &rfds, nullptr, nullptr, &tv) < 0)
 	{
 		Log(LOG_ERROR, "connection lost.");
 		DestroySocket();
@@ -1228,7 +1228,7 @@ std::pair<unsigned char*, unsigned int> SatelIntegra::getFullFrame(const unsigne
 	result.push_back(0xFE);
 	result.push_back(0x0D);
 
-	unsigned int resultSize = result.size();
+	size_t resultSize = result.size();
 	unsigned char* pResult = new unsigned char[resultSize];
 	memset(pResult, 0, resultSize);
 	std::list<unsigned char>::iterator it = result.begin();
@@ -1237,5 +1237,5 @@ std::pair<unsigned char*, unsigned int> SatelIntegra::getFullFrame(const unsigne
 		pResult[index] = *it;
 	}
 
-	return { pResult, resultSize };
+	return { pResult, static_cast<unsigned int>(resultSize) };
 }

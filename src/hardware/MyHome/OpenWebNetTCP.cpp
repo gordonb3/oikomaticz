@@ -183,7 +183,7 @@ bool COpenWebNetTCP::isStatusSocketConnected()
 **/
 bool COpenWebNetTCP::ownWrite(csocket *connectionSocket, const char* pdata, size_t size)
 {
-	int bytesWritten = connectionSocket->write(pdata, size);
+	int bytesWritten = connectionSocket->write(pdata, static_cast<unsigned int>(size));
 	if (bytesWritten != size)
 	{
 		Log(LOG_ERROR, "partial write: %u/%u", bytesWritten, (unsigned int)size);
@@ -198,7 +198,7 @@ bool COpenWebNetTCP::ownWrite(csocket *connectionSocket, const char* pdata, size
 int COpenWebNetTCP::ownRead(csocket *connectionSocket, char* pdata, size_t size)
 {
 	memset(pdata, 0, size);
-	int read = connectionSocket->read(pdata, size, false);
+	int read = connectionSocket->read(pdata, static_cast<unsigned int>(size), false);
 	return (read);
 }
 
@@ -856,7 +856,7 @@ void COpenWebNetTCP::UpdateBlinds(const int who, const int where, const int Comm
 		nvalue = 0;
 		slevel = 0;
 		switch_type = (iLevel < 0) ? device::tswitch::type::VenetianBlindsEU : device::tswitch::type::BlindsPercentage;
-		m_sql.InsertDevice(m_HwdID, szIdx, iInterface, pTypeGeneralSwitch, sSwitchTypeAC, switch_type, 0, "", devname);
+		m_sql.InsertDevice(m_HwdID, 0, szIdx, iInterface, pTypeGeneralSwitch, sSwitchTypeAC, switch_type, 0, "", devname);
 	}
 	else
 	{
@@ -934,7 +934,7 @@ void COpenWebNetTCP::UpdateCenPlus(const int who, const int where, const int Com
 	{
 		// First insert, set SwitchType = device::tswitch::type::Contact, so we have a correct contact device
 		nvalue = 0;
-		m_sql.InsertDevice(m_HwdID, szIdx, iInterface, pTypeGeneralSwitch, sSwitchTypeAC, device::tswitch::type::Contact, 0, "Unavailable", devname);
+		m_sql.InsertDevice(m_HwdID, 0, szIdx, iInterface, pTypeGeneralSwitch, sSwitchTypeAC, device::tswitch::type::Contact, 0, "Unavailable", devname);
 	}
 	else
 	{
@@ -967,7 +967,7 @@ void COpenWebNetTCP::UpdateSoundDiffusion(const int who, const int where, const 
 	result = m_sql.safe_query("SELECT ID,SwitchType FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%s') AND (Unit==%d)", m_HwdID, szIdx, iInterface);
 	if (result.empty())
 	{
-		//m_sql.InsertDevice(m_HwdID, szIdx, iInterface, pTypeGeneralSwitch, sSwitchTypeAC, device::tswitch::type::Media, 0, "Unavailable", "OpenWebNet Media", 12, 255, 1);
+		//m_sql.InsertDevice(m_HwdID, 0, szIdx, iInterface, pTypeGeneralSwitch, sSwitchTypeAC, device::tswitch::type::Media, 0, "Unavailable", "OpenWebNet Media", 12, 255, 1);
 	}
 
 	//TODO: manage SoundDiffusion device like dimmer (on, off and set volume) or like media device (check how to do it)
@@ -1001,7 +1001,7 @@ void COpenWebNetTCP::UpdateSwitch(const int who, const int where, const int what
 		}
 		else
 			switch_type = device::tswitch::type::OnOff;
-		m_sql.InsertDevice(m_HwdID, szIdx, iInterface, pTypeGeneralSwitch, sSwitchTypeAC, switch_type, 0, "Unavailable", devname);
+		m_sql.InsertDevice(m_HwdID, 0, szIdx, iInterface, pTypeGeneralSwitch, sSwitchTypeAC, switch_type, 0, "Unavailable", devname);
 	}
 	else
 	{
@@ -1031,7 +1031,7 @@ void COpenWebNetTCP::UpdateSwitch(const int who, const int where, const int what
 **/
 void COpenWebNetTCP::decodeWhereAndFill(const int who, const std::string &where, std::vector<std::string> whereParam, std::string *devname, int *iWhere)
 {
-	int wlen = where.length();
+	size_t wlen = where.length();
 	int iArea = -1;
 	*iWhere = -1;
 

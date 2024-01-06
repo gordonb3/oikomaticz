@@ -413,7 +413,7 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 
 				uint8_t unit = GetUnit_by_ID(atol(HeatingZone->szZoneId.c_str()));
 				std::string szDeviceName;
-				m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName, true, "");
+				m_sql.UpdateValue(this->m_HwdID, 0, HeatingZone->szZoneId.c_str(), unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName, true, "");
 			}
 			return true;
 		}
@@ -478,7 +478,7 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 
 			uint8_t unit = GetUnit_by_ID(atol(HeatingZone->szZoneId.c_str()));
 			std::string szDeviceName;
-			m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName, true, "");
+			m_sql.UpdateValue(this->m_HwdID, 0, HeatingZone->szZoneId.c_str(), unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName, true, "");
 		}
 		return true;
 	}
@@ -739,7 +739,7 @@ void CEvohomeWeb::DecodeZone(evohome::device::zone* HeatingZone)
 		szUpdateStat.append(";" + szuntil);
 
 	std::string szDeviceName;
-	uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, HeatingZone->szZoneId.c_str(), GetUnit_by_ID(evoID), pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName, true, "");
+	uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, 0, HeatingZone->szZoneId.c_str(), GetUnit_by_ID(evoID), pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, szUpdateStat.c_str(), szDeviceName, true, "");
 
 	if (m_updatedev && (DevRowIdx != -1))
 	{
@@ -814,7 +814,7 @@ void CEvohomeWeb::DecodeDHWState(evohome::device::temperatureControlSystem* tcs)
 		szUpdateStat.append(";" + szuntil);
 
 	std::string szDeviceName;
-	uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, HotWater->szZoneId.c_str(), 1, pTypeEvohomeWater, sTypeEvohomeWater, 10, 255, 50, szUpdateStat.c_str(), szDeviceName, true, "");
+	uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, 0, HotWater->szZoneId.c_str(), 1, pTypeEvohomeWater, sTypeEvohomeWater, 10, 255, 50, szUpdateStat.c_str(), szDeviceName, true, "");
 
 	if (m_updatedev && (DevRowIdx != -1))
 	{
@@ -929,7 +929,7 @@ uint8_t CEvohomeWeb::GetUnit_by_ID(unsigned long evoID)
 		}
 		// else create as unit zero -> we'll update that on the next visit
 
-		uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, cDeviceID, unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, "0.0;0.0;Auto", szDeviceName, true, "");
+		uint64_t DevRowIdx = m_sql.UpdateValue(this->m_HwdID, 0, cDeviceID, unit, pTypeEvohomeZone, sTypeEvohomeZone, 10, 255, 0, "0.0;0.0;Auto", szDeviceName, true, "");
 		if (DevRowIdx != -1)
 		{
 			char devname[8];

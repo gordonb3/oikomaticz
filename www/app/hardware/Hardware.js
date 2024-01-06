@@ -2947,11 +2947,6 @@ define(['app'], function (app) {
 				e.preventDefault();
 				SetRFXCOMMode();
 			});
-			$('#hardwarecontent #firmwarebutton').click(function (e) {
-				e.preventDefault();
-				$rootScope.hwidx = $('#hardwarecontent #idx').val();
-				SwitchLayout('RFXComFirmware');
-			});
 
 			$('#hardwarecontent #idx').val(idx);
 			$('#hardwarecontent #Keeloq').prop('checked', ((Mode6 & 0x01) != 0));
@@ -3035,11 +3030,6 @@ define(['app'], function (app) {
 			$('#hardwarecontent #submitbutton').click(function (e) {
 				e.preventDefault();
 				SetRFXCOMMode868();
-			});
-			$('#hardwarecontent #firmwarebutton').click(function (e) {
-				e.preventDefault();
-				$rootScope.hwidx = $('#hardwarecontent #idx').val();
-				SwitchLayout('RFXComFirmware');
 			});
 
 			$('#hardwarecontent #idx').val(idx);
@@ -3966,7 +3956,7 @@ define(['app'], function (app) {
 			$.ajax({
 				url: "json.htm?type=command&param=addtuyadevice&idx=" + $.devIdx + "&name=" + encodeURIComponent($("#tuyadeviceparams #devicename").val()) +
 				"&tuyaid=" + $("#tuyadeviceparams #tuyaid").val() +
-				"&localkey=" + $("#tuyadeviceparams #localkey").val() +
+				"&localkey=" + encodeURIComponent($("#tuyadeviceparams #localkey").val()) +
 				"&ipaddr=" + $("#tuyadeviceparams #ipaddress").val() +
 				"&energydivider=" + $("#tuyadeviceparams #energydivider").val(),
 				async: false,
@@ -3985,7 +3975,7 @@ define(['app'], function (app) {
 				url: "json.htm?type=command&param=updatetuyadevice&idx=" + $.devIdx + "&devid=" + devid +
 				"&name=" + encodeURIComponent($("#tuyadeviceparams #devicename").val()) +
 				"&tuyaid=" + $("#tuyadeviceparams #tuyaid").val() +
-				"&localkey=" + $("#tuyadeviceparams #localkey").val() +
+				"&localkey=" + encodeURIComponent($("#tuyadeviceparams #localkey").val()) +
 				"&ipaddr=" + $("#tuyadeviceparams #ipaddress").val() +
 				"&energydivider=" + $("#tuyadeviceparams #energydivider").val(),
 				async: false,
@@ -4101,6 +4091,17 @@ define(['app'], function (app) {
 							else if (HwTypeStr.indexOf("Limitless") >= 0) {
 								HwTypeStr += ' <span class="label label-info lcursor" onclick="EditLimitlessType(' + item.idx + ',\'' + item.Name + '\',' + item.Mode1 + ',' + item.Mode2 + ',' + item.Mode3 + ',' + item.Mode4 + ',' + item.Mode5 + ',' + item.Mode6 + ');">' + $.t("Set Mode") + '</span>';
 							}
+							else if (HwTypeStr.indexOf("OpenZWave") >= 0) {
+								HwTypeStr += '<br>Version: ' + item.version;
+
+								if (typeof item.NodesQueried != 'undefined') {
+									var lblStatus = "label-info";
+									if (item.NodesQueried != true) {
+										lblStatus = "label-important";
+									}
+									HwTypeStr += ' <a href="#/Hardware/' + item.idx + '" class="label ' + lblStatus + ' btn-link">' + $.t("Setup") + '</a>';
+								}
+							}
 							else if (HwTypeStr.indexOf("Enphase") >= 0) {
 								HwTypeStr += '<br>Version: ' + item.version;
 							}							
@@ -4135,6 +4136,9 @@ define(['app'], function (app) {
 							}
 							else if (HwTypeStr.indexOf("BleBox") >= 0) {
 								HwTypeStr += ' ' + hardwareSetupLink;
+							}
+							else if (HwTypeStr.indexOf("MQTT Client") >= 0) {
+                                HwTypeStr += ' ' + hardwareSetupLink;
 							}
 							else if (HwTypeStr.indexOf("MQTT Auto") >= 0) {
 								HwTypeStr += ' ' + hardwareSetupLink;

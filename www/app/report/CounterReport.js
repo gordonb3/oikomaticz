@@ -152,6 +152,8 @@ define(['app', 'report/helpers'], function (app, reportHelpers) {
             vm.decimals = (vm.device.SwitchTypeVal == 3) ? vm.device.Divider.numDecimalsDiv1() : 3;
             vm.isMonthView = vm.selectedMonth > 0;
 
+			$.devIdx = vm.device.idx;
+
             getData();
         }
         
@@ -247,6 +249,10 @@ define(['app', 'report/helpers'], function (app, reportHelpers) {
                 .draw();
         }
 
+		function reloadPage() {
+			window.location.reload();
+		}
+
         function showUsageChart(data) {
             var chartElement = $element.find('#usagegraph');
             var series = [];
@@ -293,6 +299,17 @@ define(['app', 'report/helpers'], function (app, reportHelpers) {
                     valueDecimals: vm.decimals
                 },
                 plotOptions: {
+					series: {
+						point: {
+							events: {
+								click: function (event) {
+									if (vm.isMonthView) {
+										chartPointClickNew(event, false, reloadPage);
+									}
+								}
+							}
+						}
+					},
                     column: {
                         minPointLength: 4,
                         pointPadding: 0.1,

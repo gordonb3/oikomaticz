@@ -622,9 +622,10 @@ namespace Plugins {
 						}
 
 						m_sql.safe_query("INSERT INTO DeviceStatus "
-							"(HardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, CustomImage, Description, Color, Options, LastUpdate) "
-							"VALUES (%d,'%q',%d,%d,%d,%d,%d,%d,%d,'%q',%d,'%q',%d,'%q','%q','%q','%q')",
+							"(HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, SwitchType, Used, SignalLevel, BatteryLevel, Name, nValue, sValue, CustomImage, Description, Color, Options, LastUpdate) "
+							"VALUES (%d, %d,'%q',%d,%d,%d,%d,%d,%d,%d,'%q',%d,'%q',%d,'%q','%q','%q','%q')",
 							pModState->pPlugin->m_HwdID,
+							0,
 							sDeviceID.c_str(),
 							self->Unit,
 							self->Type,
@@ -779,6 +780,7 @@ namespace Plugins {
 
 			DevRowIdx = m_sql.UpdateValue(
 				pModState->pPlugin->m_HwdID,
+				0,
 				sDeviceID.c_str(),
 				self->Unit,
 				iType,
@@ -925,7 +927,7 @@ namespace Plugins {
 		{
 			pModState->pPlugin->SetHeartbeatReceived();
 			std::string sID = std::to_string(self->ID);
-			m_sql.safe_query("UPDATE DeviceStatus SET LastUpdate='%s' WHERE (ID == %s )", TimeToString(nullptr, TF_DateTime).c_str(), sID.c_str());
+			m_sql.UpdateLastUpdate(sID);
 		}
 		else
 		{

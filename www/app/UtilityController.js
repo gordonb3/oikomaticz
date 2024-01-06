@@ -444,6 +444,18 @@ define(['app', 'livesocket'], function (app) {
 				else if (item.SubType == "Thermostat Clock") {
 					status = "";
 				}
+				else if (item.SubType == "Thermostat Mode") {
+					status = "";
+					bigtext = item.Data;
+				}
+				else if (item.SubType == "Thermostat Operating State") {
+					status = "";
+					bigtext = item.Data;
+				}
+				else if (item.SubType == "Thermostat Fan Mode") {
+					status = "";
+					bigtext = item.Data;
+				}
 				else if (item.SubType == "Waterflow") {
 					status = "";
 					bigtext = item.Data;
@@ -524,7 +536,7 @@ define(['app', 'livesocket'], function (app) {
 			$('#modal').show();
 
 			var htmlcontent = '';
-			var bHaveAddedDevider = false;
+			var bHaveAddedDivider = false;
 
 			var tophtm = "";
 			var i = 0;
@@ -541,13 +553,13 @@ define(['app', 'livesocket'], function (app) {
 						}
 						$.each(data.result, function (i, item) {
 							if (i % 3 == 0) {
-								//add devider
-								if (bHaveAddedDevider == true) {
-									//close previous devider
+								//add divider
+								if (bHaveAddedDivider == true) {
+									//close previous divider
 									htmlcontent += '</div>\n';
 								}
 								htmlcontent += '<div class="row divider">\n';
-								bHaveAddedDevider = true;
+								bHaveAddedDivider = true;
 							}
 							var backgroundClass = $rootScope.GetItemBackgroundStatus(item);
 							var graphLogLink = '#/Devices/' + item.idx + '/Log';
@@ -617,6 +629,15 @@ define(['app', 'livesocket'], function (app) {
 								bigtext += item.Data + ' ' + item.vunit;
 							}
 							else if (item.SubType == "Waterflow") {
+								bigtext += item.Data;
+							}
+							else if (item.SubType == "Thermostat Mode") {
+								bigtext += item.Data;
+							}
+							else if (item.SubType == "Thermostat Operating State") {
+								bigtext += item.Data;
+							}
+							else if (item.SubType == "Thermostat Fan Mode") {
 								bigtext += item.Data;
 							}
 							
@@ -762,6 +783,18 @@ define(['app', 'livesocket'], function (app) {
 							}
 							else if (item.SubType == "Thermostat Clock") {
 								xhtm += '<img src="images/clock48.png" height="48" width="48"></td>\n';
+								status = "";
+							}
+							else if (item.SubType == "Thermostat Mode") {
+								xhtm += '<img src="images/mode48.png" height="48" width="48"></td>\n';
+								status = "";
+							}
+							else if (item.SubType == "Thermostat Operating State") {
+								xhtm += '<img src="images/mode48.png" height="48" width="48"></td>\n';
+								status = "";
+							}
+							else if (item.SubType == "Thermostat Fan Mode") {
+								xhtm += '<img src="images/mode48.png" height="48" width="48"></td>\n';
 								status = "";
 							}
 							else if (item.SubType == "Sound Level") {
@@ -915,6 +948,16 @@ define(['app', 'livesocket'], function (app) {
 									xhtm += '<a class="btnsmall" onclick="EditThermostatClock(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', \'' + item.DayTime + '\',' + item.Protected + ', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
 								}
 							}
+							else if (item.SubType == "Thermostat Mode") {
+								if (permissions.hasPermission("Admin")) {
+									xhtm += '<a class="btnsmall" onclick="EditThermostatMode(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', \'' + item.Mode + '\', \'' + item.Modes + '\',' + item.Protected + ', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
+								}
+							}
+							else if (item.SubType == "Thermostat Fan Mode") {
+								if (permissions.hasPermission("Admin")) {
+									xhtm += '<a class="btnsmall" onclick="EditThermostatFanMode(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', \'' + item.Mode + '\', \'' + item.Modes + '\',' + item.Protected + ', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
+								}
+							}
 							else if ((item.Type == "General") && (item.SubType == "Voltage")) {
 								xhtm += '<a class="btnsmall" href="' + graphLogLink + '" data-i18n="Log">Log</a> ';
 								if (permissions.hasPermission("Admin")) {
@@ -985,8 +1028,8 @@ define(['app', 'livesocket'], function (app) {
 					}
 				}
 			});
-			if (bHaveAddedDevider == true) {
-				//close previous devider
+			if (bHaveAddedDivider == true) {
+				//close previous divider
 				htmlcontent += '</div>\n';
 			}
 			if (htmlcontent == '') {

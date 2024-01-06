@@ -987,7 +987,7 @@ void P1MeterBase::ParseP1PlaintextData(const unsigned char *pData, const int Len
 	if (m_bufferpos == sizeof(m_buffer))
 	{
 		// discard oversized datagram
-		if ((Len > 400) || (pData[0] == 0x21))
+		if ((Len > 600) || (pData[0] == 0x21))
 		{
 			// 400 is an arbitrary chosen number to differentiate between full datagrams and single line commits
 			// the objective is that we only want to display this log line once for any datagram
