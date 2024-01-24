@@ -193,6 +193,7 @@ define(['app', 'livesocket'], function (app) {
 					(item.Type.indexOf('Color Switch') == 0) ||
 					(item.Type.indexOf('RFY') == 0) ||
 					(item.Type.indexOf('ASA') == 0) ||
+					(item.Type.indexOf('Heating') == 0) ||
 					(item.SubType == "Smartwares Mode") ||
 					(item.SubType == "Relay") ||
 					((typeof item.SubType != 'undefined') && (item.SubType.indexOf('Itho') == 0)) ||
@@ -207,6 +208,9 @@ define(['app', 'livesocket'], function (app) {
 						var status = TranslateStatus(item.Status) + " ";
 						if (item.SubType == "Contact") {
 							status = '<a class="btn btn-mini" href="#/Devices/' + item.idx + '/Log">' + $.t(item.Status) + '</a>';
+						}
+						else if (item.SubType == "Evohome") {
+							status = EvohomePopupMenu(item,'evomobile');
 						}
 						else if (item.SwitchType == "Doorbell") {
 							status += '<button class="btn btn-mini" type="button" onclick="SwitchLight(' + item.idx + ',\'On\',' + item.Protected + ');">' + $.t("Ring") + '</button>';
@@ -523,6 +527,10 @@ define(['app', 'livesocket'], function (app) {
 								highlighttext = highlow + " Tariff";
 							}
 							img = '<img src="images/' + item.Image + '48_' + item.Status + '.png"  title="' + $.t(highlighttext) + '" height="40" width="40">';
+						}
+						else if (item.SubType == "Evohome") {
+							img = EvohomeImg(item,'evomini');
+							bigtext = GetLightStatusText(item);
 						}
 						else if (item.SwitchType == "Doorbell") {
 							img = '<img src="images/doorbell48.png" title="' + $.t("Turn On") + '" onclick="SwitchLight(' + item.idx + ',\'On\',' + item.Protected + ');" class="lcursor" height="40" width="40">';
@@ -1795,6 +1803,7 @@ define(['app', 'livesocket'], function (app) {
 									(item.Type.indexOf('Color Switch') == 0) ||
 									(item.Type.indexOf('RFY') == 0) ||
 									(item.Type.indexOf('ASA') == 0) ||
+									(item.Type.indexOf('Heating') == 0) ||
 									(item.SubType == "Relay") ||
 									((typeof item.SubType != 'undefined') && (item.SubType.indexOf('Itho') == 0)) ||
 									((typeof item.SubType != 'undefined') && (item.SubType.indexOf('Lucci') == 0)) ||
@@ -2222,7 +2231,7 @@ define(['app', 'livesocket'], function (app) {
 										var streamimg = '<img src="images/webcam.png" title="' + $.t('Stream Video') + '" height="16" width="16">';
 										streamurl = "<a href=\"javascript:ShowCameraLiveStream('" + escape(item.Name) + "'," + item.CameraIdx + "," + item.CameraAspect + ")\">" + streamimg + "</a>";
 										bigtext += "&nbsp;" + streamurl;
-									} else if (item.SwitchType == "Selector") {
+									} else if ((item.SwitchType == "Selector") || (item.SubType == "Evohome")) {
 										bigtext = GetLightStatusText(item);
 									}
 									xhtm += bigtext + '</span></td>\n';
@@ -2233,6 +2242,9 @@ define(['app', 'livesocket'], function (app) {
 											highlighttext = highlow + " Tariff";
 										}
 										xhtm += '\t      <td id="img" class="img img1"><img src="images/' + item.Image + '48_' + item.Status + '.png"  title="' + $.t(highlighttext) + '" height="40" width="40"></td>\n';
+									}
+									else if (item.SubType == "Evohome") {
+										xhtm += EvohomePopupMenu(item,'evomini');
 									}
 									else if (item.SwitchType == "Doorbell") {
 										xhtm += '\t      <td id="img" class="img img1"><img src="images/doorbell48.png" title="' + $.t("Turn On") + '" onclick="SwitchLight(' + item.idx + ',\'On\',' + item.Protected + ');" class="lcursor" height="40" width="40"></td>\n';
