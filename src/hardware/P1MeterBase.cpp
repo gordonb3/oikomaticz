@@ -243,7 +243,7 @@ bool P1MeterBase::MatchLine()
 		if (m_lbuffer[2] == '0')
 		{
 			// Try to match OBIS IDs:
-			//    timestamp:		0-0:1.0.0
+			//    timestamp:		0-0:1.0.0	-- possible future use
 			//    version P1+eMucs:		0-0:96.1.4
 			//    tariff indicator:		0-0:96.14.0
 			if (strncmp("96.14.0",(const char*)&m_lbuffer + 4,7) == 0)
@@ -251,7 +251,7 @@ bool P1MeterBase::MatchLine()
 			else if ((m_p1version == 0) && (strncmp("96.1.4",(const char*)&m_lbuffer + 4,6) == 0))	// get meter version only once
 			{
 				matchtype = device::tmeter::COSEM::OBIS::version;
-		}
+			}
 			else
 				return true;
 		}
@@ -281,7 +281,7 @@ bool P1MeterBase::MatchLine()
 
 			if (strncmp("24.2.",(const char*)&m_lbuffer + 4,5) == 0)
 			{
-				if ((m_lbuffer[2] & 0xFD) != '1')
+				if ((m_lbuffer[9] & 0xFD) != '1')
 					return true;
 				matchtype = device::tmeter::COSEM::OBIS::gasUsageDSMR4;
 			}
