@@ -135,6 +135,7 @@ enum value {
 	VisualCrossing,			//127
 	MitsubishiWF,			//128
 	LocalTuya = 501,		//501
+	APSLocalECU = 502,		//502
 	END
 };
 
@@ -275,7 +276,8 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ MQTTAutoDiscovery,		"MQTT Auto Discovery Client Gateway with LAN interface",	"MQTT-AD"		},
 	{ RFLINKMQTT,			"RFLink Gateway MQTT",						"RFLink"		},
 	{ MitsubishiWF,			"Mitsubishi WF RAC Airco with LAN (HTTP) interface",		"MitsubishiWF"		},
-	{ LocalTuya,			"Local Tuya provider",						"LocalTuya"		},
+	{ LocalTuya,			"Local Tuya",							"LocalTuya"		},
+	{ APSLocalECU,			"APSystems Local ECU",						"APSLocalECU"		},
 	{ 0, nullptr, nullptr }
 };
 

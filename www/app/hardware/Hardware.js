@@ -334,8 +334,7 @@ define(['app'], function (app) {
 				(text.indexOf("YeeLight") >= 0) ||
 				(text.indexOf("Arilux AL-LC0x") >= 0) ||
 				(text.indexOf("sysfs GPIO") >= 0) ||
-				(text.indexOf("Local Tuya provider") >= 0)
-
+				(text.indexOf("Local Tuya") >= 0)
 				)
 			 {
 				// if hardwaretype == 1000 => I2C sensors grouping
@@ -1601,6 +1600,32 @@ define(['app'], function (app) {
 					}
 				});
 		    }
+			else if (text.indexOf("APSystems Local ECU") >= 0) {
+				var address = $("#hardwarecontent #divremote #tcpaddress").val();
+				if (address == "") 
+				{
+					ShowNotify($.t('Please enter an Address!'), 2500, true);
+					return;
+				}
+
+				$.ajax({
+					url: "json.htm?type=command&param=updatehardware&htype=" + hardwaretype +
+					"&loglevel=" + logLevel +
+					"&address=" + address +
+					"&name=" + encodeURIComponent(name) +
+					"&enabled=" + bEnabled +
+					"&idx=" + idx +
+					"&datatimeout=" + datatimeout,
+					async: false,
+					dataType: 'json',
+					success: function (data) {
+						RefreshHardwareTable();
+					},
+					error: function () {
+						ShowNotify($.t('Problem updating hardware!'), 2500, true);
+					}
+				});
+			}
 		}
 
 		AddHardware = function () {
@@ -1854,7 +1879,7 @@ define(['app'], function (app) {
 				(text.indexOf("Motherboard") >= 0) ||
 				(text.indexOf("YeeLight") >= 0) ||
 				(text.indexOf("Arilux AL-LC0x") >= 0) ||
-				(text.indexOf("Local Tuya provider") >= 0)
+				(text.indexOf("Local Tuya") >= 0)
 			) {
 				$.ajax({
 					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype +
@@ -2919,6 +2944,32 @@ define(['app'], function (app) {
 					"&address=" + address +
 					"&username=" + encodeURIComponent(username) +
 					"&password=" + encodeURIComponent(password) +
+					"&name=" + encodeURIComponent(name) +
+					"&enabled=" + bEnabled +
+					"&idx=" + idx +
+					"&datatimeout=" + datatimeout,
+					async: false,
+					dataType: 'json',
+					success: function (data) {
+						RefreshHardwareTable();
+					},
+					error: function () {
+						ShowNotify($.t('Problem updating hardware!'), 2500, true);
+					}
+				});
+			}
+			else if (text.indexOf("APSystems Local ECU") >= 0) {
+				var address = $("#hardwarecontent #divremote #tcpaddress").val();
+				if (address == "") 
+				{
+					ShowNotify($.t('Please enter an Address!'), 2500, true);
+					return;
+				}
+
+				$.ajax({
+					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype +
+					"&loglevel=" + logLevel +
+					"&address=" + address +
 					"&name=" + encodeURIComponent(name) +
 					"&enabled=" + bEnabled +
 					"&idx=" + idx +
@@ -4202,7 +4253,7 @@ define(['app'], function (app) {
 								var baudrate = (HwTypeStr.indexOf("LAN") >= 0) ? 1 : item.Mode1;
 								HwTypeStr += ' <span class="label label-info lcursor" onclick="EditP1(' + item.idx + ',\'' + item.Name + '\',' + baudrate + ',' + item.Mode2 + ',' + item.Mode3 + ',' + item.Mode4 + ');">' + $.t("Options") + '</span>';
 							}
-							else if (HwTypeStr.indexOf("Local Tuya provider") >= 0) {
+							else if (HwTypeStr.indexOf("Local Tuya") >= 0) {
 								HwTypeStr += ' <span class="label label-info lcursor" onclick="EditTuya(' + item.idx + ',\'' + item.Name + '\');">' + $.t("Setup Tuya Devices") + '</span>';
 							}
 
@@ -4656,6 +4707,9 @@ define(['app'], function (app) {
 								$("#hardwarecontent #hardwareparamshoneywelllyric #hwApiSecret").val(atob(tmparray[1]));
 							}
 						}
+						else if (data["Type"].indexOf("APSystems Local ECU") >= 0) {
+							$("#hardwarecontent #hardwareparamsremote #tcpaddress").val(data["Address"]);
+						}
 						if (data["Type"].indexOf("MySensors Gateway with MQTT") >= 0) {
 
 							// Break out any possible topic prefix pieces.
@@ -4981,6 +5035,7 @@ define(['app'], function (app) {
 			}
 			else if (
 				(text.indexOf("LAN") >= 0 ||
+				text.indexOf("APSystems Local ECU") >= 0 ||
 				text.indexOf("Harmony") >= 0 ||
 				text.indexOf("Eco Devices") >= 0 ||
 				text.indexOf("Intergas InComfort") >= 0 ||
@@ -5013,6 +5068,10 @@ define(['app'], function (app) {
 					else if (text.indexOf("Enphase") >= 0) {
 						$("#hardwarecontent #divenphase").show();
 						$("#hardwarecontent #divlogin").show();
+					}
+					else if (text.indexOf("APSystems Local ECU") >= 0) {
+						$("#hardwarecontent #divremote #lblremoteport").hide();
+						$("#hardwarecontent #divremote #tcpport").hide();
 					}
 					else if (text.indexOf("Alfen") >= 0) {
 						$("#hardwarecontent #divlogin").show();

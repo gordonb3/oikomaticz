@@ -451,6 +451,10 @@ namespace http
 			{
 				return true;
 			}
+			else if ( (htype == hardware::type::LocalTuya) || (htype == hardware::type::APSLocalECU) )
+			{
+				return true;
+			}
 			else
 			{
 				_log.Debug(DEBUG_HARDWARE, "ValidateHardware: No checks for Hardware type (%d)", htype);

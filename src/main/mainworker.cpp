@@ -27,6 +27,7 @@
 #include "hardware/AirconWithMe.h"
 #include "hardware/AlfenEve.h"
 #include "hardware/AnnaThermostat.h"
+#include "hardware/APSystems/LocalECU.hpp"
 #include "hardware/Arilux.h"
 #include "hardware/AtagOne.h"
 #include "hardware/BleBox.h"
@@ -1100,6 +1101,9 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case hardware::type::LocalTuya:
 		pHardware = new CLocalTuya(ID);
+		break;
+	case hardware::type::APSLocalECU:
+		pHardware = new CAPSLocalECU(ID, Address);
 		break;
 	}
 
