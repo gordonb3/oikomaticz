@@ -16,7 +16,6 @@
 #include <boost/algorithm/string/join.hpp>
 #include "main/json_helper.h"
 
-#include <boost/crc.hpp>
 #include <algorithm>
 #include <set>
 
@@ -1892,8 +1891,6 @@ void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase* pHardware, const 
 {
 	// current date/time based on current system
 	//size_t Len = pRXCommand[0] + 1;
-
-	const_cast<CDomoticzHardwareBase*>(pHardware)->SetHeartbeatReceived();
 
 	uint64_t DeviceRowIdx = (uint64_t)-1;
 	std::string DeviceName;
@@ -12989,58 +12986,6 @@ bool MainWorker::SetThermostatState(const std::string& idx, const int newState)
 }
 
 #ifdef WITH_OPENZWAVE
-bool MainWorker::SetZWaveThermostatModeInt(const std::vector<std::string>& sd, const int tMode)
-{
-	int HardwareID = atoi(sd[0].c_str());
-	int hindex = FindDomoticzHardware(HardwareID);
-	if (hindex == -1)
-		return false;
-
-	unsigned long ID;
-	std::stringstream s_strid;
-	s_strid << std::hex << sd[1];
-	s_strid >> ID;
-	CDomoticzHardwareBase* pHardware = GetHardware(HardwareID);
-	if (pHardware == nullptr)
-		return false;
-	if (pHardware->HwdType == hardware::type::OpenZWave)
-	{
-		_tGeneralDevice tmeter;
-		tmeter.subtype = sTypeZWaveThermostatMode;
-		tmeter.intval1 = ID;
-		tmeter.intval2 = tMode;
-		if (!WriteToHardware(HardwareID, (const char*)&tmeter, sizeof(_tGeneralDevice)))
-			return false;
-	}
-	return true;
-}
-
-bool MainWorker::SetZWaveThermostatFanModeInt(const std::vector<std::string>& sd, const int fMode)
-{
-	int HardwareID = atoi(sd[0].c_str());
-	int hindex = FindDomoticzHardware(HardwareID);
-	if (hindex == -1)
-		return false;
-
-	unsigned long ID;
-	std::stringstream s_strid;
-	s_strid << std::hex << sd[1];
-	s_strid >> ID;
-	CDomoticzHardwareBase* pHardware = GetHardware(HardwareID);
-	if (pHardware == nullptr)
-		return false;
-	if (pHardware->HwdType == hardware::type::OpenZWave)
-	{
-		_tGeneralDevice tmeter;
-		tmeter.subtype = sTypeZWaveThermostatFanMode;
-		tmeter.intval1 = ID;
-		tmeter.intval2 = fMode;
-		if (!WriteToHardware(HardwareID, (const char*)&tmeter, sizeof(_tGeneralDevice)))
-			return false;
-	}
-	return true;
-}
-
 bool MainWorker::SetZWaveThermostatMode(const std::string& idx, const int tMode)
 {
 	//Get Device details
@@ -13051,8 +12996,32 @@ bool MainWorker::SetZWaveThermostatMode(const std::string& idx, const int tMode)
 	if (result.empty())
 		return false;
 
-	std::vector<std::string> sd = result[0];
-	return SetZWaveThermostatModeInt(sd, tMode);
+	int HardwareID = atoi(result[0][0].c_str());
+	int hindex = FindDomoticzHardware(HardwareID);
+	if (hindex == -1)
+		return false;
+	CDomoticzHardwareBase* pHardware = GetHardware(HardwareID);
+	if (pHardware == nullptr)
+		return false;
+
+	if (pHardware->HwdType == hardware::type::Domoticz)
+	{
+		DomoticzTCP* pDomoticz = static_cast<DomoticzTCP*>(pHardware);
+		return pDomoticz->SetZWaveThermostatMode(idx, tMode);
+	}
+
+	unsigned long ID;
+	std::stringstream s_strid;
+	s_strid << std::hex << result[0][1];
+	s_strid >> ID;
+
+	if (pHardware->HwdType != hardware::type::OpenZWave)
+		return false;
+	_tGeneralDevice tmeter;
+	tmeter.subtype = sTypeZWaveThermostatMode;
+	tmeter.intval1 = ID;
+	tmeter.intval2 = tMode;
+	return WriteToHardware(HardwareID, (const char*)&tmeter, sizeof(_tGeneralDevice));
 }
 
 bool MainWorker::SetZWaveThermostatFanMode(const std::string& idx, const int fMode)
@@ -13065,8 +13034,32 @@ bool MainWorker::SetZWaveThermostatFanMode(const std::string& idx, const int fMo
 	if (result.empty())
 		return false;
 
-	std::vector<std::string> sd = result[0];
-	return SetZWaveThermostatFanModeInt(sd, fMode);
+	int HardwareID = atoi(result[0][0].c_str());
+	int hindex = FindDomoticzHardware(HardwareID);
+	if (hindex == -1)
+		return false;
+	CDomoticzHardwareBase* pHardware = GetHardware(HardwareID);
+	if (pHardware == nullptr)
+		return false;
+
+	if (pHardware->HwdType == hardware::type::Domoticz)
+	{
+		DomoticzTCP* pDomoticz = static_cast<DomoticzTCP*>(pHardware);
+		return pDomoticz->SetZWaveThermostatFanMode(idx, fMode);
+	}
+	if (pHardware->HwdType != hardware::type::OpenZWave)
+		return false;
+
+	unsigned long ID;
+	std::stringstream s_strid;
+	s_strid << std::hex << result[0][1];
+	s_strid >> ID;
+
+	_tGeneralDevice tmeter;
+	tmeter.subtype = sTypeZWaveThermostatFanMode;
+	tmeter.intval1 = ID;
+	tmeter.intval2 = fMode;
+	return WriteToHardware(HardwareID, (const char*)&tmeter, sizeof(_tGeneralDevice));
 }
 
 #endif
@@ -13553,11 +13546,10 @@ void MainWorker::HeartbeatCheck()
 	{
 		if (!pHardware->m_bSkipReceiveCheck)
 		{
-			//Skip Dummy Hardware
+			//Check Thread Timeout
 			bool bDoCheck = (pHardware->HwdType != hardware::type::Dummy) && (pHardware->HwdType != hardware::type::EVOHOME_SCRIPT);
 			if (bDoCheck)
 			{
-				//Check Thread Timeout
 				double diff = difftime(now, pHardware->m_LastHeartbeat);
 				//_log.Log(LOG_STATUS, "%d last checking  %.2lf seconds ago", iterator->first, dif);
 				if (diff > 60)
@@ -13572,28 +13564,12 @@ void MainWorker::HeartbeatCheck()
 				}
 			}
 
+			//Check received data timeout
 			if (pHardware->m_DataTimeout > 0)
 			{
 				//Check Receive Timeout
 				double diff = difftime(now, pHardware->m_LastHeartbeatReceive);
 				bool bHaveDataTimeout = (diff > pHardware->m_DataTimeout);
-				if (!bHaveDataTimeout)
-				{
-					if (
-						(pHardware->HwdType == hardware::type::RFXLAN)
-						|| (pHardware->HwdType == hardware::type::RFXtrx315)
-						|| (pHardware->HwdType == hardware::type::RFXtrx433)
-						|| (pHardware->HwdType == hardware::type::RFXtrx868)
-						)
-					{
-						const CRFXBase* pRFXBase = static_cast<CRFXBase*>(pHardware);
-						if (pRFXBase->m_LastP1Received != 0)
-						{
-							diff = difftime(now, pRFXBase->m_LastP1Received);
-							bHaveDataTimeout = (diff > pHardware->m_DataTimeout);
-						}
-					}
-				}
 				if (bHaveDataTimeout)
 				{
 					std::string sDataTimeout;
@@ -13634,7 +13610,6 @@ void MainWorker::HeartbeatCheck()
 					m_devicestorestart.push_back(pHardware->m_HwdID);
 				}
 			}
-
 		}
 	}
 }

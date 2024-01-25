@@ -16,6 +16,7 @@
 #include "main/json_helper.h"
 #include <sqlite3.h>
 #include "hardware/hardwaretypes.h"
+#include "hardware/DomoticzTCP.h"
 #include "protocols/SMTPClient.h"
 #include "push/InfluxPush.h"
 #include "WebServerHelper.h"
@@ -40,7 +41,7 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 4
-#define DOMOTICZ_DB_VERSION 166
+#define DOMOTICZ_DB_VERSION 167
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
@@ -56,7 +57,7 @@ constexpr auto sqlCreateDeviceStatus =
 "CREATE TABLE IF NOT EXISTS [DeviceStatus] ("
 "[ID] INTEGER PRIMARY KEY, "
 "[HardwareID] INTEGER NOT NULL, "
-"[OrgHardwareID] DEFAULT 0, "
+"[OrgHardwareID] INTEGER DEFAULT 0, "
 "[DeviceID] VARCHAR(25) NOT NULL, "
 "[Unit] INTEGER DEFAULT 0, "
 "[Name] VARCHAR(100) DEFAULT Unknown, "
@@ -229,6 +230,7 @@ constexpr auto sqlCreateMultiMeter_Calendar =
 constexpr auto sqlCreateNotifications =
 "CREATE TABLE IF NOT EXISTS [Notifications] ("
 "[ID] INTEGER PRIMARY KEY, "
+"[Active] BOOLEAN DEFAULT true, "
 "[DeviceRowID] BIGINT(10) NOT NULL, "
 "[Params] VARCHAR(100), "
 "[CustomMessage] VARCHAR(300) DEFAULT (''), "
@@ -3152,6 +3154,10 @@ bool CSQLHelper::OpenDatabase()
 		{
 			query("ALTER TABLE DeviceStatus ADD COLUMN [OrgHardwareID] INTEGER default 0");
 		}
+		if (dbversion < 167)
+		{
+			query("ALTER TABLE Notifications ADD COLUMN [Active] BOOLEAN DEFAULT true");
+		}
 	}
 
 	if ((!bNewInstall) && (ozdbversion < OIKOMATICZ_DB_VERSION))
@@ -3764,10 +3770,24 @@ bool CSQLHelper::SwitchLightFromTasker(uint64_t idx, const std::string& switchcm
 
 	std::vector<std::string> sd = result[0];
 	int HardwareID = atoi(sd[0].c_str());
-	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
+
+	int hindex = m_mainworker.FindDomoticzHardware(HardwareID);
+	if (hindex == -1)
+	{
+		_log.Log(LOG_ERROR, "Switch command not send!, Hardware device disabled or not found!");
+		return false;
+	}
 	CDomoticzHardwareBase* pHardware = m_mainworker.GetHardware(HardwareID);
 	if (pHardware == nullptr)
 		return false;
+	if (pHardware->HwdType == hardware::type::Domoticz)
+	{
+		DomoticzTCP* pDomoticz = static_cast<DomoticzTCP*>(pHardware);
+		bool bret = pDomoticz->SwitchLight(idx, switchcmd, level, color, false, User);
+		return (bret) ? MainWorker::SL_OK : MainWorker::SL_ERROR;
+	}
+
+	device::tswitch::type::value switchtype = (device::tswitch::type::value)atoi(sd[5].c_str());
 
 	std::string switchCommand = switchcmd;
 	bool bret = m_mainworker.SwitchLightInt(sd, switchCommand, level, color, false, User);
@@ -4320,7 +4340,7 @@ void CSQLHelper::Do_Work()
 				std::string idx = sstr.str();
 				float fValue = (float)atof(itt._sValue.c_str());
 
-				auto result = safe_query("SELECT a.[Type] FROM Hardware as a, DeviceStatus as b WHERE (b.ID == 9693) AND (a.ID == b.HardwareID)");
+				auto result = safe_query("SELECT a.[Type] FROM Hardware as a, DeviceStatus as b WHERE (b.ID == %" PRIu64 ") AND (a.ID == b.HardwareID)", itt._idx);
 				if (!result.empty())
 				{
 					hardware::type::value HwdType = (hardware::type::value)atoi(result[0][0].c_str());
@@ -5154,7 +5174,7 @@ uint64_t CSQLHelper::InsertDevice(const int HardwareID, const int OrgHardwareID,
 
 	safe_query(
 		"INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, SwitchType, SignalLevel, BatteryLevel, nValue, sValue, Name) "
-		"VALUES ('%d','%d','%q','%d','%d','%d','%d','%d','%d','%d','%q','%q')",
+		"VALUES (%d,%d,'%q',%d,%d,%d,%d,%d,%d,%d,'%q','%q')",
 		HardwareID, OrgHardwareID, ID, unit,
 		devType, subType, switchType,
 		signallevel, batterylevel,
@@ -5316,6 +5336,12 @@ uint64_t CSQLHelper::UpdateValueInt(
 	if (!m_dbase)
 		return -1;
 
+	CDomoticzHardwareBase* pHardware = m_mainworker.GetHardware(HardwareID);
+	if (pHardware != nullptr)
+	{
+		const_cast<CDomoticzHardwareBase*>(pHardware)->SetHeartbeatReceived();
+	}
+
 	uint64_t ulID = 0;
 	std::map<std::string, std::string> options;
 
@@ -5356,7 +5382,6 @@ uint64_t CSQLHelper::UpdateValueInt(
 
 #ifdef ENABLE_PYTHON
 		//TODO: Plugins should perhaps be blocked from implicitly adding a device by update? It's most likely a bug due to updating a removed device..
-		CDomoticzHardwareBase* pHardware = m_mainworker.GetHardware(HardwareID);
 		if (pHardware != nullptr && pHardware->HwdType == hardware::type::PythonPlugin)
 		{
 			_log.Debug(DEBUG_NORM, "CSQLHelper::UpdateValueInt: Notifying plugin %u about creation of device %u", HardwareID, unit);
@@ -5548,7 +5573,6 @@ uint64_t CSQLHelper::UpdateValueInt(
 			std::string slevel = sd[6];
 
 			hardware::type::value HWtype = hardware::type::Domoticz; //just a value
-			CDomoticzHardwareBase* pHardware = m_mainworker.GetHardware(HardwareID);
 			if (pHardware != nullptr)
 				HWtype = pHardware->HwdType;
 

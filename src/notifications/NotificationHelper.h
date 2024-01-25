@@ -9,6 +9,7 @@
 struct _tNotification
 {
 	uint64_t ID;
+	bool Active;
 	std::string Params;
 	int Priority;
 	time_t LastSend;
@@ -37,11 +38,10 @@ class CNotificationHelper
 	// notification functions
 	void CheckAndHandleLastUpdateNotification();
 	void ReloadNotifications();
-	bool AddNotification(const std::string &DevIdx, const std::string &Param, const std::string &CustomMessage, const std::string& CustomAction, const std::string &ActiveSystems, int Priority, bool SendAlways);
+	bool AddNotification(const std::string &DevIdx, const bool Avtive, const std::string &Param, const std::string &CustomMessage, const std::string& CustomAction, const std::string &ActiveSystems, int Priority, bool SendAlways);
 	bool RemoveDeviceNotifications(const std::string &DevIdx);
 	bool RemoveNotification(const std::string &ID);
-	std::vector<_tNotification> GetNotifications(uint64_t DevIdx);
-	std::vector<_tNotification> GetNotifications(const std::string &DevIdx);
+	std::vector<_tNotification> GetNotifications(uint64_t DevIdx, const bool bActiveOnly = true);
 	void TouchNotification(uint64_t ID);
 	void TouchLastUpdate(uint64_t ID);
 	bool CustomRecoveryMessage(uint64_t ID, std::string &msg, bool isRecovery);
@@ -79,7 +79,6 @@ class CNotificationHelper
 	bool CheckAndHandleValueNotification(uint64_t Idx, const std::string &DeviceName, int value);
 	bool CheckAndHandleRainNotification(uint64_t Idx, const std::string &DeviceName, unsigned char devType, unsigned char subType, notification::type::value ntype, float mvalue);
 	bool CheckAndHandleAmpere123Notification(uint64_t Idx, const std::string &DeviceName, float Ampere1, float Ampere2, float Ampere3);
-	bool CheckAndHandleAlertNotification(uint64_t Idx, const std::string &DeviceName, const std::string &sValue);
 
 	std::string ParseCustomMessage(const std::string &cMessage, const std::string &sName, const std::string &sValue);
 	bool ApplyRule(const std::string &rule, bool equal, bool less);

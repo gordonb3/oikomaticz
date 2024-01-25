@@ -118,15 +118,6 @@ void CDomoticzHardwareBase::SetHeartbeatReceived()
 	mytime(&m_LastHeartbeatReceive);
 }
 
-void CDomoticzHardwareBase::HandleHBCounter(const int iInterval)
-{
-	m_iHBCounter++;
-	if (m_iHBCounter % iInterval == 0)
-	{
-		SetHeartbeatReceived();
-	}
-}
-
 int CDomoticzHardwareBase::SetThreadNameInt(const std::thread::native_handle_type& thread)
 {
 	return SetThreadName(thread, m_Name.c_str());
@@ -1270,7 +1261,7 @@ void CDomoticzHardwareBase::SendZWaveAlarmSensor(const int NodeID, const uint8_t
 	gDevice.intval1 = (int)(lID);
 	gDevice.intval2 = aValue;
 
-	int maxChars = (alarmLabel.size() < sizeof(_tGeneralDevice::text) - 1) ? alarmLabel.size() : sizeof(_tGeneralDevice::text) - 1;
+	size_t maxChars = (alarmLabel.size() < sizeof(_tGeneralDevice::text) - 1) ? alarmLabel.size() : sizeof(_tGeneralDevice::text) - 1;
 	strncpy(gDevice.text, alarmLabel.c_str(), maxChars);
 	gDevice.text[maxChars] = 0;
 

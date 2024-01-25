@@ -164,6 +164,12 @@ void DomoticzTCP::OnData(const uint8_t* pData, size_t length)
 		uint64_t idx = m_sql.UpdateValue(m_HwdID, OrgHardwareID, DeviceID.c_str(), Unit, Type, SubType, SignalLevel, BatteryLevel, nValue, sValue.c_str(), Name, true, m_Name.c_str());
 		if (idx == (uint64_t)-1)
 		{
+			if (!m_sql.m_bAcceptNewHardware)
+			{
+				Log(LOG_STATUS, "Device creation failed, Oikomaticz settings prevent accepting new devices. (device ID %s)", DeviceID.c_str());
+				return;
+			}
+
 			Log(LOG_ERROR, "Failed to update device %s", DeviceID.c_str());
 			return;
 		}
@@ -184,9 +190,9 @@ void DomoticzTCP::OnData(const uint8_t* pData, size_t length)
 		m_sql.UpdateDeviceValue("LastUpdate", LastUpdate, std::to_string(idx));
 
 	}
-	catch (const std::exception&)
+	catch (const std::exception& e)
 	{
-		Log(LOG_ERROR, "Invalid data received!");
+		Log(LOG_ERROR, "Exception: Invalid data received! (%s)", e.what());
 	}
 }
 
@@ -327,3 +333,36 @@ bool DomoticzTCP::SwitchEvoModal(const std::string& idx, const std::string& stat
 	AESEncryptData(szSend, szEncrypted, (const uint8_t*)uhash.data());
 	return WriteToHardware(szEncrypted);
 }
+
+#ifdef WITH_OPENZWAVE
+bool DomoticzTCP::SetZWaveThermostatMode(const std::string& idx, int tMode)
+{
+	Json::Value root;
+	if (!AssambleDeviceInfo(idx, root))
+		return false;
+	root["action"] = "SetZWaveThermostatMode";
+	root["tMode"] = tMode;
+
+	std::string szSend = JSonToRawString(root);
+	std::vector<char> uhash = HexToBytes(m_password);
+	std::string szEncrypted;
+	AESEncryptData(szSend, szEncrypted, (const uint8_t*)uhash.data());
+	return WriteToHardware(szEncrypted);
+}
+
+bool DomoticzTCP::SetZWaveThermostatFanMode(const std::string& idx, int fMode)
+{
+	Json::Value root;
+	if (!AssambleDeviceInfo(idx, root))
+		return false;
+	root["action"] = "SetZWaveThermostatFanMode";
+	root["fMode"] = fMode;
+
+	std::string szSend = JSonToRawString(root);
+	std::vector<char> uhash = HexToBytes(m_password);
+	std::string szEncrypted;
+	AESEncryptData(szSend, szEncrypted, (const uint8_t*)uhash.data());
+	return WriteToHardware(szEncrypted);
+}
+#endif
+

@@ -19,6 +19,12 @@ class DomoticzTCP : public CDomoticzHardwareBase, ASyncTCP
 	bool SetThermostatState(const std::string& idx, int newState);
 	bool SwitchEvoModal(const std::string& idx, const std::string& status, const std::string& action, const std::string& ooc, const std::string& until);
 
+#ifdef WITH_OPENZWAVE
+	bool SetZWaveThermostatMode(const std::string& idx, int tMode);
+	bool SetZWaveThermostatFanMode(const std::string& idx, int fMode);
+#endif
+
+
 #ifndef NOCLOUD
 	void SetConnected(bool connected);
 	void Authenticated(const std::string &aToken, bool authenticated);
