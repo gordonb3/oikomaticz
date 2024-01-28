@@ -305,15 +305,12 @@ void CAPSLocalECU::SendMeters()
 	unsigned long powerusage1;
 	unsigned long powerusage2;
 	if (m_tariff == 0)
-	{
-		powerusage1 = m_usageLow;
-		powerusage2 = (m_ECUClient->m_apsecu.lifetime_energy * 1000) - m_usageLow;
-	}
+		m_usageHigh = (m_ECUClient->m_apsecu.lifetime_energy * 1000) - m_usageLow;
 	else
-	{
-		powerusage1 = (m_ECUClient->m_apsecu.lifetime_energy * 1000) - m_usageHigh;
-		powerusage2 = m_usageHigh;
-	}
+		m_usageLow = (m_ECUClient->m_apsecu.lifetime_energy * 1000) - m_usageHigh;
+	powerusage1 = m_usageLow;
+	powerusage2 = m_usageHigh;
+
 	sprintf(p1data, "%lu;%lu;0;0;%d;0", powerusage1, powerusage2, m_ECUClient->m_apsecu.current_power);
 	result = m_sql.safe_query("UPDATE DeviceStatus SET sValue='%s', lastupdate='%s' WHERE ID=%s", p1data, timestring, IDx.c_str());
 	m_mainworker.sOnDeviceReceived(m_HwdID, atoll(IDx.c_str()), "Solar Power", nullptr);
