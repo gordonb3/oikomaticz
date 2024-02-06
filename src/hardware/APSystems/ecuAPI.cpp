@@ -13,6 +13,12 @@
 #define ECU_LISTEN_PORT 8899
 #define READ_BUFFER_SIZE 2000
 
+#define ECU_QUERY_HEADER 	"APS1100160001"
+#define INVERTER_QUERY_HEADER	"APS1100280002"
+#define INVERTER_SIGNAL_HEADER	"APS1100280003"
+#define GET_ENERGY_DAY		"APS1100360003"
+#define GET_ENERGY_WMY		"APS1100300004"
+
 #include "ecuAPI.hpp"
 #include <netdb.h>
 #include <zlib.h>
@@ -30,7 +36,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
-
 
 #ifdef DEBUG
 #include <iostream>
@@ -59,11 +64,120 @@ void ecuAPI::SetTargetAddress(const std::string ip_address)
 }
 
 
+int ecuAPI::GetDayReport(const int year, const uint8_t month, const uint8_t day, std::string &jsondata)
+{
+	unsigned char buffer[READ_BUFFER_SIZE] = GET_ENERGY_DAY;
+	int buffer_pos = 13;
+	bcopy(m_apsecu.id.c_str(), (char*)&buffer[buffer_pos], m_apsecu.id.length());
+	buffer_pos += m_apsecu.id.length();
+	bcopy(MESSAGE_SEND_TRAILER, (char*)&buffer[buffer_pos], 3);
+	buffer_pos += 3;
+
+	char datestring[20];
+	sprintf(datestring, "%04d%02d%02d\n", year, month, day);
+	bcopy(datestring, (char*)&buffer[buffer_pos], 9);
+	buffer_pos += 9;
+
+	if (!ConnectToDevice())
+		return -1;
+	send(buffer, buffer_pos);
+	int numbytes = receive(buffer, READ_BUFFER_SIZE);
+	disconnect();
+
+#ifdef DEBUG
+	std::cout << "dbg: received message: ";
+	for(int i=0; i<(int)(numbytes); ++i)
+		printf("%.2x", (uint8_t)buffer[i]);
+	std::cout << "\n";
+#endif
+
+	if ( (numbytes < 15) || (!VerifyMessageSize(numbytes, buffer)) )
+		return 1;
+
+	int pos = 15;
+	int maxpos = numbytes - 4;
+	if (maxpos == pos)
+	{
+		jsondata = "{\n    datapoints : []\n}\n";
+		return 0;
+	}
+	jsondata = "{\n    datapoints :\n    [";
+	while (pos < maxpos)
+	{
+		unsigned char* currenttime = &buffer[pos];
+		std::string hour = ReadBCDnumber(currenttime, 0, 1);
+		std::string minute = ReadBCDnumber(currenttime, 1, 1);
+		int power = ReadBigMachineSmallInt(currenttime, 2);
+		if (pos > 15)
+			jsondata.append(",");
+		char dayresult[100];
+		sprintf(dayresult, "\n        {\n            \"time\" : \"%s:%s\"\n            \"power\" : %d\n        }", hour.c_str(), minute.c_str(), power);
+		jsondata.append(dayresult);
+		pos += 4;
+	}
+	jsondata.append("\n    ]\n}\n");
+
+	return 0;
+}
+
+
+int ecuAPI::GetPeriodReport(const uint8_t period, std::string &jsondata)
+{
+	if (period > 2)
+		return -1;
+
+	unsigned char buffer[READ_BUFFER_SIZE] = GET_ENERGY_WMY;
+	int buffer_pos = 13;
+	bcopy(m_apsecu.id.c_str(), (char*)&buffer[buffer_pos], m_apsecu.id.length());
+	buffer_pos += m_apsecu.id.length();
+	bcopy(MESSAGE_SEND_TRAILER, (char*)&buffer[buffer_pos], 3);
+	buffer_pos += 3;
+	uint8_t datestring[3] = { 0x30, (uint8_t)(period | 0x30), 0x0a };
+	bcopy(datestring, (char*)&buffer[buffer_pos], 3);
+	buffer_pos += 3;
+
+
+	if (!ConnectToDevice())
+		return -1;
+	send(buffer, buffer_pos);
+	int numbytes = receive(buffer, READ_BUFFER_SIZE);
+	disconnect();
+
+	if ( (numbytes < 15) || (!VerifyMessageSize(numbytes, buffer)) )
+		return 1;
+
+	int pos = 17;
+	int maxpos = numbytes - 4;
+	if (maxpos == pos)
+	{
+		jsondata = "{\n    datapoints : []\n}\n";
+		return 0;
+	}
+	jsondata = "{\n    datapoints :\n    [";
+	while (pos < maxpos)
+	{
+		unsigned char* currenttime = &buffer[pos];
+		std::string year = ReadBCDnumber(currenttime, 0, 2);
+		std::string month = ReadBCDnumber(currenttime, 2, 1);
+		std::string day = ReadBCDnumber(currenttime, 3, 1);
+		double energy = static_cast<double>(ReadBigMachineInt(currenttime, 4)) / 100;
+		if (pos > 17)
+			jsondata.append(",");
+		char dayresult[100];
+		sprintf(dayresult, "\n        {\n            \"date\" : \"%s-%s-%s\"\n            \"power\" : %0.2f\n        }", year.c_str(), month.c_str(), day.c_str(), energy);
+		jsondata.append(dayresult);
+		pos += 8;
+	}
+	jsondata.append("\n    ]\n}\n");
+	
+	return 0;
+}
+
+
 int ecuAPI::QueryECU()
 {
-	unsigned char buffer[READ_BUFFER_SIZE];
-	bcopy(ECU_QUERY_HEADER, (char*)&buffer[0], sizeof(ECU_QUERY_HEADER));
-	int buffer_pos = (int)sizeof(ECU_QUERY_HEADER);
+	unsigned char buffer[READ_BUFFER_SIZE] = ECU_QUERY_HEADER;
+	int buffer_pos = 13;
 	bcopy(MESSAGE_SEND_TRAILER, (char*)&buffer[buffer_pos], sizeof(MESSAGE_SEND_TRAILER));
 	buffer_pos += (int)sizeof(MESSAGE_SEND_TRAILER);
 
@@ -85,13 +199,6 @@ int ecuAPI::QueryECU()
 	if (m_apsecu.id.empty())
 		m_apsecu.id.append((const char*)&buffer[13],12);
 
-	std::string vlenstring;
-	vlenstring.append((const char*)&buffer[52],3);
-	int vlen = atoi(vlenstring.c_str());
-	std::string versionstring;
-	versionstring.append((const char*)&buffer[55],vlen);
-	m_apsecu.version = versionstring;
-
 	m_apsecu.timestamp = -1;
 	m_apsecu.lifetime_energy = static_cast<double>(ReadBigMachineInt(buffer,27)) / 10;
 	m_apsecu.current_power = ReadBigMachineInt(buffer,31);
@@ -99,22 +206,35 @@ int ecuAPI::QueryECU()
 
 	if (buffer[25] == '0')
 	{
-		if (buffer[26] == '1')	// YC600/DS3 series
+		if (buffer[26] == '1')	// 
 		{
 			m_apsecu.numinverters = ReadBigMachineSmallInt(buffer,46);
 			m_apsecu.invertersonline = ReadBigMachineSmallInt(buffer,48);
+			std::string vlenstring;
+			vlenstring.append((const char*)&buffer[52],3);
+			int vlen = atoi(vlenstring.c_str());
+			std::string versionstring;
+			versionstring.append((const char*)&buffer[55],vlen);
+			m_apsecu.version = versionstring;
 
 		}
-		else if (buffer[26] == '2')  // YC1000/QT2 series
+		else if (buffer[26] == '2')  // 
 		{
 			m_apsecu.numinverters = ReadBigMachineSmallInt(buffer,39);
 			m_apsecu.invertersonline = ReadBigMachineSmallInt(buffer,41);
+			std::string vlenstring;
+			vlenstring.append((const char*)&buffer[49],3);
+			int vlen = atoi(vlenstring.c_str());
+			std::string versionstring;
+			versionstring.append((const char*)&buffer[52],vlen);
+			m_apsecu.version = versionstring;
 		}
 	}
 
 	// reset the list of inverters
 	std::vector<APSystems::ecu::InverterInfo>().swap(m_apsecu.inverters);
-	m_apsecu.inverters.resize(m_apsecu.numinverters);
+	if (m_apsecu.numinverters > 0)
+		m_apsecu.inverters.resize(m_apsecu.numinverters);
 
 	return 0;
 }
@@ -128,9 +248,8 @@ int ecuAPI::QueryInverters()
 		if (statuscode != 0)
 			return statuscode;
 	}
-	unsigned char buffer[READ_BUFFER_SIZE];
-	bcopy(INVERTER_QUERY_HEADER, (char*)&buffer[0], sizeof(INVERTER_QUERY_HEADER));
-	int buffer_pos = (int)sizeof(INVERTER_QUERY_HEADER);
+	unsigned char buffer[READ_BUFFER_SIZE] = INVERTER_QUERY_HEADER;
+	int buffer_pos = 13;
 	bcopy(m_apsecu.id.c_str(), (char*)&buffer[buffer_pos], m_apsecu.id.length());
 	buffer_pos += m_apsecu.id.length();
 	bcopy(MESSAGE_SEND_TRAILER, (char*)&buffer[buffer_pos], sizeof(MESSAGE_SEND_TRAILER));
@@ -151,11 +270,11 @@ int ecuAPI::QueryInverters()
 	if ( (numbytes < 30) || (!VerifyMessageSize(numbytes, buffer)) )
 		return 1;
 
-
 	m_apsecu.timestamp = ReadTimestamp(buffer, 19);
 
 	int inverter_pos = 26;
-	for (int i = 0; i < m_apsecu.numinverters; i++)
+	int maxpos = numbytes - 4;
+	for (int i = 0; ( (i < m_apsecu.numinverters) && (inverter_pos < maxpos) ); i++)
 	{
 		unsigned char* currentinverter = &buffer[inverter_pos];
 		m_apsecu.inverters[i].id = ReadBCDnumber(currentinverter, 0, 6);
@@ -251,6 +370,56 @@ int ecuAPI::QueryInverters()
 }
 
 
+int ecuAPI::GetInverterSignalLevels()
+{
+	if (m_apsecu.id.empty() || (m_apsecu.numinverters == 0))
+	{
+		int statuscode = QueryInverters();
+		if (statuscode != 0)
+			return statuscode;
+	}
+	unsigned char buffer[READ_BUFFER_SIZE] = INVERTER_SIGNAL_HEADER;
+	int buffer_pos = 13;
+	bcopy(m_apsecu.id.c_str(), (char*)&buffer[buffer_pos], m_apsecu.id.length());
+	buffer_pos += m_apsecu.id.length();
+	bcopy(MESSAGE_SEND_TRAILER, (char*)&buffer[buffer_pos], sizeof(MESSAGE_SEND_TRAILER));
+	buffer_pos += (int)sizeof(MESSAGE_SEND_TRAILER);
+
+	if (!ConnectToDevice())
+		return -1;
+	send(buffer, buffer_pos);
+	int numbytes = receive(buffer, READ_BUFFER_SIZE);
+	disconnect();
+
+#ifdef DEBUG
+	std::cout << "dbg: received message: ";
+	for(int i=0; i<(int)(numbytes); ++i)
+		printf("%.2x", (uint8_t)buffer[i]);
+	std::cout << "\n";
+#endif
+	if ( (numbytes < 15) || (!VerifyMessageSize(numbytes, buffer)) )
+		return 1;
+
+	int inverter_pos = 15;
+	int maxpos = numbytes - 4;
+	while (inverter_pos < maxpos)
+	{
+		unsigned char* currentinverter = &buffer[inverter_pos];
+		std::string inverter_id = ReadBCDnumber(currentinverter, 0, 6);
+		for (int j = 0; j < m_apsecu.numinverters; j++)
+		{
+			if (m_apsecu.inverters[j].id == inverter_id)
+			{
+				m_apsecu.inverters[j].signal_strength = (int)(currentinverter[6] * 100 / 255);
+				break;
+			}
+		}
+		inverter_pos += 7;
+	}
+	return 0;
+}
+
+
 /* private */ int ecuAPI::ReadBigMachineInt(const unsigned char* buffer, const int pos)
 {
 	const unsigned char* cursor = &buffer[pos];
@@ -330,7 +499,6 @@ int ecuAPI::QueryInverters()
 }
 
 
-
 /* private */ bool ecuAPI::ConnectToDevice()
 {
 	struct sockaddr_in serv_addr;
@@ -393,5 +561,4 @@ int ecuAPI::QueryInverters()
 #endif
 	m_sockfd = 0;
 }
-
 

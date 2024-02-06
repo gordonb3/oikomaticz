@@ -34,8 +34,8 @@ namespace APSystems {
       uint8_t online_status;
       double frequency;
       int temperature;
+      int signal_strength;
       std::vector<APSystems::ecu::InverterChannel> channels;
-    
     } InverterInfo;
 
     typedef struct _sSystemInfo
@@ -69,14 +69,15 @@ public:
 
 	int QueryECU();
 	int QueryInverters();
+	int GetInverterSignalLevels();
+	int GetDayReport(const int year, const uint8_t month, const uint8_t day, std::string &jsondata);
+	int GetPeriodReport(const uint8_t period, std::string &jsondata);
+
 
 private:
 	int m_sockfd;
 	std::string m_ecu_address;
 
-	const uint8_t ECU_QUERY_HEADER[13] = {'A','P','S','1','1','0','0','1','6','0','0','0','1'};
-	const uint8_t INVERTER_QUERY_HEADER[13] = {'A','P','S','1','1','0','0','2','8','0','0','0','2'};
-	const uint8_t INVERTER_SIGNAL_HEADER[13] = {'A','P','S','1','1','0','0','2','8','0','0','3','0'};
 	const uint8_t MESSAGE_SEND_TRAILER[4] = {'E','N','D',0x0a};
 
 	bool VerifyMessageSize(const int bytes_received, const unsigned char* buffer);

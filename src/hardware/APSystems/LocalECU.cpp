@@ -23,9 +23,9 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#define CUSTOM_IMAGE_ID 19		// row index inside 'switch_icons.txt'
+#define CUSTOM_IMAGE_ID 19		// row index inside 'switch_icons.txt' for the tariff switch
 #define REPORT_INTERVAL 300
-#define RETRY_INTERVAL 30
+#define RETRY_INTERVAL 15
 
 
 CAPSLocalECU::CAPSLocalECU(const int ID, const std::string &IPAddress) : m_IPAddress(IPAddress)
@@ -97,11 +97,15 @@ void CAPSLocalECU::Init()
 		m_usageLow = 0;
 		m_usageHigh = 0;
 	}
+	m_todayEnergyOffset = -1;
+	m_lastLifeEnergy = m_usageLow + m_usageHigh;
 }
 
 
 bool CAPSLocalECU::StartHardware()
 {
+	Log(LOG_STATUS, "Starting Local ECU thread");
+
 	RequestStart();
 
 	Init();
@@ -117,7 +121,7 @@ bool CAPSLocalECU::StartHardware()
 
 bool CAPSLocalECU::StopHardware()
 {
-	Log(LOG_STATUS, "Stopping Local ECU communication thread");
+	Log(LOG_STATUS, "Stopping Local ECU thread");
 
 	// stop master thread ([this])
 	if (m_thread != nullptr)
@@ -129,7 +133,6 @@ bool CAPSLocalECU::StopHardware()
 	m_bIsStarted = false;
 	return true;
 }
-
 
 
 void CAPSLocalECU::Do_Work()
@@ -149,10 +152,9 @@ void CAPSLocalECU::Do_Work()
 		seconds_remaining--;
 		if (seconds_remaining <= 0)
 		{
+			seconds_remaining = RETRY_INTERVAL;
 			if (GetECUData())
 				seconds_remaining = (int)(m_ECULastReport + REPORT_INTERVAL - mytime(NULL));
-			else
-				seconds_remaining = RETRY_INTERVAL;
 		}
 	}
 }
@@ -161,6 +163,13 @@ void CAPSLocalECU::Do_Work()
 // Tariff switch
 bool CAPSLocalECU::WriteToHardware(const char *pdata, const unsigned char length)
 {
+	/* Some of the ECU units expose a web based interface allowing the user to send a limited set
+	 * of commands including a rest of the main communication port.
+	 *
+	 * For now the only application of this WriteToHardware() function is to toggle a parameter
+	 * inside this module to split the ECU's single counter into a double tariff counter. This
+	 * switch should be kept in sync with the tariff indicator from your smart meter.
+	 */
 	if(!pdata)
 		return false;
 
@@ -176,13 +185,13 @@ bool CAPSLocalECU::WriteToHardware(const char *pdata, const unsigned char length
 		// signal energy meters to switch tariff
 		if (cmnd == gswitch_sOn) // low tariff
 		{
-			Log(LOG_STATUS, "Enabling low tariff");
+			Log(LOG_STATUS, "ECU: Enabling low tariff");
 			m_tariff = 1;
 		}
 		else
 		{
-			Log(LOG_STATUS, "Enabling high tariff");
-			m_tariff = 0; // high/single tariff
+			Log(LOG_STATUS, "ECU: Enabling high tariff");
+			m_tariff = 0; // high tariff
 		}
 		return true;
 	}
@@ -193,6 +202,13 @@ bool CAPSLocalECU::WriteToHardware(const char *pdata, const unsigned char length
 
 bool CAPSLocalECU::GetECUData()
 {
+	/* The ECU is incapable of simultaneous communication. When it is communicating with the inverters
+	 * (using Zigbe) it will thus reject our communication attempt. The same happens when the ECU is
+	 * "phoning home" to update the numbers accessable through the web based app.
+	 *
+	 * TODO whenever the ECU starts returning errno 111 it requires either a restart or activation of
+	 * its AP before allowing us access again. For now this will require user intervention.
+	 */
 	int statuscode;
 	statuscode = m_ECUClient->QueryECU();
 	if (statuscode == 0)
@@ -218,7 +234,7 @@ std::string CAPSLocalECU::GetP1IDx()
 	result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (Type='%d') AND (Subtype='%d')", m_HwdID, pTypeP1Power, sTypeP1Power);
 	if (result.empty())
 	{
-		_log.Debug(DEBUG_HARDWARE, "Create solar power meter");
+		_log.Debug(DEBUG_HARDWARE, "ECU: Create solar power meter");
 		P1Power	ecu_energy;
 		memset(&ecu_energy, 0, sizeof(P1Power));
 		ecu_energy.len = sizeof(P1Power) - 1;
@@ -245,7 +261,7 @@ std::string CAPSLocalECU::GetVoltmeterIDx(const std::string &szShortID)
 	result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (Type='%d') AND (Subtype='%d') AND (DeviceID='%s')", m_HwdID, pTypeGeneral, sTypeVoltage, szShortID.c_str());
 	if (result.empty())
 	{
-		_log.Debug(DEBUG_HARDWARE, "Create voltage meter for inverter %s", szShortID.c_str());
+		_log.Debug(DEBUG_HARDWARE, "ECU: Create voltage meter for inverter %s", szShortID.c_str());
 		char *end = NULL;
 		int inverterID = (int)strtoul(szShortID.c_str(), &end, 16);
 		_tGeneralDevice gDevice;
@@ -270,7 +286,7 @@ std::string CAPSLocalECU::GetWattmeterIDx(const std::string &szShortID, const in
 	result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (Type='%d') AND (Subtype='%d') AND (DeviceID='%s') AND (Unit=%d)", m_HwdID, pTypeUsage, sTypeElectric, szShortID.c_str(), channel + 11);
 	if (result.empty())
 	{
-		_log.Debug(DEBUG_HARDWARE, "Create watt meter %d for inverter channel %s", channel + 1, szShortID.c_str());
+		_log.Debug(DEBUG_HARDWARE, "ECU: Create watt meter %d for inverter channel %s", channel + 1, szShortID.c_str());
 		char *end = NULL;
 		int inverterID = (int)strtoul(szShortID.c_str(), &end, 16);
 		_tUsageMeter umeter;
@@ -293,31 +309,63 @@ std::string CAPSLocalECU::GetWattmeterIDx(const std::string &szShortID, const in
 
 void CAPSLocalECU::SendMeters()
 {
-	std::vector<std::vector<std::string> > result;
-	std::string IDx;
 	struct tm * tt;
 	tt = localtime(&m_ECUClient->m_apsecu.timestamp);
 	char timestring[30];
 	strftime(timestring, 30, "%Y-%m-%d %H:%M:%S" , tt);
 
-	IDx = GetP1IDx();
-	char p1data[60];
-	unsigned long powerusage1;
-	unsigned long powerusage2;
-	if (m_tariff == 0)
-		m_usageHigh = (m_ECUClient->m_apsecu.lifetime_energy * 1000) - m_usageLow;
-	else
-		m_usageLow = (m_ECUClient->m_apsecu.lifetime_energy * 1000) - m_usageHigh;
-	powerusage1 = m_usageLow;
-	powerusage2 = m_usageHigh;
+	/* The main counter in the ECU has a 100 Watthour resolution which causes the week graph
+	 * to show 1200 Watt spikes when there is little production. To show a somewhat friendlier
+	 * graph we use the 10 Watthour resolution from the day counter, however this means that
+	 * we need to find the right offset in the internal counter where the day counter started.
+	 * We assume this to be where both exported counters have their minimum increment within
+	 * the same 5 minute report.
+	 */
+	unsigned long lifetimeEnergy = m_ECUClient->m_apsecu.lifetime_energy * 1000;
+	unsigned int todayEnergy = m_ECUClient->m_apsecu.today_energy * 1000;
+	if (todayEnergy == 0)
+	{
+		uint8_t haveDayLifeSync = m_todayEnergyOffset & 1;
+		if (m_lastTodayEnergy > 0)	// new day
+		{
+			m_lastLifeEnergy = m_usageLow + m_usageHigh;
+			m_lastTodayEnergy = 0;
+			m_todayEnergyOffset = 0 - (m_lastLifeEnergy % 100) - haveDayLifeSync;
+		}
+	}
+	else if (m_todayEnergyOffset & 1)
+	{
+		if (lifetimeEnergy > m_lastLifeEnergy)
+		{
+			int todayEnergyDelta = todayEnergy - m_lastTodayEnergy;
+			int lifetimeEnergyDelta = lifetimeEnergy - m_lastLifeEnergy;
+			if ((todayEnergyDelta == 10) && (lifetimeEnergyDelta == 100))
+				m_todayEnergyOffset = todayEnergy; // set today's offset
+			else
+				m_todayEnergyOffset = todayEnergy - 1; // set it because it's likely still closer than our previous guess but keep the mark that we still require sync
+		}
+	}
+	m_lastLifeEnergy = lifetimeEnergy;
+	m_lastTodayEnergy = todayEnergy;
 
-	sprintf(p1data, "%lu;%lu;0;0;%d;0", powerusage1, powerusage2, m_ECUClient->m_apsecu.current_power);
+	if (m_tariff == 0)
+		m_usageHigh = lifetimeEnergy + ((todayEnergy - m_todayEnergyOffset) % 100) - m_usageLow;
+	else
+		m_usageLow = lifetimeEnergy + ((todayEnergy - m_todayEnergyOffset) % 100) - m_usageHigh;
+
+	/*  Not using the standard Rx method here because it does not allow us to use the time from the ECU report
+	 */
+	char p1data[60];
+	sprintf(p1data, "%lu;%lu;0;0;%d;0", m_usageLow, m_usageHigh, m_ECUClient->m_apsecu.current_power);
+	std::vector<std::vector<std::string> > result;
+	std::string IDx = GetP1IDx();
 	result = m_sql.safe_query("UPDATE DeviceStatus SET sValue='%s', lastupdate='%s' WHERE ID=%s", p1data, timestring, IDx.c_str());
 	m_mainworker.sOnDeviceReceived(m_HwdID, atoll(IDx.c_str()), "Solar Power", nullptr);
 
 	for (int i = 0; i < m_ECUClient->m_apsecu.inverters.size(); i++)
 	{
 		std::string szShortID = m_ECUClient->m_apsecu.inverters[i].id.substr(6);
+		std::vector<std::vector<std::string> > result;
 
 		IDx = GetVoltmeterIDx(szShortID);
 		if (m_ECUClient->m_apsecu.inverters[i].online_status == 0)

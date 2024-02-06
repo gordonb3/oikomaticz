@@ -15,7 +15,6 @@
 #include <time.h>
 
 
-
 class CAPSLocalECU : public CDomoticzHardwareBase
 {
 public:
@@ -30,8 +29,11 @@ private:
 	uint8_t m_tariff;
 	unsigned long m_usageLow;
 	unsigned long m_usageHigh;
-	ecuAPI *m_ECUClient;
+	unsigned long m_lastLifeEnergy;
+	unsigned int m_lastTodayEnergy;
+	int m_todayEnergyOffset;
 	time_t m_ECULastReport;
+	ecuAPI *m_ECUClient;
 
 	void Init();
 	bool StartHardware() override;
@@ -40,7 +42,6 @@ private:
 
 	bool GetECUData();
 	void SendMeters();
-
 	std::string GetP1IDx();
 	std::string GetVoltmeterIDx(const std::string &szShortID);
 	std::string GetWattmeterIDx(const std::string &szShortID, const int channel);
