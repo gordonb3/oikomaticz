@@ -229,6 +229,7 @@ int ecuAPI::QueryECU()
 			versionstring.append((const char*)&buffer[52],vlen);
 			m_apsecu.version = versionstring;
 		}
+		else return -1;
 	}
 
 	// reset the list of inverters
@@ -273,7 +274,7 @@ int ecuAPI::QueryInverters()
 	m_apsecu.timestamp = ReadTimestamp(buffer, 19);
 
 	int inverter_pos = 26;
-	int maxpos = numbytes - 4;
+	int maxpos = numbytes - 9;
 	for (int i = 0; ( (i < m_apsecu.numinverters) && (inverter_pos < maxpos) ); i++)
 	{
 		unsigned char* currentinverter = &buffer[inverter_pos];
@@ -293,6 +294,9 @@ int ecuAPI::QueryInverters()
 		{
 			if (currentinverter[8] == '1')		// YC600/DS3 series
 			{
+				inverter_pos += 21;
+				if (inverter_pos > numbytes)
+					return -1;
 				if (m_apsecu.inverters[i].online_status != 0)
 				{
 					m_apsecu.inverters[i].frequency = static_cast<double>(ReadBigMachineSmallInt(currentinverter, 9)) / 10;
@@ -311,10 +315,12 @@ int ecuAPI::QueryInverters()
 						channel_pos += 4;
 					}
 				}
-				inverter_pos += 21;
 			}
 			else if (currentinverter[8] == '2')		// YC1000/QT2 series
 			{
+				inverter_pos += 27;
+				if (inverter_pos > numbytes)
+					return -1;
 				if (m_apsecu.inverters[i].online_status != 0)
 				{
 					m_apsecu.inverters[i].frequency = static_cast<double>(ReadBigMachineSmallInt(currentinverter, 9)) / 10;
@@ -333,10 +339,12 @@ int ecuAPI::QueryInverters()
 						channel_pos += 4;
 					}
 				}
-				inverter_pos += 27;
 			}
 			else if (currentinverter[8] == '3')		// QS1
 			{
+				inverter_pos += 23;
+				if (inverter_pos > numbytes)
+					return -1;
 				if (m_apsecu.inverters[i].online_status != 0)
 				{
 					m_apsecu.inverters[i].frequency = static_cast<double>(ReadBigMachineSmallInt(currentinverter, 9)) / 10;
@@ -360,7 +368,6 @@ int ecuAPI::QueryInverters()
 						}
 					}
 				}
-				inverter_pos += 23;
 			}
 			else
 				inverter_pos += 9;
