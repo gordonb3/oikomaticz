@@ -133,46 +133,46 @@ bool CEvohomeWeb::StartSession()
 {
 	if (m_loggedon && !evohome::WebAPI::v2->is_session_valid())
 	{
-		_log.Debug(DEBUG_HARDWARE, "(%s) renewing V2 session", m_Name.c_str());
+		Debug(DEBUG_HARDWARE, "Renewing V2 session");
 		if (!evohome::WebAPI::v2->renew_login())
 		{
-			_log.Debug(DEBUG_HARDWARE, "(%s) V2 session renewal failed", m_Name.c_str());
+			Debug(DEBUG_HARDWARE, "V2 session renewal failed");
 			int returnCode = GetLastV2ResponseCode();
-			_log.Log(LOG_ERROR, "(%s) session renewal failed with message: %s (RC = %d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
+			Log(LOG_ERROR, "session renewal failed with message: %s (RC = %d)", evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
 			if (returnCode >= 400)
 				m_loggedon = false;
 			return false;
 		}
-		_log.Debug(DEBUG_HARDWARE, "(%s) V2 session renewal success", m_Name.c_str());
+		Debug(DEBUG_HARDWARE, "V2 session renewal success");
 	}
 
 	if (!m_loggedon)
 	{
-		_log.Log(LOG_STATUS, "(%s) connect to Evohome server", m_Name.c_str());
+		Log(LOG_STATUS, "Connect to Evohome server");
 		if (!evohome::WebAPI::v2->login(m_username, m_password))
 		{
 			int returnCode = GetLastV2ResponseCode();
-			_log.Log(LOG_ERROR, "(%s) login failed with message: %s (RC = %d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
+			Log(LOG_ERROR, "login failed with message: %s (RC = %d)", evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
 			m_logonfailures++;
 			if (m_logonfailures == LOGONFAILTRESHOLD)
-				_log.Log(LOG_STATUS, "(%s) logon fail treshold reached - trottling", m_Name.c_str());
+				Log(LOG_STATUS, "Logon fail treshold reached - trottling");
 			if ((m_logonfailures * m_refreshRate) > MAXPOLINTERVAL)
 				m_logonfailures--;
 			return false;
 		}
 		m_loggedon = true;
-		_log.Debug(DEBUG_HARDWARE, "(%s) V2 session established successfully", m_Name.c_str());
+		Debug(DEBUG_HARDWARE, "V2 session established successfully");
 	}
 
 	m_logonfailures = 0;
 
-	_log.Debug(DEBUG_HARDWARE, "(%s) retrieve installation info for user %s", m_Name.c_str(), evohome::WebAPI::v2->get_user_id().c_str());
+	Debug(DEBUG_HARDWARE, "Retrieve installation info for user %s", evohome::WebAPI::v2->get_user_id().c_str());
 	// (re)initialize Evohome installation info
 	std::vector<std::vector<unsigned long>>().swap(m_vUnits);
 	if (!evohome::WebAPI::v2->full_installation())
 	{
 		int returnCode = GetLastV2ResponseCode();
-		_log.Log(LOG_ERROR, "(%s) retrieve installation info failed with message: %s (RC = %d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
+		Log(LOG_ERROR, "Retrieve installation info failed with message: %s (RC = %d)", evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
 		return false;
 	}
 
@@ -189,7 +189,7 @@ bool CEvohomeWeb::StartSession()
 	}
 	else
 	{
-		_log.Log(LOG_ERROR, "(%s) installation at [%d,%d,%d] does not exist - verify your settings", m_Name.c_str(), m_locationIdx, m_gatewayIdx, m_systemIdx);
+		Log(LOG_ERROR, "Installation at [%d,%d,%d] does not exist - verify your settings", m_locationIdx, m_gatewayIdx, m_systemIdx);
 		m_loggedon = false;
 		return false;
 	}
@@ -198,7 +198,7 @@ bool CEvohomeWeb::StartSession()
 		char cMulti[2] = {'\0','\0'};
 		if (numLocations != 1)
 			cMulti[0] = 's';
-		_log.Debug(DEBUG_HARDWARE, "(%s) server reports %d registered location%s, selected `%s`", m_Name.c_str(), static_cast<int>(numLocations), cMulti, m_szLocationName.c_str());
+		Debug(DEBUG_HARDWARE, "Server reports %d registered location%s, selected `%s`", static_cast<int>(numLocations), cMulti, m_szLocationName.c_str());
 	}
 
 	if (m_awaysetpoint == 0) // first run - try to get our Away setpoint value from the controller device status
@@ -256,7 +256,7 @@ void CEvohomeWeb::Do_Work()
 {
 	int refreshTimer = m_refreshRate - MINPOLINTERVAL;
 	int pollcounter = LOGONFAILTRESHOLD;
-	_log.Log(LOG_STATUS, "(%s) Worker started...", m_Name.c_str());
+	Log(LOG_STATUS, "Worker started...");
 	m_lastAccessTimer=0;
 	while (!IsStopRequested(1000))
 	{
@@ -273,7 +273,7 @@ void CEvohomeWeb::Do_Work()
 		}
 	}
 
-	_log.Log(LOG_STATUS, "(%s) Worker stopped...", m_Name.c_str());
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 
@@ -317,25 +317,25 @@ bool CEvohomeWeb::GetStatus()
 		return false;
 	if ((size_t)m_locationIdx > evohome::WebAPI::v2->m_vLocations.size())
 	{
-		_log.Log(LOG_ERROR, "(%s) location ID is invalid, verify your settings", m_Name.c_str());
+		Log(LOG_ERROR, "Location ID is invalid, verify your settings");
 		return false;
 	}
-	_log.Log(LOG_NORM, "(%s) fetch data from server", m_Name.c_str());
+	Log(LOG_NORM, "Fetch data from server");
 	if (!evohome::WebAPI::v2->get_status(m_locationIdx))
 	{
 		int returnCode = GetLastV2ResponseCode();
 		if (returnCode >= 500)
 		{
-			_log.Log(LOG_ERROR, "(%s) V2 status request returned a server error (RC = %d)", m_Name.c_str(), returnCode);
+			Log(LOG_ERROR, "V2 status request returned a server error (RC = %d)", returnCode);
 		}
 		else if (returnCode >= 400)
 		{
-			_log.Log(LOG_ERROR, "(%s) V2 session was invalidated (RC = %d)", m_Name.c_str(), returnCode);
+			Log(LOG_ERROR, "V2 session was invalidated (RC = %d)", returnCode);
 			m_loggedon = false;
 		}
 		else
 		{
-			_log.Log(LOG_ERROR, "(%s) V2 status retrieval failed with message: %s (RC = %d)", m_Name.c_str(), evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
+			Log(LOG_ERROR, "V2 status retrieval failed with message: %s (RC = %d)", evohome::WebAPI::v2->get_last_error().c_str(), returnCode);
 		}
 		return false;
 	}
@@ -348,16 +348,16 @@ bool CEvohomeWeb::GetStatus()
 		bool v1sessionvalid = evohome::WebAPI::v1->is_session_valid();
 		if (!v1sessionvalid)
 		{
-			_log.Debug(DEBUG_HARDWARE, "(%s) login to V1 API", m_Name.c_str());
+			Debug(DEBUG_HARDWARE, "Login to V1 API");
 			v1sessionvalid = evohome::WebAPI::v1->login(m_username, m_password);
 			if (!v1sessionvalid)
 			{
-				_log.Log(LOG_ERROR, "(%s) login to v1 API failed with message: %s", m_Name.c_str(), evohome::WebAPI::v1->get_last_error().c_str());
+				Log(LOG_ERROR, "Login to v1 API failed with message: %s", evohome::WebAPI::v1->get_last_error().c_str());
 			}
 		}
 		if (v1sessionvalid && !evohome::WebAPI::v1->full_installation())
 		{
-			_log.Log(LOG_ERROR, "(%s) v1 data retrieval failed with message: %s", m_Name.c_str(), evohome::WebAPI::v1->get_last_error().c_str());
+			Log(LOG_ERROR, "v1 data retrieval failed with message: %s", evohome::WebAPI::v1->get_last_error().c_str());
 		}
 	}
 
@@ -378,19 +378,19 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 {
 	if (sysmode >= (uint8_t)(sizeof(m_dczToEvoWebAPIMode)))
 	{
-		_log.Log(LOG_ERROR, "(%s) invalid system mode, verify your command script", m_Name.c_str());
+		Log(LOG_ERROR, "Invalid system mode, verify your command script");
 		return false;
 	}
 	int newmodeID = (int)(m_dczToEvoWebAPIMode[sysmode]);
 	if (newmodeID > 6)
 	{
-		_log.Log(LOG_ERROR, "(%s) setting system mode '%s' is not supported by web API", m_Name.c_str(), GetControllerModeName(sysmode));
+		Log(LOG_ERROR, "Setting system mode '%s' is not supported by web API", GetControllerModeName(sysmode));
 		return false;
 	}
 	std::string sznewmode = GetWebAPIModeName(sysmode);
 	if (evohome::WebAPI::v2->set_system_mode(evohome::WebAPI::tcs2->szSystemId, newmodeID))
 	{
-		_log.Log(LOG_NORM, "(%s) changed system mode to %s", m_Name.c_str(), GetControllerModeName(sysmode));
+		Log(LOG_NORM, "Changed system mode to %s", GetControllerModeName(sysmode));
 
 		int numZones = static_cast<int>(evohome::WebAPI::tcs2->zones.size());
 		if (sznewmode == "HeatingOff")
@@ -482,7 +482,7 @@ bool CEvohomeWeb::SetSystemMode(uint8_t sysmode)
 		}
 		return true;
 	}
-	_log.Log(LOG_ERROR, "(%s) error changing system mode", m_Name.c_str());
+	Log(LOG_ERROR, "Error changing system mode");
 	m_loggedon = false;
 	return false;
 }
@@ -496,7 +496,7 @@ bool CEvohomeWeb::SetSetpoint(const char *pdata)
 	evohome::device::zone* HeatingZone = evohome::WebAPI::v2->get_zone_by_ID(zoneId);
 	if (HeatingZone == nullptr) // zone number not known by installation (manually added?)
 	{
-		_log.Log(LOG_ERROR, "(%s) attempt to change setpoint on unknown zone", m_Name.c_str());
+		Log(LOG_ERROR, "Attempt to change setpoint on unknown zone");
 		return false;
 	}
 
@@ -510,11 +510,11 @@ bool CEvohomeWeb::SetSetpoint(const char *pdata)
 		if ((!HeatingZone->jSchedule.isNull()) || evohome::WebAPI::v2->get_zone_schedule(HeatingZone->szZoneId))
 		{
 			szuntil = evohome::WebAPI::v2->get_next_switchpoint(HeatingZone, szsetpoint, RETURN_LOCAL_TIME).substr(0,-1);
-			_log.Debug(DEBUG_HARDWARE, "(%s) using schedule to restore zone %s to %s degrees until %s", m_Name.c_str(), zoneId.c_str(), szsetpoint.c_str(), szuntil.c_str());
+			Debug(DEBUG_HARDWARE, "Using schedule to restore zone %s to %s degrees until %s", zoneId.c_str(), szsetpoint.c_str(), szuntil.c_str());
 			pEvo->temperature = (int16_t)(strtod(szsetpoint.c_str(), nullptr) * 100);
 		}
 		else
-			_log.Log(LOG_ERROR, "(%s) failed to retrieve schedule information for zone %s", m_Name.c_str(), zoneId.c_str());
+			Log(LOG_ERROR, "Failed to retrieve schedule information for zone %s", zoneId.c_str());
 
 		if ((m_showSchedule) && (!szuntil.empty()))
 			CEvohomeDateTime::DecodeISODate(*pEvo, szuntil.c_str());
@@ -543,10 +543,10 @@ bool CEvohomeWeb::SetSetpoint(const char *pdata)
 				std::string szsetpoint;
 				szuntil = evohome::WebAPI::v2->get_next_switchpoint(HeatingZone, szsetpoint, RETURN_UTC_TIME);
 				szlocaluntil = IsoTimeString::utc_to_local(szuntil).substr(0,-1);
-				_log.Debug(DEBUG_HARDWARE, "(%s) using schedule to set end time for temporary override on zone %s to %d.%d degrees until %s", m_Name.c_str(), zoneId.c_str(), temperature_int, temperature_frac, szlocaluntil.c_str());
+				Debug(DEBUG_HARDWARE, "Using schedule to set end time for temporary override on zone %s to %d.%d degrees until %s", zoneId.c_str(), temperature_int, temperature_frac, szlocaluntil.c_str());
 			}
 			else
-				_log.Log(LOG_ERROR, "(%s) invalid command setting temporary override for zone %s with no end time or schedule", m_Name.c_str(), zoneId.c_str());
+				Log(LOG_ERROR, "Invalid command setting temporary override for zone %s with no end time or schedule", zoneId.c_str());
 		}
 		else
 			szlocaluntil = IsoTimeString::utc_to_local(szuntil).substr(0,-1);
@@ -561,7 +561,7 @@ bool CEvohomeWeb::SetDHWState(const char *pdata)
 {
 	if (!evohome::WebAPI::v2->has_dhw(evohome::WebAPI::tcs2)) // Installation has no Hot Water device
 	{
-		_log.Log(LOG_ERROR, "(%s) attempt to set state on non existing Hot Water device", m_Name.c_str());
+		Log(LOG_ERROR, "Attempt to set state on non existing Hot Water device");
 		return false;
 	}
 
@@ -687,7 +687,7 @@ void CEvohomeWeb::DecodeZone(evohome::device::zone* HeatingZone)
 		{
 			m_awaysetpoint = new_awaysetpoint;
 			m_sql.safe_query("UPDATE Hardware SET Extra='%0.2f;%d' WHERE ID=%d", m_awaysetpoint, m_wdayoff, this->m_HwdID);
-			_log.Log(LOG_STATUS, "(%s) change Away setpoint to '%0.2f' because of non matching setpoint (%s)", m_Name.c_str(), m_awaysetpoint, evohome::WebAPI::v2->get_zone_name(HeatingZone).c_str());
+			Log(LOG_STATUS, "Change Away setpoint to '%0.2f' because of non matching setpoint (%s)", m_awaysetpoint, evohome::WebAPI::v2->get_zone_name(HeatingZone).c_str());
 
 		}
 		szmode = szsysmode;
@@ -725,7 +725,7 @@ void CEvohomeWeb::DecodeZone(evohome::device::zone* HeatingZone)
 					{
 						m_sql.safe_query("UPDATE Hardware SET Extra='%0.2f;%d' WHERE ID=%d", m_awaysetpoint, m_wdayoff, this->m_HwdID);
 
-						_log.Log(LOG_STATUS, "(%s) change Day Off schedule reference to '%s' because of non matching setpoint (%s)", m_Name.c_str(), weekdays[m_wdayoff].c_str(), evohome::WebAPI::v2->get_zone_name(HeatingZone).c_str());
+						Log(LOG_STATUS, "Change Day Off schedule reference to '%s' because of non matching setpoint (%s)", weekdays[m_wdayoff].c_str(), evohome::WebAPI::v2->get_zone_name(HeatingZone).c_str());
 					}
 					if (m_showSchedule)
 						szuntil = evohome::WebAPI::v2->get_next_switchpoint(HeatingZone, RETURN_UTC_TIME);
@@ -753,7 +753,7 @@ void CEvohomeWeb::DecodeZone(evohome::device::zone* HeatingZone)
 			// also wipe StrParam1 - we do not want a double action from the old (python) script when changing the setpoint
 			m_sql.safe_query("UPDATE DeviceStatus SET Name='%q', StrParam1='' WHERE (ID == %" PRIu64 ")", szZoneName.c_str(), DevRowIdx);
 			if (szDeviceName.find("zone ") != std::string::npos)
-				_log.Log(LOG_STATUS, "(%s) register new zone '%s'", m_Name.c_str(), szZoneName.c_str());
+				Log(LOG_STATUS, "Register new zone '%s'", szZoneName.c_str());
 			szDeviceName = szZoneName;
 		}
 	}
@@ -896,7 +896,7 @@ uint8_t CEvohomeWeb::GetUnit_by_ID(unsigned long evoID)
 					unit++;
 				if (unit > m_nMaxZones)
 				{
-					_log.Log(LOG_ERROR, "(%s) cannot create a valid zone unit number because you have no free zones left in this location", m_Name.c_str());
+					Log(LOG_ERROR, "Cannot create a valid zone unit number because you have no free zones left in this location");
 					return 0;
 				}
 
@@ -922,7 +922,7 @@ uint8_t CEvohomeWeb::GetUnit_by_ID(unsigned long evoID)
 
 			if (unit > m_nMaxZones)
 			{
-				_log.Log(LOG_ERROR, "(%s) cannot add new zone because you have no free zones left in this location", m_Name.c_str());
+				Log(LOG_ERROR, "Cannot add new zone because you have no free zones left in this location");
 				return 0;
 			}
 			found = unit;

@@ -628,12 +628,12 @@ std::string &stdstring_trimws(std::string &s)
 	return stdstring_ltrimws(stdstring_rtrimws(s));
 }
 
-double CalculateDewPoint(double temp, int humidity)
+double CalculateDewPoint(double temp, double humidity)
 {
 	if (humidity==0)
 		return temp;
-	double dew_numer = 243.04*(log(double(humidity)/100.0)+((17.625*temp)/(temp+243.04)));
-	double dew_denom = 17.625-log(double(humidity)/100.0)-((17.625*temp)/(temp+243.04));
+	double dew_numer = 243.04*(log(humidity/100.0)+((17.625*temp)/(temp+243.04)));
+	double dew_denom = 17.625-log(humidity/100.0)-((17.625*temp)/(temp+243.04));
 	if (dew_numer==0)
 		dew_numer=1;
 	return dew_numer/dew_denom;
@@ -1758,6 +1758,8 @@ bool AESEncryptData(const std::string& szInputBuffer, std::string& szOutputBuffe
 
 	std::string szInputBufffer((const uint8_t*)pInBuf, (const uint8_t*)pInBuf + encs_length);
 
+	delete[] pInBuf;
+
 	// max ciphertext len for a n bytes of plaintext is
    // n + AES_BLOCK_SIZE - 1 bytes
 	int nLen = (int)szInputBufffer.size();
@@ -1775,28 +1777,32 @@ bool AESEncryptData(const std::string& szInputBuffer, std::string& szOutputBuffe
 	// Prepare output buffer
 	szOutputBuffer.resize(nCLen);
 
+	bool fOk = false;
+
 	// Perform the encryption
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 
-	if (!ctx) return false;
-
-	bool fOk = true;
+	if (!ctx)
+		return false;
 
 	EVP_CIPHER_CTX_init(ctx);
-	if (fOk) fOk = EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, aes_key, iv_enc);
+
+	fOk = EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, aes_key, iv_enc);
 	if (!fOk)
 	{
 		ERR_print_errors_fp(stderr);
 		goto exit_sub;
 	}
 	EVP_CIPHER_CTX_set_padding(ctx, 0);
-	if (fOk) fOk = EVP_EncryptUpdate(ctx, (uint8_t*)&szOutputBuffer[0], &nCLen, (const uint8_t*)&szInputBufffer[0], nLen);
+
+	fOk = EVP_EncryptUpdate(ctx, (uint8_t*)&szOutputBuffer[0], &nCLen, (const uint8_t*)&szInputBufffer[0], nLen);
 	if (!fOk)
 	{
 		ERR_print_errors_fp(stderr);
 		goto exit_sub;
 	}
-	if (fOk) fOk = EVP_EncryptFinal_ex(ctx, (uint8_t*)(&szOutputBuffer[0]) + nCLen, &nFLen);
+
+	fOk = EVP_EncryptFinal_ex(ctx, (uint8_t*)(&szOutputBuffer[0]) + nCLen, &nFLen);
 	if (!fOk)
 	{
 		ERR_print_errors_fp(stderr);

@@ -11,6 +11,7 @@
 #include <iomanip>
 #include "RFXtrx.h"
 #include "RFXNames.h"
+#include "Helper.h"
 #include "Logger.h"
 #include "mainworker.h"
 #include "main/json_helper.h"
@@ -628,7 +629,6 @@ constexpr auto sqlCreateTuyaDevices =
 ");";
 
 extern std::string szUserDataFolder;
-#define round(a) (int)(a + .5)
 
 CSQLHelper::CSQLHelper()
 {
@@ -6280,7 +6280,7 @@ void CSQLHelper::UpdateTemperatureLog()
 				if (splitresults.size() >= 2)
 				{
 					temp = static_cast<float>(atof(splitresults[0].c_str()));
-					humidity = round(atof(splitresults[1].c_str()));
+					humidity = ground(atof(splitresults[1].c_str()));
 					dewpoint = (float)CalculateDewPoint(temp, humidity);
 				}
 				break;
@@ -6288,7 +6288,7 @@ void CSQLHelper::UpdateTemperatureLog()
 				if (splitresults.size() == 5)
 				{
 					temp = static_cast<float>(atof(splitresults[0].c_str()));
-					humidity = round(atof(splitresults[1].c_str()));
+					humidity = ground(atof(splitresults[1].c_str()));
 					if (dSubType == sTypeTHBFloat)
 						barometer = int(atof(splitresults[3].c_str()) * 10.0F);
 					else
@@ -9824,7 +9824,7 @@ std::map<std::string, std::string> CSQLHelper::GetDeviceOptions(const std::strin
 	std::map<std::string, std::string> optionsMap;
 
 	if (idx.empty()) {
-		_log.Log(LOG_ERROR, "Cannot set options on device %s", idx.c_str());
+		_log.Log(LOG_ERROR, "GetDeviceOptions, idx cannot be empty!");
 		return optionsMap;
 	}
 
