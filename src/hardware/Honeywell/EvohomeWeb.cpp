@@ -320,7 +320,7 @@ bool CEvohomeWeb::GetStatus()
 		Log(LOG_ERROR, "Location ID is invalid, verify your settings");
 		return false;
 	}
-	Log(LOG_NORM, "Fetch data from server");
+	Debug(DEBUG_HARDWARE, "Fetch data from server");
 	if (!evohome::WebAPI::v2->get_status(m_locationIdx))
 	{
 		int returnCode = GetLastV2ResponseCode();

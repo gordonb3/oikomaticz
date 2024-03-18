@@ -119,7 +119,7 @@ bool HarmonyHubWS::WriteToHardware(const char *pdata, const unsigned char /*leng
 
 	if (this->m_bIsChangingActivity)
 	{
-		_log.Log(LOG_ERROR, "Harmony Hub: Command cannot be sent. Hub is changing activity");
+		Log(LOG_ERROR, "Command cannot be sent. Hub is changing activity");
 		return false;
 	}
 
@@ -133,12 +133,12 @@ bool HarmonyHubWS::WriteToHardware(const char *pdata, const unsigned char /*leng
 		{
 			// "secret" undefined state request to silence connection error reporting
 			if (this->m_bShowConnectError)
-				_log.Log(LOG_STATUS, "Harmony Hub: disable connection error logging");
+				Log(LOG_STATUS, "disable connection error logging");
 			this->m_bShowConnectError = false;
 			return false;
 		}
 
-		_log.Log(LOG_STATUS, "Harmony Hub: Received a switch command but we are not connected - attempting connect now");
+		Log(LOG_STATUS, "Received a switch command but we are not connected - attempting connect now");
 		this->m_bLoginNow = true;
 		int retrycount = 0;
 		while ( (retrycount < 10) && (!IsStopRequested(500)) )
@@ -153,7 +153,7 @@ bool HarmonyHubWS::WriteToHardware(const char *pdata, const unsigned char /*leng
 
 		if (this->m_connectionstatus == harmonyhubpp::connection::status::closed)
 		{
-			_log.Log(LOG_ERROR, "Harmony Hub: Connect failed: cannot send the switch command");
+			Log(LOG_ERROR, "Connect failed: cannot send the switch command");
 			return false;
 		}
 	}
@@ -182,13 +182,13 @@ bool HarmonyHubWS::WriteToHardware(const char *pdata, const unsigned char /*leng
 			}
 			if (m_HarmonyClient.start_activity("-1"))
 			{
-				_log.Log(LOG_ERROR, "Harmony Hub: Error sending the power-off command");
+				Log(LOG_ERROR, "Error sending the power-off command");
 				return false;
 			}
 		}
 		else if (m_HarmonyClient.start_activity(realID))
 		{
-			_log.Log(LOG_ERROR, "Harmony Hub: Error sending the switch command");
+			Log(LOG_ERROR, "Error sending the switch command");
 			return false;
 		}
 	}
@@ -198,7 +198,7 @@ bool HarmonyHubWS::WriteToHardware(const char *pdata, const unsigned char /*leng
 
 void HarmonyHubWS::Do_Work()
 {
-	_log.Log(LOG_STATUS,"Harmony Hub: Worker thread started...");
+	Log(LOG_STATUS,"Worker thread started...");
 
 	unsigned int pcounter = 0;		// ping interval counter
 	unsigned int tcounter = 0;		// 1/25 seconds
@@ -254,7 +254,7 @@ void HarmonyHubWS::Do_Work()
 					if (m_bRequireEcho || SendPing() != 0)
 					{
 						// Hub dropped our connection
-						_log.Log(LOG_ERROR, "Harmony Hub: Error pinging server.. Resetting connection.");
+						Log(LOG_ERROR, "Error pinging server.. Resetting connection.");
 						Disconnect();
 						pcounter = HARMONY_RETRY_LOGIN_SECONDS - 5; // wait 5 seconds before attempting login again
 					}
@@ -269,7 +269,7 @@ void HarmonyHubWS::Do_Work()
 					if (SendPing() != 0)
 					{
 						// Hub dropped our connection
-						_log.Log(LOG_ERROR, "Harmony Hub: Error pinging server.. Resetting connection.");
+						Log(LOG_ERROR, "Error pinging server.. Resetting connection.");
 						Disconnect();
 						pcounter = HARMONY_RETRY_LOGIN_SECONDS - 5; // wait 5 seconds before attempting login again
 					}
@@ -287,7 +287,7 @@ void HarmonyHubWS::Do_Work()
 						{
 							m_bLoginNow = true;
 							if (fcounter > 0)
-								_log.Log(LOG_NORM, "Harmony Hub: Reattempt login.");
+								Log(LOG_NORM, "Reattempt login.");
 						}
 					}
 				}
@@ -312,7 +312,7 @@ void HarmonyHubWS::Do_Work()
 				if ((pcounter % HARMONY_RETRY_LOGIN_SECONDS) > 1)
 				{
 					// timeout
-					_log.Log(LOG_ERROR, "Harmony Hub: setup command socket timed out");
+					Log(LOG_ERROR, "setup command socket timed out");
 					m_connectionstatus = harmonyhubpp::connection::status::closed;
 //					ResetCommunicationSocket();
 				}
@@ -349,7 +349,7 @@ void HarmonyHubWS::Do_Work()
 	}
 	Disconnect();
 
-	_log.Log(LOG_STATUS,"Harmony Hub: Worker stopped...");
+	Log(LOG_STATUS,"Worker stopped...");
 }
 
 
@@ -428,7 +428,7 @@ void HarmonyHubWS::UpdateSwitch(unsigned char /*idx*/, const char *realID, const
 
 void HarmonyHubWS::ConnectToHub()
 {
-	_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Attempting connect to %s", m_szHarmonyAddress.c_str());
+	Debug(DEBUG_HARDWARE, "Attempting connect to %s", m_szHarmonyAddress.c_str());
 	m_bWantAnswer = true;
 	m_connectionstatus = harmonyhubpp::connection::status::connecting;
 	m_HarmonyClient.connect(m_szHarmonyAddress);
@@ -440,7 +440,7 @@ void HarmonyHubWS::Disconnect()
 {
 	if (m_connectionstatus != harmonyhubpp::connection::status::closed)
 	{
-		_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Closing connection");
+		Debug(DEBUG_HARDWARE, "Closing connection");
 		m_connectionstatus = harmonyhubpp::connection::status::closing;
 		m_HarmonyClient.close();
 
@@ -454,7 +454,7 @@ void HarmonyHubWS::Disconnect()
 		if (m_connectionstatus != harmonyhubpp::connection::status::closed)
 		{
 			// something went wrong
-			_log.Log(LOG_ERROR, "Harmony Hub: Timeout while closing connection");
+			Log(LOG_ERROR, "Timeout while closing connection");
 			m_connectionstatus = harmonyhubpp::connection::status::closed;
 		}
 	}
@@ -473,7 +473,7 @@ int HarmonyHubWS::SendPing()
 
 	int retval = m_HarmonyClient.ping().value();
 	if (retval > 0)
-		_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Ping returned error %d", retval);
+		Debug(DEBUG_HARDWARE, "Ping returned error %d", retval);
 	return retval;
 }
 
@@ -503,10 +503,10 @@ void HarmonyHubWS::ProcessHarmonyResponse(const Json::Value &j_data)
 		{
 			m_connectionstatus = harmonyhubpp::connection::status::closed;
 			if (m_bShowConnectError)
-				_log.Log(LOG_ERROR, "Harmony Hub: Attempt to connect to Hub returned error %d", returncode);
+				Log(LOG_ERROR, "Attempt to connect to Hub returned error %d", returncode);
 		}
 		else
-			_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Error %d returned in response to %s", returncode, j_data["cmd"].asString().c_str());
+			Debug(DEBUG_HARDWARE, "Error %d returned in response to %s", returncode, j_data["cmd"].asString().c_str());
 		return;
 	}
 
@@ -560,7 +560,7 @@ void HarmonyHubWS::ProcessHarmonyResponse(const Json::Value &j_data)
 		}
 
 		std::string szCurrentActivity = j_data["data"]["result"].asString();
-		_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Current activity ID = %s (%s)", szCurrentActivity.c_str(), m_mapActivities[szCurrentActivity].c_str());
+		Debug(DEBUG_HARDWARE, "Current activity ID = %s (%s)", szCurrentActivity.c_str(), m_mapActivities[szCurrentActivity].c_str());
 		if (m_szCurActivityID.empty()) // initialize all switches
 		{
 			m_szCurActivityID = szCurrentActivity;
@@ -603,7 +603,7 @@ void HarmonyHubWS::ProcessHarmonyResponse(const Json::Value &j_data)
 	{
 		if (j_data["data"]["activity"].empty())
 		{
-			_log.Log(LOG_ERROR, "Harmony Hub: Invalid data received! (Update Activities)");
+			Log(LOG_ERROR, "Invalid data received! (Update Activities)");
 			return;
 		}
 
@@ -619,12 +619,12 @@ void HarmonyHubWS::ProcessHarmonyResponse(const Json::Value &j_data)
 		}
 		catch (...)
 		{
-			_log.Log(LOG_ERROR, "Harmony Hub: Invalid data received! (Update Activities, JSon activity)");
+			Log(LOG_ERROR, "Invalid data received! (Update Activities, JSon activity)");
 		}
 
 		if (_log.IsDebugLevelEnabled(DEBUG_HARDWARE))
 		{
-			std::string resultString = "Harmony Hub: Activity list: {";
+			std::string resultString = "Activity list: {";
 
 			for (auto &&activity : m_mapActivities)
 			{
@@ -637,7 +637,7 @@ void HarmonyHubWS::ProcessHarmonyResponse(const Json::Value &j_data)
 			resultString=resultString.substr(0, resultString.size()-1);
 			resultString.append("}");
 
-			_log.Debug(DEBUG_HARDWARE, resultString);
+			Debug(DEBUG_HARDWARE, resultString);
 		}
 	}
 
@@ -672,7 +672,7 @@ void HarmonyHubWS::ProcessHarmonyNotification(const Json::Value &j_data)
 	{
 		if (!j_data.isMember("data"))
 		{
-			_log.Log(LOG_ERROR, "Harmony Hub: invalid data");
+			Log(LOG_ERROR, "invalid data");
 			return;
 		}
 
@@ -687,9 +687,9 @@ void HarmonyHubWS::ProcessHarmonyNotification(const Json::Value &j_data)
 			{
 				m_bIsChangingActivity = bIsChanging;
 				if (m_bIsChangingActivity)
-					_log.Log(LOG_STATUS, "Harmony Hub: Changing activity");
+					Log(LOG_STATUS, "Changing activity");
 				else
-					_log.Log(LOG_STATUS, "Harmony Hub: Finished changing activity");
+					Log(LOG_STATUS, "Finished changing activity");
 			}
 		}
 
@@ -699,7 +699,7 @@ void HarmonyHubWS::ProcessHarmonyNotification(const Json::Value &j_data)
 			{
 				std::string szHubSwVersion = j_data["data"]["hubSwVersion"].asString();
 				if (m_szHubSwVersion != szHubSwVersion)
-					_log.Log(LOG_STATUS, "Harmony Hub: Software version: %s", szHubSwVersion.c_str());
+					Log(LOG_STATUS, "Software version: %s", szHubSwVersion.c_str());
 				m_szHubSwVersion = szHubSwVersion;
 			}
 		}
@@ -721,7 +721,7 @@ void HarmonyHubWS::ProcessHarmonyNotification(const Json::Value &j_data)
 			if (stateVersion.empty())
 				stateVersion = "NaN";
 
-			_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Event state notification: stateVersion = %s, hubSwVersion = %s, activityStatus = %d, activityId = %s", stateVersion.c_str(), m_szHubSwVersion.c_str(), activityStatus, activityId.c_str() );
+			Debug(DEBUG_HARDWARE, "Event state notification: stateVersion = %s, hubSwVersion = %s, activityStatus = %d, activityId = %s", stateVersion.c_str(), m_szHubSwVersion.c_str(), activityStatus, activityId.c_str() );
 		}
 	}
 
@@ -767,7 +767,7 @@ void HarmonyHubWS::AsyncReceiver(const std::string szdata)
 
 	if ((!ret) || (!j_result.isObject()))
 	{
-		_log.Log(LOG_ERROR, "Harmony Hub: invalid json object");
+		Log(LOG_ERROR, "invalid json object");
 		return;
 	}
 
@@ -793,21 +793,21 @@ void HarmonyHubWS::AsyncReceiver(const std::string szdata)
 			{
 				m_connectionstatus = harmonyhubpp::connection::status::connected;
 				m_bShowConnectError = false;
-				_log.Log(LOG_STATUS, "Harmony Hub: Connected to Hub");
+				Log(LOG_STATUS, "Connected to Hub");
 				return;
 			}
 			else
 			{
 				m_connectionstatus = harmonyhubpp::connection::status::closed;
 				if (m_bShowConnectError)
-					_log.Log(LOG_ERROR, "Harmony Hub: Attempt to connect to Hub returned HTTP client error %d (%s)", returncode, j_result["msg"].asString().c_str());
+					Log(LOG_ERROR, "Attempt to connect to Hub returned HTTP client error %d (%s)", returncode, j_result["msg"].asString().c_str());
 				else
-					_log.Debug(DEBUG_HARDWARE, "Harmony Hub: Attempt to connect to Hub returned HTTP client error %d (%s)", returncode, j_result["msg"].asString().c_str());
+					Debug(DEBUG_HARDWARE, "Attempt to connect to Hub returned HTTP client error %d (%s)", returncode, j_result["msg"].asString().c_str());
 			}
 			return;
 		}
 
-		_log.Log(LOG_ERROR, "Harmony Hub: Unexpected HTTP client error %d (%s)", returncode, j_result["msg"].asString().c_str());
+		Log(LOG_ERROR, "Unexpected HTTP client error %d (%s)", returncode, j_result["msg"].asString().c_str());
 		return;
 	}
 
@@ -817,11 +817,11 @@ void HarmonyHubWS::AsyncReceiver(const std::string szdata)
 		if ((m_connectionstatus == harmonyhubpp::connection::status::closing) && (returncode == 1000))
 		{
 			// okay, we initiated this
-			_log.Log(LOG_STATUS, "Harmony Hub: Connection closed");
+			Log(LOG_STATUS, "Connection closed");
 		}
 		else
 		{
-			_log.Log(LOG_ERROR, "Harmony Hub: Connection closed unexpectedly (error = %d)", returncode);
+			Log(LOG_ERROR, "Connection closed unexpectedly (error = %d)", returncode);
 		}
 		m_connectionstatus = harmonyhubpp::connection::status::closed;
 		return;

@@ -210,7 +210,7 @@ void CLocalTuya::Do_Work()
 				TuyaData* devicedata = device->m_devicedata;
 				if (devicedata->connectstate == device::tuya::connectstate::RESETBYPEER)
 				{
-					_log.Debug(DEBUG_HARDWARE, "connection with device %s was reset by peer", devicedata->deviceName);
+					Debug(DEBUG_HARDWARE, "connection with device %s was reset by peer", devicedata->deviceName);
 					device->StopMonitor();
 					while (devicedata->connectstate != device::tuya::connectstate::STOPPED)
 					{
@@ -464,7 +464,6 @@ namespace http {
 			std::string protocolversion = request::findValue(&req, "protocolversion");
 			std::string sEnergyDivider = request::findValue(&req, "energydivider");
 			int iEnergyDivider = atoi(sEnergyDivider.c_str());
-_log.Log(LOG_STATUS,"UPDATE TuyaDevices SET DeviceID='%s', LocalKey='%s', IPAddress='%s', Name='%s', ProtocolVersion='%s', energyDivider=%d WHERE (ID=%d) AND (HardwareID=%d)", tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), protocolversion.c_str(), iEnergyDivider, nid, iHardwareID);
 
 			m_sql.safe_query("UPDATE TuyaDevices SET DeviceID='%s', LocalKey='%s', IPAddress='%s', Name='%s', energyDivider=%d WHERE (ID=%d) AND (HardwareID=%d)", tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), iEnergyDivider, nid, iHardwareID);
 			m_mainworker.RestartHardware(hwid);

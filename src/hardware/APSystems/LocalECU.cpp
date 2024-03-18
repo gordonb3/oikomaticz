@@ -215,15 +215,15 @@ bool CAPSLocalECU::GetECUData()
 		statuscode = m_ECUClient->QueryInverters();
 	if ((statuscode == 0) && (m_ECULastReport < m_ECUClient->m_apsecu.timestamp))
 	{
-		_log.Debug(DEBUG_HARDWARE, "Proces ECU data");
+		Debug(DEBUG_HARDWARE, "Proces ECU data");
 		m_ECULastReport = m_ECUClient->m_apsecu.timestamp;
 		SendMeters();
 		return true;
 	}
 	if (statuscode == -1)
-		_log.Debug(DEBUG_HARDWARE, "attempt to connect to ECU returned error %d", errno);
+		Debug(DEBUG_HARDWARE, "attempt to connect to ECU returned error %d", errno);
 	else if (statuscode == 1)
-		_log.Debug(DEBUG_HARDWARE, "ECU returned invalid data");
+		Debug(DEBUG_HARDWARE, "ECU returned invalid data");
 	return false;
 }
 
@@ -234,7 +234,7 @@ std::string CAPSLocalECU::GetP1IDx()
 	result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (Type='%d') AND (Subtype='%d')", m_HwdID, pTypeP1Power, sTypeP1Power);
 	if (result.empty())
 	{
-		_log.Debug(DEBUG_HARDWARE, "ECU: Create solar power meter");
+		Debug(DEBUG_HARDWARE, "ECU: Create solar power meter");
 		P1Power	ecu_energy;
 		memset(&ecu_energy, 0, sizeof(P1Power));
 		ecu_energy.len = sizeof(P1Power) - 1;
@@ -261,7 +261,7 @@ std::string CAPSLocalECU::GetVoltmeterIDx(const std::string &szShortID)
 	result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (Type='%d') AND (Subtype='%d') AND (DeviceID='%s')", m_HwdID, pTypeGeneral, sTypeVoltage, szShortID.c_str());
 	if (result.empty())
 	{
-		_log.Debug(DEBUG_HARDWARE, "ECU: Create voltage meter for inverter %s", szShortID.c_str());
+		Debug(DEBUG_HARDWARE, "ECU: Create voltage meter for inverter %s", szShortID.c_str());
 		char *end = NULL;
 		int inverterID = (int)strtoul(szShortID.c_str(), &end, 16);
 		_tGeneralDevice gDevice;
@@ -286,7 +286,7 @@ std::string CAPSLocalECU::GetWattmeterIDx(const std::string &szShortID, const in
 	result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (Type='%d') AND (Subtype='%d') AND (DeviceID='%s') AND (Unit=%d)", m_HwdID, pTypeUsage, sTypeElectric, szShortID.c_str(), channel + 11);
 	if (result.empty())
 	{
-		_log.Debug(DEBUG_HARDWARE, "ECU: Create watt meter %d for inverter channel %s", channel + 1, szShortID.c_str());
+		Debug(DEBUG_HARDWARE, "ECU: Create watt meter %d for inverter channel %s", channel + 1, szShortID.c_str());
 		char *end = NULL;
 		int inverterID = (int)strtoul(szShortID.c_str(), &end, 16);
 		_tUsageMeter umeter;

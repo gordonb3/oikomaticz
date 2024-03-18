@@ -90,7 +90,7 @@ bool TuyaMonitor::ConnectToDevice()
 	{
 		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: received invalid data from %s, verify ID and local key", m_name.c_str());
 		if (jStatus.isMember("msg"))
-			_log.Log(LOG_ERROR, "client returned \"%s\"", jStatus["msg"].asString().c_str());
+			_log.Log(LOG_ERROR, "Tuya Monitor: client returned \"%s\"", jStatus["msg"].asString().c_str());
 		return false;
 	}
 
