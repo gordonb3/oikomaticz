@@ -193,7 +193,7 @@ int ecuAPI::QueryECU()
 		printf("%.2x", (uint8_t)buffer[i]);
 	std::cout << "\n";
 #endif
-	if ( (numbytes < 45) || (!VerifyMessageSize(numbytes, buffer)) )
+	if ( (numbytes < 53) || (!VerifyMessageSize(numbytes, buffer)) )
 		return 1;
 
 	if (m_apsecu.id.empty())
@@ -268,13 +268,13 @@ int ecuAPI::QueryInverters()
 		printf("%.2x", (uint8_t)buffer[i]);
 	std::cout << "\n";
 #endif
-	if ( (numbytes < 30) || (!VerifyMessageSize(numbytes, buffer)) )
+	if ( (numbytes < 36) || (!VerifyMessageSize(numbytes, buffer)) )
 		return 1;
 
 	m_apsecu.timestamp = ReadTimestamp(buffer, 19);
 
 	int inverter_pos = 26;
-	int maxpos = numbytes - 9;
+	int maxpos = numbytes - 10;
 	for (int i = 0; ( (i < m_apsecu.numinverters) && (inverter_pos < maxpos) ); i++)
 	{
 		unsigned char* currentinverter = &buffer[inverter_pos];
@@ -295,7 +295,7 @@ int ecuAPI::QueryInverters()
 			if (currentinverter[8] == '1')		// YC600/DS3 series
 			{
 				inverter_pos += 21;
-				if (inverter_pos > numbytes)
+				if (inverter_pos >= numbytes)
 					return -1;
 				if (m_apsecu.inverters[i].online_status != 0)
 				{
@@ -319,7 +319,7 @@ int ecuAPI::QueryInverters()
 			else if (currentinverter[8] == '2')		// YC1000/QT2 series
 			{
 				inverter_pos += 27;
-				if (inverter_pos > numbytes)
+				if (inverter_pos >= numbytes)
 					return -1;
 				if (m_apsecu.inverters[i].online_status != 0)
 				{
@@ -343,7 +343,7 @@ int ecuAPI::QueryInverters()
 			else if (currentinverter[8] == '3')		// QS1
 			{
 				inverter_pos += 23;
-				if (inverter_pos > numbytes)
+				if (inverter_pos >= numbytes)
 					return -1;
 				if (m_apsecu.inverters[i].online_status != 0)
 				{

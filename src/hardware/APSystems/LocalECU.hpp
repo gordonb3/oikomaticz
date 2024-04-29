@@ -33,6 +33,7 @@ private:
 	unsigned int m_lastTodayEnergy;
 	int m_todayEnergyOffset;
 	time_t m_ECULastReport;
+	std::string m_P1IDx;
 	ecuAPI *m_ECUClient;
 
 	void Init();

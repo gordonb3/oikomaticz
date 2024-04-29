@@ -99,6 +99,7 @@ void CAPSLocalECU::Init()
 	}
 	m_todayEnergyOffset = -1;
 	m_lastLifeEnergy = m_usageLow + m_usageHigh;
+	m_P1IDx = "";
 }
 
 
@@ -203,7 +204,7 @@ bool CAPSLocalECU::WriteToHardware(const char *pdata, const unsigned char length
 bool CAPSLocalECU::GetECUData()
 {
 	/* The ECU is incapable of simultaneous communication. When it is communicating with the inverters
-	 * (using Zigbe) it will thus reject our communication attempt. The same happens when the ECU is
+	 * (using Zigbee) it will thus reject our communication attempt. The same happens when the ECU is
 	 * "phoning home" to update the numbers accessable through the web based app.
 	 *
 	 * TODO whenever the ECU starts returning errno 111 it requires either a restart or activation of
@@ -230,6 +231,8 @@ bool CAPSLocalECU::GetECUData()
 
 std::string CAPSLocalECU::GetP1IDx()
 {
+	if (!m_P1IDx.empty())
+		return m_P1IDx;
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (Type='%d') AND (Subtype='%d')", m_HwdID, pTypeP1Power, sTypeP1Power);
 	if (result.empty())
@@ -251,7 +254,8 @@ std::string CAPSLocalECU::GetP1IDx()
 			result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID=%d) AND (Type='%d') AND (Subtype='%d')", m_HwdID, pTypeP1Power, sTypeP1Power);
 		}
 	}
-	return result[0][0];
+	m_P1IDx = result[0][0];
+	return m_P1IDx;
 }
 
 
@@ -387,7 +391,7 @@ void CAPSLocalECU::SendMeters()
 			if (m_ECUClient->m_apsecu.inverters[i].online_status == 0)
 				result = m_sql.safe_query("UPDATE DeviceStatus SET DeviceID='%s', sValue='%d', lastupdate='%s' WHERE ID=%s", szShortID.c_str(), 0, timestring, IDx.c_str());
 			else
-				result = m_sql.safe_query("UPDATE DeviceStatus SET DeviceID='%s', sValue='%d', lastupdate='%s' WHERE ID=%s", szShortID.c_str(), m_ECUClient->m_apsecu.inverters[i].channels[0].power, timestring, IDx.c_str());
+				result = m_sql.safe_query("UPDATE DeviceStatus SET DeviceID='%s', sValue='%d', lastupdate='%s' WHERE ID=%s", szShortID.c_str(), m_ECUClient->m_apsecu.inverters[i].channels[j].power, timestring, IDx.c_str());
 			m_mainworker.sOnDeviceReceived(m_HwdID, atoll(IDx.c_str()), "Power", nullptr);
 		}
 	}
