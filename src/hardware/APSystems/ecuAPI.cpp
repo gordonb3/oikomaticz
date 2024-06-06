@@ -475,7 +475,16 @@ int ecuAPI::GetInverterSignalLevels()
 	int check_size = bytes_received - 1;
 	std::string sizestring;
 	sizestring.append((const char*)&buffer[5],4);
-	int reported_size = stoi(sizestring);
+	int reported_size;
+	try
+	{
+		// stoi() may throw SIGABRT if sizestring contains unexpected characters
+		reported_size = stoi(sizestring);
+	}
+	catch (...)
+	{
+		return false;
+	}
 	return (check_size == reported_size);
 }
 
