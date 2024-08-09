@@ -176,7 +176,6 @@ private:
 	void Cmd_UpdateMyProfile(WebEmSession& session, const request& req, Json::Value& root);
 	void Cmd_GetUptime(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetConfig(WebEmSession& session, const request& req, Json::Value& root);
-	void Cmd_GetLocation(WebEmSession& session, const request& req, Json::Value& root);
 	void Cmd_GetForecastConfig(WebEmSession& session, const request& req, Json::Value& root);
 	void Cmd_SendNotification(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_EmailCameraSnapshot(WebEmSession & session, const request& req, Json::Value &root);
@@ -301,6 +300,9 @@ private:
 	void Cmd_AddApplication(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_UpdateApplication(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_DeleteApplication(WebEmSession & session, const request& req, Json::Value &root);
+
+	void Cmd_GetDynamicPriceDevices(WebEmSession& session, const request& req, Json::Value& root);
+	void Cmd_GetEnergyDashboardDevices(WebEmSession& session, const request& req, Json::Value& root);
 
 	void Cmd_TuyaGetDevices(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_AddTuyaDevice(WebEmSession & session, const request& req, Json::Value &root);

@@ -1588,7 +1588,7 @@ namespace http {
 		{
 			std::stringstream sstr;
 			sstr << "DMZSID=" << session.id << "_" << session.auth_token << "." << session.expires;
-			sstr << "; HttpOnly; path=/; Expires=" << make_web_time(session.expires);
+			sstr << "; HttpOnly; SameSite=strict; path=/; Expires=" << make_web_time(session.expires);
 			reply::add_header(&rep, "Set-Cookie", sstr.str(), false);
 		}
 
@@ -1596,8 +1596,8 @@ namespace http {
 		{
 			std::stringstream sstr;
 			sstr << "DMZSID=none";
-			// RK, we removed path=/ so you can be logged in to two Domoticz's at the same time on https://my.domoticz.com/.
-			sstr << "; HttpOnly; Expires=" << make_web_time(0);
+			// RK, we removed path=/ so you can be logged in to two Oikomaticz instances
+			sstr << "; HttpOnly; SameSite=strict; Expires=" << make_web_time(0);
 			reply::add_header(&rep, "Set-Cookie", sstr.str(), false);
 		}
 
@@ -1909,7 +1909,12 @@ namespace http {
 					}
 				}
 				if (session.rights == -1)
+				{
 					_log.Debug(DEBUG_AUTH, "[Auth Check] Trusted network exception detected, but no Admin User found!");
+					//If the User database table is empty, we will create a default Admin user (we are in trusted network anyway)
+					session.username = "{admin}";
+					session.rights = URIGHTS_ADMIN;
+				}
 				bTrustedNetwork = true;
 			}
 
@@ -2208,7 +2213,7 @@ namespace http {
 			else if (!realHost.empty())
 			{
 				if (AreWeInTrustedNetwork(session.remote_host))
-				{	// We only use Proxy header information if the connection Domotic receives comes from a Trusted network
+				{	// We only use Proxy header information if the connection Oikomaticz receives comes from a Trusted network
 					session.remote_host = realHost;		// replace the host of the connection with the originating host behind the proxies
 					rep.originHost = realHost;
 					bUseRealHost = true;

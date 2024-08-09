@@ -53,7 +53,7 @@ void P1MeterTCP::Do_Work()
 	}
 	terminate();
 
-	Log(LOG_STATUS, "TCP/IP Worker stopped...");
+	Log(LOG_STATUS, "Worker stopped...");
 }
 
 
@@ -68,7 +68,7 @@ void P1MeterTCP::OnConnect()
 {
 	// reset all values and buffers - they may contain invalid data
 	Init();
-	Log(LOG_STATUS, "connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+	Log(LOG_STATUS, "Connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 
 	if (m_bDisableCRC)
 	{
@@ -79,7 +79,7 @@ void P1MeterTCP::OnConnect()
 
 void P1MeterTCP::OnDisconnect()
 {
-	Log(LOG_STATUS, "disconnected");
+	Log(LOG_STATUS, "Disconnected");
 }
 
 

@@ -2410,7 +2410,6 @@ define(['app', 'livesocket'], function (app) {
 						room: idx >= 0 ? idx : undefined
 					});
 					$location.replace();
-					$scope.$apply();
 			};
 			$scope.ctrl=ctrl;
 

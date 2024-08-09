@@ -21,7 +21,6 @@ class Lyric : public CDomoticzHardwareBase
 	void SetSetpoint(int idx, float temp, int nodeid);
 	void SetPauseStatus(int idx, bool bHeating, int nodeid);
 	void SendOnOffSensor(int NodeID, device::tswitch::type::value switchtype, bool SwitchState, const std::string &defaultname);
-	void SendSetPointSensor(unsigned char Idx, float Temp, const std::string &defaultname);
 	bool refreshToken();
 	void Init();
 	bool StartHardware() override;

@@ -14,6 +14,7 @@ class P1MeterBase : public CDomoticzHardwareBase
 	~P1MeterBase() override;
 
 	bool SetOptions(bool disable_crc, unsigned int ratelimit, unsigned int gasmbuschannel);
+	float m_currentTariff;
 
       private:
 	void Init();
@@ -65,7 +66,6 @@ class P1MeterBase : public CDomoticzHardwareBase
 	unsigned char m_phasecount;
 	unsigned char m_linecount;
 	unsigned char m_CRfound;
-	float m_currentTariff;
 	float m_lastTariff;
 	bool m_mbusonly;
 

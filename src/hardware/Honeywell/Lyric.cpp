@@ -326,9 +326,9 @@ void Lyric::GetThermostatData()
 			desc = kHeatSetPointDesc;
 			stdreplace(desc, "{devicename}", deviceName);
 			if (m_lyricDevices[devNr].temperatureUnit == device::tmeter::temperature::unit::FAHRENHEIT)
-				SendSetPointSensor((uint8_t)(10 * devNr + 4), ConvertToCelsius(temperature), desc);
+				SendSetPointSensor(0, 0, 0, (uint8_t)(10 * devNr + 4), 0, (float)ConvertToCelsius(temperature), desc);
 			else
-				SendSetPointSensor((uint8_t)(10 * devNr + 4), temperature, desc);
+				SendSetPointSensor(0, 0, 0, (uint8_t)(10 * devNr + 4), 0, temperature, desc);
 
 			std::string operationstatus = (*currentDevice)["operationStatus"]["mode"].asString();
 			bool bStatus = (operationstatus != "EquipmentOff");
@@ -407,23 +407,6 @@ void Lyric::SendOnOffSensor(const int NodeID, const device::tswitch::type::value
 	}
 }
 
-
-//
-// send the temperature from Honeywell Lyric to domoticz backend
-//
-void Lyric::SendSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
-{
-	tSetpoint thermos;
-	thermos.type = pTypeSetpoint;
-	thermos.subtype = sTypeSetpoint;
-	thermos.id1 = 0;
-	thermos.id2 = 0;
-	thermos.id3 = 0;
-	thermos.id4 = Idx;
-	thermos.dunit = 0;
-	thermos.value = Temp;
-	sDecodeRXMessage(this, (const unsigned char *)&thermos, defaultname.c_str(), 255, nullptr);
-}
 
 //
 // transfer pause status to Honeywell Lyric api
@@ -506,7 +489,7 @@ void Lyric::SetSetpoint(const int idx, const float temp, const int /*nodeid*/)
 	// register the new setpoint in our database
 	std::string desc = kHeatSetPointDesc;
 	stdreplace(desc, "{devicename}", m_lyricDevices[idx].deviceName);
-	SendSetPointSensor((uint8_t)(10 * idx + 4), temp, desc);
+	SendSetPointSensor(0, 0, 0, (uint8_t)(10 * idx + 4), 0, temp, desc);
 
 	// this also turns on the heating, so let the corresponding switch reflect that
 	desc = kHeatingDesc;

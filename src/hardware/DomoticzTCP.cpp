@@ -93,7 +93,7 @@ bool DomoticzTCP::WriteToHardware(const char* pdata, unsigned char length)
 
 void DomoticzTCP::OnConnect()
 {
-	_log.Log(LOG_STATUS, "connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+	_log.Log(LOG_STATUS, "Connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 
 	if (!m_username.empty())
 	{
@@ -106,7 +106,7 @@ void DomoticzTCP::OnConnect()
 
 void DomoticzTCP::OnDisconnect()
 {
-	_log.Log(LOG_STATUS, "disconnected from: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+	_log.Log(LOG_STATUS, "Disconnected from: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
 }
 
 

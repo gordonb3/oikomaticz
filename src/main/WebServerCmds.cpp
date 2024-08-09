@@ -360,13 +360,6 @@ namespace http
 				// USB/System
 				if (sport.empty())
 					return false; // need to have a serial port
-
-				if (htype == hardware::type::TeleinfoMeter)
-				{
-					// Teleinfo always has decimals. Chances to have a P1 and a Teleinfo device on the same
-					// Oikomaticz instance are very low as both are national standards (NL and FR)
-					m_sql.UpdatePreferencesVar("SmartMeterType", 0);
-				}
 			}
 			else if (IsNetworkDevice(htype))
 			{
@@ -383,12 +376,6 @@ namespace http
 				{
 					if (smode1.empty())
 						return false;
-				}
-				else if ((htype == hardware::type::ECODEVICES) || (htype == hardware::type::TeleinfoMeterTCP))
-				{
-					// EcoDevices and Teleinfo always have decimals. Chances to have a P1 and a EcoDevice/Teleinfo
-					//  device on the same Oikomaticz instance are very low as both are national standards (NL and FR)
-					m_sql.UpdatePreferencesVar("SmartMeterType", 0);
 				}
 				else if (htype == hardware::type::AlfenEveCharger)
 				{
@@ -576,6 +563,11 @@ namespace http
 				mode1 = 4;
 				mode2 = 500;
 			}
+			else if (htype == hardware::type::BleBox)
+			{
+				mode1 = 60;
+				mode2 = 0;
+			}
 
 			if (htype == hardware::type::HTTPPOLLER)
 			{
@@ -592,9 +584,9 @@ namespace http
 					name.c_str(), (senabled == "true") ? 1 : 0, htype, iLogLevelEnabled, address.c_str(), port, sport.c_str(), username.c_str(), password.c_str(),
 					extra.c_str(), mode1Str.c_str(), mode2Str.c_str(), mode3Str.c_str(), mode4Str.c_str(), mode5Str.c_str(), mode6Str.c_str(), iDataTimeout);
 			}
-			else if ((htype == hardware::type::RFXtrx433) || (htype == hardware::type::RFXtrx868))
+			else if ((htype == hardware::type::RFXtrx433) || (htype == hardware::type::RFXtrx868) || (htype == hardware::type::Netatmo))
 			{
-				// No Extra field here, handled in CWebServer::SetRFXCOMMode
+				// No Extra field here, handled in CWebServer::SetRFXCOMMode and in CNetatmo::CNetatmo for Netatmo devices
 				m_sql.safe_query("INSERT INTO Hardware (Name, Enabled, Type, LogLevel, Address, Port, SerialPort, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, "
 					"DataTimeout) VALUES ('%q',%d, %d, %d,'%q',%d,'%q','%q','%q',%d,%d,%d,%d,%d,%d,%d)",
 					name.c_str(), (senabled == "true") ? 1 : 0, htype, iLogLevelEnabled, address.c_str(), port, sport.c_str(), username.c_str(), password.c_str(), mode1,
@@ -678,6 +670,7 @@ namespace http
 			if (!ValidateHardware(htype, sport, address, port, username, password, mode1Str, mode2Str, mode3Str, mode4Str, mode5Str, mode6Str, extra, idx))
 				return;
 
+
 			root["status"] = "OK";
 			root["title"] = "UpdateHardware";
 
@@ -712,9 +705,9 @@ namespace http
 						extra.c_str(), mode1Str.c_str(), mode2Str.c_str(), mode3Str.c_str(), mode4Str.c_str(), mode5Str.c_str(), mode6Str.c_str(), iDataTimeout,
 						idx.c_str());
 				}
-				else if ((htype == hardware::type::RFXtrx433) || (htype == hardware::type::RFXtrx868))
+				else if ((htype == hardware::type::RFXtrx433) || (htype == hardware::type::RFXtrx868) || (htype == hardware::type::Netatmo))
 				{
-					// No Extra field here, handled in CWebServer::SetRFXCOMMode
+					// No Extra field here, handled in CWebServer::SetRFXCOMMode and CNetatmo::CNetatmo( for Netatmo
 					m_sql.safe_query("UPDATE Hardware SET Name='%q', Enabled=%d, Type=%d, LogLevel=%d, Address='%q', Port=%d, SerialPort='%q', Username='%q', Password='%q', "
 						"Mode1=%d, Mode2=%d, Mode3=%d, Mode4=%d, Mode5=%d, Mode6=%d, DataTimeout=%d WHERE (ID == '%q')",
 						name.c_str(), (bEnabled == true) ? 1 : 0, htype, iLogLevelEnabled, address.c_str(), port, sport.c_str(), username.c_str(), password.c_str(),
@@ -1609,6 +1602,7 @@ namespace http
 			root["WindSign"] = m_sql.m_windsign;
 			root["TempScale"] = m_sql.m_tempscale;
 			root["TempSign"] = m_sql.m_tempsign;
+			root["CurrencySign"] = m_sql.m_currencysign;
 
 			int iUser = -1;
 			if (!session.username.empty() && (iUser = FindUser(session.username.c_str())) != -1)
@@ -1699,34 +1693,6 @@ namespace http
 				}
 			}
 			root["status"] = "OK";
-		}
-
-		// Could now be obsolete as only 1 usage was found in Forecast screen, which now uses other command
-		void CWebServer::Cmd_GetLocation(WebEmSession& session, const request& req, Json::Value& root)
-		{
-			if (session.rights == -1)
-			{
-				session.reply_status = reply::forbidden;
-				return; // Only auth user allowed
-			}
-			root["title"] = "GetLocation";
-			std::string Latitude = "1";
-			std::string Longitude = "1";
-			std::string sValue;
-			if (m_sql.GetPreferencesVar("Location", sValue))
-			{
-				std::vector<std::string> strarray;
-				StringSplit(sValue, ";", strarray);
-
-				if (strarray.size() == 2)
-				{
-					Latitude = strarray[0];
-					Longitude = strarray[1];
-					root["status"] = "OK";
-				}
-			}
-			root["Latitude"] = Latitude;
-			root["Longitude"] = Longitude;
 		}
 
 		void CWebServer::Cmd_GetForecastConfig(WebEmSession& session, const request& req, Json::Value& root)
@@ -2173,6 +2139,18 @@ namespace http
 				root["DividerEnergy"] = EnergyDivider;
 			}
 
+			int iP1Hardware = m_mainworker.FindDomoticzHardwareByType(hardware::type::P1SmartMeter);
+			if (iP1Hardware == -1)
+				iP1Hardware = m_mainworker.FindDomoticzHardwareByType(hardware::type::P1SmartMeterLAN);
+			if (iP1Hardware != -1)
+			{
+				P1MeterBase* pP1Meter = dynamic_cast<P1MeterBase*>(m_mainworker.GetHardware(iP1Hardware));
+				if (pP1Meter != nullptr)
+				{
+					root["P1_Tariff"] = (pP1Meter->m_currentTariff == 1) ? "Low" : "High";
+				}
+			}
+
 			std::string idx = request::findValue(&req, "idx");
 			if (idx.empty())
 				return;
@@ -2285,7 +2263,6 @@ namespace http
 				m_sql.UpdatePreferencesVar("CM113DisplayType", atoi(request::findValue(&req, "CM113DisplayType").c_str())); cntSettings++;
 				m_sql.UpdatePreferencesVar("MaxElectricPower", atoi(request::findValue(&req, "MaxElectricPower").c_str())); cntSettings++;
 				m_sql.UpdatePreferencesVar("DoorbellCommand", atoi(request::findValue(&req, "DoorbellCommand").c_str())); cntSettings++;
-				m_sql.UpdatePreferencesVar("SmartMeterType", atoi(request::findValue(&req, "SmartMeterType").c_str())); cntSettings++;
 				m_sql.UpdatePreferencesVar("SecOnDelay", atoi(request::findValue(&req, "SecOnDelay").c_str())); cntSettings++;
 				m_sql.UpdatePreferencesVar("FloorplanPopupDelay", atoi(request::findValue(&req, "FloorplanPopupDelay").c_str())); cntSettings++;
 				m_sql.UpdatePreferencesVar("FloorplanActiveOpacity", atoi(request::findValue(&req, "FloorplanActiveOpacity").c_str())); cntSettings++;
@@ -2312,6 +2289,11 @@ namespace http
 
 				m_sql.UpdatePreferencesVar("Title", (request::findValue(&req, "Title").empty()) ? "Oikomaticz" : request::findValue(&req, "Title")); cntSettings++;
 
+				m_sql.UpdatePreferencesVar("HourIdxElectricityDevice", atoi(request::findValue(&req, "HourIdxElectricityDevice").c_str())); cntSettings++;
+				m_sql.UpdatePreferencesVar("HourIdxGasDevice", atoi(request::findValue(&req, "HourIdxGasDevice").c_str())); cntSettings++;
+				m_sql.UpdatePreferencesVar("P1DisplayType", atoi(request::findValue(&req, "P1DisplayType").c_str())); cntSettings++;
+
+
 				/* More complex ones that need additional processing */
 				/* ------------------------------------------------- */
 
@@ -2329,6 +2311,8 @@ namespace http
 				m_sql.UpdatePreferencesVar("CostWater", int(CostWater * 10000.0F)); cntSettings++;
 				float CostCityHeat = static_cast<float>(atof(request::findValue(&req, "CostCityHeat").c_str()));
 				m_sql.UpdatePreferencesVar("CostCityHeat", int(CostCityHeat * 10000.0F)); cntSettings++;
+
+				m_mainworker.HandleHourPrice();
 
 				int EnergyDivider = atoi(request::findValue(&req, "EnergyDivider").c_str());
 				if (EnergyDivider < 1)
@@ -2392,8 +2376,6 @@ namespace http
 				m_sql.m_weightunit = (_eWeightUnit)nUnit;
 				m_sql.UpdatePreferencesVar("WeightUnit", m_sql.m_weightunit); cntSettings++;
 
-				m_sql.SetUnitsAndScale();
-
 				/* Update Preferences and call other functions as well due to changes */
 				/* ------------------------------------------------------------------ */
 
@@ -2406,6 +2388,9 @@ namespace http
 					m_mainworker.GetSunSettings();
 				}
 				cntSettings++;
+
+				std::string sCurrency = request::findValue(&req, "CurrencySymbol");
+				m_sql.UpdatePreferencesVar("Currency", sCurrency); cntSettings++;
 
 				bool AllowPlainBasicAuth = (request::findValue(&req, "AllowPlainBasicAuth") == "on" ? 1 : 0);
 				m_sql.UpdatePreferencesVar("AllowPlainBasicAuth", AllowPlainBasicAuth);
@@ -2567,6 +2552,55 @@ namespace http
 						rnvalue = 6000;
 					m_sql.m_max_kwh_usage = rnvalue;
 				}
+
+				//Energy Dashboard Settings
+				int EP1 = atoi(request::findValue(&req, "EP1").c_str());
+				int EGas = atoi(request::findValue(&req, "EGas").c_str());
+				int EWater = atoi(request::findValue(&req, "EWater").c_str());
+				int ESolar = atoi(request::findValue(&req, "ESolar").c_str());
+				int EBatteryWatt = atoi(request::findValue(&req, "EBatteryWatt").c_str());
+				int EBatterySoc = atoi(request::findValue(&req, "EBatterySoc").c_str());
+				int ETextSensor = atoi(request::findValue(&req, "ETextSensor").c_str());
+				int EExtra1 = atoi(request::findValue(&req, "EExtra1").c_str());
+				int EExtra2 = atoi(request::findValue(&req, "EExtra2").c_str());
+				int EExtra3 = atoi(request::findValue(&req, "EExtra3").c_str());
+				std::string EExtra1Field = request::findValue(&req, "EExtra1Field");
+				std::string EExtra2Field = request::findValue(&req, "EExtra2Field");
+				std::string EExtra3Field = request::findValue(&req, "EExtra3Field");
+				std::string EExtra1Icon = request::findValue(&req, "EExtra1Icon");
+				std::string EExtra2Icon = request::findValue(&req, "EExtra2Icon");
+				std::string EExtra3Icon = request::findValue(&req, "EExtra3Icon");
+				bool bConvertWaterM3ToLiter = (request::findValue(&req, "EConvertWaterM3ToLiter") == "on" ? 1 : 0);
+				bool bDisplayTime = (request::findValue(&req, "EDisplayTime") == "on" ? 1 : 0);
+				bool bDisplayFlowWithLines = (request::findValue(&req, "EDisplayFlowWithLines") == "on" ? 1 : 0);
+				bool bUseCustomIcons = (request::findValue(&req, "EUseCustomIcons") == "on" ? 1 : 0);
+
+				Json::Value ESettings;
+				ESettings["idP1"] = EP1;
+				ESettings["idGas"] = EGas;
+				ESettings["idWater"] = EWater;
+				ESettings["idSolar"] = ESolar;
+				ESettings["idBatteryWatt"] = EBatteryWatt;
+				ESettings["idBatterySoc"] = EBatterySoc;
+				ESettings["idTextSensor"] = ETextSensor;
+				ESettings["idExtra1"] = EExtra1;
+				ESettings["idExtra2"] = EExtra2;
+				ESettings["idExtra3"] = EExtra3;
+				ESettings["Extra1Field"] = EExtra1Field;
+				ESettings["Extra2Field"] = EExtra2Field;
+				ESettings["Extra3Field"] = EExtra3Field;
+				ESettings["Extra1Icon"] = EExtra1Icon;
+				ESettings["Extra2Icon"] = EExtra2Icon;
+				ESettings["Extra3Icon"] = EExtra3Icon;
+				ESettings["ConvertWaterM3ToLiter"] = bConvertWaterM3ToLiter;
+				ESettings["DisplayTime"] = bDisplayTime;
+				ESettings["DisplayFlowWithLines"] = bDisplayFlowWithLines;
+				ESettings["UseCustomIcons"] = bUseCustomIcons;
+
+				std::string szESettings = JSonToRawString(ESettings);
+				m_sql.UpdatePreferencesVar("ESettings", szESettings);
+
+				m_sql.SetUnitsAndScale();
 
 				/* To wrap up everything */
 				m_notifications.ConfigFromGetvars(req, true);
@@ -4559,10 +4593,6 @@ namespace http
 				{
 					root["DoorbellCommand"] = nValue;
 				}
-				else if (Key == "SmartMeterType")
-				{
-					root["SmartMeterType"] = nValue;
-				}
 				else if (Key == "EnableTabFloorplans")
 				{
 					root["EnableTabFloorplans"] = nValue;
@@ -4758,6 +4788,31 @@ namespace http
 				else if (Key == "IFTTTAPI")
 				{
 					root["IFTTTAPI"] = sValue;
+				}
+				else if (Key == "HourIdxElectricityDevice")
+				{
+					root["HourIdxElectricityDevice"] = nValue;
+				}
+				else if (Key == "HourIdxGasDevice")
+				{
+					root["HourIdxGasDevice"] = nValue;
+				}
+				else if (Key == "Currency")
+				{
+					root["Currency"] = sValue;
+				}
+				else if (Key == "ESettings")
+				{
+					Json::Value jesettings;
+					bool ret = ParseJSon(sValue, jesettings);
+					if (ret)
+					{
+						root["ESettings"] = jesettings;
+					}
+				}
+				else if (Key == "P1DisplayType")
+				{
+					root["P1DisplayType"] = nValue;
 				}
 			}
 		}
@@ -4966,6 +5021,50 @@ namespace http
 				ii++;
 			}
 			root["status"] = "OK";
+		}
+
+		void CWebServer::Cmd_GetDynamicPriceDevices(WebEmSession& session, const request& req, Json::Value& root)
+		{
+			if (session.rights != 2)
+			{
+				session.reply_status = reply::forbidden;
+				return; //Only admin user allowed
+			}
+			root["status"] = "OK";
+			root["title"] = "GetDynamicPriceDevices";
+			std::vector<std::vector<std::string> > result;
+			result = m_sql.safe_query("SELECT ID, Name FROM DeviceStatus WHERE( (Type==243 AND SubType==31) OR (Type==243 AND SubType==33) ) ORDER BY Name");
+			if (!result.empty())
+			{
+				int ii = 0;
+
+				root["result"][ii]["idx"] = 0x98765;
+				root["result"][ii]["Name"] = "Internal (Meter Settings)";
+				ii++;
+
+				for (const auto& sd : result)
+				{
+					root["result"][ii]["idx"] = atoi(sd[0].c_str());
+					root["result"][ii]["Name"] = sd[1];
+					ii++;
+				}
+			}
+		}
+		void CWebServer::Cmd_GetEnergyDashboardDevices(WebEmSession& session, const request& req, Json::Value& root)
+		{
+			root["title"] = "GetEnergyDashboardDevices";
+
+			std::string szESettings;
+			if (m_sql.GetPreferencesVar("ESettings", szESettings))
+			{
+				Json::Value jesettings;
+				bool ret = ParseJSon(szESettings, jesettings);
+				if (ret)
+				{
+					root["status"] = "OK";
+					root["result"]["ESettings"] = jesettings;
+				}
+			}
 		}
 
 	} // namespace server
