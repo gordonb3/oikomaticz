@@ -328,7 +328,7 @@ void CLocalTuya::SendSwitch(TuyaData *devicedata)
 	result = m_sql.safe_query("SELECT nValue FROM DeviceStatus WHERE (HardwareID=%d) AND (DeviceID='%08d') AND (Unit=%d) AND (Type=%d) AND (Subtype=%d)", m_HwdID, devicedata->deviceID, unitcode, pTypeGeneralSwitch, sSwitchTypeAC);
 	if (!result.empty())
 	{
-		//check if we have a change, if not do not update it
+		// Check if we have a change, if not do not update it
 		int currentState = atoi(result[0][0].c_str());
 		if (currentState == (int)devicedata->switchstate)
 			return;
@@ -356,7 +356,7 @@ void CLocalTuya::SendVoltage(TuyaData *devicedata)
 	sDecodeRXMessage(this, (const unsigned char *)&tuya_voltmeter, devicedata->deviceName, 255, nullptr);
 }
 
-//Webserver helpers
+// Webserver helpers
 namespace http {
 	namespace server {
 
@@ -365,7 +365,7 @@ namespace http {
 			if (session.rights != 2)
 			{
 				session.reply_status = reply::forbidden;
-				return; //Only admin user allowed
+				return; // Only admin user allowed
 			}
 			std::string hwid = request::findValue(&req, "idx");
 			if (hwid.empty())
@@ -404,7 +404,7 @@ namespace http {
 			if (session.rights != 2)
 			{
 				session.reply_status = reply::forbidden;
-				return; //Only admin user allowed
+				return; // only admin user allowed
 			}
 			std::string hwid = request::findValue(&req, "idx");
 			if (hwid.empty())
@@ -424,8 +424,15 @@ namespace http {
 			std::string sEnergyDivider = request::findValue(&req, "energydivider");
 			int iEnergyDivider = atoi(sEnergyDivider.c_str());
 
+			// localkey may contain a single quote character that we need to duplicate as an escape in SQL
+			size_t pos = localkey.find_first_of('\'');
+			while (pos != std::string::npos)
+			{
+				localkey.insert(pos, 1, '\'');
+				pos = localkey.find_first_of('\'', pos+2);
+			}
 
-			//Make a unique number for ID
+			// make a unique number for ID
 			int nid = 1;
 			std::vector<std::vector<std::string> > result;
 			result = m_sql.safe_query("SELECT MAX(ID) FROM TuyaDevices");
@@ -443,7 +450,7 @@ namespace http {
 			if (session.rights != 2)
 			{
 				session.reply_status = reply::forbidden;
-				return; //Only admin user allowed
+				return; // only admin user allowed
 			}
 			std::string hwid = request::findValue(&req, "idx");
 			if (hwid.empty())
@@ -465,6 +472,14 @@ namespace http {
 			std::string sEnergyDivider = request::findValue(&req, "energydivider");
 			int iEnergyDivider = atoi(sEnergyDivider.c_str());
 
+			// localkey may contain a single quote character that we need to duplicate as an escape in SQL
+			size_t pos = localkey.find_first_of('\'');
+			while (pos != std::string::npos)
+			{
+				localkey.insert(pos, 1, '\'');
+				pos = localkey.find_first_of('\'', pos+2);
+			}
+
 			m_sql.safe_query("UPDATE TuyaDevices SET DeviceID='%s', LocalKey='%s', IPAddress='%s', Name='%s', energyDivider=%d WHERE (ID=%d) AND (HardwareID=%d)", tuyaID.c_str(), localkey.c_str(), IP_Address.c_str(), devicename.c_str(), iEnergyDivider, nid, iHardwareID);
 			m_mainworker.RestartHardware(hwid);
 			root["status"] = "OK";
@@ -475,7 +490,7 @@ namespace http {
 			if (session.rights != 2)
 			{
 				session.reply_status = reply::forbidden;
-				return; //Only admin user allowed
+				return; // only admin user allowed
 			}
 			std::string hwid = request::findValue(&req, "idx");
 			if (hwid.empty())
