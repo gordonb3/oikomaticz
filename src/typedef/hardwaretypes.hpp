@@ -58,7 +58,7 @@ enum value {
 	KMTronic433,			//50
 	Pinger,				//51
 	NestThermostat,			//52
-	THERMOSMART,			//53
+	NOT_USED,			//53
 	Netatmo,			//54
 	Kodi,				//55
 	ANNATHERMOSTAT,			//56
@@ -209,7 +209,6 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ Pinger,			"System Alive Checker (Ping)",					"Pinger"		},
 	{ NestThermostat,		"Nest Thermostat/Protect",					"Nest"			},
 	{ Nest_OAuthAPI,		"Nest Thermostat/Protect OAuth",				"Nest"			},
-	{ THERMOSMART,			"Thermosmart Thermostat",					"ThermoSmart"		},
 	{ Netatmo,			"Netatmo",							"Netatmo"		},
 	{ Kodi,				"Kodi Media Server",						"Kodi"			},
 	{ PanasonicTV,			"PanasonicTV",							"PanasonicTV"		},

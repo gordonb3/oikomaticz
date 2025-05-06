@@ -3,6 +3,7 @@
 #include "hardware/DomoticzHardware.h"
 #include "hardware/hardwaretypes.h"
 #include "TelldusFunctions.h"
+#include <chrono>
 
 class CTellstick : public CDomoticzHardwareBase
 {

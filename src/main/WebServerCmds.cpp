@@ -266,7 +266,7 @@ namespace http
 
 		void CWebServer::Cmd_GetHardwareTypes(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -398,7 +398,7 @@ namespace http
 			}
 			else if ((htype == hardware::type::Wunderground) || (htype == hardware::type::DarkSky) || (htype == hardware::type::VisualCrossing) || (htype == hardware::type::AccuWeather) || (htype == hardware::type::OpenWeatherMap) || (htype == hardware::type::ICYTHERMOSTAT) ||
 				(htype == hardware::type::TOONTHERMOSTAT) || (htype == hardware::type::AtagOne) || (htype == hardware::type::PVOUTPUT_INPUT) || (htype == hardware::type::NestThermostat) || (htype == hardware::type::ANNATHERMOSTAT) ||
-				(htype == hardware::type::THERMOSMART) || (htype == hardware::type::Tado) || (htype == hardware::type::Tesla) || (htype == hardware::type::Mercedes) || (htype == hardware::type::Netatmo))
+				(htype == hardware::type::Tesla) || (htype == hardware::type::Mercedes) || (htype == hardware::type::Netatmo))
 			{
 				if ((username.empty()) || (password.empty()))
 					return false;
@@ -433,7 +433,7 @@ namespace http
 					|| (htype == hardware::type::Arilux) || (htype == hardware::type::USBtinGateway) || (htype == hardware::type::BuienRadar) || (htype == hardware::type::HoneywellLyric) ||(htype == hardware::type::RaspberryGPIO)
 					|| (htype == hardware::type::SysfsGpio) || (htype == hardware::type::OpenWebNetTCP) || (htype == hardware::type::Daikin) || (htype == hardware::type::PythonPlugin) || (htype == hardware::type::RaspberryPCF8574)
 					|| (htype == hardware::type::OpenWebNetUSB) || (htype == hardware::type::IntergasInComfortLAN2RF) || (htype == hardware::type::EnphaseAPI) || (htype == hardware::type::EcoCompteur) || (htype == hardware::type::Meteorologisk)
-					|| (htype == hardware::type::AirconWithMe) || (htype == hardware::type::EneverPriceFeeds) )
+					|| (htype == hardware::type::AirconWithMe) || (htype == hardware::type::EneverPriceFeeds) || (htype == hardware::type::Tado))
 			{
 				return true;
 			}
@@ -584,9 +584,9 @@ namespace http
 					name.c_str(), (senabled == "true") ? 1 : 0, htype, iLogLevelEnabled, address.c_str(), port, sport.c_str(), username.c_str(), password.c_str(),
 					extra.c_str(), mode1Str.c_str(), mode2Str.c_str(), mode3Str.c_str(), mode4Str.c_str(), mode5Str.c_str(), mode6Str.c_str(), iDataTimeout);
 			}
-			else if ((htype == hardware::type::RFXtrx433) || (htype == hardware::type::RFXtrx868) || (htype == hardware::type::Netatmo))
+			else if ((htype == hardware::type::RFXtrx433) || (htype == hardware::type::RFXtrx868))
 			{
-				// No Extra field here, handled in CWebServer::SetRFXCOMMode and in CNetatmo::CNetatmo for Netatmo devices
+				// No Extra field here, handled in CWebServer::SetRFXCOMMode
 				m_sql.safe_query("INSERT INTO Hardware (Name, Enabled, Type, LogLevel, Address, Port, SerialPort, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6, "
 					"DataTimeout) VALUES ('%q',%d, %d, %d,'%q',%d,'%q','%q','%q',%d,%d,%d,%d,%d,%d,%d)",
 					name.c_str(), (senabled == "true") ? 1 : 0, htype, iLogLevelEnabled, address.c_str(), port, sport.c_str(), username.c_str(), password.c_str(), mode1,
@@ -674,6 +674,15 @@ namespace http
 			root["status"] = "OK";
 			root["title"] = "UpdateHardware";
 
+			if (htype == hardware::type::Netatmo && extra == "") {
+				//Extra contains  private data (client sectret), and is not sent to the front-end because of security reason
+				//Avoid overwriting existing datas
+				std::vector<std::vector<std::string>> result;
+				result = m_sql.safe_query("SELECT Extra FROM Hardware WHERE ID=%q", idx.c_str());
+				if (!result.empty())
+					extra = result[0][0];
+			}
+
 			if (htype == hardware::type::Domoticz)
 			{
 				if (password.size() != 32)
@@ -705,9 +714,9 @@ namespace http
 						extra.c_str(), mode1Str.c_str(), mode2Str.c_str(), mode3Str.c_str(), mode4Str.c_str(), mode5Str.c_str(), mode6Str.c_str(), iDataTimeout,
 						idx.c_str());
 				}
-				else if ((htype == hardware::type::RFXtrx433) || (htype == hardware::type::RFXtrx868) || (htype == hardware::type::Netatmo))
+				else if ((htype == hardware::type::RFXtrx433) || (htype == hardware::type::RFXtrx868))
 				{
-					// No Extra field here, handled in CWebServer::SetRFXCOMMode and CNetatmo::CNetatmo( for Netatmo
+					// No Extra field here, handled in CWebServer::SetRFXCOMMode
 					m_sql.safe_query("UPDATE Hardware SET Name='%q', Enabled=%d, Type=%d, LogLevel=%d, Address='%q', Port=%d, SerialPort='%q', Username='%q', Password='%q', "
 						"Mode1=%d, Mode2=%d, Mode3=%d, Mode4=%d, Mode5=%d, Mode6=%d, DataTimeout=%d WHERE (ID == '%q')",
 						name.c_str(), (bEnabled == true) ? 1 : 0, htype, iLogLevelEnabled, address.c_str(), port, sport.c_str(), username.c_str(), password.c_str(),
@@ -734,7 +743,7 @@ namespace http
 
 		void CWebServer::Cmd_GetDeviceValueOptions(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -764,7 +773,7 @@ namespace http
 
 		void CWebServer::Cmd_GetDeviceValueOptionWording(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -789,14 +798,14 @@ namespace http
 
 		void CWebServer::Cmd_AddUserVariable(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				_log.Log(LOG_ERROR, "User: %s tried to add a uservariable!", session.username.c_str());
 				return; // Only admin user allowed
 			}
 			std::string variablename = HTMLSanitizer::Sanitize(request::findValue(&req, "vname"));
-			std::string variablevalue = request::findValue(&req, "vvalue");
+			std::string variablevalue = HTMLSanitizer::Sanitize(request::findValue(&req, "vvalue"));
 			std::string variabletype = request::findValue(&req, "vtype");
 
 			root["title"] = "AddUserVariable";
@@ -843,7 +852,7 @@ namespace http
 
 		void CWebServer::Cmd_DeleteUserVariable(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				_log.Log(LOG_ERROR, "User: %s tried to delete a uservariable!", session.username.c_str());
 				session.reply_status = reply::forbidden;
@@ -860,7 +869,7 @@ namespace http
 
 		void CWebServer::Cmd_UpdateUserVariable(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				_log.Log(LOG_ERROR, "User: %s tried to update a uservariable!", session.username.c_str());
 				session.reply_status = reply::forbidden;
@@ -869,7 +878,7 @@ namespace http
 
 			std::string idx = request::findValue(&req, "idx");
 			std::string variablename = HTMLSanitizer::Sanitize(request::findValue(&req, "vname"));
-			std::string variablevalue = request::findValue(&req, "vvalue");
+			std::string variablevalue = HTMLSanitizer::Sanitize(request::findValue(&req, "vvalue"));
 			std::string variabletype = request::findValue(&req, "vtype");
 
 			root["title"] = "UpdateUserVariable";
@@ -988,7 +997,7 @@ namespace http
 
 		void CWebServer::Cmd_AllowNewHardware(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -1004,7 +1013,7 @@ namespace http
 
 		void CWebServer::Cmd_DeleteHardware(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -1075,7 +1084,7 @@ namespace http
 		// Plan Functions
 		void CWebServer::Cmd_AddPlan(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -1103,7 +1112,7 @@ namespace http
 
 		void CWebServer::Cmd_UpdatePlan(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -1127,7 +1136,7 @@ namespace http
 
 		void CWebServer::Cmd_DeletePlan(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -1208,7 +1217,7 @@ namespace http
 
 		void CWebServer::Cmd_AddPlanActiveDevice(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -1287,7 +1296,7 @@ namespace http
 
 		void CWebServer::Cmd_DeletePlanDevice(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -1320,7 +1329,7 @@ namespace http
 
 		void CWebServer::Cmd_DeleteAllPlanDevices(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -1424,7 +1433,7 @@ namespace http
 		{
 			root["status"] = "OK";
 			root["title"] = "GetVersion";
-			if (session.rights != -1 )
+			if (session.rights != URIGHTS_NONE)
 			{
 				root["version"] = szAppVersion;
 				root["hash"] = szAppHash;
@@ -1441,7 +1450,7 @@ namespace http
 		{
 			root["status"] = "OK";
 			root["title"] = "GetAuth";
-			if (session.rights != -1)
+			if (session.rights != URIGHTS_NONE)
 			{
 				root["user"] = session.username;
 				root["rights"] = session.rights;
@@ -1453,17 +1462,19 @@ namespace http
 		{
 			root["status"] = "ERR";
 			root["title"] = "GetMyProfile";
-			if (session.rights > 0)	// Viewer cannot change his profile
+			if (session.rights == URIGHTS_VIEWER || session.rights == URIGHTS_NONE)	// Viewer cannot change his profile
 			{
-				int iUser = FindUser(session.username.c_str());
-				if (iUser != -1)
-				{
-					root["user"] = session.username;
-					root["rights"] = session.rights;
-					if (!m_users[iUser].Mfatoken.empty())
-						root["mfasecret"] = m_users[iUser].Mfatoken;
-					root["status"] = "OK";
-				}
+				return;
+			}
+
+			int iUser = FindUser(session.username.c_str());
+			if (iUser != -1)
+			{
+				root["user"] = session.username;
+				root["rights"] = session.rights;
+				if (!m_users[iUser].Mfatoken.empty())
+					root["mfasecret"] = m_users[iUser].Mfatoken;
+				root["status"] = "OK";
 			}
 		}
 
@@ -1472,74 +1483,76 @@ namespace http
 			root["status"] = "ERR";
 			root["title"] = "UpdateMyProfile";
 
-			if (req.method == "POST" && session.rights > 0)	// Viewer cannot change his profile
+			if (req.method != "POST" || session.rights == URIGHTS_VIEWER || session.rights == URIGHTS_NONE)	// Viewer cannot change his profile
 			{
-				std::string sUsername = request::findValue(&req, "username");
-				int iUser = FindUser(session.username.c_str());
-				if (iUser == -1)
-				{
-					root["error"] = "User not found!";
-					return;
-				}
-				if (m_users[iUser].Username != sUsername)
-				{
-					root["error"] = "User mismatch!";
-					return;
-				}
+				return;
+			}
 
-				std::string sOldPwd = request::findValue(&req, "oldpwd");
-				std::string sNewPwd = request::findValue(&req, "newpwd");
-				if (!sOldPwd.empty() && !sNewPwd.empty())
-				{
-					if (m_users[iUser].Password == sOldPwd)
-					{
-						m_users[iUser].Password = sNewPwd;
-						m_sql.safe_query("UPDATE Users SET Password='%q' WHERE (ID=%d)", sNewPwd.c_str(), m_users[iUser].ID);
-						LoadUsers();	// Make sure the new password is loaded in memory
-						root["status"] = "OK";
-					}
-					else
-					{
-						root["error"] = "Old password mismatch!";
-						return;
-					}
-				}
+			std::string sUsername = request::findValue(&req, "username");
+			int iUser = FindUser(session.username.c_str());
+			if (iUser == -1)
+			{
+				root["error"] = "User not found!";
+				return;
+			}
+			if (m_users[iUser].Username != sUsername)
+			{
+				root["error"] = "User mismatch!";
+				return;
+			}
 
-				std::string sTotpsecret = request::findValue(&req, "totpsecret");
-				std::string sTotpCode = request::findValue(&req, "totpcode");
-				bool bEnablemfa = (request::findValue(&req, "enablemfa") == "true" ? true : false);
-				if (bEnablemfa && sTotpsecret.empty())
+			std::string sOldPwd = request::findValue(&req, "oldpwd");
+			std::string sNewPwd = request::findValue(&req, "newpwd");
+			if (!sOldPwd.empty() && !sNewPwd.empty())
+			{
+				if (m_users[iUser].Password == sOldPwd)
 				{
-					root["error"] = "Not a valid TOTP secret!";
-					return;
-				}
-				// Update the User Profile
-				if (!bEnablemfa)
-				{
-					sTotpsecret = "";
+					m_users[iUser].Password = sNewPwd;
+					m_sql.safe_query("UPDATE Users SET Password='%q' WHERE (ID=%d)", sNewPwd.c_str(), m_users[iUser].ID);
+					LoadUsers();	// Make sure the new password is loaded in memory
+					root["status"] = "OK";
 				}
 				else
 				{
-					//verify code
-					if (!sTotpCode.empty())
+					root["error"] = "Old password mismatch!";
+					return;
+				}
+			}
+
+			std::string sTotpsecret = request::findValue(&req, "totpsecret");
+			std::string sTotpCode = request::findValue(&req, "totpcode");
+			bool bEnablemfa = (request::findValue(&req, "enablemfa") == "true" ? true : false);
+			if (bEnablemfa && sTotpsecret.empty())
+			{
+				root["error"] = "Not a valid TOTP secret!";
+				return;
+			}
+			// Update the User Profile
+			if (!bEnablemfa)
+			{
+				sTotpsecret = "";
+			}
+			else
+			{
+				//verify code
+				if (!sTotpCode.empty())
+				{
+					std::string sTotpKey = "";
+					if (base32_decode(sTotpsecret, sTotpKey))
 					{
-						std::string sTotpKey = "";
-						if (base32_decode(sTotpsecret, sTotpKey))
+						if (!VerifySHA1TOTP(sTotpCode, sTotpKey))
 						{
-							if (!VerifySHA1TOTP(sTotpCode, sTotpKey))
-							{
-								root["error"] = "Incorrect/expired 6 digit code!";
-								return;
-							}
+							root["error"] = "Incorrect/expired 6 digit code!";
+							return;
 						}
 					}
 				}
-				m_users[iUser].Mfatoken = sTotpsecret;
-				m_sql.safe_query("UPDATE Users SET MFAsecret='%q' WHERE (ID=%d)", sTotpsecret.c_str(), m_users[iUser].ID);
-
-				LoadUsers();
-				root["status"] = "OK";
 			}
+			m_users[iUser].Mfatoken = sTotpsecret;
+			m_sql.safe_query("UPDATE Users SET MFAsecret='%q' WHERE (ID=%d)", sTotpsecret.c_str(), m_users[iUser].ID);
+
+			LoadUsers();
+			root["status"] = "OK";
 		}
 
 		void CWebServer::Cmd_GetUptime(WebEmSession& session, const request& req, Json::Value& root)
@@ -1697,7 +1710,7 @@ namespace http
 
 		void CWebServer::Cmd_GetForecastConfig(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights == -1)
+			if (session.rights == URIGHTS_NONE)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only auth user allowed
@@ -1844,7 +1857,7 @@ namespace http
 			if (!session.username.empty())
 				Username = session.username;
 
-			if (session.rights < 1)
+			if (session.rights == URIGHTS_VIEWER || session.rights == URIGHTS_NONE)
 			{
 				session.reply_status = reply::forbidden;
 				return; // only user or higher allowed
@@ -1961,7 +1974,7 @@ namespace http
 
 		void CWebServer::Cmd_CustomEvent(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights < 1)
+			if (session.rights == URIGHTS_VIEWER || session.rights == URIGHTS_NONE)
 			{
 				session.reply_status = reply::forbidden;
 				return; // only user or higher allowed
@@ -2016,7 +2029,7 @@ namespace http
 
 		void CWebServer::Cmd_SystemShutdown(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -2037,7 +2050,7 @@ namespace http
 
 		void CWebServer::Cmd_SystemReboot(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -2058,7 +2071,7 @@ namespace http
 
 		void CWebServer::Cmd_ExcecuteScript(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -2202,7 +2215,7 @@ namespace http
 
 		void CWebServer::Cmd_DeleteDateRange(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -2219,7 +2232,7 @@ namespace http
 
 		void CWebServer::Cmd_DeleteDataPoint(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -2238,7 +2251,7 @@ namespace http
 		// PostSettings
 		void CWebServer::Cmd_PostSettings(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -2395,7 +2408,7 @@ namespace http
 				bool AllowPlainBasicAuth = (request::findValue(&req, "AllowPlainBasicAuth") == "on" ? 1 : 0);
 				m_sql.UpdatePreferencesVar("AllowPlainBasicAuth", AllowPlainBasicAuth);
 
-				m_pWebEm->SetAllowPlainBasicAuth(AllowPlainBasicAuth);
+				m_webservers.SetAllowPlainBasicAuth(AllowPlainBasicAuth);
 				cntSettings++;
 
 				std::string WebLocalNetworks = CURLEncode::URLDecode(request::findValue(&req, "WebLocalNetworks"));
@@ -2406,7 +2419,7 @@ namespace http
 				if (session.username.empty())
 				{
 					// Local network could be changed so lets force a check here
-					session.rights = -1;
+					session.rights = URIGHTS_NONE;
 				}
 
 				std::string SecPassword = request::findValue(&req, "SecPassword");
@@ -2632,7 +2645,7 @@ namespace http
 
 		void CWebServer::Cmd_DeleteDevice(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -2650,7 +2663,7 @@ namespace http
 
 		void CWebServer::Cmd_AddScene(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -2688,7 +2701,7 @@ namespace http
 
 		void CWebServer::Cmd_DeleteScene(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -2704,7 +2717,7 @@ namespace http
 
 		void CWebServer::Cmd_UpdateScene(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3035,7 +3048,12 @@ namespace http
 					root["result"][ii]["SerialPort"] = sd[6];
 					root["result"][ii]["Username"] = sd[7];
 					root["result"][ii]["Password"] = sd[8];
-					root["result"][ii]["Extra"] = sd[9];
+					if (hType == hardware::type::Netatmo) {
+						root["result"][ii]["Extra"] = "";	//Don't pass the refresh token to the front-end because of security reasons
+					}
+					else {
+						root["result"][ii]["Extra"] = sd[9];
+					}
 
 					if (hType == hardware::type::PythonPlugin)
 					{
@@ -3179,7 +3197,7 @@ namespace http
 		void CWebServer::Cmd_GetApplications(WebEmSession & session, const request& req, Json::Value &root)
 		{
 			root["title"] = "GetApplications";
-			if (session.rights < URIGHTS_ADMIN)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 			}
@@ -3209,7 +3227,7 @@ namespace http
 		void CWebServer::Cmd_AddApplication(WebEmSession & session, const request& req, Json::Value &root)
 		{
 			root["title"] = "AddApplication";
-			if (session.rights < URIGHTS_ADMIN)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 			}
@@ -3257,7 +3275,7 @@ namespace http
 		void CWebServer::Cmd_UpdateApplication(WebEmSession & session, const request& req, Json::Value &root)
 		{
 			root["title"] = "UpdateApplication";
-			if (session.rights < URIGHTS_ADMIN)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 			}
@@ -3310,7 +3328,7 @@ namespace http
 		void CWebServer::Cmd_DeleteApplication(WebEmSession & session, const request& req, Json::Value &root)
 		{
 			root["title"] = "DeleteApplication";
-			if (session.rights < URIGHTS_ADMIN)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 			}
@@ -3397,7 +3415,7 @@ namespace http
 
 		void CWebServer::Cmd_GetSceneActivations(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3465,7 +3483,7 @@ namespace http
 
 		void CWebServer::Cmd_AddSceneCode(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3525,7 +3543,7 @@ namespace http
 
 		void CWebServer::Cmd_RemoveSceneCode(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3595,7 +3613,7 @@ namespace http
 
 		void CWebServer::Cmd_ClearSceneCodes(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3655,7 +3673,7 @@ namespace http
 		{
 			root["title"] = "UploadCustomIcon";
 			// Only admin user allowed
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3702,7 +3720,7 @@ namespace http
 
 		void CWebServer::Cmd_DeleteCustomIcon(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3736,7 +3754,7 @@ namespace http
 
 		void CWebServer::Cmd_UpdateCustomIcon(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3758,7 +3776,7 @@ namespace http
 
 		void CWebServer::Cmd_RenameDevice(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3784,7 +3802,7 @@ namespace http
 
 		void CWebServer::Cmd_RenameScene(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3805,7 +3823,7 @@ namespace http
 
 		void CWebServer::Cmd_SetDeviceUsed(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3883,7 +3901,7 @@ namespace http
 
 		void CWebServer::Cmd_ClearShortLog(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3900,7 +3918,7 @@ namespace http
 
 		void CWebServer::Cmd_VacuumDatabase(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3953,7 +3971,7 @@ namespace http
 
 		void CWebServer::Cmd_UpdateMobileDevice(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -3974,7 +3992,7 @@ namespace http
 
 		void CWebServer::Cmd_DeleteMobileDevice(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -4012,6 +4030,10 @@ namespace http
 					//Allow old Temp or Temp+Hum or Temp+Hum+Baro devices to be replaced by new Temp or Temp+Hum or Temp+Hum+Baro
 					result = m_sql.safe_query("SELECT ID, Name, Type FROM DeviceStatus WHERE (Type=='%d') || (Type=='%d') || (Type=='%d') AND (ID!=%" PRIu64 ")", pTypeTEMP, pTypeTEMP_HUM, pTypeTEMP_HUM_BARO, idx);
 				}
+				else if (dType == pTypeRAIN)
+				{
+					result = m_sql.safe_query("SELECT ID, Name, Type FROM DeviceStatus WHERE (Type=='%d') AND (ID!=%" PRIu64 ")", pTypeRAIN, idx);
+				}
 				else
 				{
 					result = m_sql.safe_query("SELECT ID, Name FROM DeviceStatus WHERE (Type=='%q') AND (SubType=='%q') AND (ID!=%" PRIu64 ")", result[0][0].c_str(),
@@ -4035,74 +4057,18 @@ namespace http
 		// then delete the NEW sensor
 		void CWebServer::Cmd_DoTransferDevice(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			std::string sidx = request::findValue(&req, "idx");
-			if (sidx.empty())
+			std::string sOldIdx = request::findValue(&req, "idx");
+			if (sOldIdx.empty())
 				return;
 
-			std::string newidx = request::findValue(&req, "newidx");
-			if (newidx.empty())
+			std::string sNewIdx = request::findValue(&req, "newidx");
+			if (sNewIdx.empty())
 				return;
-
-			std::vector<std::vector<std::string>> result;
 
 			root["status"] = "OK";
 			root["title"] = "DoTransferDevice";
 
-			result = m_sql.safe_query("SELECT HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType FROM DeviceStatus WHERE (ID == '%q')", newidx.c_str());
-			if (result.empty())
-				return;
-
-			int newHardwareID = std::stoi(result[0].at(0));
-			int newOrgHardwareID = std::stoi(result[0].at(1));
-			std::string newDeviceID = result[0].at(2);
-			int newUnit = std::stoi(result[0].at(3));
-			int devType = std::stoi(result[0].at(4));
-			int subType = std::stoi(result[0].at(5));
-
-			//get last update date from old device
-			result = m_sql.safe_query("SELECT LastUpdate FROM DeviceStatus WHERE (ID == '%q')", sidx.c_str());
-			if (result.empty())
-				return;
-			std::string szLastOldDate = result[0][0];
-
-			m_sql.safe_query("UPDATE DeviceStatus SET HardwareID = %d, OrgHardwareID = %d, DeviceID = '%q', Unit = %d, Type = %d, SubType = %d WHERE ID == '%q'", newHardwareID, newOrgHardwareID, newDeviceID.c_str(), newUnit, devType, subType, sidx.c_str());
-
-			//new device could already have some logging, so let's keep this data
-			//Rain
-			m_sql.safe_query("UPDATE Rain SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-			m_sql.safe_query("UPDATE Rain_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-
-			//Temperature
-			m_sql.safe_query("UPDATE Temperature SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-			m_sql.safe_query("UPDATE Temperature_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-
-			//UV
-			m_sql.safe_query("UPDATE UV SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-			m_sql.safe_query("UPDATE UV_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-
-			//Wind
-			m_sql.safe_query("UPDATE Wind SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-			m_sql.safe_query("UPDATE Wind_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-
-			//Meter
-			m_sql.safe_query("UPDATE Meter SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-			m_sql.safe_query("UPDATE Meter_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-
-			//Multimeter
-			m_sql.safe_query("UPDATE MultiMeter SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-			m_sql.safe_query("UPDATE MultiMeter_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-
-			//Fan
-			m_sql.safe_query("UPDATE Fan SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-			m_sql.safe_query("UPDATE Fan_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-
-			//Percentage
-			m_sql.safe_query("UPDATE Percentage SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-			m_sql.safe_query("UPDATE Percentage_Calendar SET DeviceRowID='%q' WHERE (DeviceRowID == '%q') AND (Date>'%q')", sidx.c_str(), newidx.c_str(), szLastOldDate.c_str());
-
-			m_sql.DeleteDevices(newidx);
-
-			m_mainworker.m_scheduler.ReloadSchedules();
+			m_sql.TransferDevice(sOldIdx, sNewIdx);	// Function body moved to main helper
 		}
 
 		void CWebServer::Cmd_GetSharedUserDevices(WebEmSession& session, const request& req, Json::Value& root)
@@ -4128,7 +4094,7 @@ namespace http
 
 		void CWebServer::Cmd_SetSharedUserDevices(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -4159,7 +4125,7 @@ namespace http
 
 		void CWebServer::Cmd_ClearSharedUserDevices(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -4175,7 +4141,7 @@ namespace http
 
 		void CWebServer::Cmd_SetUsed(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -4191,8 +4157,9 @@ namespace http
 				return;
 
 			std::string deviceid = request::findValue(&req, "deviceid");
-			std::string name = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
-			std::string description = HTMLSanitizer::Sanitize(request::findValue(&req, "description"));
+			std::string name = HTMLSanitizer::Sanitize(request::findValue(&req, "name")); stdstring_trim(name);
+			std::string text = HTMLSanitizer::Sanitize(request::findValue(&req, "text")); stdstring_trim(text);
+			std::string description = HTMLSanitizer::Sanitize(request::findValue(&req, "description")); stdstring_trim(description);
 			std::string sswitchtype = request::findValue(&req, "switchtype");
 			std::string maindeviceidx = request::findValue(&req, "maindeviceidx");
 			std::string addjvalue = request::findValue(&req, "addjvalue");
@@ -4245,12 +4212,6 @@ namespace http
 
 			int CustomImage = (!sCustomImage.empty()) ? std::stoi(sCustomImage) : OldCustomImage;
 
-			// Strip trailing spaces in 'name'
-			name = stdstring_trim(name);
-
-			// Strip trailing spaces in 'description'
-			description = stdstring_trim(description);
-
 			if (!setPoint.empty() || !state.empty())
 			{
 				double tempcelcius = atof(setPoint.c_str());
@@ -4282,6 +4243,13 @@ namespace http
 					m_sql.safe_query("UPDATE DeviceStatus SET Used=%d, Name='%q', Description='%q', SwitchType=%d, CustomImage=%d WHERE (ID == '%q')", used, name.c_str(),
 						description.c_str(), switchtype, CustomImage, idx.c_str());
 				}
+			}
+
+			if ((dType == pTypeGeneral) && (dSubType == sTypeTextStatus))
+			{
+				m_sql.safe_query("UPDATE DeviceStatus SET sValue='%q' WHERE (ID == '%q')", text.c_str(), idx.c_str());
+				m_mainworker.SetTextDevice(idx, text);
+				m_sql.UpdateLastUpdate(idx);
 			}
 
 			if (bHasstrParam1)
@@ -4840,7 +4808,7 @@ namespace http
 				(dType != pTypeLighting6) && (dType != pTypeFan) && (dType != pTypeColorSwitch) && (dType != pTypeSecurity1) && (dType != pTypeSecurity2) && (dType != pTypeEvohome) &&
 				(dType != pTypeEvohomeRelay) && (dType != pTypeCurtain) && (dType != pTypeBlinds) && (dType != pTypeRFY) && (dType != pTypeRego6XXValue) && (dType != pTypeChime) &&
 				(dType != pTypeThermostat2) && (dType != pTypeThermostat3) && (dType != pTypeThermostat4) && (dType != pTypeRemote) && (dType != pTypeGeneralSwitch) &&
-				(dType != pTypeHomeConfort) && (dType != pTypeFS20) && (!((dType == pTypeRadiator1) && (dSubType == sTypeSmartwaresSwitchRadiator))) && (dType != pTypeHunter) && (dType != pTypeDDxxxx)
+				(dType != pTypeHomeConfort) && (dType != pTypeFS20) && (!((dType == pTypeRadiator1) && (dSubType == sTypeSmartwaresSwitchRadiator))) && (dType != pTypeHunter) && (dType != pTypeDDxxxx) && (dType != pTypeHoneywell_AL)
 				)
 				return; // no light device! we should not be here!
 
@@ -4997,7 +4965,7 @@ namespace http
 
 		void CWebServer::Cmd_RemoteWebClientsLog(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; // Only admin user allowed
@@ -5025,7 +4993,7 @@ namespace http
 
 		void CWebServer::Cmd_GetDynamicPriceDevices(WebEmSession& session, const request& req, Json::Value& root)
 		{
-			if (session.rights != 2)
+			if (session.rights != URIGHTS_ADMIN)
 			{
 				session.reply_status = reply::forbidden;
 				return; //Only admin user allowed

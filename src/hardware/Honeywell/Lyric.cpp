@@ -326,9 +326,9 @@ void Lyric::GetThermostatData()
 			desc = kHeatSetPointDesc;
 			stdreplace(desc, "{devicename}", deviceName);
 			if (m_lyricDevices[devNr].temperatureUnit == device::tmeter::temperature::unit::FAHRENHEIT)
-				SendSetPointSensor(0, 0, 0, (uint8_t)(10 * devNr + 4), 0, (float)ConvertToCelsius(temperature), desc);
+				SendSetPointSensor(0, 0, 0, (uint8_t)(10 * devNr + 4), 0, 255, (float)ConvertToCelsius(temperature), desc);
 			else
-				SendSetPointSensor(0, 0, 0, (uint8_t)(10 * devNr + 4), 0, temperature, desc);
+				SendSetPointSensor(0, 0, 0, (uint8_t)(10 * devNr + 4), 0, 255, temperature, desc);
 
 			std::string operationstatus = (*currentDevice)["operationStatus"]["mode"].asString();
 			bool bStatus = (operationstatus != "EquipmentOff");
@@ -489,7 +489,7 @@ void Lyric::SetSetpoint(const int idx, const float temp, const int /*nodeid*/)
 	// register the new setpoint in our database
 	std::string desc = kHeatSetPointDesc;
 	stdreplace(desc, "{devicename}", m_lyricDevices[idx].deviceName);
-	SendSetPointSensor(0, 0, 0, (uint8_t)(10 * idx + 4), 0, temp, desc);
+	SendSetPointSensor(0, 0, 0, (uint8_t)(10 * idx + 4), 0, 255, temp, desc);
 
 	// this also turns on the heating, so let the corresponding switch reflect that
 	desc = kHeatingDesc;

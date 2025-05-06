@@ -1,17 +1,59 @@
-Version 2024.x
-- Changed: Google Firebase Cloud Messaging (FCM) alternative way to pass a Domoticz device ID through the extra field ('|Device=<devidx>')
-- Changed: dzVents, possible to pass a Domoticz device ID in notify() through the extra parameter
+Version 4.10.506 (May 5 2025)
+- Implemented: Battery level for Setpoint sensors
+- Implemented: Charts, zoom option for 'Day' view
+- Implemented: Data Pushers, added P1 actual value
+- Implemented: EnOcean, now able to choose an optional base_id as sender_id instead of the chip_id (#6213)
+- Implemented: Floorplan, Add support for stop button (Ventation blinds)
+- Implemented: RFXCom, Updated SDK
+- Implemented: Support for Honeywell Series 5/PIR
+- Implemented: Text sensor, now posible to edit direct from the GUI
 - Implemented: YouLess, added Water meter
+- Implemented: More default icons
+- Implemented: MQTT-AD, added support for Gas device class
+- Implemented: MQTT-AD, added support for Text device class
+- Implemented: MQTT-AD, better precision for kWh sensors
+- Implemented: MQTT-AD, enabled 'device_automation' component to be compatible with upcoming (2025) Zigbee2MQTT version
+- Implemented: MQTT-AD, handling single onoff color mode as a normal light/switch
+- Implemented: MQTT-AD, power sensors for the Tuya SPM02
+- Implemented: MQTT-AD, support sensors that report humidity but sends 'null' values
+- Implemented: MQTT-AD, support for string field state objects
+- Implemented: MQTT Push 'Retained' mode option
+- Implemented: Rain devices can now be replacement with different types of rain devices
+- Implemented: RFXCom, Falmec Support
+- Implemented: RTL433, Support Generic Switch (Door) sensor
+- Implemented: Tado, oauth2 support
+- Changed: dzVents, possible to pass a Domoticz device ID in notify() through the extra parameter
+- Changed: Energy Dashboard now also available for non-admin users
+- Changed: Energy Dashboard, Text object clipping rectangle
+- Changed: Google Firebase Cloud Messaging (FCM) alternative way to pass a Domoticz device ID through the extra field ('|Device=<devidx>')
+- Changed: Internal webserver refactoring 
+- Changed: Netatmo Improved and automated login process for devices (to obtain client ID and Password with user selectable scopes)
+- Changed: Removed Highcharts 'Download PNG/JPG/SVG' buttons until export server is fixed
+- Changed: Using OpenStreetMap for Latitude/Longitude query in settings
+- Changed: Hardware/User/Application/Variables setup page (update/delete/add buttons)
+- Changed: Smoke Detectors are now able (internally) to use keep-alive timestamps
+- Fixed: Application shutdown, solved possible crash (#6310)
+- Fixed: AtagOne, fixed getting device_id and better debuginfo
+- Fixed: Charts, dynamic title based on selected range
+- Fixed: Computed Meter summation
+- Fixed: Custom Icons, making sure they are valid and loaded OK
+- Fixed: Floorplan, corrected open/close icon behaviour
+- Fixed: Floorplan, now handles protected selectors
+- Fixed: MQTT Push, making sure direct push is working
+- Fixed: Possible mutex lock issue when logging
+- Fixed: Pushers, corrected Gas value rounding
+- Fixed: Python framework, invalid sValue when creating a General/kWh sensor
+- Fixed: RFXCom 868 MHz Weather device
+- Fixed: RFXCom, WS90 Weather device
+- Removed: Thermosmart thermostat (Product no longer supported/available by the manufacturer)
+- Removed: API: Old RType calls have been replaced
+- Updated: HighCharts
+- Updated: Self Signed Certificate (Valid till 2035)
+- Updated: Translations
 
-Version 2024.7 (July 13th 2024)
+Version 4.10.506 (August 9 2024)
+- Implemented: AP Systems ECU solar energy monitor
 - Implemented: P1 Meter, Report, Header now also supports simple mode (No T1/T2/R1/R2 but just total)
-- Fixed: Google Cloud Messaging (GCM/FCM) possible crash when notification needed to be send
-
-Version 2024.6 (July 8th 2024)
-- Fixed: EventSystem, LOG_FORCE now always logged
-- Changed: Google Cloud Messaging (GCM) now uses the new v1 API of Google's Firebase Cloud Messaging (FCM)
-
-Version 2024.5 (July 7th 2024)
 - Implemented: Currency Symbol in Location Settings
 - Implemented: dzVents, Added historical data helper 'med' to calculate the median value
 - Implemented: dzVents, Improved logging
@@ -28,43 +70,12 @@ Version 2024.5 (July 7th 2024)
 - Implemented: P1 Meter, option to specify view (low/high tariff or simple (dynamic contract))
 - Implemented: Possible to query a range of device states via JSON
 - Implemented: SolarEdge, polling Storage devices
-- Fixed: Data Pushers, Forecast for Weather Station subtypes
-- Fixed: Floorplan, better detection of switches
-- Fixed: Hardware Setup, hiding extra parameters when selecting a python plugin
-- Fixed: PythonEx framework, two notifications where send for switch type devices
-- Fixed: Python framework, custom image loading
-- Removed: Cereal Proxy (not used anymore)
-- Changed: EvoHome, now making use of general logging system
-- Changed: MQTT-AD, now also handles brightness scale number values as string
-- Changed: SBFSpot, disabled error 28 error
-- Changed: Selector switch now displays correct state in Data field (and devices overview)
-
-Version 2024.4 (January 30th 2024)
-- Fixed: cWebm, fixing high CPU load caused by time jumps
-- Fixed: Memory leak in master/client setup
-- Fixed: Python, device creation with options was not working correctly
-- Fixed: Room Selection, switching to default room did not always work
-- Fixed: Temperature compare chart for Fahrenheit
-
-Version 2024.3 (January 24th 2024)
 - Implemented: Domoticz Remote Server, added better error message if remote Domoticz device could not be created because accepting new devices is disabled under settings
 - Implemented: InfluxDB Data push, add error message when return status code is forbidden
-- Fixed: Alert sensor notification
-- Fixed: Scripts/Lua/Blockly, setting a setPoint
-
-Version 2024.2 (January 15th 2024)
 - Implemented: Compare chart for most sensor types
 - Implemented: Email, Splitting mime attachments over multiple lines
 - Implemented: Notifications, Option to enable/disable
 - Implemented: OpenZwave is back.... (No Support)
-- Updated: Translations
-- Changed: Comparing charts now uses correct Y-Axis label
-- Changed: Internal, Last received is now handled differently, should solve possible hardware timeout issues
-- Changed: MQTT, QoS is now set to 1 for all messages
-- Fixed: MQTT-AD: Fan creation
-- Fixed: Timer Plans, now also duplicates scenes
-
-Version 2024.1 (January 1th 2024)
 - Implemented: AlfenEve, added charging indication switch
 - Implemented: AlfenEve, added option to specify charge current (or disable this)
 - Implemented: AlfenEve, added Solar charging mode and settings
@@ -91,10 +102,35 @@ Version 2024.1 (January 1th 2024)
 - Implemented: TeleInfo, added Tempo field
 - Implemented: Temp/Hum/Baro or combination can be replaced by any other Temp/Hum/Baro or combination
 - Implemented: Temperature report, now possible to remove data point (via shift click) from variation chart
+- Updated: Translations
+- Changed: Google Cloud Messaging (GCM) now uses the new v1 API of Google's Firebase Cloud Messaging (FCM)
+- Changed: EvoHome, now making use of general logging system
+- Changed: MQTT-AD, now also handles brightness scale number values as string
+- Changed: SBFSpot, disabled error 28 error
+- Changed: Selector switch now displays correct state in Data field (and devices overview)
+- Changed: Comparing charts now uses correct Y-Axis label
+- Changed: Internal, Last received is now handled differently, should solve possible hardware timeout issues
+- Changed: MQTT, QoS is now set to 1 for all messages
 - Changed: Floorplan, better display of current state for counter devices
 - Changed: Floorplan, Sound Icon state (0 dB = Off else On)
 - Changed: MQTT-AD: better device name generation
 - Changed: Netatmo login, now using the API Token
+- Fixed: Google Cloud Messaging (GCM/FCM) possible crash when notification needed to be send
+- Fixed: EventSystem, LOG_FORCE now always logged
+- Fixed: Data Pushers, Forecast for Weather Station subtypes
+- Fixed: Floorplan, better detection of switches
+- Fixed: Hardware Setup, hiding extra parameters when selecting a python plugin
+- Fixed: PythonEx framework, two notifications where send for switch type devices
+- Fixed: Python framework, custom image loading
+- Fixed: cWebm, fixing high CPU load caused by time jumps
+- Fixed: Memory leak in master/client setup
+- Fixed: Python, device creation with options was not working correctly
+- Fixed: Room Selection, switching to default room did not always work
+- Fixed: Temperature compare chart for Fahrenheit
+- Fixed: Alert sensor notification
+- Fixed: Scripts/Lua/Blockly, setting a setPoint
+- Fixed: MQTT-AD: Fan creation
+- Fixed: Timer Plans, now also duplicates scenes
 - Fixed: EventSystem, corrected event of RGB/W/WW devices
 - Fixed: Export to csv from Charts
 - Fixed: MQTT-AD, RGB dimmers did not work correctly in scenes/timers
@@ -106,10 +142,11 @@ Version 2024.1 (January 1th 2024)
 - Fixed: Python memory leak
 - Fixed: Sunset/rise timers now correctly set the time for next day
 - Fixed: Switches defined with "Off Delay" are not set to "Off" at startup
+- Removed: Cereal Proxy (not used anymore)
 - Removed: OpenZWave (Move to ZWaveJS-UI in combination with MQTT Auto Discovery)
 - Removed: RFXCom, firmware update via web interface (use RFXFlash instead)
 
-Version 2023.2 (July 21 2023)
+Version 4.10.486 (July 31 2023)
 - Implemented: 2FA/TOTP (Time-based One-Time Password) and HOTP (HMAC-based One-Time Password)
 - Implemented: Alfen Eve Charger hardware
 - Implemented: Allow a 'user' with shared devices to set it's own favorite devices
@@ -144,8 +181,7 @@ Version 2023.2 (July 21 2023)
 - Updated: Plugin manager: ready for Python 3.11
 - Removed: native GoodWe hardware (use the new GoodWe python plugin instead)
 
-Version 2023.1 (February 14 2023)
-- For a full overview visit: https://www.domoticz.com/wiki/Domoticz_versions_-_Commits for details
+Version 4.10.485 (Februari 16 2023)
 - Implemented: Accept JWT tokens as authentication and Authorization Bearer tokens (either from internal or external IAM service)
 - Implemented: Blinds, added option to schedule 0%
 - Implemented: dzVents, OpenURL PATCH method
@@ -155,12 +191,10 @@ Version 2023.1 (February 14 2023)
 - Implemented: MQTT, added support for wildcards in discovery topics
 - Implemented: MQTT, climate preset mode
 - Implemented: New 'auth' debug flag to see IAM related messages
-- Implemented: Now 'Applications' can be registered to get secure access to Domoticz, see 'setup' menu (standard DomoticzUI app is registered by default)
-- Implemented: P1 Meter, added number of (long) power failures, voltage sags/swells
 - Implemented: SECURITY_SETUP.md describing the new/improved security setup
-- Implemented: Support for basic OpenID Connect Discovery ('https://<DOMOTICZURL>/.well-known/openid-configuration')
+- Implemented: Support for basic OpenID Connect Discovery ('https://<servername>/.well-known/openid-configuration')
 - Implemented: Search option in Switches/Scenes/Temperature/Utility and Weather tab
-- Implemented: The Security realm can be configured using the 'vhostname' option (default domoticz.com)
+- Implemented: The Security realm can be configured using the 'vhostname' option
 - Implemented: Timer, Grid option for selected switches and thermostat. Big thanks to syrhus/labelette91580 and xbeaudouin
 - Implemented: User device selection now displays type/subtype
 - Changed: All security related setting are now in 1 settings tab
@@ -185,7 +219,7 @@ Version 2023.1 (February 14 2023)
 - Fixed: Navigation bar display issues on some mobile devices
 - Fixed: Setpoint popup when using protection
 
-Version 2022.2 (November 5 2022)
+Version 4.10.483 (November 9 2022)
 - Implemented: Blockly,	added 'Toggle' set command
 - Implemented: Camera, camera Aspect Ratio
 - Implemented: Commandline option '-weblog <weblogfile>' which creates Apache Combined Logformat logs containg all webrequests
@@ -195,8 +229,8 @@ Version 2022.2 (November 5 2022)
 - Implemented: EcoDevices, complete support for EcoDevices RT2 with firmware 3.00.xx
 - Implemented: FritzBox, more statistics
 - Implemented: Fritzbox, up/download statistics
+- Implemented: Local Tuya switching and energy monitor
 - Implemented: MQTT Auto Discovery Protocol (Zigbee2MQTT/ Z-Wave JS UI)
-- Implemented: P1 Meter, added Current L1/L2/L3 sensor for delivered
 - Implemented: Philips Hue, support color change on some vendors bulb (like LIDL)
 - Implemented: RFXCom, added internal support for Novy Mood, Level Sensor
 - Implemented: SolarEdge, more sensors support
@@ -207,7 +241,6 @@ Version 2022.2 (November 5 2022)
 - Changed: Blinds working (see https://www.domoticz.com/wiki/Blinds)
 - Changed: Energy devices have more precision
 - Changed: kWh devices	MAX Power per phase from 10000 to 18400 (230V*80A)
-- Changed: P1 Meter, changed P1 Max W from 17250 (25A) to 55200 (80A)
 - Changed: P1 Meter, speed up CRC calculation
 - Changed: Webserver, removing AppCache, switching to service worker
 - Fixed: Blockly, keeping last dim level when switching OFF, option for Close state
@@ -216,20 +249,18 @@ Version 2022.2 (November 5 2022)
 - Fixed: Counters, rounding (number of decimals) in GUI
 - Fixed: Crash when secure webserver could not start and applying settings
 - Fixed: Dimmer, better handling of last dimmer level when switching on/off
-- Fixed: EvoHome, correct state/mode for EvoHome type
 - Fixed: Floorplan, custom utility icons corrected in Floorplan
 - Fixed: Floorplan, fixed blinds state icon/switching
 - Fixed: Floorplan, making sure the Door Lock is switchable in the Floorplan
 - Fixed: Floorplans, fixed issues with the displaying of some icons
 - Fixed: Notification system, prevent double start
-- Fixed: P1 Meter, fix for Sibelga smart meters that use a too long string as an identifier
 - Fixed: RFXCom, corrected RFXCom solar sensor reading
 - Fixed: Temperature, corrected chill calculation
 - Fixed: WebGUI, making sure status does not wrap in mobile mode
 - Removed: AppCache
 - Deprecated: OpenZWave, please move to MQTT Auto Discovery and ZWave JS UI (Project stopped a long time ago!)
 
-Version 2022.1 (January 31 2022)
+Version 4.10.448 (December 28 2021)
 - Implemented: Added Irrigation icon (also thanks to dbemowsk)
 - Implemented: Build system, implemented unit tests
 - Implemented: Device support for Xiaomi Aqara Wireless Relay Controller (2 Channels) | LLKZMK11LM | relay.c2acn01
@@ -260,11 +291,10 @@ Version 2022.1 (January 31 2022)
 - Changed: default journal mode for windows now WAL (write ahead) add command line option to override
 - Changed: Webserver, updated internals
 - Fixed: Charts, changes, bug fixes, Computed kWh, usage calculation, zoom
-- Fixed: EvoHome, Fix Web API crash when a new zone wass added
 - Fixed: Notifications, Email notification fix jpeg inline attachment handling for K9 mail
 - Fixed: OpenWeatherMap, Fix to resolve OWM City for default location. Used by OWM based forecast screen
 
-Version 2021.1 (April 17 2021)
+Version 4.10.439 (April 20 2021)
 - Implemented: Added option to set loglevel per hardware device
 - Implemented: Added optional parameter 'level' to addlogmessage JSON
 - Implemented: AirconWithMe wifi module
@@ -300,6 +330,7 @@ Version 2021.1 (April 17 2021)
 - Updated: eVehicles; added ODO meter, unlock/open alert, max charge level to Tesla module
 - Updated: eVehicles; added option to manual set API key
 - Updated: EvoHome; decode, display and store hotwater setpoint
+- Updated: EvoHome Web; implemented improved version of the external client
 - Updated: GUI; Lay-out of notifications tab
 - Updated: MQTT; added option to choose notification subsystem
 - Updated: MQTT; added publish schemes: device index, device name and implemented custom topics for in- and outbound messages
@@ -329,7 +360,9 @@ Version 2021.1 (April 17 2021)
 - Fixed: Icon uploading from Linux clients/browsers
 - Fixed: Floorplan uploading
 - Fixed: Font in events editor on MacOS
+- Fixed: LogitechMediaServer, allow registering of new players
 - Fixed: Motherboard Sensors for big partitions
+- Fixed: P1 Meter, fix for Sibelga smart meters that use a too long blank string as version indicator
 - Fixed: Possible crash in CEventSystem::SetEventTrigger
 - Fixed: Preserve custom icon and description when switching device from used -> unused -> used
 - Fixed: Prevent duplicate keys in preferences table
@@ -340,7 +373,7 @@ Version 2021.1 (April 17 2021)
 - Fixed: Windows installation respects configured log parameters
 - Fixed: Zwave various issues
 
-Version 2020.2 (April 26th 2020)
+Version 4.10.388 (April 28 2020)
 - Implemented: GUI: New Update controller code
 - Implemented: GUI: Real-time updates of history-logs on device / scene changes
 - Fixed: Battery level Real-time updates
@@ -350,15 +383,13 @@ Version 2020.2 (April 26th 2020)
 - Fixed: Unwanted RFY protection popup
 - Updated: BuienRadar, Now possible to enter Station_ID or Latitude/Longitude
 - Updated: Deprecated Google Cloud Messaging system(gcm) replaced by Firebase Cloud Messaging (fcm)
-- Updated: dzVents version 3.0.2 ( https://www.domoticz.com/wiki/DzVents:_next_generation_LUA_scripting#History )
+- Updated: dzVents version 3.0.3 ( https://www.domoticz.com/wiki/DzVents:_next_generation_LUA_scripting#History )
 - Updated: OpenZWave configuration files
 - Updated: OpenZWave library for windows
 - Updated: MQTT add option to enable/disable loop prevention
 - Changed: Removed external library dependencies from repository
 - Updated: Translations
 - Updated: TTNMQTT, improved handling CayenneLPP channels
-
-Version 2020.1 (March 22th 2020)
 - Implemented: BuienRadar
 - Implemented: DarkSky CloudCover sensor
 - Implemented: eVehicles framework, with Tesla as first hardware module
@@ -377,6 +408,7 @@ Version 2020.1 (March 22th 2020)
 - Implemented: OpenZWave, Support for Frequency sensor
 - Implemented: Option to replace switch with another (same type)
 - Implemented: Per User favorites (with viewer rights)
+- Implemented: REST client to replace too restricted HTTP client implementation
 - Implemented: RFXCom implemented datatimeout for external P1 sensor
 - Implemented: RTL433, added Power (Watt) type
 - Implemented: RTL433, added rainfall_mm type
@@ -410,7 +442,7 @@ Version 2020.1 (March 22th 2020)
 - Updated: SQLite 3.31.1
 - Updated: Translations
 
-Version 4.10717 (May 9th 2019)
+Version 4.10717 (May 9 2019)
 - Fixed: dzVents, Allowing no error message for HTTP calls (#3191)
 - Fixed: EcoCompteur now uses the port specified in the hardware setup (#3184)
 - Fixed: Log for Weight sensor (#3192)
@@ -418,7 +450,7 @@ Version 4.10717 (May 9th 2019)
 - Fixed: issue with slightly too large labels for the selector switch (#3187)
 - Updated: dzVents (version 2.4.19, See dzVents/documentation/history.md)
 
-Version 4.10658 (May 5th 2019)
+Version 4.10658 (May 5 2019)
 - Implemented: [BleBox] Add support for airSensor and use the newest api for shutterBox
 - Implemented: Alecto WS5500 implemented (pTypeWeather)
 - Implemented: Anna Thermostat Added ability to select presets on the Anna via selector switch. Added ability to update the state of the proximity switch in the Anna thermostat.
@@ -519,7 +551,7 @@ Version 4.10658 (May 5th 2019)
 - Updated: Weather Underground for use with the new API, option to specify Lat/Long as location
 - Updated: Winddelen, using new API URL now, and including some more sensors
 
-Version 4.9700 (June 23th 2018)
+Version 4.9700 (June 23 2018)
 - Implemented: Blockly, now possible to directly add/update Text devices
 - Implemented: Blockly: now possible to use expressions in debug messages like "My temperature is {{temperaturedevice[1234]}} degrees" (see http://www.domoticz.com/wiki/Events)
 - Implemented: Camera: support for HTTPS url's
@@ -570,7 +602,7 @@ Version 4.9700 (June 23th 2018)
 - Changed: Philips Hue: internal code
 - Fixed: Various, see github
 
-Version 3.8153 (July 30th 2017)
+Version 3.8153 (July 30 2017)
 - Fixed: Camera Editor, will now always refresh thumbnail in table
 - Fixed: Devices could become invisible when a scene/group was added to the 'hidden devices' room plan with the same idx
 - Fixed: JSon float/nan value, solved by upgrading JSonCPP
@@ -626,15 +658,15 @@ Version 3.8153 (July 30th 2017)
 - Removed: Razberry ZWave handling method. Existing users need to migrate to OpenZWave
 - Integrated dzVents 2.0.0: See dzVents/documentation/history.md
 
-Version 3.5878 (November 10th 2016)
+Version 3.5878 (November 10 2016)
 - Fixes and various improvements
 
-Version 3.5837 (October 30th 2016)
+Version 3.5837 (October 30 2016)
 - Fixed: Blockly/Lua, FOR and RANDOM are now again in minutes
 - Changed: Shortlog charts for Temperature, Current and Smartlog are now using a spline
 - Changed: Lua/Blockly, Notifications are now not blocking
 
-Version 3.5834 (October 29th 2016)
+Version 3.5834 (October 29 2016)
 - Implemented: TSL2561 illuminance I2C sensor (ldrolez)
 - Implemented: AccuWeather support
 - Implemented: Air Quality graph, Avarage and Previous month/year
@@ -691,7 +723,7 @@ Version 3.5834 (October 29th 2016)
 - Updated: Highcharts 4.2.6
 - Updated: SQLite3 v3.13.0
 
-Version 3.4834 (March 2nd 2016)
+Version 3.4834 (March 2 2016)
 - Implemented: Blockly, now possible to use expressions in notifications/email/SMS like "My temperature is {{temperaturedevice[1234]}} degrees" (see http://www.domoticz.com/wiki/Events)
 - Implemented: Blockly, now possible to send a notification with a user variable/device as subject/body
 - Implemented: Chinese language support, big thanks to wxws!!
@@ -782,12 +814,12 @@ Version 3.4834 (March 2nd 2016)
 - Updated: OpenZWave, configuration files
 - Updated: SQLite3 v3.11.1.
 
-Version 2.3530 (November 1th 2015)
+Version 2.3530 (November 1 2015)
 - Implemented: Degree Days in Temperature report
 - Implemented: RFXCom, support for Home Confort TEL-010
 - Fixed: Segmentation fault while cleaning timed out sessions (#180)
 
-Version 2.3521 (October 31th 2015)
+Version 2.3521 (October 31 2015)
 - Implemented "Stop" state in blockly in switch states
 - Implemented: Ability to parse data coming from an HTTP POST data with a lua script (seb)
 - Implemented: Added Logitech Media Server support (thanks to EddyK69!!)
@@ -916,7 +948,7 @@ Version 2.3521 (October 31th 2015)
 - Fixed: upgrading via the web interface (some users had experienced a problem)
 - Fixed: Weather tab, notifications
 
-Version 2.2563 (June 14th 2015)
+Version 2.2563 (June 14 2015)
 - Implemented: WebServer, native SSL and keep-alive, big thanks to chimit!!!!
 - Implemented: RFXCom, support for Blinds T9/T10
 - Implemented: RFXCom, mode6 (Keeloq protocol) support
@@ -1035,10 +1067,10 @@ Version 2.2563 (June 14th 2015)
 - Fixed: wind gust tooltip
 - Fixed: Wind Graph generation could cause a crash
 
-Version 2.2284 (February 22th 2015)
+Version 2.2284 (February 22 2015)
 - Fixed: Firefox, RGBW/Setpoint popup
 
-Version 2.2283 (February 21th 2015)
+Version 2.2283 (February 21 2015)
 - Implemented: Alert Sensor (update via udevice json call)
 - Implemented: Automatic OpenZWave heal network command at 04:00am
 - Implemented: Blinds1, T7 Forest
@@ -1146,7 +1178,7 @@ Version 2.2283 (February 21th 2015)
 - Updated: AngularJS library
 - Updated: WindowsLibraries on server
 
-Version 2.2025 (September 28th 2014)
+Version 2.2025 (September 28 2014)
 - Implemented: 'Toon' hardware support
 - Implemented: 1wire : add support of DS2438 (family 26h) on OWFS and Windows
 - Implemented: A-OK Blinds now displays a stop button
@@ -1257,7 +1289,7 @@ Version 2.2025 (September 28th 2014)
 - Fixed: Updater when eventsystem was disabled, and added laguage support
 - Updated: OpenZWave library
 
-Version 1.1680 (April 21th 2014)
+Version 1.1680 (April 21 2014)
 - Implemented: Allow interactive emulation of X10 sensors
 - Implemented: Blinds Percentage switch type (Fibaro roller shutter)
 - Implemented: BlindsT7 (Forest)
@@ -1353,7 +1385,7 @@ Version 1.1680 (April 21th 2014)
 - Removed: Unused Save/Delete buttons in edit Scene/Group
 - Updated: Highcharts 3.0.10
 
-Version 1.1396 (January 18th 2014)
+Version 1.1396 (January 18 2014)
 - Implemented: Add Manual Light/Switch for Meiantech
 - Implemented: Application Settings, option to enable/disable adding of new hardware/devices (For example to disable newly received RF hardware)
 - Implemented: Blockly/Lua, Send Email notification to
@@ -1423,7 +1455,7 @@ Version 1.1396 (January 18th 2014)
 - Fixed: User Devices for Users that did not have 'Shared' rights
 - Updated: Highcharts 3.0.9, JQuery and JQueryUI
 
-Version 1.1186 (November 16th 2013)
+Version 1.1186 (November 16 2013)
 - Implemented/Changed: Scenes 'Learn' command will now listen to the status (pressing On/Off/Mood)
 - Implemented: Added more log buttons to the devices tab
 - Implemented: Added otherdevices_dewpoint to Lua scripts
@@ -1478,7 +1510,7 @@ Version 1.1186 (November 16th 2013)
 - Fixed: Random Timer interval in the setting page was not stored
 - Fixed: Siren Switch type can now be switched on/off
 
-Version 1.1087 (Oktober 16th 2013)
+Version 1.1087 (Oktober 16 2013)
 - Implemented/Fixed: HTML5, New Alert/Confirmation system to solve iOS issue
 - Implemented: 1Wire Voltage support on Utility/Dashboard
 - Implemented: Alecto WS1200 (Temp+Rain sensor)
@@ -1546,7 +1578,7 @@ Version 1.1087 (Oktober 16th 2013)
 - Fixed: Shortlog History days display when showing graph from dashboard
 - Fixed: Typo's in SQLHelper.cpp
 
-Version 1.940 (July 31th 2013)
+Version 1.940 (July 31 2013)
 - Implemented: Add manual switch support for Lighting1/Energenie
 - Implemented: Application settings, mobile view (mobile, or as normal dashboard), iPhone will always be mobile theme
 - Implemented: device name in scripts calls (6th parameter)
@@ -1591,7 +1623,7 @@ Version 1.940 (July 31th 2013)
 - Fixed: Z-Wave, Wattage scale factor was not initialized
 - Removed: Device Type on Temperature/Weather tab
 
-Version 1.762 (July 1th 2013)
+Version 1.762 (July 1 2013)
 - Changed: Motion Sensors, Off delay now sends 'Off' to Lighting 1/6 devices, and 'No Motion' to X10 motion sensors
 - Changed: Only RAEX blinds will not show a 'stop' button
 - Changed: Wind Station LaCrosse WS2300 will again display 'gust'
@@ -1632,7 +1664,7 @@ Version 1.762 (July 1th 2013)
 - Implemented: Z-Wave Temp/Humidity sensor
 - Removed: Altitude from BMP085 sensor
 
-Version 1.666 (May 28th 2013)
+Version 1.666 (May 28 2013)
 - Implemented: 1-Wire aux sub-folders
 - Implemented: 1-Wire Humidity sensors
 - Implemented: 1-Wire OWFS sensor support, see Wiki pages
@@ -1669,7 +1701,7 @@ Version 1.666 (May 28th 2013)
 - Fixed: Voltcraft C020 value reading corrected for little endian systems
 - Fixed: Windows installer now includes scripts folder
 
-Version 1.607 (May 11th 2013)
+Version 1.607 (May 11 2013)
 - Implemented: 5th parameter for light/switch script (full status descriptor)
 - Implemented: Date/Time/SunSet/SunRise on every page (except mobile browsers will have only SunSet/SunRise)
 - Implemented: Device type Blinds (Safy / RollerTrol / Hasta / A-OK RF01,AC114 / RAEX / Media Mount)
@@ -1716,7 +1748,7 @@ Version 1.607 (May 11th 2013)
 - Fixed: webgui update auto restart (caused by script changes)
 - Removed: patch for 'Better day value calculation' for multimeter devices (Like P1 Smart Meter electra), not needed
 
-Version 1.484 (April 28th 2013)
+Version 1.484 (April 28 2013)
 - Implemented/Fixed: web update now not available for ArchLinux raspberry pi
 - Implemented: Add support for Lighting6 (Blyss)
 - Implemented: Added support for short term data in the custom temperature graph
@@ -1750,7 +1782,7 @@ Version 1.484 (April 28th 2013)
 - Fixed: Visual Studio svn template was not added to SVN
 - Updated: HighCharts Library
 
-Version 1.412 (April 1th 2013)
+Version 1.412 (April 1 2013)
 - Implemented: Ability to change page / bookmark page using # on url
 - Implemented: Added SVN revision number to version string
 - Implemented: Adjustment value for barometer sensors
@@ -1806,7 +1838,7 @@ Version 1.412 (April 1th 2013)
 - Fixed: Weather Station Negative temperature
 - Fixed: Weather Station Rain meter
 
-Version 1.0.9 (February 17th 2013)
+Version 1.0.9 (February 17 2013)
 - Implemented: 'Delay Off' for Motion detectors
 - Implemented: Dimmer change now directly updates the user interface status
 - Implemented: dimmer timer support
@@ -1835,7 +1867,7 @@ Version 1.0.9 (February 17th 2013)
 - Fixed: Now able to clear light log for security1 devices
 - Fixed: Possible issue when disabling/enabling/removing hardware
 
-Version 1.0.8 (February 3th 2013)
+Version 1.0.8 (February 3 2013)
 - Changed: HTML cleanup (Updated to newer libraries as well)
 - Changed: Setting a switch level is now done by setting the level to 0=Off, 1..xx for the level
 - Changed: When setting switch level = 0, the switch is turned Off now
@@ -1852,7 +1884,7 @@ Version 1.0.8 (February 3th 2013)
 - Implemented: Switchtype 'Dimmer'
 - Removed: SQLite MFC runtime dependency
 
-Version 1.0.7 (January 18th 2013)
+Version 1.0.7 (January 18 2013)
 - Implemented: Added jwsmtp class
 - Implemented: Clicking Top Left (Domoticz) will show dashboard
 - Implemented: Dashboard now includes server date
@@ -1873,7 +1905,7 @@ Version 1.0.7 (January 18th 2013)
 - Changed: Schedule item started message will now also report the timer type
 - Changed: updated to RFCOM SDK version 6.01
 
-Version 1.0.6 (January 9th 2013)
+Version 1.0.6 (January 9 2013)
 - Implemented: Option to add a manual LightwaveRF switch
 - Implemented: P1 Smart Meter Serial hardware
 - Implemented: P1 Smart Meter TCP hardware
@@ -1886,5 +1918,5 @@ Version 1.0.6 (January 9th 2013)
 - Fixed: Lighting 1, ARC Doorbell is now send with a 'Chime' instead of All On
 - Fixed: Temp, Hum, TempHumBaro ID
 
-Version 1.0.5 (December 29th 2012)
+Version 1.0.5 (December 29 2012)
 - Start of History document

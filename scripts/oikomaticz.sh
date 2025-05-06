@@ -27,6 +27,7 @@ DAEMON_ARGS="$DAEMON_ARGS -userdata /var/lib/$NAME/"
 DAEMON_ARGS="$DAEMON_ARGS -dbase /var/lib/$NAME/$NAME.db"
 DAEMON_ARGS="$DAEMON_ARGS -log /var/log/$NAME.log"
 #DAEMON_ARGS="$DAEMON_ARGS -syslog"
+#export PYTHONPATH=/home/pi/Domoticz_Python_Env:$PYTHONPATH
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
