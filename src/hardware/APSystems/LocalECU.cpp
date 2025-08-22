@@ -165,7 +165,7 @@ void CAPSLocalECU::Do_Work()
 bool CAPSLocalECU::WriteToHardware(const char *pdata, const unsigned char length)
 {
 	/* Some of the ECU units expose a web based interface allowing the user to send a limited set
-	 * of commands including a rest of the main communication port.
+	 * of commands including a reset of the main communication port.
 	 *
 	 * For now the only application of this WriteToHardware() function is to toggle a parameter
 	 * inside this module to split the ECU's single counter into a double tariff counter. This
@@ -364,7 +364,12 @@ void CAPSLocalECU::SendMeters()
 	std::vector<std::vector<std::string> > result;
 	std::string IDx = GetP1IDx();
 	result = m_sql.safe_query("UPDATE DeviceStatus SET sValue='%s', lastupdate='%s' WHERE ID=%s", p1data, timestring, IDx.c_str());
-	m_mainworker.sOnDeviceReceived(m_HwdID, atoll(IDx.c_str()), "Solar Power", nullptr);
+	uint64_t nIDx = atoll(IDx.c_str());
+	// Tell mainworker that device was updated
+	m_mainworker.sOnDeviceReceived(m_HwdID, nIDx, "Solar Power", nullptr);
+	// Tell eventsystem that device was updated
+	m_mainworker.m_eventsystem.ProcessDevice(m_HwdID, nIDx, 1, pTypeP1Power, sTypeP1Power, 255, 255, 0, p1data);
+
 
 	for (int i = 0; i < m_ECUClient->m_apsecu.inverters.size(); i++)
 	{
@@ -376,7 +381,11 @@ void CAPSLocalECU::SendMeters()
 			result = m_sql.safe_query("UPDATE DeviceStatus SET DeviceID='%s', sValue='%d', lastupdate='%s' WHERE ID=%s", szShortID.c_str(), 0, timestring, IDx.c_str());
 		else
 			result = m_sql.safe_query("UPDATE DeviceStatus SET DeviceID='%s', sValue='%d', lastupdate='%s' WHERE ID=%s", szShortID.c_str(), m_ECUClient->m_apsecu.inverters[i].channels[0].volt, timestring, IDx.c_str());
-		m_mainworker.sOnDeviceReceived(m_HwdID, atoll(IDx.c_str()), "Voltage", nullptr);
+		nIDx = atoll(IDx.c_str());
+		// Tell mainworker that device was updated
+		m_mainworker.sOnDeviceReceived(m_HwdID, nIDx, "Voltage", nullptr);
+		// Tell eventsystem that device was updated
+		m_mainworker.m_eventsystem.ProcessDevice(m_HwdID, nIDx, 1, pTypeGeneral, sTypeVoltage, 255, 255, 0, p1data);
 
 		int numchannels = (int)m_ECUClient->m_apsecu.inverters[i].channels.size();
 		if (numchannels == 0)
@@ -392,7 +401,11 @@ void CAPSLocalECU::SendMeters()
 				result = m_sql.safe_query("UPDATE DeviceStatus SET DeviceID='%s', sValue='%d', lastupdate='%s' WHERE ID=%s", szShortID.c_str(), 0, timestring, IDx.c_str());
 			else
 				result = m_sql.safe_query("UPDATE DeviceStatus SET DeviceID='%s', sValue='%d', lastupdate='%s' WHERE ID=%s", szShortID.c_str(), m_ECUClient->m_apsecu.inverters[i].channels[j].power, timestring, IDx.c_str());
-			m_mainworker.sOnDeviceReceived(m_HwdID, atoll(IDx.c_str()), "Power", nullptr);
+			nIDx = atoll(IDx.c_str());
+			// Tell mainworker that device was updated
+			m_mainworker.sOnDeviceReceived(m_HwdID, nIDx, "Power", nullptr);
+			// Tell eventsystem that device was updated
+			m_mainworker.m_eventsystem.ProcessDevice(m_HwdID, nIDx, j + 11, pTypeUsage, sTypeElectric, 255, 255, 0, p1data);
 		}
 	}
 }
