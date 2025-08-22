@@ -544,6 +544,7 @@ int ecuAPI::GetInverterSignalLevels()
 	if (connect(m_sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == 0)
 		return true;
 
+	m_sockfd = 0;
 	return false;
 }
 
@@ -570,11 +571,14 @@ int ecuAPI::GetInverterSignalLevels()
 
 /* private */ void ecuAPI::disconnect()
 {
+	if (m_sockfd > 0)
+	{
 #ifdef WIN32
-	closesocket(m_sockfd);
+		closesocket(m_sockfd);
 #else
-	close(m_sockfd);
+		close(m_sockfd);
 #endif
+	}
 	m_sockfd = 0;
 }
 

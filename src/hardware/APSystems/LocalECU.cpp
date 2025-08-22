@@ -138,8 +138,6 @@ bool CAPSLocalECU::StopHardware()
 
 void CAPSLocalECU::Do_Work()
 {
-	m_ECUClient = new ecuAPI();
-	m_ECUClient->SetTargetAddress(m_IPAddress);
 	int seconds_remaining = 0;
 
 	unsigned long sec_counter = 0;
@@ -154,8 +152,11 @@ void CAPSLocalECU::Do_Work()
 		if (seconds_remaining <= 0)
 		{
 			seconds_remaining = RETRY_INTERVAL;
+			m_ECUClient = new ecuAPI();
+			m_ECUClient->SetTargetAddress(m_IPAddress);
 			if (GetECUData())
 				seconds_remaining = (int)(m_ECULastReport + REPORT_INTERVAL - mytime(NULL));
+			delete m_ECUClient;
 		}
 	}
 }
