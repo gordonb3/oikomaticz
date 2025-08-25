@@ -82,7 +82,7 @@ int ecuAPI::GetDayReport(const int year, const uint8_t month, const uint8_t day,
 		return -1;
 	send(buffer, buffer_pos);
 	int numbytes = receive(buffer, READ_BUFFER_SIZE);
-	disconnect();
+//	disconnect();
 
 #ifdef DEBUG
 	std::cout << "dbg: received message: ";
@@ -141,7 +141,7 @@ int ecuAPI::GetPeriodReport(const uint8_t period, std::string &jsondata)
 		return -1;
 	send(buffer, buffer_pos);
 	int numbytes = receive(buffer, READ_BUFFER_SIZE);
-	disconnect();
+//	disconnect();
 
 	if ( (numbytes < 15) || (!VerifyMessageSize(numbytes, buffer)) )
 		return 1;
@@ -185,7 +185,7 @@ int ecuAPI::QueryECU()
 		return -1;
 	send(buffer, buffer_pos);
 	int numbytes = receive(buffer, READ_BUFFER_SIZE);
-	disconnect();
+//	disconnect();
 
 #ifdef DEBUG
 	std::cout << "dbg: received message: ";
@@ -260,7 +260,7 @@ int ecuAPI::QueryInverters()
 		return -1;
 	send(buffer, buffer_pos);
 	int numbytes = receive(buffer, READ_BUFFER_SIZE);
-	disconnect();
+//	disconnect();
 
 #ifdef DEBUG
 	std::cout << "dbg: received message: ";
@@ -396,7 +396,7 @@ int ecuAPI::GetInverterSignalLevels()
 		return -1;
 	send(buffer, buffer_pos);
 	int numbytes = receive(buffer, READ_BUFFER_SIZE);
-	disconnect();
+//	disconnect();
 
 #ifdef DEBUG
 	std::cout << "dbg: received message: ";
@@ -517,6 +517,12 @@ int ecuAPI::GetInverterSignalLevels()
 
 /* private */ bool ecuAPI::ConnectToDevice()
 {
+	if (m_sockfd > 0)
+	{
+		// already connected
+		return true;
+	}
+
 	struct sockaddr_in serv_addr;
 	bzero((char*)&serv_addr, sizeof(serv_addr));
 	if (!ResolveHost(serv_addr))
@@ -541,10 +547,15 @@ int ecuAPI::GetInverterSignalLevels()
 #endif
 	setsockopt(m_sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 
+#ifdef WIN32
+	int set = 1;
+	setsockopt(m_sockfd, IPPROTO_TCP, TCP_NODELAY,  (char*) &set, sizeof(set) );
+#endif
+
 	if (connect(m_sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == 0)
 		return true;
 
-	m_sockfd = 0;
+	disconnect();
 	return false;
 }
 
