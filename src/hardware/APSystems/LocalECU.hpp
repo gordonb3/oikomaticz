@@ -34,6 +34,7 @@ private:
 	int m_todayEnergyOffset;
 	time_t m_ECULastReport;
 	std::string m_P1IDx;
+	std::string m_ECUVersion;
 	ecuAPI *m_ECUClient;
 
 	void Init();

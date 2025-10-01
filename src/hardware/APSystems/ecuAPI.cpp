@@ -39,12 +39,6 @@
 
 #ifdef DEBUG
 #include <iostream>
-
-void exit_error(const char *msg)
-{
-	perror(msg);
-	exit(0);
-}
 #endif
 
 ecuAPI::ecuAPI()
@@ -82,11 +76,11 @@ int ecuAPI::GetDayReport(const int year, const uint8_t month, const uint8_t day,
 		return -1;
 	send(buffer, buffer_pos);
 	int numbytes = receive(buffer, READ_BUFFER_SIZE);
-//	disconnect();
+	disconnect();
 
 #ifdef DEBUG
 	std::cout << "dbg: received message: ";
-	for(int i=0; i<(int)(numbytes); ++i)
+	for(int i = 0; i < (int)(numbytes); ++i)
 		printf("%.2x", (uint8_t)buffer[i]);
 	std::cout << "\n";
 #endif
@@ -141,7 +135,7 @@ int ecuAPI::GetPeriodReport(const uint8_t period, std::string &jsondata)
 		return -1;
 	send(buffer, buffer_pos);
 	int numbytes = receive(buffer, READ_BUFFER_SIZE);
-//	disconnect();
+	disconnect();
 
 	if ( (numbytes < 15) || (!VerifyMessageSize(numbytes, buffer)) )
 		return 1;
@@ -185,11 +179,12 @@ int ecuAPI::QueryECU()
 		return -1;
 	send(buffer, buffer_pos);
 	int numbytes = receive(buffer, READ_BUFFER_SIZE);
-//	disconnect();
+	// 2162 devices do not accept multiple queries to be made within a single session
+	disconnect();
 
 #ifdef DEBUG
 	std::cout << "dbg: received message: ";
-	for(int i=0; i<(int)(numbytes); ++i)
+	for(int i = 0; i < (int)(numbytes); ++i)
 		printf("%.2x", (uint8_t)buffer[i]);
 	std::cout << "\n";
 #endif
@@ -260,11 +255,12 @@ int ecuAPI::QueryInverters()
 		return -1;
 	send(buffer, buffer_pos);
 	int numbytes = receive(buffer, READ_BUFFER_SIZE);
-//	disconnect();
+	// 2162 devices do not accept multiple queries to be made within a single session
+	disconnect();
 
 #ifdef DEBUG
 	std::cout << "dbg: received message: ";
-	for(int i=0; i<(int)(numbytes); ++i)
+	for(int i = 0; i < (int)(numbytes); ++i)
 		printf("%.2x", (uint8_t)buffer[i]);
 	std::cout << "\n";
 #endif
@@ -396,11 +392,12 @@ int ecuAPI::GetInverterSignalLevels()
 		return -1;
 	send(buffer, buffer_pos);
 	int numbytes = receive(buffer, READ_BUFFER_SIZE);
-//	disconnect();
+	// 2162 devices do not accept multiple queries to be made within a single session
+	disconnect();
 
 #ifdef DEBUG
 	std::cout << "dbg: received message: ";
-	for(int i=0; i<(int)(numbytes); ++i)
+	for(int i = 0; i < (int)(numbytes); ++i)
 		printf("%.2x", (uint8_t)buffer[i]);
 	std::cout << "\n";
 #endif
@@ -563,7 +560,7 @@ int ecuAPI::GetInverterSignalLevels()
 /* private */ int ecuAPI::send(unsigned char* buffer, const unsigned int size)
 {
 #ifdef WIN32
-	return send(m_sockfd, buffer, size, 0);
+	return ::send(m_sockfd, buffer, size, 0);
 #else
 	return write(m_sockfd, buffer, size);
 #endif

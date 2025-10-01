@@ -100,6 +100,7 @@ void CAPSLocalECU::Init()
 	m_todayEnergyOffset = -1;
 	m_lastLifeEnergy = m_usageLow + m_usageHigh;
 	m_P1IDx = "";
+	m_ECUVersion = "";
 }
 
 
@@ -220,10 +221,20 @@ bool CAPSLocalECU::GetECUData()
 		Debug(DEBUG_HARDWARE, "Proces ECU data");
 		m_ECULastReport = m_ECUClient->m_apsecu.timestamp;
 		SendMeters();
+		if (m_ECUVersion != m_ECUClient->m_apsecu.version)
+		{
+			if (m_ECUVersion.empty())
+			{
+				Log(LOG_STATUS, "ECU firmware version is %s", m_ECUClient->m_apsecu.version.c_str());
+			} else {
+				Log(LOG_STATUS, "ECU firmware has been updated to version %s", m_ECUClient->m_apsecu.version.c_str());
+			}
+			m_ECUVersion = m_ECUClient->m_apsecu.version;
+		}
 		return true;
 	}
 	if (statuscode == -1)
-		Debug(DEBUG_HARDWARE, "attempt to connect to ECU returned error %d", errno);
+		Log(LOG_ERROR, "attempt to connect to ECU returned error %d", errno);
 	else if (statuscode == 1)
 		Debug(DEBUG_HARDWARE, "ECU returned invalid data");
 	return false;
