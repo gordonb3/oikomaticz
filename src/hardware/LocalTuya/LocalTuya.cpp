@@ -284,6 +284,9 @@ bool CLocalTuya::WriteToHardware(const char *pdata, const unsigned char length)
 
 void CLocalTuya::SendMeter(TuyaData *devicedata)
 {
+	if (devicedata->energyDivider == 0)
+		return;
+
 	if ((devicedata->usageHigh > 0) || (devicedata->usageLow > 0))
 	{
 		P1Power	tuya_energy;
