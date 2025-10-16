@@ -32,6 +32,7 @@ private:
 	unsigned long m_lastLifeEnergy;
 	unsigned int m_lastTodayEnergy;
 	int m_todayEnergyOffset;
+	int m_lastTensDelta;
 	time_t m_ECULastReport;
 	std::string m_P1IDx;
 	std::string m_ECUVersion;
