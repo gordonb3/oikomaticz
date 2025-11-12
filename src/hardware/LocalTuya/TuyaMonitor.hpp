@@ -13,7 +13,7 @@
 #define MAX_BUFFER_SIZE 1024
 #endif
 
-#include "tuyaAPI33.hpp"
+#include "tuyapp/src/tuyaAPI.hpp"
 #include <string>
 #include <thread>
 #include <mutex>
@@ -63,7 +63,7 @@ class TuyaMonitor : public StoppableTask
 {
 
 public:
-	TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const device::tuya::protocolversion::value eProtocolVersion, const int energyDivider);
+	TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, std::string protocolVersion, const int energyDivider);
 	~TuyaMonitor();
 
 	bool StartMonitor();
@@ -81,9 +81,9 @@ private:
 	bool ConnectToDevice();
 	void MonitorThread();
 
-	tuyaAPI33 *m_tuyaclient;
+	tuyaAPI *m_tuyaclient;
 	std::string m_name, m_id, m_key, m_address;
-	device::tuya::protocolversion::value m_protocolversion;
+	std::string m_protocolversion;
 	unsigned char message_buffer[MAX_BUFFER_SIZE];
 	std::shared_ptr<std::thread> m_thread;
 	bool m_isPowerMeter;

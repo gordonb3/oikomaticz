@@ -36,7 +36,12 @@ include_directories(evohomeclient/src/)
 list(FILTER evohome_SRCS EXCLUDE REGEX "RESTClient")
 add_library(evohome STATIC ${evohome_SRCS})
 
-set(STATIC_LIBRARIES iamserver jsoncpp tinyxpath serial evohome)
+# local Tuya client
+file(GLOB_RECURSE tuyapp_SRCS tuyapp/src/*.cpp)
+include_directories(tuyapp/src/)
+add_library(tuyapp STATIC ${tuyapp_SRCS})
+
+set(STATIC_LIBRARIES iamserver jsoncpp tinyxpath serial evohome tuyapp)
 
 
 ## included libraries that may be used to override dynamicly linked system provided libraries

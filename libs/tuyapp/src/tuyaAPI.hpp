@@ -9,11 +9,13 @@
  *  @license GPL-3.0+ <https://github.com/gordonb3/tuyapp/blob/master/LICENSE>
  */
 
-// Tuya API 3.3 Class
+// Tuya API Base Class
 
-#ifndef _tuyaAPI33
-#define _tuyaAPI33
+#ifndef _tuyaAPI
+#define _tuyaAPI
 
+// Tuya Local Access TCP Port
+#define TUYA_COMMAND_PORT 6668
 
 // Tuya Command Types
 #define TUYA_UDP 0  // HEART_BEAT_CMD
@@ -63,41 +65,21 @@
 #define TUYA_LAN_SET_GW_CHANNEL 252
 
 
-
+#include "tuyaTCP.hpp"
 #include <string>
 #include <cstdint>
 
-class tuyaAPI33
+
+class tuyaAPI : public tuyaTCP
 {
-
 public:
-/************************************************************************
- *									*
- *	Class construct							*
- *									*
- ************************************************************************/
-	tuyaAPI33();
-	~tuyaAPI33();
+	virtual ~tuyaAPI() {}
 
-	int BuildTuyaMessage(unsigned char *buffer, const uint8_t command, std::string payload, const std::string &encryption_key);
-	std::string DecodeTuyaMessage(unsigned char* buffer, const int size, const std::string &encryption_key);
+	static tuyaAPI* create(const std::string &version);
 
-	bool ConnectToDevice(const std::string &hostname, const int portnumber, const uint8_t retries = 5);
-	int send(unsigned char* buffer, const unsigned int size);
-	int receive(unsigned char* buffer, const unsigned int maxsize, const unsigned int minsize = 28);
-	void disconnect();
-
-
-private:
-	int m_sockfd;
-
-	const uint8_t MESSAGE_SEND_HEADER[16] = {0,0,0x55,0xaa,0,0,0,0,0,0,0,0,0,0,0,0};
-	const uint8_t MESSAGE_SEND_TRAILER[8] = {0,0,0,0,0,0,0xaa,0x55};
-	const uint8_t PROTOCOL_33_HEADER[15] = {'3','.','3',0,0,0,0,0,0,0,0,0,0,0,0};
-
-	bool ResolveHost(const std::string &hostname, struct sockaddr_in& serv_addr);
+	virtual int BuildTuyaMessage(unsigned char *buffer, const uint8_t command, const std::string &payload, const std::string &encryption_key) = 0;
+	virtual std::string DecodeTuyaMessage(unsigned char* buffer, const int size, const std::string &encryption_key) = 0;
 
 };
 
 #endif
-

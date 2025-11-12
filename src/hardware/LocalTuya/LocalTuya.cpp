@@ -166,21 +166,12 @@ void CLocalTuya::Do_Work()
 			uint32_t ID = atoi(sd[0].c_str());
 			int energyDivider = atoi(sd[6].c_str());
 			std::string protocolVersion = sd[5];
-			device::tuya::protocolversion::value eProtocolVersion;
 			if (protocolVersion.empty())
 			{
 				protocolVersion = "3.3";
-				eProtocolVersion = device::tuya::protocolversion::v33;
 				m_sql.safe_query("UPDATE TuyaDevices SET ProtocolVersion='%s' WHERE ID=%d AND HardwareID=%d", protocolVersion, ID, m_HwdID);
 			}
-			else
-			{
-				if (protocolVersion == "3.3")
-					eProtocolVersion = device::tuya::protocolversion::v33;
-				else if (protocolVersion == "3.3.1")
-					eProtocolVersion = device::tuya::protocolversion::v33_1;
-			}
-			TuyaMonitor* tuyadevice = new TuyaMonitor(ID, sd[1], sd[2], sd[3], sd[4], eProtocolVersion, energyDivider);
+			TuyaMonitor* tuyadevice = new TuyaMonitor(ID, sd[1], sd[2], sd[3], sd[4], protocolVersion, energyDivider);
 			tuyadevice->sigSendMeter.connect([this](auto devicedata) {SendMeter(devicedata);});
 			tuyadevice->sigSendSwitch.connect([this](auto devicedata) {SendSwitch(devicedata);});
 			tuyadevice->sigSendVoltage.connect([this](auto devicedata) {SendVoltage(devicedata);});

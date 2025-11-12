@@ -24,12 +24,12 @@
 #include <fstream>
 
 
-TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const device::tuya::protocolversion::value eProtocolVersion, const int energyDivider) :
+TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const std::string protocolVersion, const int energyDivider) :
 	m_name(name),
 	m_id(id),
 	m_key(key),
 	m_address(address),
-	m_protocolversion(eProtocolVersion)
+	m_protocolversion(protocolVersion)
 {
 	m_devicedata = new TuyaData();
 	memset(m_devicedata, 0, sizeof(TuyaData));
@@ -50,8 +50,11 @@ TuyaMonitor::~TuyaMonitor()
 
 bool TuyaMonitor::ConnectToDevice()
 {
-	m_tuyaclient = new tuyaAPI33();
-	if (!m_tuyaclient->ConnectToDevice(m_address, TUYA_COMMAND_PORT, 1))
+	if (m_protocolversion == "3.3.1")
+		m_tuyaclient = tuyaAPI::create("3.3");
+	else
+		m_tuyaclient = tuyaAPI::create(m_protocolversion);
+	if (!m_tuyaclient->ConnectToDevice(m_address, 1))
 	{
 		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: failed to connect to %s - wrong IP?", m_name.c_str());
 		return false;
@@ -64,10 +67,11 @@ bool TuyaMonitor::ConnectToDevice()
 	std::string payload = ss_payload.str();
 
 	int numbytes;
-	if (m_protocolversion == device::tuya::protocolversion::v33_1)
-		numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_CONTROL_NEW, payload, m_key);
+	if ((m_protocolversion == "3.1") || (m_protocolversion == "3.3"))
+			numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_DP_QUERY, payload, m_key);
 	else
-		numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_DP_QUERY, payload, m_key);
+			numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_CONTROL_NEW, payload, m_key);
+
 	numbytes = m_tuyaclient->send(message_buffer, numbytes);
 	if (numbytes < 0)
 	{
