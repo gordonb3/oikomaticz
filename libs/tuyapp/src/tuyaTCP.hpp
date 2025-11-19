@@ -34,11 +34,11 @@ public:
 	tuyaTCP();
 	~tuyaTCP();
 
-	bool ConnectToDevice(const std::string &hostname, const uint8_t retries = 5);
-	int send(unsigned char* buffer, const unsigned int size);
-	int receive(unsigned char* buffer, const unsigned int maxsize, const unsigned int minsize = 28);
+	virtual bool ConnectToDevice(const std::string &hostname, const uint8_t retries = 1);
+	int send(unsigned char* buffer, const int size);
+	int receive(unsigned char* buffer, const int maxsize, const int minsize = 28, bool waitforanswer = true);
+	int getlasterror();
 	void disconnect();
-
 
 private:
 	int m_sockfd;

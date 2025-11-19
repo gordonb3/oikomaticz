@@ -9,8 +9,6 @@
  *  @license GPL-3.0+ <https://github.com/gordonb3/tuyapp/blob/master/LICENSE>
  */
 
-#define TUYA_COMMAND_PORT 6668
-
 #include "TuyaMonitor.hpp"
 #include <unistd.h>
 #include <iostream>
@@ -183,36 +181,62 @@ void TuyaMonitor::MonitorThread()
 		if (m_isPowerMeter)
 		{
 			// request data point updates
-			payload = "{\"dpId\":[19,20]}";
+			payload = "{\"dpId\":[1,19,20]}";
 			numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_UPDATEDPS, payload, m_key);
 		}
 		else
 		{
+/*
 			// send heart beat to keep connection alive
 			payload = "{\"gwId\":\"" + m_id + "\",\"devId\":\"" + m_id + "\"}";
 			numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_HEART_BEAT, payload, m_key);
+*/
+			// request data point updates
+			payload = "{\"dpId\":[1]}";
+			numbytes = m_tuyaclient->BuildTuyaMessage(message_buffer, TUYA_UPDATEDPS, payload, m_key);
 		}
 
 		numbytes = m_tuyaclient->send(message_buffer, numbytes);
 		if (numbytes < 0)
 		{
-			_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: Lost communication with %s", m_name.c_str());
-			m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
-			break;
+			if (errno == EAGAIN)
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				int so_error = m_tuyaclient->getlasterror();
+				if ( so_error != 0)
+				{
+					_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: Lost communication with %s", m_name.c_str());
+					m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
+					break;
+				}
+			}
+
 		}
 
-		numbytes = m_tuyaclient->receive(message_buffer, MAX_BUFFER_SIZE - 1);
-		if (numbytes < 0)
+		numbytes = -1;
+		int i = 0;
+		while ((numbytes <= 28) && (i < 1000) && (!IsStopRequested(10)))  // 10 seconds
 		{
-			// expect a timeout because the device will only send updates when the requested values change
-			if (errno != 11)
+			i++;
+			numbytes = m_tuyaclient->receive(message_buffer, MAX_BUFFER_SIZE - 1, 0, false);
+			if (numbytes < 0)
 			{
+				// expect a timeout because the device will only send updates when the requested values change
+				if (errno == EAGAIN)
+					continue;
 				_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d", m_name.c_str(), errno);
 				m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
 				break;
 			}
+
+			if (numbytes <= 28)
+			{
+				// device sent us a message with an empty payload - wait for one that does contain an actual payload
+				continue;
+			}
 		}
-		else
+
+		if ((numbytes > 0) && (!IsStopRequested(1)))
 		{
 			std::string tuyaresponse = m_tuyaclient->DecodeTuyaMessage(message_buffer, numbytes, m_key);
 
