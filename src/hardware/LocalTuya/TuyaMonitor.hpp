@@ -79,12 +79,14 @@ public:
 private:
 
 	bool ConnectToDevice();
+	int SendToDevice(const int numbytes);
+	int ReadFromDevice(const int timeout);
 	void MonitorThread();
 
 	tuyaAPI *m_tuyaclient;
 	std::string m_name, m_id, m_key, m_address;
 	std::string m_protocolversion;
-	unsigned char message_buffer[MAX_BUFFER_SIZE];
+	unsigned char m_cMessageBuffer[MAX_BUFFER_SIZE];
 	std::shared_ptr<std::thread> m_thread;
 	bool m_isPowerMeter;
 	bool m_waitForSwitch;

@@ -203,17 +203,25 @@ void CLocalTuya::Do_Work()
 				{
 					Debug(DEBUG_HARDWARE, "connection with device %s was reset by peer", devicedata->deviceName);
 					device->StopMonitor();
-					while (devicedata->connectstate != device::tuya::connectstate::STOPPED)
-					{
-						std::this_thread::sleep_for(std::chrono::milliseconds(200));
-					}
+				}
+				else if (devicedata->connectstate == device::tuya::connectstate::STOPPED)
+				{
+					// wait 5 seconds before attempting reconnect
+					uint8_t i = 0;
+					while ((i < 50) && (!IsStopRequested(100)))
+						i++;
 					devicedata->connectstate = device::tuya::connectstate::OFFLINE;
 				}
-				if (devicedata->connectstate == device::tuya::connectstate::OFFLINE)
+				else if (devicedata->connectstate == device::tuya::connectstate::OFFLINE)
 				{
 					Log(LOG_NORM, "Retry communication thread with %s", devicedata->deviceName);
 					if (device->StartMonitor())
 						Log(LOG_STATUS, "Successfully connected to %s", devicedata->deviceName);
+					else
+					{
+						Log(LOG_ERROR, "Failed connect to %s", devicedata->deviceName);
+						devicedata->connectstate = device::tuya::connectstate::STOPPED;
+					}
 				}
 			}
 		}
