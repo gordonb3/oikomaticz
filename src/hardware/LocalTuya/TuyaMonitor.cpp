@@ -39,6 +39,7 @@ TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, cons
 	strncpy(m_devicedata->deviceName, m_name.c_str(), 19);
 
 	m_isPowerMeter = false;
+	m_sendNOOPonConnect = false;
 }
 
 
@@ -55,37 +56,74 @@ bool TuyaMonitor::ConnectToDevice()
 		m_tuyaclient = tuyaAPI::create("3.3");
 	else
 		m_tuyaclient = tuyaAPI::create(m_protocolversion);
-	if (!m_tuyaclient->ConnectToDevice(m_address, 1))
+
+	m_tuyaclient->setAsyncMode();
+
+	int i = 0;
+	m_tuyaclient->ConnectToDevice(m_address);
+	while (!m_tuyaclient->isSocketWritable() && (i < 500) && (!IsStopRequested(10))) // 5 seconds
 	{
-		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: failed to connect to %s - wrong IP?", m_name.c_str());
+#ifdef WIN32
+		if (m_tuyaclient->getlasterror() != WSAEWOULDBLOCK)
+			break;
+#else
+		if ((m_tuyaclient->getlasterror() != EAGAIN) && (m_tuyaclient->getlasterror() != EINPROGRESS))
+			break;
+#endif
+		i++;
+	}
+
+	if (m_tuyaclient->getlasterror() != 0)
+	{
+		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: failed to connect to %s, %s", m_name.c_str(), strerror(m_tuyaclient->getlasterror()));
 		return false;
 	}
 
 	// request current state of the device
 	std::stringstream ss_payload;
-	long currenttime = time(NULL) ;
-	ss_payload << "{\"gwId\":\"" << m_id << "\",\"devId\":\"" << m_id << "\",\"uid\":\"" << m_id << "\",\"t\":\"" << currenttime << "\",\"dps\":{\"1\":null,\"9\":null,\"18\":null,\"19\":null,\"20\":null}}";
-	std::string payload = ss_payload.str();
-
-	int payload_len = 0;
-	if ((m_protocolversion == "3.1") || (m_protocolversion == "3.3"))
+	long currenttime;
+	std::string payload;
+	int payload_len;
+	int numbytes;
+	if (m_sendNOOPonConnect)
+	{
+		m_sendNOOPonConnect = false;
+		ss_payload.str("");
+		currenttime = time(NULL);
+		ss_payload << "{\"devId\":\"" << m_id << "\",\"uid\":\"" << m_id << "\",\"dps\":{\"9\":0" << "},\"t\":\"" << currenttime << "\"}";
+		payload = ss_payload.str();
+		if ((m_protocolversion == "3.1") || (m_protocolversion == "3.3"))
 			payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_DP_QUERY, payload, m_key);
-	else
+		else
 			payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_CONTROL_NEW, payload, m_key);
+		numbytes = m_tuyaclient->send(m_cMessageBuffer, payload_len);
+		numbytes = ReadFromDevice(2);
+		if (numbytes <= 0)
+		{
+			_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: NOOP command failed to free device %s, error is %d", m_name.c_str(), m_tuyaclient->getlasterror());
+			return false;
+		}
+	}
+	ss_payload.str("");
+	currenttime = time(NULL);
+	ss_payload << "{\"gwId\":\"" << m_id << "\",\"devId\":\"" << m_id << "\",\"uid\":\"" << m_id << "\",\"t\":\"" << currenttime << "\",\"dps\":{\"1\":null,\"9\":null,\"18\":null,\"19\":null,\"20\":null}}";
+	payload = ss_payload.str();
 
-	int numbytes = m_tuyaclient->send(m_cMessageBuffer, payload_len);
+	if ((m_protocolversion == "3.1") || (m_protocolversion == "3.3"))
+		payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_DP_QUERY, payload, m_key);
+	else
+		payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_CONTROL_NEW, payload, m_key);
+
+	numbytes = m_tuyaclient->send(m_cMessageBuffer, payload_len);
 
 	memset(m_cMessageBuffer, 0, MAX_BUFFER_SIZE);
-	numbytes = ReadFromDevice(1);
+	numbytes = ReadFromDevice(2);
 	if (numbytes <= 0)
 	{
-//		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: failed receive from %s, error is %d", m_name.c_str(), m_tuyaclient->getlasterror());
-#ifdef WIN32
-		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d on status request", m_name.c_str(), WSAGetLastError());
-#else
-		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d on status request", m_name.c_str(), errno);
-#endif
-		return true;
+		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d on status request", m_name.c_str(), m_tuyaclient->getlasterror());
+		if (m_tuyaclient->getlasterror() > 0)
+			m_sendNOOPonConnect = true;
+		return false;
 	}
 	std::string tuyaresponse = m_tuyaclient->DecodeTuyaMessage(m_cMessageBuffer, numbytes, m_key);
 
@@ -127,10 +165,10 @@ bool TuyaMonitor::StartMonitor()
 {
 	if (m_devicedata->connectstate == device::tuya::connectstate::OFFLINE)
 	{
+		RequestStart();
 		m_devicedata->connectstate = device::tuya::connectstate::STARTING;
 		if (ConnectToDevice())
 		{
-			RequestStart();
 			m_thread = std::make_shared<std::thread>([this] { MonitorThread(); });
 			m_devicedata->connectstate = device::tuya::connectstate::CONNECTED;
 			return true;
@@ -195,22 +233,21 @@ int TuyaMonitor::ReadFromDevice(const int timeout)
 {
 	int numbytes = -1;
 	int i = 0;
-	while ((numbytes <= 28) && (i < (timeout * 100)) && (!IsStopRequested(10)))  // 10 seconds
+	while ((numbytes <= 28) && (i < (timeout * 100)) && (!IsStopRequested(10)))
 	{
 		i++;
-		numbytes = m_tuyaclient->receive(m_cMessageBuffer, MAX_BUFFER_SIZE - 1, 0, false);
+		numbytes = m_tuyaclient->receive(m_cMessageBuffer, MAX_BUFFER_SIZE - 1);
 		if (numbytes < 0)
 		{
 			// expect a timeout because the device will only respond to UPDATEDPS when the requested values change
 #ifdef WIN32
 			if (WSAGetLastError() == WSAEWOULDBLOCK)
 				continue;
-			_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d on read", m_name.c_str(), WSAGetLastError());
 #else
 			if ((errno == EAGAIN) || (errno == EINPROGRESS))
 				continue;
-			_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d on read", m_name.c_str(), errno);
 #endif
+			_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d on read", m_name.c_str(), m_tuyaclient->getlasterror());
 			m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
 			break;
 		}
@@ -220,6 +257,11 @@ int TuyaMonitor::ReadFromDevice(const int timeout)
 			// device sent us a message with an empty payload - wait for one that does contain an actual payload
 			continue;
 		}
+	}
+	if ((m_tuyaclient->getlasterror() != 0) && (m_tuyaclient->getlasterror() != EAGAIN) && (m_tuyaclient->getlasterror() != EINPROGRESS))
+	{
+		m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
+		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned %d bytes on read (errno was %d)", m_name.c_str(), numbytes, m_tuyaclient->getlasterror());
 	}
 	return numbytes;
 }
@@ -237,6 +279,7 @@ void TuyaMonitor::MonitorThread()
 	Json::CharReaderBuilder jBuilder;
 	std::unique_ptr<Json::CharReader> jReader(jBuilder.newCharReader());
 
+	m_tuyaclient->setAsyncMode();
 	while (!IsStopRequested(1) && (m_devicedata->connectstate == device::tuya::connectstate::CONNECTED))
 	{
 		if (numbytes > 0)
@@ -252,20 +295,10 @@ void TuyaMonitor::MonitorThread()
 			payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_HEART_BEAT, payload, m_key);
 		}
 
-		numbytes = m_tuyaclient->send(m_cMessageBuffer, payload_len);
-		if (numbytes < payload_len)
-		{
-#ifdef WIN32
-			_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d on write", m_name.c_str(), WSAGetLastError());
-#else
-			_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d on write", m_name.c_str(), errno);
-#endif
-//			m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
-//			break;
-		}
+		m_tuyaclient->send(m_cMessageBuffer, payload_len);
 
-		numbytes = ReadFromDevice(1);
-		if ((numbytes > 0) && (!IsStopRequested(1)))
+		numbytes = ReadFromDevice(10); // 10 seconds
+		if (numbytes > 0)
 		{
 			std::string tuyaresponse = m_tuyaclient->DecodeTuyaMessage(m_cMessageBuffer, numbytes, m_key);
 
@@ -329,8 +362,6 @@ bool TuyaMonitor::SendSwitchCommand(int switchstate)
 
 	m_waitForSwitch = true;
 	int numbytes = m_tuyaclient->send(m_cMessageBuffer, payload_len);
-	if (numbytes < 0)
-		return false;
 	for (int i = 0; i < 20; i++)
 	{
 		// wait for monitor thread to confirm new switch state

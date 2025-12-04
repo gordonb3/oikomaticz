@@ -90,5 +90,6 @@ private:
 	std::shared_ptr<std::thread> m_thread;
 	bool m_isPowerMeter;
 	bool m_waitForSwitch;
+	bool m_sendNOOPonConnect;
 };
 
