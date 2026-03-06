@@ -25,7 +25,7 @@ namespace Plugins {
 		CConnection *	m_pConnection;
 
 	protected:
-		boost::asio::deadline_timer *m_Timer;
+		boost::asio::steady_timer *m_Timer;
 		virtual void configureTimeout();
 
 	      public:
@@ -163,7 +163,7 @@ namespace Plugins {
 	  boost::asio::ip::icmp::resolver m_Resolver;
 	  boost::asio::ip::icmp::socket *m_Socket;
 	  boost::asio::ip::icmp::endpoint m_Endpoint;
-	  boost::asio::deadline_timer *m_Timer;
+	  boost::asio::steady_timer *m_Timer;
 
 	  clock_t m_Clock;
 	  int m_SequenceNo;

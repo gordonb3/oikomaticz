@@ -25,7 +25,7 @@
  #include <Winsock2.h>
 #endif
 
-TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const std::string protocolVersion, const int energyDivider) :
+TuyaMonitor::TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const std::string &protocolVersion, const int energyDivider) :
 	m_name(name),
 	m_id(id),
 	m_key(key),
@@ -57,6 +57,12 @@ bool TuyaMonitor::ConnectToDevice()
 	else
 		m_tuyaclient = tuyaAPI::create(m_protocolversion);
 
+	if (m_tuyaclient == nullptr)
+	{
+		_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: failed to create tuya client for protocol version %s", m_protocolversion.c_str());
+		return false;
+	}
+
 	m_tuyaclient->setAsyncMode();
 
 	int i = 0;
@@ -85,17 +91,19 @@ bool TuyaMonitor::ConnectToDevice()
 	std::string payload;
 	int payload_len;
 	int numbytes;
+	uint8_t command;
 	if (m_sendNOOPonConnect)
 	{
 		m_sendNOOPonConnect = false;
-		ss_payload.str("");
-		currenttime = time(NULL);
-		ss_payload << "{\"devId\":\"" << m_id << "\",\"uid\":\"" << m_id << "\",\"dps\":{\"9\":0" << "},\"t\":\"" << currenttime << "\"}";
-		payload = ss_payload.str();
-		if ((m_protocolversion == "3.1") || (m_protocolversion == "3.3"))
-			payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_DP_QUERY, payload, m_key);
+
+		std::string szDPS = "{\"9\":0}";
+		if (m_tuyaclient->getProtocol() >= tuyaAPI::Protocol::v34)
+			command = TUYA_CONTROL_NEW;
 		else
-			payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_CONTROL_NEW, payload, m_key);
+			command = TUYA_CONTROL;
+
+		payload = m_tuyaclient->GeneratePayload(command, m_id, szDPS);
+		payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, command, payload, m_key);
 		numbytes = m_tuyaclient->send(m_cMessageBuffer, payload_len);
 		numbytes = ReadFromDevice(2);
 		if (numbytes <= 0)
@@ -104,16 +112,14 @@ bool TuyaMonitor::ConnectToDevice()
 			return false;
 		}
 	}
-	ss_payload.str("");
-	currenttime = time(NULL);
-	ss_payload << "{\"gwId\":\"" << m_id << "\",\"devId\":\"" << m_id << "\",\"uid\":\"" << m_id << "\",\"t\":\"" << currenttime << "\",\"dps\":{\"1\":null,\"9\":null,\"18\":null,\"19\":null,\"20\":null}}";
-	payload = ss_payload.str();
 
-	if ((m_protocolversion == "3.1") || (m_protocolversion == "3.3"))
-		payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_DP_QUERY, payload, m_key);
+	if (m_tuyaclient->getProtocol() >= tuyaAPI::Protocol::v35)
+		command = TUYA_DP_QUERY_NEW;
 	else
-		payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_CONTROL_NEW, payload, m_key);
+		command = TUYA_DP_QUERY;
 
+	payload = m_tuyaclient->GeneratePayload(command, m_id, "");
+	payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, command, payload, m_key);
 	numbytes = m_tuyaclient->send(m_cMessageBuffer, payload_len);
 
 	memset(m_cMessageBuffer, 0, MAX_BUFFER_SIZE);
@@ -210,6 +216,7 @@ bool TuyaMonitor::StopMonitor()
 int TuyaMonitor::SendToDevice(const int numbytes)
 {
 	int result = m_tuyaclient->send(m_cMessageBuffer, numbytes);
+/*
 	if (result <= 0)
 	{
 #ifdef WIN32
@@ -225,6 +232,7 @@ int TuyaMonitor::SendToDevice(const int numbytes)
 				return 1;
 		}
 	}
+*/
 	return result;
 }
 
@@ -241,12 +249,16 @@ int TuyaMonitor::ReadFromDevice(const int timeout)
 		{
 			// expect a timeout because the device will only respond to UPDATEDPS when the requested values change
 #ifdef WIN32
-			if (WSAGetLastError() == WSAEWOULDBLOCK)
+			if (m_tuyaclient->getlasterror() == WSAEWOULDBLOCK)
 				continue;
 #else
-			if ((errno == EAGAIN) || (errno == EINPROGRESS))
+			if ((m_tuyaclient->getlasterror() == EAGAIN) || (m_tuyaclient->getlasterror() == EINPROGRESS))
 				continue;
 #endif
+			// catch possible race condition
+			if (m_tuyaclient->getlasterror() == 0)
+				continue;
+
 			_log.Debug(DEBUG_HARDWARE, "Tuya Monitor: device %s returned error %d on read", m_name.c_str(), m_tuyaclient->getlasterror());
 			m_devicedata->connectstate = device::tuya::connectstate::RESETBYPEER;
 			break;
@@ -282,16 +294,16 @@ void TuyaMonitor::MonitorThread()
 	m_tuyaclient->setAsyncMode();
 	while (!IsStopRequested(1) && (m_devicedata->connectstate == device::tuya::connectstate::CONNECTED))
 	{
-		if (numbytes > 0)
+		if (numbytes >= 0)
 		{
-			// received data => make new request for data point updates for switch state, power and voltage
+			// received data => make new request for data point updates of switch state, power and voltage
 			payload = "{\"dpId\":[1,19,20]}";
 			payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_UPDATEDPS, payload, m_key);
 		}
 		else
 		{
 			// send heart beat to keep connection alive
-			payload = "{\"gwId\":\"" + m_id + "\",\"devId\":\"" + m_id + "\"}";
+			payload = m_tuyaclient->GeneratePayload(TUYA_HEART_BEAT, m_id, "");
 			payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_HEART_BEAT, payload, m_key);
 		}
 
@@ -349,16 +361,20 @@ void TuyaMonitor::MonitorThread()
 
 bool TuyaMonitor::SendSwitchCommand(int switchstate)
 {
-	long currenttime = time(NULL) ;
-	std::stringstream ss_payload;
-	ss_payload << "{\"devId\":\"" << m_id << "\",\"uid\":\"" << m_id << "\",\"dps\":{\"1\":";
+	uint8_t command;
+	std::string szDPS;
 	if (switchstate)
-		ss_payload << "true";
+		szDPS = "{\"1\":true}";
 	else
-		ss_payload << "false";
-	ss_payload <<  "},\"t\":\"" << currenttime << "\"}";
-	std::string payload = ss_payload.str();
-	int payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, TUYA_CONTROL, payload, m_key);
+		szDPS = "{\"1\":false}";
+
+	if (m_tuyaclient->getProtocol() >= tuyaAPI::Protocol::v34)
+		command = TUYA_CONTROL_NEW;
+	else
+		command = TUYA_CONTROL;
+
+	std::string payload = m_tuyaclient->GeneratePayload(command, m_id, szDPS);
+	int payload_len = m_tuyaclient->BuildTuyaMessage(m_cMessageBuffer, command, payload, m_key);
 
 	m_waitForSwitch = true;
 	int numbytes = m_tuyaclient->send(m_cMessageBuffer, payload_len);

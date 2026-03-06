@@ -145,7 +145,7 @@ strong {
 	border-width: 2px 2px 2px 2px;
 	border-color: #5FA0FF;
 	border-style: solid;
-	border-radius: 10px;
+	border-radius: 5px;
 }
 
 	#notification p {
@@ -683,15 +683,12 @@ table.mobileitem {
 	background-color: #FFFFFF;
 	width: 100%;
 }
-.status {
-	white-space: nowrap;
-}
 
 .mobileitem {
 	border: solid #ccc 1px;
-	-moz-border-radius: 6px;
-	-webkit-border-radius: 6px;
-	border-radius: 6px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
 	-webkit-box-shadow: 0 1px 1px #ccc;
 	-moz-box-shadow: 0 1px 1px #ccc;
 	box-shadow: 0 1px 1px #ccc;
@@ -745,39 +742,39 @@ table.mobileitem {
 }
 
 .mobileitem th:first-child {
-	-moz-border-radius: 6px 0 0 0;
-	-webkit-border-radius: 6px 0 0 0;
-	border-radius: 6px 0 0 0;
+	-moz-border-radius: 5px 0 0 0;
+	-webkit-border-radius: 5px 0 0 0;
+	border-radius: 5px 0 0 0;
 }
 
 .mobileitem th:last-child {
-	-moz-border-radius: 0 6px 0 0;
-	-webkit-border-radius: 0 6px 0 0;
-	border-radius: 0 6px 0 0;
+	-moz-border-radius: 0 5px 0 0;
+	-webkit-border-radius: 0 5px 0 0;
+	border-radius: 0 5px 0 0;
 }
 
 .mobileitem th:only-child {
-	-moz-border-radius: 6px 6px 0 0;
-	-webkit-border-radius: 6px 6px 0 0;
-	border-radius: 6px 6px 0 0;
+	-moz-border-radius: 5px 5px 0 0;
+	-webkit-border-radius: 5px 5px 0 0;
+	border-radius: 5px 5px 0 0;
 }
 
 .mobileitem tr:last-child td:first-child {
-	-moz-border-radius: 0 0 0 6px;
-	-webkit-border-radius: 0 0 0 6px;
-	border-radius: 0 0 0 6px;
+	-moz-border-radius: 0 0 0 5px;
+	-webkit-border-radius: 0 0 0 5px;
+	border-radius: 0 0 0 5px;
 }
 
 .mobileitem tr:last-child td:last-child {
-	-moz-border-radius: 0 0 6px 0;
-	-webkit-border-radius: 0 0 6px 0;
-	border-radius: 0 0 6px 0;
+	-moz-border-radius: 0 0 5px 0;
+	-webkit-border-radius: 0 0 5px 0;
+	border-radius: 0 0 5px 0;
 }
 
 .mobileitem tr:last-child td[colspan="2"] {
-	-moz-border-radius: 0 0 6px 6px;
-	-webkit-border-radius: 0 0 6px 6px;
-	border-radius: 0 0 6px 6px;
+	-moz-border-radius: 0 0 5px 5px;
+	-webkit-border-radius: 0 0 5px 5px;
+	border-radius: 0 0 5px 5px;
 }
 
 .mobileitem #status {
@@ -795,7 +792,7 @@ table.mobileitem {
 	border-width: 1px;
 	border-style: solid;
 	border-color: #333 #333 #777 #333;
-	border-radius: 25px;
+	border-radius: .3125em;
 	width: 100%;
 	margin-top: 0px;
 	position: absolute;
@@ -833,7 +830,7 @@ table.mobileitem {
 	border: 0;
 	top: 0;
 	height: 100%;
-	border-radius: 25px;
+	border-radius: .3125em;
 }
 
 #holder {
@@ -905,9 +902,9 @@ table.mobileitem {
 
 .navbar .nav .dropdown-menu {
 	border: 1px solid #616261;
-	-webkit-border-radius: 3px;
-	-moz-border-radius: 3px;
-	border-radius: 3px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
 	font-family: arial, helvetica, sans-serif;
 	padding: 4px 4px 4px 4px;
 	background-color: #7d7e7d;
@@ -926,9 +923,9 @@ table.mobileitem {
 	font-family: 'Abel', sans-serif;
 	color: #FC2C2C;
 	border: 1px solid #616261;
-	-webkit-border-radius: 3px;
-	-moz-border-radius: 3px;
-	border-radius: 3px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
 	font-family: arial, helvetica, sans-serif;
 	padding: 10px 10px 10px 10px;
 	font-weight: bold;
@@ -968,9 +965,9 @@ table.mobileitem {
 
 .navbar .nav .current_page_item > a {
 	border: 1px solid #25729a;
-	-webkit-border-radius: 3px;
-	-moz-border-radius: 3px;
-	border-radius: 3px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
 	font-family: arial, helvetica, sans-serif;
 	padding: 10px 10px 10px 10px;
 	font-weight: bold;
@@ -1093,7 +1090,30 @@ div.log {
 .page-header-small {
 	padding-bottom: 4px;
 	margin: 20px 0 6px;
-	border-bottom: 1px solid #eeeeee;
+	border-bottom: 3px double var(--accent-color);
+	font-size: 9pt;
+}
+
+.page-header-with-button {
+	display: flex;
+}
+.page-header-with-button h1 {
+	flex: 1;
+}
+.page-header-with-button div {
+	flex: 1 0 100px;
+	text-align: right;
+}
+.page-header-with-button a {
+	padding: 4px 1.25em;
+}
+
+.page-content-container {
+	background: #11213d;
+	border: 1px solid var(--accent-color);
+	border-radius: 5px;
+	padding: 10px 0;
+	margin-top: 10px;
 }
 
 a:link {
@@ -1653,7 +1673,6 @@ span.evomobile {
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
-	background-color: #FFF;
 	min-width: 294px;
 	overflow: scroll;
 	overflow-x: hidden;
@@ -1664,11 +1683,13 @@ span.evomobile {
 }
 
 .iconlist .iconlistitem {
-	padding: 0px;
-	width: 290px;
+	padding: 2px;
+	width: 289px;
 	overflow: auto;
-	margin: 2px 0px 0px 0px;
+	margin: 3px;
 	height: 52px;
+	background: #F2F1FA;
+	border-radius: 5px;
 }
 
 .iconlist .iconlistitem:hover {
@@ -1692,7 +1713,7 @@ span.evomobile {
 }
 
 .iconlist .iconlistitem img {
-	margin-top: 1px;
+	margin: 1px 10px 0 5px;
 	width: 48px;
 	height: 48px;
 	float: left;
@@ -1708,22 +1729,21 @@ span.evomobile {
 	overflow: hidden;
 }
 
-.inputbox {
-	background-color: #FFF;
-	border-color: #B4BAC0;
-	color: #333;
-}
-
 .autowidth {
 	width: auto !important;
 }
 
 .inputbox {
-	background-color: #FFF;
-	border: 1px solid #C0C0C0;
-	color: #333;
+	border: none;
+	background: #283750;
+	color: #eee;
 	padding: 2px;
 	cursor: text;
+	margin-right: 10px;
+}
+
+.iconedit img {
+	margin: 0 10px;
 }
 
 #timesun {
@@ -1775,9 +1795,9 @@ span.evomobile {
 	font-size: 13px;
 	line-height: 100%;
 	border-color: transparent;
-	border-radius: 7px;
-	-moz-border-radius: 7px;
-	-webkit-border-radius: 7px;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
 }
 #tbFiltSearch.tbFiltSearchWithResults INPUT{
 	width:115px;
@@ -1814,6 +1834,7 @@ span.evomobile {
 	width: 140px;
 	margin-bottom: 5px;
 	display: inline-block;
+	padding: 4px;
 }
 
 #tbTimeSun{
@@ -2154,6 +2175,9 @@ tspan {
 	height: 300px;
 	margin-bottom: 38px;
 }
+device-light-log, .device-log-chart:first-child {
+	margin-top: 19px;
+}
 
 .device-log-chart_sm {
 	height: 100px;
@@ -2432,23 +2456,30 @@ table.display thead th.sorting_disabled div.DataTables_sort_wrapper {
 .chartarea {
 	position: relative;
 }
-.zoom-buttons-container {
-	position: absolute;
-	right: 50px;
-	padding-top: 11px;
-	z-index: 1;
-}
 .chartarea button {
 	float: right;
 	height: 21px;
 	border-radius: 2px;
 	border-width: 0px;
 }
+.zoom-buttons-container {
+	display: flex;
+	position: absolute;
+	right: 50px;
+	padding-top: 11px;
+	z-index: 1;
+}
 .zoom-button {
-	width: 24px;
+	margin-left: 5px;
+	margin-right: 5px !important;
 	background-color: transparent;
 	color: rgb(221, 221, 221);
 }
+.zoom-button-active {
+    color: #aaf5aa;
+	font-weight: bold;
+}
+
 .zoom-reset {
 	padding-left: 6px;
 	padding-right: 6px;

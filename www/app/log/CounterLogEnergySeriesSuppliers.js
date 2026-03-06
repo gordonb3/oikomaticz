@@ -35,7 +35,7 @@
             p1MonthYearSeriesSuppliers: p1MonthYearSeriesSuppliers,
 			p1PastMonthYearSeriesSuppliers: p1PastMonthYearSeriesSuppliers,
             p1PriceSeriesSuppliers: p1PriceSeriesSuppliers,
-			p1TrendlineMonthYearSeriesSuppliers: p1TrendlineMonthYearSeriesSuppliers,
+			p1TrendlineMonthYearSeriesSuppliers: p1TrendlineMonthYearSeriesSuppliers
         };
 
         function counterDaySeriesSuppliers(deviceType) {
@@ -106,13 +106,17 @@
                     label: 'J',
                     template: {
                         type: 'area',
+						threshold: 0,
                         name: $.t('Energy Usage'),
                         tooltip: {
                             valueSuffix: ' ' + chart.valueUnits.energy(chart.valueMultipliers.m1)
                         },
+						marker: {
+							enabled: false
+						},
                         color: 'rgba(120,150,220,0.9)',
                         fillOpacity: 0.2,
-                        yAxis: 0,
+                        yAxis: 1,
                         visible: false
                     }
                 },
@@ -123,13 +127,17 @@
                     label: 'K',
                     template: {
                         type: 'area',
+						threshold: 0,
                         name: $.t('Energy Returned'),
                         tooltip: {
                             valueSuffix: ' ' + chart.valueUnits.energy(chart.valueMultipliers.m1)
                         },
+						marker: {
+							enabled: false
+						},
                         color: 'rgba(120,220,150,0.9)',
                         fillOpacity: 0.2,
-                        yAxis: 0,
+                        yAxis: 1,
                         visible: false
                     }
                 },
@@ -137,13 +145,30 @@
                     id: 'p1DSSU',
                     dataItemKeys: ['v'],
                     showWithoutDatapoints: false,
+                    //convertZeroToNull: true,
                     label: 'L0',
                     template: {
+                        type: 'area',
+						threshold: 0,
                         name: $.t('Usage'),
                         tooltip: {
                             valueSuffix: ' ' + chart.valueUnits.power(chart.valueMultipliers.m1)
                         },
-                        color: 'rgba(3,190,252,0.8)',
+						marker: {
+							enabled: false
+						},
+						color: {
+							linearGradient: {
+								x1: 0,
+								y1: 0,
+								x2: 0,
+								y2: 1
+							},
+							stops: [
+								[0, 'rgb(160, 30, 252, 1)'],
+								[1, 'rgb(3, 190, 252, 0.8)']
+							]
+						},						
                         stack: 'susage',
                         yAxis: 1
                     }
@@ -154,11 +179,17 @@
                     showWithoutDatapoints: false,
                     label: '<=',
                     template: {
+                        type: 'area',
+						threshold: 0,
                         name: $.t('Usage') + ' 1',
                         tooltip: {
                             valueSuffix: ' ' + chart.valueUnits.power(chart.valueMultipliers.m1)
                         },
-                        color: 'rgba(60,130,252,0.8)',
+						marker: {
+							enabled: false
+						},
+                        color: 'rgba(60,130,252)',
+						fillOpacity: 0.5,
                         stack: 'susage',
                         yAxis: 1
                     }
@@ -169,11 +200,17 @@
                     showWithoutDatapoints: false,
                     label: 'M',
                     template: {
+                        type: 'area',
+						threshold: 0,
                         name: $.t('Usage') + ' 2',
                         tooltip: {
                             valueSuffix: ' ' + chart.valueUnits.power(chart.valueMultipliers.m1)
                         },
+						marker: {
+							enabled: false
+						},
                         color: 'rgba(3,190,252,0.8)',
+						fillOpacity: 0.5,
                         stack: 'susage',
                         yAxis: 1
                     }
@@ -337,13 +374,30 @@
                         return data.delivered === true;
                     },
                     showWithoutDatapoints: false,
+                    //convertZeroToNull: true,
                     label: 'R',
                     template: {
+						type: 'area',
+						threshold: 0,
                         name: $.t('Return'),
                         tooltip: {
                             valueSuffix: ' ' + chart.valueUnits.power(chart.valueMultipliers.m1)
                         },
-                        color: 'rgba(3,252,190,0.8)',
+						marker: {
+							enabled: false
+						},
+						color: {
+							linearGradient: {
+								x1: 0,
+								y1: 0,
+								x2: 0,
+								y2: 1
+							},
+							stops: [
+								[0, 'rgb(3,152,90)'],
+								[0.8, 'rgb(3,252,190)']
+							]
+						},						
                         stack: 'sreturn',
                         yAxis: 1
                     }
@@ -357,11 +411,17 @@
                     showWithoutDatapoints: false,
                     label: 'R',
                     template: {
+						type: 'area',
+						threshold: 0,
                         name: $.t('Return') + ' 1',
                         tooltip: {
                             valueSuffix: ' ' + chart.valueUnits.power(chart.valueMultipliers.m1)
                         },
-                        color: 'rgba(30,242,110,0.8)',
+						marker: {
+							enabled: false
+						},
+						color: 'rgba(30,242,110,0.8)',
+						fillOpacity: 0.5,
                         stack: 'sreturn',
                         yAxis: 1
                     }
@@ -375,11 +435,17 @@
                     showWithoutDatapoints: false,
                     label: 'S',
                     template: {
+						type: 'area',
+						threshold: 0,
                         name: $.t('Return') + ' 2',
                         tooltip: {
                             valueSuffix: ' ' + chart.valueUnits.power(chart.valueMultipliers.m1)
                         },
-                        color: 'rgba(3,252,190,0.8)',
+						marker: {
+							enabled: false
+						},
+						color: 'rgba(3,252,190,0.8)',
+						fillOpacity: 0.5,
                         stack: 'sreturn',
                         yAxis: 1
                     }
@@ -576,9 +642,7 @@
                     }
                 })
             ];
-			
-        }
-		
+        }		
     });
 
 });

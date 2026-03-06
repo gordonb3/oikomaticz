@@ -4,7 +4,6 @@ project(static_libs)
 
 # defaults
 option(USE_BUILTIN_LUA "Use builtin lua library" NO)
-option(USE_BUILTIN_MQTT "Use builtin mosquitto library" NO)
 option(USE_BUILTIN_SQLITE "Use builtin sqlite library" NO)
 option(USE_BUILTIN_ZLIB "Use builtin zlib library" NO)
 option(USE_BUILTIN_MINIZIP "Use builtin minizip library" NO)
@@ -39,9 +38,19 @@ add_library(evohome STATIC ${evohome_SRCS})
 # local Tuya client
 file(GLOB_RECURSE tuyapp_SRCS tuyapp/src/*.cpp)
 include_directories(tuyapp/src/)
+#API 3.1 seems to be broken
+add_definitions(-DWITHOUT_API31)
 add_library(tuyapp STATIC ${tuyapp_SRCS})
 
-set(STATIC_LIBRARIES iamserver jsoncpp tinyxpath serial evohome tuyapp)
+# mdns
+file(GLOB mdns_SRCS mdns/*.cpp)
+add_library(mdns STATIC ${mdns_SRCS})
+
+# mcpserver
+file(GLOB mcpserver_SRCS mcpserver/*.cpp)
+add_library(mcpserver STATIC ${mcpserver_SRCS})
+
+set(STATIC_LIBRARIES iamserver jsoncpp tinyxpath serial evohome tuyapp mdns mcpserver)
 
 
 ## included libraries that may be used to override dynamicly linked system provided libraries
@@ -84,35 +93,6 @@ else(USE_BUILTIN_LUA)
     message(FATAL_ERROR "LUA not found but USE_BUILTIN_LUA=NO")
   endif(LUA_FOUND)
 endif(USE_BUILTIN_LUA)
-
-#
-# MOSQUITTO
-#
-if(USE_BUILTIN_MQTT)
-  message(STATUS "Using builtin mosquitto library")
-  add_subdirectory(mosquittopp)
-  get_directory_property(MQTT_LIBRARIES DIRECTORY mosquittopp DEFINITION MQTT_LIBRARIES)
-  add_definitions(-DBUILTIN_MQTT)
-  set(MQTT_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/mosquittopp")
-else(USE_BUILTIN_MQTT)
-  pkg_check_modules(MQTT QUIET libmosquitto)
-  if(MQTT_FOUND)
-    message(STATUS "Found Mosquitto ${MQTT_VERSION} at: ${MQTT_INCLUDEDIR}")
-  else(MQTT_FOUND)
-    find_path(MQTT_INCLUDE_DIRS NAMES mosquitto.h)
-    if(MQTT_INCLUDE_DIRS)
-      find_library(MQTT_LIBRARIES NAMES libmosquitto.so)
-      if(MQTT_LIBRARIES)
-        string(REPLACE "/mosquitto.h" "" MQTT_INCLUDEDIR ${MQTT_INCLUDE_DIRS})
-        message(STATUS "Found Mosquitto at: ${MQTT_INCLUDEDIR}")
-      else(MQTT_LIBRARIES)
-        message(FATAL_ERROR "Mosquitto library not found, but USE_BUILTIN_MQTT=NO")
-      endif(MQTT_LIBRARIES)
-    else(MQTT_INCLUDE_DIRS)
-      message(FATAL_ERROR "Mosquitto not found, but USE_BUILTIN_MQTT=NO")
-    endif(MQTT_INCLUDE_DIRS)
-  endif(MQTT_FOUND)
-endif(USE_BUILTIN_MQTT)
 
 #
 # SQLITE
@@ -172,6 +152,30 @@ else(USE_BUILTIN_MINIZIP)
   endif(MINIZIP_FOUND)
 endif(USE_BUILTIN_MINIZIP)
 
+
+
+## dynamicly linked system provided libraries
+
+#
+# MOSQUITTO
+#
+pkg_check_modules(MQTT QUIET libmosquitto)
+if(MQTT_FOUND)
+  message(STATUS "Found Mosquitto ${MQTT_VERSION} at: ${MQTT_INCLUDEDIR}")
+else(MQTT_FOUND)
+  find_path(MQTT_INCLUDE_DIRS NAMES mosquitto.h)
+  if(MQTT_INCLUDE_DIRS)
+    find_library(MQTT_LIBRARIES NAMES libmosquitto.so)
+    if(MQTT_LIBRARIES)
+      string(REPLACE "/mosquitto.h" "" MQTT_INCLUDEDIR ${MQTT_INCLUDE_DIRS})
+      message(STATUS "Found Mosquitto at: ${MQTT_INCLUDEDIR}")
+    else(MQTT_LIBRARIES)
+      message(FATAL_ERROR "Mosquitto library not found, but USE_BUILTIN_MQTT=NO")
+    endif(MQTT_LIBRARIES)
+  else(MQTT_INCLUDE_DIRS)
+    message(FATAL_ERROR "Mosquitto not found, but USE_BUILTIN_MQTT=NO")
+  endif(MQTT_INCLUDE_DIRS)
+endif(MQTT_FOUND)
 
 ## combine paths for querying by our main project file
 set(BUILTIN_LIBRARIES ${STATIC_LIBRARIES} ${LUA_LIBRARIES} ${MQTT_LIBRARIES} ${SQLite_LIBRARIES} ${ZLIB_LIBRARIES} ${MINIZIP_LIBRARIES})

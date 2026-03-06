@@ -26,7 +26,8 @@ Example
 {"production":[{"type":"inverters","activeCount":9,"readingTime":1568991780,"wNow":712,"whLifetime":1448651},{"type":"eim","activeCount":1,"measurementType":"production","readingTime":1568991966,"wNow":624.315,"whLifetime":1455843.527,"varhLeadLifetime":0.001,"varhLagLifetime":311039.158,"vahLifetime":1619431.681,"rmsCurrent":2.803,"rmsVoltage":233.289,"reactPwr":137.092,"apprntPwr":654.245,"pwrFactor":0.95,"whToday":4295.527,"whLastSevenDays":74561.527,"vahToday":5854.681,"varhLeadToday":0.001,"varhLagToday":2350.158}],"consumption":[{"type":"eim","activeCount":1,"measurementType":"total-consumption","readingTime":1568991966,"wNow":1260.785,"whLifetime":2743860.336,"varhLeadLifetime":132372.858,"varhLagLifetime":273043.125,"vahLifetime":3033001.948,"rmsCurrent":5.995,"rmsVoltage":233.464,"reactPwr":437.269,"apprntPwr":1399.886,"pwrFactor":0.9,"whToday":11109.336,"whLastSevenDays":129007.336,"vahToday":13323.948,"varhLeadToday":895.858,"varhLagToday":3700.125},{"type":"eim","activeCount":1,"measurementType":"net-consumption","readingTime":1568991966,"wNow":636.47,"whLifetime":0.0,"varhLeadLifetime":132372.857,"varhLagLifetime":-37996.033,"vahLifetime":3033001.948,"rmsCurrent":3.191,"rmsVoltage":233.376,"reactPwr":574.361,"apprntPwr":744.807,"pwrFactor":0.85,"whToday":0,"whLastSevenDays":0,"vahToday":0,"varhLeadToday":0,"varhLagToday":0}],"storage":[{"type":"acb","activeCount":0,"readingTime":0,"wNow":0,"whNow":0,"state":"idle"}]}
 */
 
-#define ENPHASE_API_INFO "http://{ip}/info.xml" //needs to be http
+#define ENPHASE_API_INFO "{ip}/info.xml"
+#define ENPHASE_API_INFO_OLD "http://{ip}/info.xml" //needs to be http
 #define ENPHASE_API_HOME "{ip}/home.json"
 #define ENPHASE_API_CHECK_JWT "{ip}/auth/check_jwt"
 #define ENPHASE_API_PRODUCTION "{ip}/production.json?details=1"
@@ -39,6 +40,24 @@ Example
 #define ENPAHSE_API_REPORT_PRODUCTION "{ip}/ivp/meters/reports/production"
 #define ENPAHSE_API_REPORT_CONSUMPTION "{ip}/ivp/meters/reports/consumption"
 #define ENPAHSE_API_LIVEDATA_STATUS "{ip}/ivp/livedata/status"
+
+/*
+#define ENPAHSE_API_LIMIT_POWER "{ip}/ivp/ss/dpel"
+with data:
+{
+	"dynamic_pel_settings": {
+		"enable": true,
+		"export_limit": true,
+		"limit_value_W": 250.0,
+		"slew_rate": 50.0,
+		"enable_dynamic_limiting": false.
+	},
+	"filename": "site_settings",
+	"version": "00.00.01".
+}
+*/
+
+//3 August 2025, found a great website with all the API endpoints: https://github.com/Matthew1471/Enphase-API
 
 #ifdef DEBUG_EnphaseAPI_W
 void SaveString2Disk(std::string str, std::string filename)
@@ -143,9 +162,6 @@ EnphaseAPI::EnphaseAPI(
 		m_szTokenInstaller = result[0][1];
 	}
 	//(We can probably not use them both at the same time)
-
-	//Init Production counter
-	m_ProductionCounter.Init("EnphaseOffset_Production_" + std::to_string(m_HwdID), this);
 }
 
 bool EnphaseAPI::StartHardware()
@@ -434,8 +450,12 @@ bool EnphaseAPI::GetSerialSoftwareVersion()
 #else
 	if (!HTTPClient::GET(MakeURL(ENPHASE_API_INFO), sResult))
 	{
-		Log(LOG_ERROR, "Error getting http data! (info)");
-		return false;
+		//could be an old firmware
+		if (!HTTPClient::GET(MakeURL(ENPHASE_API_INFO_OLD), sResult))
+		{
+			Log(LOG_ERROR, "Error getting http data! (info)");
+			return false;
+		}
 	}
 #ifdef DEBUG_EnphaseAPI_W
 	SaveString2Disk(sResult, "E:\\EnphaseAPI_info.xml");
@@ -597,47 +617,31 @@ bool EnphaseAPI::GetOwnerToken()
 
 	std::string session_id = root["session_id"].asString();
 
+	Json::Value jdata;
+	jdata["session_id"] = session_id;
+	jdata["serial_num"] = m_szSerial;
+	jdata["username"] = m_szUsername;
+	szPostdata = JSonToRawString(jdata);
+
+	ExtraHeaders.clear();
+	ExtraHeaders.push_back("Content-type: application/json");
+	ExtraHeaders.push_back("Accept: application/json");
+
+
 	//Now get the Token
 #ifdef DEBUG_EnphaseAPI_R
 	sResult = ReadFile("E:\\EnphaseAPI_token.json");
 #else
-	std::string enlightenTokenURL = "https://enlighten.enphaseenergy.com/entrez-auth-token?serial_num=<SERIAL>";
-	stdreplace(enlightenTokenURL, "<SERIAL>", m_szSerial);
-
-	if (!HTTPClient::GET(enlightenTokenURL, ExtraHeaders, sResult))
+	if (!HTTPClient::POST("https://entrez.enphaseenergy.com/tokens", szPostdata, ExtraHeaders, sResult))
 	{
-		Log(LOG_ERROR, "Error getting http data! (check_jwt)");
+		Log(LOG_ERROR, "Error getting http data! (login/tokens)");
 		return false;
 	}
+#endif
 #ifdef DEBUG_EnphaseAPI_W
 	SaveString2Disk(sResult, "E:\\EnphaseAPI_token.json");
 #endif
-#endif
-	Json::Value result;
-	ret = ParseJSon(sResult, result);
-	if ((!ret) || (!result.isObject()))
-	{
-		m_szToken.clear();
-		Log(LOG_ERROR, "Invalid data received! (production/json)");
-		return false;
-	}
-	if (
-		(result["token"].empty())
-		|| (result["expires_at"].empty())
-		)
-	{
-		m_szToken.clear();
-		Log(LOG_ERROR, "Invalid (no) data received (get_token, objects not found)");
-		return false;
-	}
-	m_szToken = result["token"].asString();
-	time_t expires_at = result["expires_at"].asInt64();
-	//print expires_at
-	struct tm* timeinfo;
-	timeinfo = localtime(&expires_at);
-	char buffer[80];
-	strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
-	Log(LOG_STATUS, "Token expires at: %s", buffer);
+	m_szToken = sResult;
 	if (!CheckAuthJWT(m_szToken, true))
 		return false;
 
@@ -845,10 +849,13 @@ void EnphaseAPI::parseProduction(const Json::Value& root)
 	if (musage < 0)
 		musage = 0; //seems sometimes the production value is negative??
 
-	uint64_t mtotal = reading["whLifetime"].asUInt64();
-	if (mtotal != 0)
+	double mtotal = reading["whLifetime"].asDouble();
+	double adjustedTotal = m_ProductionCounter.CheckTotalCounter(this, m_HwdID, 1, 1, mtotal / 1000.0);
+
+	// Only send the meter update if we have a valid total (not initial 0)
+	if (adjustedTotal > 0 || mtotal > 0)
 	{
-		m_ProductionCounter.SendKwhMeter(m_HwdID, 1, 255, musage, mtotal / 1000.0, "Enphase kWh Production");
+		SendKwhMeter(m_HwdID, 1, 255, musage, adjustedTotal, "Enphase kWh Production");
 	}
 }
 
@@ -859,7 +866,12 @@ void EnphaseAPI::parseConsumption(const Json::Value& root)
 		return;
 	}
 
-	int iIndex = 2;
+/*
+* New method with dedicated counters for total and net consumption
+* to avoid issues with resets
+* But does not seem to work!
+* So keeping the old method above
+*/
 	for (const auto& itt : root["consumption"])
 	{
 		int activeCount = itt["activeCount"].asInt();
@@ -868,12 +880,23 @@ void EnphaseAPI::parseConsumption(const Json::Value& root)
 
 		m_bHaveConsumption = true;
 
-		std::string szName = "Enphase " + itt["measurementType"].asString();
+		std::string measurementType = itt["measurementType"].asString();
+		std::string szName = "Enphase " + measurementType;
 		int musage = itt["wNow"].asInt();
-		int mtotal = itt["whLifetime"].asInt();
+		double mtotal = itt["whLifetime"].asDouble();
 		if (mtotal != 0)
 		{
-			SendKwhMeter(m_HwdID, iIndex++, 255, musage, mtotal / 1000.0, szName);
+			// Use fixed indices and dedicated counter helpers for each consumption type
+			if (measurementType == "total-consumption")
+			{
+				double adjustedTotal = m_ConsumptionTotalCounter.CheckTotalCounter(this, m_HwdID, 2, 1, mtotal / 1000.0);
+				SendKwhMeter(m_HwdID, 2, 255, musage, adjustedTotal, szName);
+			}
+			else if (measurementType == "net-consumption")
+			{
+				double adjustedTotal = m_ConsumptionNetCounter.CheckTotalCounter(this, m_HwdID, 3, 1, mtotal / 1000.0);
+				SendKwhMeter(m_HwdID, 3, 255, musage, adjustedTotal, szName);
+			}
 		}
 	}
 }
@@ -1385,6 +1408,8 @@ bool EnphaseAPI::getInverterDetails()
 		return false;
 	}
 
+	time_t atime = time(nullptr);
+
 	for (const auto& itt : root)
 	{
 		if (itt["serialNumber"].empty())
@@ -1393,6 +1418,14 @@ bool EnphaseAPI::getInverterDetails()
 
 		int musage = itt["lastReportWatts"].asInt();
 		int mtotal = itt["maxReportWatts"].asInt();
+
+		time_t last_reported = static_cast<time_t>(itt["lastReportDate"].asInt());
+
+		bool bTimeout = false;
+
+		if (last_reported < atime - 3600 * 24) {
+			bTimeout = true;
+		}
 
 		std::string szDeviceID = szSerialNumber;
 		std::string sDeviceName = "Inv " + szSerialNumber;
@@ -1406,6 +1439,13 @@ bool EnphaseAPI::getInverterDetails()
 			m_HwdID, szDeviceID.c_str(), 1, devType, subType);
 		if (result.empty())
 		{
+			if (bTimeout)
+			{
+				//nothing received for the last hour!
+				std::string szLogMsg = "Last update more then 1 day ago from inverter " + TimeToString(&last_reported, TF_DateTime) + ", serial: " + szSerialNumber + ")";
+				Log(LOG_ERROR, "%s", szLogMsg.c_str());
+				continue;
+			}
 			// Insert
 			int iUsed = 0;
 			m_sql.safe_query("INSERT INTO DeviceStatus (HardwareID, OrgHardwareID, DeviceID, Unit, Type, SubType, SignalLevel, BatteryLevel, Name, Used, nValue, sValue) "
@@ -1421,6 +1461,13 @@ bool EnphaseAPI::getInverterDetails()
 		}
 		else
 		{
+			if (bTimeout)
+			{
+				//nothing received for the last hour!
+				std::string szLogMsg = "Last update more then 1 day ago from inverter: \"" + result[0][0] + "\" (" + TimeToString(&last_reported, TF_DateTime) + ", serial: " + szSerialNumber + ")";
+				Log(LOG_ERROR, "%s", szLogMsg.c_str());
+				continue;
+			}
 			// Update
 			UpdateValueInt(szDeviceID.c_str(), 1, devType, subType, 12, 255, nValue, sValue.c_str(), result[0][0]);
 		}

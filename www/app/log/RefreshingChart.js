@@ -82,7 +82,7 @@ define(['lodash', 'Base', 'DomoticzBase', 'DataLoader', 'ChartLoader', 'ChartZoo
         function createChartDefinition(template) {
             return _.merge({
                     chart: {
-                        type: 'spline',
+                        type: (self.dataSupplier.isShortLogChart) ? 'area' : 'spline',
                         zoomType: 'x',
                         marginTop: 45,
                         panning: true,
@@ -176,7 +176,7 @@ define(['lodash', 'Base', 'DomoticzBase', 'DataLoader', 'ChartLoader', 'ChartZoo
                                                     self.dataSupplier.isShortLogChart,
                                                     Intl.DateTimeFormat().resolvedOptions().timeZone
                                                 ).then(function () {
-                                                    self.$route.reload();
+													window.location.reload();
                                                 });
                                             }
                                         }
@@ -221,6 +221,19 @@ define(['lodash', 'Base', 'DomoticzBase', 'DataLoader', 'ChartLoader', 'ChartZoo
                                     }
                                 }
                             }
+                        },
+                        area: {
+							threshold: null,
+                            lineWidth: 1.4,
+                            marker: {
+                                enabled: false
+                            },
+                            states: {
+                                hover: {
+                                    lineWidth: 2
+                                }
+                            },
+							fillOpacity: 0.4
                         },
                         areasplinerange: {
                             marker: {
@@ -626,6 +639,18 @@ define(['lodash', 'Base', 'DomoticzBase', 'DataLoader', 'ChartLoader', 'ChartZoo
 			self.$scope.changeCompTypeTemp = function() {
 				self.ctrl.var_name = self.$scope.comptype;
 				refreshChartData();
+			}
+			
+			self.$scope.isTemp = function() {
+				if (self.ctrl !== undefined) {
+					if (self.ctrl.sensorType !== undefined) {
+						let sensorType = self.ctrl.sensorType;
+						if (sensorType == "hum") {
+							return false;
+						}
+					}
+				}
+				return true;
 			}
 
             self.$scope.groupByLabel = function (label) {

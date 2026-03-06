@@ -68,9 +68,9 @@ public:
 	void CheckSceneCode(uint64_t DevRowIdx, uint8_t dType, uint8_t dSubType, int nValue, const char *sValue, const std::string &User);
 	bool DoesDeviceActiveAScene(uint64_t DevRowIdx, int Cmnd);
 
-	bool SetSetPoint(const std::string &idx, float TempValue);
-	bool SetSetPointInt(const std::vector<std::string> &sd, float TempValue);
-	bool SetSetPointEvo(const std::string& idx, float TempValue, const std::string& newMode, const std::string& until);
+	bool SetSetPoint(const std::string &idx, float TempValue, const std::string& User = "");
+	bool SetSetPointInt(const std::vector<std::string> &sd, float TempValue, const std::string& User = "");
+	bool SetSetPointEvo(const std::string& idx, float TempValue, const std::string& newMode, const std::string& until, const std::string& User = "");
 	bool SetThermostatState(const std::string &idx, int newState);
 
 	bool SetTextDevice(const std::string& idx, const std::string & text);
@@ -269,6 +269,7 @@ private:
 	void decode_GeneralSwitch(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_HomeConfort(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_Thermostat(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
+	void decode_Thermostat6(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_Chime(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_BBQ(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);
 	void decode_Power(const CDomoticzHardwareBase *pHardware, const tRBUF *pResponse, _tRxMessageProcessingResult & procResult);

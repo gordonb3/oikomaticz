@@ -10,9 +10,6 @@
 #pragma once
 #include <string>
 
-#define EVOHOME_HOST "https://tccna.honeywell.com"
-
-
 namespace evohome {
 
   namespace messages {

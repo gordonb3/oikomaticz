@@ -47,6 +47,13 @@ namespace http
 				return;
 			std::string sensorarea = request::findValue(&req, "sensorarea");
 			std::string srange = request::findValue(&req, "range");
+
+			if (srange == "stats")
+			{
+				Cmd_GetkWhStats(session, req, root);
+				return;
+			}
+
 			std::string sgroupby = request::findValue(&req, "groupby");
 			if (srange.empty() && sgroupby.empty())
 				return;
@@ -80,6 +87,11 @@ namespace http
 			double AddjValue2 = atof(result[0][5].c_str());
 			std::string sOptions = result[0][6];
 			std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sOptions);
+
+			if (options["AddDBLogEntry"] == "true")
+			{
+				bIsManagedCounter = true;
+			}
 
 			double divider = m_sql.GetCounterDivider(int(metertype), int(dType), float(AddjValue2));
 
@@ -119,7 +131,10 @@ namespace http
 			else
 			{
 				// week,year,month
-				if (sensor == "temp")
+				if (
+					(sensor == "temp")
+					|| (sensor == "hum")
+					)
 					dbasetable = "Temperature_Calendar";
 				else if (sensor == "rain")
 					dbasetable = "Rain_Calendar";
@@ -175,7 +190,7 @@ namespace http
 					{
 						root["status"] = "OK";
 						root["title"] = "Graph " + sensor + " " + srange;
-/*
+
 						char szDateStart[40];
 						char szDateEnd[40];
 						sprintf(szDateEnd, "%04d-%02d-%02d %02d:%02d:%02d", tm1.tm_year + 1900, tm1.tm_mon + 1, tm1.tm_mday, tm1.tm_hour, tm1.tm_min, tm1.tm_sec);
@@ -183,15 +198,21 @@ namespace http
 						// Subtract a day
 						time_t daybefore;
 						struct tm tm2;
-						getNoon(daybefore, tm2, tm1.tm_year + 1900, tm1.tm_mon + 1, tm1.tm_mday - 1); // We only want one day
+						getNoon(daybefore, tm2, tm1.tm_year + 1900, tm1.tm_mon + 1, tm1.tm_mday - 1);
 						sprintf(szDateStart, "%04d-%02d-%02d %02d:%02d:%02d", tm2.tm_year + 1900, tm2.tm_mon + 1, tm2.tm_mday, tm1.tm_hour, tm1.tm_min, tm1.tm_sec);
 
-						result = m_sql.safe_query("SELECT strftime('%%Y-%%m-%%d %%H:00:00', Date) as ymd, MIN(Value1) as u1, MIN(Value5) as u2, MIN(Value2) as d1, MIN(Value6) as d2 FROM %s WHERE (DeviceRowID==%" PRIu64 " AND Date>='%q' AND Date<='%q') GROUP BY ymd",
-							dbasetable.c_str(), idx, szDateStart, szDateEnd);
-*/
+						std::string szGroupBy;
+						int resolution = m_sql.m_PriceResolution.load();
+						if (resolution < 60) {
+							// Group by sub-hourly slots using the configured resolution (e.g. 15 or 30 minutes)
+							szGroupBy = "strftime('%%Y-%%m-%%d %%H:', Date) || printf('%%02d', (CAST(strftime('%%M', Date) AS INTEGER) / " + std::to_string(resolution) + ") * " + std::to_string(resolution) + ") || ':00'";
+						} else {
+							// Group by hour (original behavior)
+							szGroupBy = "strftime('%%Y-%%m-%%d %%H:00:00', Date)";
+						}
 
-						result = m_sql.safe_query("SELECT strftime('%%Y-%%m-%%d %%H:00:00', Date) as ymd, MIN(Value1) as u1, MIN(Value5) as u2, MIN(Value2) as d1, MIN(Value6) as d2, Price FROM %s WHERE (DeviceRowID==%" PRIu64 ") GROUP BY ymd",
-							dbasetable.c_str(), idx);
+						result = m_sql.safe_query("SELECT %s as ymd, MIN(Value1) as u1, MIN(Value5) as u2, MIN(Value2) as d1, MIN(Value6) as d2, MIN(Price) as price FROM %s WHERE (DeviceRowID==%" PRIu64 " AND Date>='%q' AND Date<='%q') GROUP BY ymd",
+							szGroupBy.c_str(), dbasetable.c_str(), idx, szDateStart, szDateEnd);
 						if (!result.empty())
 						{
 							int ii = 0;
@@ -199,6 +220,7 @@ namespace http
 							bool bHaveFirstValue = false;
 							int64_t lastUsage, lastDeliv;
 							time_t lastTime = 0;
+							float lastPrice = 0;
 
 							int lastDay = 0;
 
@@ -213,6 +235,7 @@ namespace http
 
 								int64_t actUsage = actUsage1 + actUsage2;
 								int64_t actDeliv = actDeliv1 + actDeliv2;
+								float actPrice = std::stof(sd[5]);
 
 								std::string stime = sd[0];
 								struct tm ntime;
@@ -235,6 +258,7 @@ namespace http
 										lastUsage = actUsage;
 										lastDeliv = actDeliv;
 										lastTime = atime;
+										lastPrice = actPrice;
 										continue;
 									}
 
@@ -253,7 +277,7 @@ namespace http
 									root["result"][ii]["r"] = szTmp;
 
 									float total = (curUsage - curDeliv) / 1000.0F;
-									float fPrice = std::stof(sd[5]) * total;
+									float fPrice = lastPrice * total;
 									sprintf(szTmp, "%.4f", fPrice);
 									root["result"][ii]["p"] = szTmp;
 									ii++;
@@ -265,11 +289,13 @@ namespace http
 								lastUsage = actUsage;
 								lastDeliv = actDeliv;
 								lastTime = atime;
+								lastPrice = actPrice;
 							}
 							if (bHaveDeliverd)
 							{
 								root["delivered"] = true;
 							}
+							root["PriceResolution"] = m_sql.m_PriceResolution.load();
 						}
 					}
 				}
@@ -301,7 +327,7 @@ namespace http
 								|| dType == pTypeRFXSensor && dSubType == sTypeRFXSensorTemp
 								|| dType == pTypeGeneral && dSubType == sTypeSystemTemp
 								|| dType == pTypeGeneral && dSubType == sTypeBaro
-								|| dType == pTypeEvohomeZone
+								|| dType == pTypeEvohomeZone || dType == pTypeThermostat6
 								|| dType == pTypeEvohomeWater
 								)
 							{
@@ -313,11 +339,11 @@ namespace http
 								double tvalue = ConvertTemperature(atof(sd[1].c_str()), tempsign);
 								root["result"][ii]["ch"] = tvalue;
 							}
-							if ((dType == pTypeHUM) || (dType == pTypeTEMP_HUM) || (dType == pTypeTEMP_HUM_BARO))
+							if ((dType == pTypeHUM) || (dType == pTypeTEMP_HUM) || (dType == pTypeTEMP_HUM_BARO) || ((dType == pTypeThermostat6) && ((dSubType == sTypeThermostat6TempHum) || (dSubType == sTypeThermostat6TempHumBaro))))
 							{
 								root["result"][ii]["hu"] = sd[2];
 							}
-							if ((dType == pTypeTEMP_HUM_BARO) || (dType == pTypeTEMP_BARO) || ((dType == pTypeGeneral) && (dSubType == sTypeBaro)))
+							if ((dType == pTypeTEMP_HUM_BARO) || (dType == pTypeTEMP_BARO) || ((dType == pTypeGeneral) && (dSubType == sTypeBaro)) || ((dType == pTypeThermostat6) && ((dSubType == sTypeThermostat6TempBaro) || (dSubType == sTypeThermostat6TempHumBaro))))
 							{
 								if (dType == pTypeTEMP_HUM_BARO)
 								{
@@ -339,8 +365,13 @@ namespace http
 									sprintf(szTmp, "%.1f", atof(sd[3].c_str()) / 10.0F);
 									root["result"][ii]["ba"] = szTmp;
 								}
+								else if ((dType == pTypeThermostat6) && ((dSubType == sTypeThermostat6TempBaro) || (dSubType == sTypeThermostat6TempHumBaro)))
+								{
+									sprintf(szTmp, "%.1f", atof(sd[3].c_str()) / 10.0F);
+									root["result"][ii]["ba"] = szTmp;
+								}
 							}
-							if ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater))
+							if ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater) || (dType == pTypeThermostat6))
 							{
 								double se = ConvertTemperature(atof(sd[5].c_str()), tempsign);
 								root["result"][ii]["se"] = se;
@@ -491,9 +522,9 @@ namespace http
 										root["result"][ii]["v1"] = szTmp;
 										sprintf(szTmp, "%ld", curUsage2);
 										root["result"][ii]["v2"] = szTmp;
-										sprintf(szTmp, "%ld", curDeliv1);
+										sprintf(szTmp, "%ld", -curDeliv1);
 										root["result"][ii]["r1"] = szTmp;
-										sprintf(szTmp, "%ld", curDeliv2);
+										sprintf(szTmp, "%ld", -curDeliv2);
 										root["result"][ii]["r2"] = szTmp;
 									}
 									else
@@ -501,7 +532,7 @@ namespace http
 										//Simple
 										sprintf(szTmp, "%ld", curUsage1 + curUsage2);
 										root["result"][ii]["v"] = szTmp;
-										sprintf(szTmp, "%ld", curDeliv1 + curDeliv2);
+										sprintf(szTmp, "%ld", -(curDeliv1 + curDeliv2));
 										root["result"][ii]["r"] = szTmp;
 									}
 									long pUsage1 = (long)(actUsage1 - firstUsage1);
@@ -513,7 +544,7 @@ namespace http
 									{
 										long pDeliv1 = (long)(actDeliv1 - firstDeliv1);
 										long pDeliv2 = (long)(actDeliv2 - firstDeliv2);
-										sprintf(szTmp, "%ld", pDeliv1 + pDeliv2);
+										sprintf(szTmp, "%ld", -(pDeliv1 + pDeliv2));
 										root["result"][ii]["eg"] = szTmp;
 									}
 
@@ -1014,6 +1045,7 @@ namespace http
 						root["ValueQuantity"] = options["ValueQuantity"];
 						root["ValueUnits"] = options["ValueUnits"];
 						root["Divider"] = divider;
+						root["PriceResolution"] = m_sql.m_PriceResolution.load();
 
 						int ii = 0;
 
@@ -1029,6 +1061,11 @@ namespace http
 
 						int lastHour = 0;
 						time_t lastTime = 0;
+
+						// Sub-hourly slot grouping for kWh meters
+						bool bUseSubHourSlots = (m_sql.m_PriceResolution < 60);
+						int lastSlot = -1;  // replaces lastHour for 15-min mode
+						int currentSlot = 0;
 
 						int method = 0;
 						std::string sMethod = request::findValue(&req, "method");
@@ -1058,11 +1095,23 @@ namespace http
 									// bars / hour
 									int64_t actValue = std::stoll(sd[0]);
 									szlastDateTime = sd[1].substr(0, 16);
-									szActDateTimeHour = sd[1].substr(0, 13) + ":00";
 
 									struct tm ntime;
 									time_t atime;
 									ParseSQLdatetime(atime, ntime, sd[1], -1);
+
+									// Format timestamp for 15-min or hourly slots
+									if (bUseSubHourSlots)
+									{
+										int slotMin = (ntime.tm_min / m_sql.m_PriceResolution) * m_sql.m_PriceResolution;
+										char szSlot[32];
+										snprintf(szSlot, sizeof(szSlot), "%s%02d", sd[1].substr(0, 14).c_str(), slotMin);
+										szActDateTimeHour = szSlot;
+									}
+									else
+									{
+										szActDateTimeHour = sd[1].substr(0, 13) + ":00";
+									}
 
 									if (actValue < ulFirstValue)
 									{
@@ -1070,11 +1119,14 @@ namespace http
 										{
 											//Assume ,eter/counter turnover
 											ulFirstValue = ulRealFirstValue = actValue;
+											currentSlot = bUseSubHourSlots ? (ntime.tm_hour * (60 / m_sql.m_PriceResolution) + ntime.tm_min / m_sql.m_PriceResolution) : ntime.tm_hour;
+											lastSlot = currentSlot;
 											lastHour = ntime.tm_hour;
 										}
 									}
 
-									if (lastHour != ntime.tm_hour)
+									currentSlot = bUseSubHourSlots ? (ntime.tm_hour * (60 / m_sql.m_PriceResolution) + ntime.tm_min / m_sql.m_PriceResolution) : ntime.tm_hour;
+									if (lastSlot != currentSlot)
 									{
 										if (lastDay != ntime.tm_mday)
 										{
@@ -1145,12 +1197,15 @@ namespace http
 										{
 											ulFirstValue = actValue;
 										}
+										lastSlot = currentSlot;
 										lastHour = ntime.tm_hour;
 									}
 
 									if (!bHaveFirstValue)
 									{
 										bHaveFirstValue = true;
+										currentSlot = bUseSubHourSlots ? (ntime.tm_hour * (60 / m_sql.m_PriceResolution) + ntime.tm_min / m_sql.m_PriceResolution) : ntime.tm_hour;
+										lastSlot = currentSlot;
 										lastHour = ntime.tm_hour;
 										ulFirstValue = actValue;
 										ulRealFirstValue = actValue;
@@ -2049,7 +2104,10 @@ namespace http
 					sprintf(szDateStartPrev, "%04d-%02d-%02d", tm2.tm_year + 1900 - 1, tm2.tm_mon + 1, tm2.tm_mday);
 				}
 
-				if (sensor == "temp")
+				if (
+					(sensor == "temp")
+					|| (sensor == "hum")
+					)
 				{
 					root["status"] = "OK";
 
@@ -2059,11 +2117,14 @@ namespace http
 						std::string var_name = request::findValue(&req, "var_name");
 						MakeCompareDataSensor(root, sgroupby, dbasetable, idx, var_name);
 
-						if (tempsign == 'F')
+						if (sensor == "temp")
 						{
-							for (auto& itt : root["result"])
+							if (tempsign == 'F')
 							{
-								itt["s"] = ConvertTemperature(itt["s"].asDouble(), tempsign);
+								for (auto& itt : root["result"])
+								{
+									itt["s"] = ConvertTemperature(itt["s"].asDouble(), tempsign);
+								}
 							}
 						}
 						return;
@@ -2097,7 +2158,7 @@ namespace http
 								|| ((dType == pTypeRFXSensor) && (dSubType == sTypeRFXSensorTemp))
 								|| ((dType == pTypeUV) && (dSubType == sTypeUV3))
 								|| ((dType == pTypeGeneral) && (dSubType == sTypeSystemTemp))
-								|| (dType == pTypeEvohomeZone)
+								|| (dType == pTypeEvohomeZone) || (dType == pTypeThermostat6)
 								|| (dType == pTypeEvohomeWater)
 								|| ((dType == pTypeGeneral) && (dSubType == sTypeBaro))
 								)
@@ -2151,7 +2212,7 @@ namespace http
 									root["result"][ii]["ba"] = szTmp;
 								}
 							}
-							if ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater))
+							if ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater) || (dType == pTypeThermostat6))
 							{
 								double sm = ConvertTemperature(atof(sd[8].c_str()), tempsign);
 								double sx = ConvertTemperature(atof(sd[9].c_str()), tempsign);
@@ -2213,7 +2274,7 @@ namespace http
 							|| (dType == pTypeRadiator1)
 							|| ((dType == pTypeUV) && (dSubType == sTypeUV3))
 							|| ((dType == pTypeWIND) && (dSubType == sTypeWIND4))
-							|| (dType == pTypeEvohomeZone)
+							|| (dType == pTypeEvohomeZone) || (dType == pTypeThermostat6)
 							|| (dType == pTypeEvohomeWater)
 							)
 						{
@@ -2258,7 +2319,7 @@ namespace http
 								root["result"][ii]["ba"] = szTmp;
 							}
 						}
-						if ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater))
+						if ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater) || (dType == pTypeThermostat6))
 						{
 							double sx = ConvertTemperature(atof(sd[8].c_str()), tempsign);
 							double sm = ConvertTemperature(atof(sd[7].c_str()), tempsign);
@@ -2320,7 +2381,7 @@ namespace http
 								|| ((dType == pTypeRFXSensor) && (dSubType == sTypeRFXSensorTemp))
 								|| ((dType == pTypeUV) && (dSubType == sTypeUV3))
 								|| ((dType == pTypeGeneral) && (dSubType == sTypeSystemTemp))
-								|| (dType == pTypeEvohomeZone)
+								|| (dType == pTypeEvohomeZone) || (dType == pTypeThermostat6)
 								|| (dType == pTypeEvohomeWater)
 								)
 							{
@@ -2373,7 +2434,7 @@ namespace http
 									root["resultprev"][iPrev]["ba"] = szTmp;
 								}
 							}
-							if ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater))
+							if ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater) || (dType == pTypeThermostat6))
 							{
 								double sx = ConvertTemperature(atof(sd[8].c_str()), tempsign);
 								double sm = ConvertTemperature(atof(sd[7].c_str()), tempsign);
@@ -3028,15 +3089,16 @@ namespace http
 						}
 						root["title"] = "Graph " + sensor + " " + srange;
 
-						result = m_sql.safe_query("SELECT Value1,Value2, Date FROM %s WHERE (DeviceRowID==%" PRIu64 " AND Date>='%q' AND Date<='%q') ORDER BY Date ASC",
+						result = m_sql.safe_query("SELECT Value1,Value2,Value3,Date FROM %s WHERE (DeviceRowID==%" PRIu64 " AND Date>='%q' AND Date<='%q') ORDER BY Date ASC",
 							dbasetable.c_str(), idx, szDateStart, szDateEnd);
 						if (!result.empty())
 						{
 							for (const auto& sd : result)
 							{
-								root["result"][ii]["d"] = sd[2].substr(0, 16);
+								root["result"][ii]["d"] = sd[3].substr(0, 16);
 								root["result"][ii]["u_min"] = atof(sd[0].c_str()) / 10.0F;
 								root["result"][ii]["u_max"] = atof(sd[1].c_str()) / 10.0F;
+								root["result"][ii]["u_avg"] = static_cast<int>((atof(sd[2].c_str()) / 10.0F) + 0.5F);
 								ii++;
 							}
 						}
@@ -3679,12 +3741,13 @@ namespace http
 					}
 					else if (dType == pTypeUsage)
 					{
-						result = m_sql.safe_query("SELECT MIN(Value), MAX(Value) FROM Meter WHERE (DeviceRowID=%" PRIu64 " AND Date>='%q')", idx, szDateEnd);
+						result = m_sql.safe_query("SELECT MIN(Value), MAX(Value), AVG(Value) FROM Meter WHERE (DeviceRowID=%" PRIu64 " AND Date>='%q')", idx, szDateEnd);
 						if (!result.empty())
 						{
 							root["result"][ii]["d"] = szDateEnd;
 							root["result"][ii]["u_min"] = atof(result[0][0].c_str()) / 10.0F;
 							root["result"][ii]["u_max"] = atof(result[0][1].c_str()) / 10.0F;
+							root["result"][ii]["u_avg"] = static_cast<int>((atof(result[0][2].c_str()) / 10.0F) + 0.5F);
 							ii++;
 						}
 					}
@@ -3943,11 +4006,11 @@ namespace http
 						((dType == pTypeRego6XXTemp) || (dType == pTypeTEMP) || (dType == pTypeTEMP_HUM) || (dType == pTypeTEMP_HUM_BARO) || (dType == pTypeTEMP_BARO) ||
 							(dType == pTypeWIND) || (dType == pTypeThermostat1) || (dType == pTypeRadiator1) || ((dType == pTypeUV) && (dSubType == sTypeUV3)) ||
 							((dType == pTypeWIND) && (dSubType == sTypeWIND4)) || ((dType == pTypeRFXSensor) && (dSubType == sTypeRFXSensorTemp)) ||
-							((dType == pTypeSetpoint) && (dSubType == sTypeSetpoint)) || (dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater)))
+							((dType == pTypeSetpoint) && (dSubType == sTypeSetpoint)) || (dType == pTypeEvohomeZone) || (dType == pTypeThermostat6) || (dType == pTypeEvohomeWater)))
 					{
 						sendTemp = true;
 					}
-					if ((sgraphSet == "true") && ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater))) // FIXME cheat for water setpoint is just on or off
+					if ((sgraphSet == "true") && ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater) || (dType == pTypeThermostat6))) // FIXME cheat for water setpoint is just on or off
 					{
 						sendSet = true;
 					}
@@ -3955,11 +4018,11 @@ namespace http
 					{
 						sendChill = true;
 					}
-					if ((sgraphHum == "true") && ((dType == pTypeHUM) || (dType == pTypeTEMP_HUM) || (dType == pTypeTEMP_HUM_BARO)))
+					if ((sgraphHum == "true") && ((dType == pTypeHUM) || (dType == pTypeTEMP_HUM) || (dType == pTypeTEMP_HUM_BARO) || ((dType == pTypeThermostat6) && ((dSubType == sTypeThermostat6TempHum) || (dSubType == sTypeThermostat6TempHumBaro)))))
 					{
 						sendHum = true;
 					}
-					if ((sgraphBaro == "true") && ((dType == pTypeTEMP_HUM_BARO) || (dType == pTypeTEMP_BARO) || ((dType == pTypeGeneral) && (dSubType == sTypeBaro))))
+					if ((sgraphBaro == "true") && ((dType == pTypeTEMP_HUM_BARO) || (dType == pTypeTEMP_BARO) || ((dType == pTypeGeneral) && (dSubType == sTypeBaro)) || ((dType == pTypeThermostat6) && ((dSubType == sTypeThermostat6TempBaro) || (dSubType == sTypeThermostat6TempHumBaro)))))
 					{
 						sendBaro = true;
 					}
@@ -4018,6 +4081,11 @@ namespace http
 										root["result"][ii]["ba"] = szTmp;
 									}
 									else if ((dType == pTypeGeneral) && (dSubType == sTypeBaro))
+									{
+										sprintf(szTmp, "%.1f", atof(sd[3].c_str()) / 10.0F);
+										root["result"][ii]["ba"] = szTmp;
+									}
+									else if ((dType == pTypeThermostat6) && ((dSubType == sTypeThermostat6TempBaro) || (dSubType == sTypeThermostat6TempHumBaro)))
 									{
 										sprintf(szTmp, "%.1f", atof(sd[3].c_str()) / 10.0F);
 										root["result"][ii]["ba"] = szTmp;

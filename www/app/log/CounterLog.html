@@ -15,6 +15,11 @@
         class="device-log-chart"
         device="::$ctrl.device"></counter-year-chart>
 
+<counter-stat-chart
+		ng-if="::$ctrl.subtype=='energy-used' || $ctrl.subtype=='energy-generated' || $ctrl.subtype=='p1Energy' || $ctrl.subtype=='instantAndCounter'"
+        class="device-log-chart"
+        device="::$ctrl.device"></counter-stat-chart>
+
 <counter-compare-chart
         ng-if="::$ctrl.subtype=='energy-used' || $ctrl.subtype=='gas' || $ctrl.subtype=='water' || $ctrl.subtype=='counter' || $ctrl.subtype=='energy-generated' || $ctrl.subtype=='time' || $ctrl.subtype=='p1Energy' || $ctrl.subtype=='instantAndCounter' || $ctrl.subtype=='cityheat'"
         class="device-log-chart"

@@ -63,7 +63,7 @@ class TuyaMonitor : public StoppableTask
 {
 
 public:
-	TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, std::string protocolVersion, const int energyDivider);
+	TuyaMonitor(const unsigned int seqnr, const std::string &name, const std::string &id, const std::string &key, const std::string &address, const std::string &protocolVersion, const int energyDivider);
 	~TuyaMonitor();
 
 	bool StartMonitor();

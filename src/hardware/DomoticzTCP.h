@@ -14,8 +14,8 @@ class DomoticzTCP : public CDomoticzHardwareBase, ASyncTCP
 	~DomoticzTCP() override = default;
 	bool WriteToHardware(const char* pdata, unsigned char length) override;
 	bool SwitchLight(const uint64_t idx, const std::string& switchcmd, const int level, _tColor color, const bool ooc, const std::string& User);
-	bool SetSetPoint(const std::string& idx, const float TempValue);
-	bool SetSetPointEvo(const std::string& idx, float TempValue, const std::string& newMode, const std::string& until);
+	bool SetSetPoint(const std::string& idx, const float TempValue, const std::string& User = "");
+	bool SetSetPointEvo(const std::string& idx, float TempValue, const std::string& newMode, const std::string& until, const std::string& User = "");
 	bool SetThermostatState(const std::string& idx, int newState);
 	bool SwitchEvoModal(const std::string& idx, const std::string& status, const std::string& action, const std::string& ooc, const std::string& until);
 	bool SetTextDevice(const std::string& idx, const std::string& text);

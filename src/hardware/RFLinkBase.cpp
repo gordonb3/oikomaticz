@@ -294,6 +294,7 @@ bool CRFLinkBase::WriteToHardware(const char *pdata, const unsigned char length)
 			if (
 				(m_SwitchType == device::tswitch::type::VenetianBlindsEU)
 				|| (m_SwitchType == device::tswitch::type::Blinds)
+				|| (m_SwitchType == device::tswitch::type::BlindsWithStop)
 				)
 			{
 				switchcmnd = GetGeneralRFLinkFromInt(rfblindcommands, pSwitch->cmnd);

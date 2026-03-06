@@ -37,7 +37,14 @@ class CWebServer : public session_store, public std::enable_shared_from_this<CWe
 	void RegisterCommandCode(const char *idname, const webserver_response_function &ResponseFunction, bool bypassAuthentication = false);
 
 	void GetJSonPage(WebEmSession & session, const request& req, reply & rep);
+	void GetAlexaPage(WebEmSession & session, const request& req, reply & rep);
 	void GetCameraSnapshot(WebEmSession & session, const request& req, reply & rep);
+
+	void Alexa_HandleDiscovery(WebEmSession& session, const request& req, Json::Value& root);
+	void Alexa_HandleAcceptGrant(WebEmSession& session, const request& req, Json::Value& root);
+	void Alexa_HandleControl(WebEmSession& session, const request& req, Json::Value& root);
+	bool CheckDeviceAccess(const WebEmSession& session, uint64_t device_idx, bool& bControlPermitted);
+	bool CheckDeviceAccess(const WebEmSession& session, const std::vector<uint64_t>& device_indices, bool& bControlPermitted);
 	void GetInternalCameraSnapshot(WebEmSession & session, const request& req, reply & rep);
 	void GetFloorplanImage(WebEmSession& session, const request& req, reply& rep);
 	void GetServiceWorker(WebEmSession& session, const request& req, reply& rep);
@@ -46,6 +53,8 @@ class CWebServer : public session_store, public std::enable_shared_from_this<CWe
 	void GetOauth2AuthCode(WebEmSession &session, const request &req, reply &rep);
 	void PostOauth2AccessToken(WebEmSession &session, const request &req, reply &rep);
 	void GetOpenIDConfiguration(WebEmSession &session, const request &req, reply &rep);
+
+	void PostMcp(WebEmSession &session, const request &req, reply &rep);
 
 	void SetRFXCOMMode(WebEmSession & session, const request& req, std::string & redirect_uri);
 	void UploadFloorplanImage(WebEmSession & session, const request& req, std::string & redirect_uri);
@@ -65,7 +74,7 @@ class CWebServer : public session_store, public std::enable_shared_from_this<CWe
 	void ReloadCustomSwitchIcons();
 
 	void LoadUsers();
-	void AddUser(unsigned long ID, const std::string &username, const std::string &password, const std::string& mfatoken, int userrights, int activetabs, const std::string &pemfile = "");
+	void AddUser(unsigned long ID, const std::string &username, const std::string &password, const std::string& mfatoken, int userrights, int activetabs, const std::string &pemfile = "", uint32_t refreshexpire = 0, const std::string &signingsecret = "", time_t accept_legacy_until = 0);
 	void ClearUserPasswords();
 	bool FindAdminUser();
 	int CountAdminUsers();
@@ -106,6 +115,7 @@ private:
 	void InvalidateOAuth2RefreshToken(const std::string &refreshtoken);
 	void PresentOauth2LoginDialog(reply &rep, const std::string &sApp, const std::string &sError);
 	bool VerifySHA1TOTP(const std::string &code, const std::string &key);
+	bool ValidRedirectUri(const std::string &redirect_uri);
 
 	//Commands
 	void Cmd_GetTimerTypes(WebEmSession & session, const request& req, Json::Value &root);
@@ -304,6 +314,9 @@ private:
 	void Cmd_GetDynamicPriceDevices(WebEmSession& session, const request& req, Json::Value& root);
 	void Cmd_GetEnergyDashboardDevices(WebEmSession& session, const request& req, Json::Value& root);
 
+	void Cmd_GetkWhStats(WebEmSession& session, const request& req, Json::Value& root);
+	void Cmd_ResetkWhStats(WebEmSession& session, const request& req, Json::Value& root);
+
 	void Cmd_TuyaGetDevices(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_AddTuyaDevice(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_UpdateTuyaDevice(WebEmSession & session, const request& req, Json::Value &root);
@@ -373,6 +386,7 @@ private:
 	//MQTT-AD
 	void Cmd_MQTTAD_GetConfig(WebEmSession& session, const request& req, Json::Value& root);
 	void Cmd_MQTTAD_UpdateNumber(WebEmSession& session, const request& req, Json::Value& root);
+	void Cmd_MQTTAD_PublishPayload(WebEmSession& session, const request& req, Json::Value& root);
 
 #ifdef WITH_OPENZWAVE
 	//ZWave

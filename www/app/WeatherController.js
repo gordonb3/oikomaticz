@@ -75,12 +75,22 @@ define(['app', 'livesocket'], function (app) {
 
 		RefreshItem = function (item) {
 			item.searchText = GenerateLiveSearchTextW(item);
+			var query = $('.jsLiveSearch').val();
+			if (query && query.length > 0) {
+				var match = item.searchText.toLowerCase().indexOf(query.toLowerCase()) !== -1;
+				if (!match) {
+					return; // Don't update items that don't match the filter
+				}
+			}
 			ctrl.items.forEach(function (olditem, oldindex, oldarray) {
 				if (olditem.idx == item.idx) {
 					oldarray[oldindex] = item;
 					if (!document.hidden) {
 						if ($scope.config.ShowUpdatedEffect == true) {
-							$("#weatherwidgets #" + item.idx + " #name").effect("highlight", { color: '#EEFFEE' }, 1000);
+							setTimeout(function() { 
+								$("#weatherwidgets #" + item.idx + " #name").effect("highlight", { color: '#EEFFEE' }, 1000);
+							}, 500);
+							
 						}
 					}
 				}

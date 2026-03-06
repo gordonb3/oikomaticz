@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <string>
 #include "RFXNames.h"
 #include "hardware/hardwaretypes.h"
@@ -277,7 +278,7 @@ struct _tTaskItem
 			getclock(&tItem._DelayTimeBegin);
 		return tItem;
 	}
-	static _tTaskItem SetSetPoint(const float DelayTime, const uint64_t idx, const std::string &varvalue, const std::string &mode = std::string(), const std::string &until = std::string())
+	static _tTaskItem SetSetPoint(const float DelayTime, const uint64_t idx, const std::string &varvalue, const std::string &mode = std::string(), const std::string &until = std::string(), const std::string& User = std::string())
 	{
 		_tTaskItem tItem;
 		tItem._ItemType = TITEM_SET_SETPOINT;
@@ -286,6 +287,7 @@ struct _tTaskItem
 		tItem._sValue = varvalue;
 		tItem._command = mode;
 		tItem._sUntil = until;
+		tItem._sUser = User;
 
 		if (DelayTime)
 			getclock(&tItem._DelayTimeBegin);
@@ -387,6 +389,7 @@ public:
 	void CheckSceneStatusWithDevice(const std::string &DevIdx);
 
 	void ScheduleShortlog();
+	void CleanupShortLog();
 	void ScheduleDay();
 
 	void ClearShortLog();
@@ -478,6 +481,7 @@ public:
 	bool m_bEnableEventSystemFullURLLog;
 	int m_ShortLogInterval;
 	bool m_bShortLogAddOnlyNewValues;
+	std::atomic<int> m_PriceResolution;
 	bool m_bLogEventScriptTrigger;
 	bool m_bDisableDzVentsSystem;
 	double m_max_kwh_usage;
@@ -546,7 +550,6 @@ private:
 	void AddCalendarUpdateMultiMeter();
 	void AddCalendarUpdatePercentage();
 	void AddCalendarUpdateFan();
-	void CleanupShortLog();
 	bool CheckDate(const std::string &sDate, int &d, int &m, int &y);
 	bool CheckDateSQL(const std::string &sDate);
 	bool CheckDateTimeSQL(const std::string &sDateTime);

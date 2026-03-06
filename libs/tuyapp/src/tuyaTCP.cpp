@@ -1,7 +1,66 @@
 /*
  *	Client interface for local Tuya device access
  *
- *	Copyright 2022-2024 - gordonb3 https://github.com/gordonb3/tuyapp
+ *	This is the base TCP communication class for single device threads.
+ *
+ *	Both async and blocking mode (default) communication is supported,
+ *	allowing straight forward single task applications to be created, as
+ *	well as more advanced multi threaded monitoring applications.
+ *
+ *	Common functions:
+ *	 - ConnectToDevice(hostname|IP_address)
+ *		Opens a TCP connection with the device
+ *		Returns true|false indicating success or failure
+ *	 - send(buffer[], size)
+ *		Sends `size` bytes of `buffer` to the device
+ *		Returns `size` on success or -1 if an error occurred
+ *	 - receive(buffer[], maxsize, minsize)
+ *		Fills `buffer` with the device's response. The additional `minsize`
+ *		parameter (used in blocking mode only) defaults to 30 to skip
+ *		processing of empty responses that are returned on state changing
+ *		commands.
+ *		Returns number of bytes received or -1 if an error occurred
+ *	 - disconnect()
+ *		Closes the connection with the device
+ *		Returns nothing
+ *	 - getlasterror()
+ *		Use this instead of referencing `errno`, which may be polluted
+ *		Returns the last error state of the connection
+ *
+ *	Async functions:
+ *	 - setAsyncMode(true|false)
+ *		Enables (default) or disables async operation
+ *		Returns nothing
+ *	 - isConnected()
+ *		Returns true|false indicating if connection was successful
+ *	 - isSocketWritable()
+ *		Returns true|false indicating if the connection is ready for writing
+ *	 - isSocketReadable()
+ *		Returns true|false indicating if the connection has data to be read
+ *	 - getSocketState()
+ *		Returns one of Tuya::TCP::Socket::value
+ *	 - setSessionReady()
+ *		Dummy function needed to be able to distinguish between being connected
+ *		and session negotiation (API 3.4+) having been completed. Calling this
+ *		method will set the SocketState to Tuya::TCP::Socket::READY from where
+ *		it will alternate with Tuya::TCP::Socket::RECEIVING
+ *		Does nothing if on call SocketState is not Tuya::TCP::Socket::CONNECTED
+ *		Returns true|false 
+ *
+ *
+ *	For either method, the connection requires periodic sending of a keep-alive
+ *	signal. Upto a 15 second interval appears to be generally accepted. Client apps
+ *	should call getSocketState() to decide what type of message the device will
+ *	accept in this case:
+ *	 - Tuya::TCP::Socket::READY
+ *		=> data was received - you may ask for additional DPS updates
+ *	 - Tuya::TCP::Socket::RECEIVING
+ *		=> no data was received yet - you may only send a `HEARTBEAT` message
+ *	Sending state changing commands can be done at any point in time
+ *
+ *
+ *
+ *	Copyright 2022-2026 - gordonb3 https://github.com/gordonb3/tuyapp
  *
  *	Licensed under GNU General Public License 3.0 or later.
  *	Some rights reserved. See COPYING, AUTHORS.
@@ -10,12 +69,10 @@
  */
 
 #define SOCKET_CONNECT_TIMEOUT_SECS 5
-#define SOCKET_RECEIVE_TIMEOUT_SECS 1
+#define SOCKET_RECEIVE_TIMEOUT_SECS 2
 
 #include "tuyaTCP.hpp"
 #include <unistd.h>
-#include <thread>
-#include <chrono>
 #include <cstring>
 #include <netdb.h>
 
@@ -62,7 +119,6 @@ Tuya::TCP::Socket::value tuyaTCP::getSocketState()
 	return m_socketState;
 }
 
-
 bool tuyaTCP::isSocketWritable()
 {
 	return (getSocketEvents(POLLOUT, 0) == 0);
@@ -85,11 +141,39 @@ bool tuyaTCP::setSessionReady()
 	return false;
 }
 
-bool tuyaTCP::ConnectToDevice(const std::string &hostname, uint8_t retries)
+
+bool tuyaTCP::isConnected()
+{
+	switch (m_socketState)
+	{
+		case Tuya::TCP::Socket::NO_SUCH_HOST:
+		case Tuya::TCP::Socket::NO_SOCK_AVAIL:
+		case Tuya::TCP::Socket::FAILED:
+		case Tuya::TCP::Socket::DISCONNECTED:
+			return false;
+		case Tuya::TCP::Socket::CONNECTED:
+		case Tuya::TCP::Socket::READY:
+		case Tuya::TCP::Socket::RECEIVING:
+			return true;
+		default:
+			break;
+	}
+	// Tuya::TCP::Socket::CONNECTING
+	if (isSocketWritable())
+	{
+		m_socketState = Tuya::TCP::Socket::CONNECTED;
+		m_lasterror = 0;
+		return true;
+	}
+	return false;
+}
+
+
+bool tuyaTCP::ConnectToDevice(const std::string &hostname)
 {
 	struct sockaddr_in serv_addr;
 	bzero((char*)&serv_addr, sizeof(serv_addr));
-	
+
 	if ((hostname.find(':') != std::string::npos) || ((hostname[0] ^ 0x30) < 10))
 	{
 		if (hostname.find(':') != std::string::npos)
@@ -146,6 +230,7 @@ bool tuyaTCP::ConnectToDevice(const std::string &hostname, uint8_t retries)
 	if (connect(m_sockfd, (const sockaddr*)&serv_addr, sizeof(serv_addr)) == 0)
 	{
 		m_socketState = Tuya::TCP::Socket::CONNECTED;
+		m_lasterror = 0;
 		return true;
 	}
 
@@ -164,6 +249,7 @@ bool tuyaTCP::ConnectToDevice(const std::string &hostname, uint8_t retries)
 		if (getSocketEvents(POLLOUT, SOCKET_CONNECT_TIMEOUT_SECS) == 0)
 		{
 			m_socketState = Tuya::TCP::Socket::CONNECTED;
+			m_lasterror = 0;
 			return true;
 		}
 	}
@@ -185,10 +271,12 @@ int tuyaTCP::send(unsigned char* buffer, const int size)
 	int numbytes;
 #ifdef WIN32
 	numbytes = ::send(m_sockfd, (char*)buffer, size, 0);
-	m_lasterror = WSAGetLastError();
+	if (numbytes < 0)
+		m_lasterror = WSAGetLastError();
 #else
 	numbytes = write(m_sockfd, buffer, size);
-	m_lasterror = errno;
+	if (numbytes < 0)
+		m_lasterror = errno;
 #endif
 
 	return numbytes;
@@ -197,28 +285,37 @@ int tuyaTCP::send(unsigned char* buffer, const int size)
 
 // After sending a device state change command, tuya devices send an empty `ack` reply first
 // if Async mode is disabled, then setting minsize to a larger value than the empty reply
-// will cause this function to skip it and wait for the actual reply.
-// If you do not specify minsize, it will default to 28 bytes (version 3.3 message protocol)
+// will cause this function to ignore it and wait for the actual reply.
+// If you do not specify minsize, it will default to 30 bytes (version 3.3 message protocol)
 int tuyaTCP::receive(unsigned char* buffer, const int maxsize, const int minsize)
 {
 	int numbytes = -1;
-	int i = 0;
-	m_lasterror = 0;
-	while ((numbytes <= minsize) && (i < SOCKET_RECEIVE_TIMEOUT_SECS * 100) && (m_lasterror == 0))
+#ifdef WIN32
+	m_lasterror = WSAEWOULDBLOCK;
+#else
+	m_lasterror = EAGAIN;
+#endif
+	int timeout;
+	if (m_asyncMode)
+		timeout = 0;
+	else
+		timeout = SOCKET_RECEIVE_TIMEOUT_SECS;
+	while (numbytes <= minsize)
 	{
-		i++;
-		if (isSocketReadable())
+		if (getSocketEvents(POLLIN, timeout) == 0)
 		{
 #ifdef WIN32
 			numbytes = recv(m_sockfd, (char*)buffer, maxsize, 0 );
-			m_lasterror = WSAGetLastError();
+			if (numbytes < 0)
+				m_lasterror = WSAGetLastError();
 #else
 			numbytes = read(m_sockfd, buffer, maxsize);
-			m_lasterror = errno;
+			if (numbytes < 0)
+				m_lasterror = errno;
 #endif
 		}
 
-		if (numbytes > minsize)
+		if (numbytes >= minsize)
 		{
 			// reset socket state to indicate that caller needs to send a new request for data
 			if (m_socketState == Tuya::TCP::Socket::RECEIVING)
@@ -227,23 +324,19 @@ int tuyaTCP::receive(unsigned char* buffer, const int maxsize, const int minsize
 		}
 
 		if (m_asyncMode)
-			return 0;
+			return -1;
 
-#ifdef DEBUG
 		if (numbytes > 0)
 		{
-			std::cout << "{\"ack\":true}\n";
-			numbytes = 0;
-		}
-#endif
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	}
-
-
+			// received an empty 'ack' message, continue reading
 #ifdef DEBUG
-	std::cout << "received " << numbytes << " bytes\n";
+			std::cout << "{\"ack\":true}\n";
 #endif
+			continue;
+		}
+
+		break;
+	}
 
 	return numbytes;
 }
@@ -257,6 +350,23 @@ int tuyaTCP::getlasterror()
 
 void tuyaTCP::disconnect()
 {
+	switch (m_socketState)
+	{
+		case Tuya::TCP::Socket::CONNECTING:
+		{
+			m_socketState = Tuya::TCP::Socket::FAILED;
+			break;
+		}
+		case Tuya::TCP::Socket::CONNECTED:
+		case Tuya::TCP::Socket::READY:
+		case Tuya::TCP::Socket::RECEIVING:
+		{
+			m_socketState = Tuya::TCP::Socket::DISCONNECTED;
+			break;
+		}
+		default:
+			break;
+	}
 	if (m_sockfd >= 0)
 		close(m_sockfd);
 	m_sockfd = -1;

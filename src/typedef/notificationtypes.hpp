@@ -8,6 +8,7 @@ enum value {
 	TEMPERATURE = 0,	//0
 	HUMIDITY,		//1
 	RAIN,			//2
+	RAINRATE,
 	UV,			//3
 	WIND,			//4
 	USAGE,			//5
@@ -47,6 +48,7 @@ const char *Description(const int nType, const unsigned char field)
 		{ TEMPERATURE,		"Temperature",	"T" },
 		{ HUMIDITY,		"Humidity",	"H" },
 		{ RAIN,			"Rain",		"R" },
+		{ RAINRATE,		"Rain Rate",	"RR" },
 		{ UV,			"UV",		"U" },
 		{ WIND,			"Wind",		"W" },
 		{ USAGE,		"Usage",	"M" },
@@ -87,6 +89,7 @@ const char *Label(const int nType)
 		{ TEMPERATURE,		"degrees" },
 		{ HUMIDITY,		"%" },
 		{ RAIN,			"mm" },
+		{ RAINRATE,		"mm/h" },
 		{ UV,			"UVI" },
 		{ WIND,			"m/s" },
 		{ USAGE,		"" },

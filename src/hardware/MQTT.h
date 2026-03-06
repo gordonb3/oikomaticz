@@ -3,9 +3,9 @@
 #include "hardware/DomoticzHardware.h"
 #include "hardware/hardwaretypes.h"
 #include "MySensorsBase.h"
-#include "main/mosquitto_helper.h"
+#include "main/mqtt_helper.h"
 
-class MQTT : public MySensorsBase, mosqdz::mosquittodz
+class MQTT : public MySensorsBase, mdz::mqttdz
 {
 	friend class MQTTAutoDiscover;
 
@@ -32,8 +32,8 @@ public:
 	void on_log(int level, const char* str) override;
 	void on_error() override;
 
-	void SendMessage(const std::string& Topic, const std::string& Message);
-	void SendMessageEx(const std::string& Topic, const std::string& Message, int qos = 0, bool retain = false);
+	bool SendMessage(const std::string& Topic, const std::string& Message);
+	bool SendMessageEx(const std::string& Topic, const std::string& Message, int qos = 0, bool retain = false);
 
 	bool ReconnectNow();
 

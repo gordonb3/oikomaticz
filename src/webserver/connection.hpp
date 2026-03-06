@@ -127,12 +127,12 @@ namespace http {
 			int read_timeout_;
 
 			/// Read timeout timer
-			boost::asio::deadline_timer read_timer_;
+			boost::asio::steady_timer read_timer_;
 
 			/// Abandoned connection timeout (in seconds)
 			long default_abandoned_timeout_;
 			/// Abandoned timeout timer
-			boost::asio::deadline_timer abandoned_timer_;
+			boost::asio::steady_timer abandoned_timer_;
 
 			/// The manager for this connection.
 			connection_manager& connection_manager_;

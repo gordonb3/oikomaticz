@@ -281,10 +281,11 @@ define(['app', 'report/helpers'], function (app, reportHelpers) {
 			} else {
 				columns.push({ title: $.t("Usage"), data: 'totalUsage', render: counterRenderer });
 				columns.push({ title: $.t("Return"), data: 'totalReturn', render: counterRenderer });
+				columns.push({ title: $.t("Total"), data: 'usage', render: counterRenderer });
 			}
 
 
-            columns.push({ title: $.t('Total'), data: 'cost', render: costRenderer });
+            columns.push({ title: $.t('Costs'), data: 'cost', render: costRenderer });
 
             columns.push({
                 title: '<>',

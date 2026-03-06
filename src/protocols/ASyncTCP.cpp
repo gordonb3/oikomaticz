@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "protocols/ASyncTCP.h"
 #include <boost/asio.hpp>
-#include <boost/system/error_code.hpp>     // for error_code
+#include <boost/system/error_code.hpp>
 #include "main/Logger.h"
 
 #define MAX_TCP_BUFFER_SIZE 4096
@@ -186,7 +186,7 @@ void ASyncTCP::reconnect_start_timer()
 	{
 		m_bIsReconnecting = true;
 
-		m_ReconnectTimer.expires_from_now(boost::posix_time::seconds(m_iReconnectDelay));
+		m_ReconnectTimer.expires_after(std::chrono::seconds(m_iReconnectDelay));
 		m_ReconnectTimer.async_wait(
 			[this](const boost::system::error_code& error) {
 				cb_reconnect_start(error);
@@ -398,7 +398,7 @@ void ASyncTCP::timeout_start_timer()
 		return;
 	}
 	timeout_cancel_timer();
-	m_TimeoutTimer.expires_from_now(boost::posix_time::seconds(m_iTimeoutDelay));
+	m_TimeoutTimer.expires_after(std::chrono::seconds(m_iTimeoutDelay));
 	m_TimeoutTimer.async_wait(
 		[this](const boost::system::error_code& error) {
 			timeout_handler(error);

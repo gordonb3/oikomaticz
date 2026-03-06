@@ -1,12 +1,23 @@
 <div id="myprofilecontent" class="container">
 	<div class="page-header-small">
-		<h1 data-i18n="My Profile">My Profile</h1><span><i><b>({{ config.userName }})</b></i></span>
+		<h1 data-i18n="My Profile">My Profile</h1><span></span>
 	</div>
-    <div>
-    <div>
+	<div class="page-content-container">
 		<form name="myPasswdForm" ng-submit="updateMyPasswd()">
-			<h3 data-i18n="Change Password">Change Password</h3>
 			<table class="display table-details" id="passwdtable">
+				<tr>
+					<td colspan="2" style="text-align: left;">
+						<h3 data-i18n="Change Password">Change Password</h3>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<label><span data-i18n="Username"></span>:</label>
+					</td>
+					<td>
+						{{ config.userName }}
+					</td>
+				</tr>
 				<tr>
 					<td>
 						<label for="OldPwd"><span data-i18n="Old Password"></span>:</label>
@@ -36,10 +47,12 @@
 				</tr>
 			</table>
 		</form>
-    </div>
-	<div>
-		<h3 data-i18n="Two way authentication"></h3>
 		<table class="display table-details" id="profiletable">
+			<tr>
+				<td colspan="2" style="text-align: left;">
+					<h3 data-i18n="Two way authentication"></h3>
+				</td>
+			</tr>
 			<tr>
 				<td></td>
 				<td colsspan="2">
@@ -51,7 +64,7 @@
 				<td>
 					<div id="qrcode">QR-code</div>
 					<input type="hidden" id="TotpSecret" autocomplete="off" name="TotpSecret" ng-model="myprofile.totpsecret" ng-change="changeTOTP();" style="width: 350px;" class="text ui-widget-content ui-corner-all"><br />
-					Using an authenticator app like <b>Google Authenticator</b> or <b>Authy</b>, scan the QR code. It will display a 6 digit code which you need to enter below.
+					Using an authenticator app like <b>Bitwarden</b> or <b>Google Authenticator</b>, scan the QR code. It will display a 6 digit code which you need to enter below.
 				</td>
 			</tr>
 			<tr ng-show="myprofile.enableMFA">
@@ -63,19 +76,12 @@
 				</td>
 			</tr>
 		</table>
-	</div>
-	<p></p>
-	<div>
 		<table class="display table-details" id="profiletable">
 			<tr>
 				<td></td>
 				<td>
-					<button type="button" class="btnstyle3" ng-click="updateMyProfile()">
-						{{ :: 'Update' | translate}}
-					</button>
-					<button type="button" class="btnstyle3" ng-click="btnCancel()">
-						{{ :: 'Cancel' | translate}}
-					</button>
+					<button type="button" class="btnstyle3" data-i18n="Update" ng-click="updateMyProfile()"></button>
+					<button type="button" class="btnstyle3" data-i18n="Cancel" ng-click="btnCancel()"></button>
 				</td>
 			</tr>
 		</table>

@@ -1,4 +1,4 @@
-define(['app', 'lodash', 'RefreshingChart', 'DataLoader', 'ChartLoader', 'log/Chart', 'log/CounterLogParams'],
+define(['app', 'lodash', 'RefreshingChart', 'DataLoader', 'ChartLoader', 'log/Chart', 'log/CounterLogParams','log/components/CounterStatChart'],
     function (app, _, RefreshingChart, DataLoader, ChartLoader) {
 
         app.component('deviceCounterLog', {
@@ -162,7 +162,7 @@ define(['app', 'lodash', 'RefreshingChart', 'DataLoader', 'ChartLoader', 'log/Ch
                 }
             }
         });
-
+		
         app.component('counterCompareChart', {
             require: {
                 logCtrl: '^deviceCounterLog'

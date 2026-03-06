@@ -23,6 +23,8 @@
 #include "main/LuaTable.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <mutex>
+#include <condition_variable>
 
 extern "C" {
 #include <lua.h>
@@ -31,6 +33,43 @@ extern "C" {
 }
 
 bool g_bUseEventTrigger = true;
+
+// Simple counting semaphore implementation using C++11 features
+class CountingSemaphore {
+private:
+	std::mutex mtx;
+	std::condition_variable cv;
+	int count;
+	const int max_count;
+
+public:
+	explicit CountingSemaphore(int initial_count)
+		: count(initial_count), max_count(initial_count) {
+	}
+
+	void acquire() {
+		std::unique_lock<std::mutex> lock(mtx);
+		cv.wait(lock, [this] { return count > 0; });
+		--count;
+	}
+
+	void release() {
+		std::lock_guard<std::mutex> lock(mtx);
+		if (count < max_count) {
+			++count;
+			cv.notify_one();
+		}
+	}
+
+	int available() const {
+		std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
+		return count;
+	}
+};
+
+// Global semaphore to limit concurrent Lua thread execution
+// Limit to 4 concurrent threads to prevent resource exhaustion
+static CountingSemaphore g_lua_thread_semaphore(4);
 
 extern time_t m_StartTime;
 extern std::string szUserDataFolder, szStartupFolder;
@@ -316,32 +355,34 @@ void CEventSystem::Do_Work()
 	m_python_Dir = szUserDataFolder + "scripts/python/";
 #endif
 #endif
-	time_t lasttime = mytime(nullptr);
-	struct tm tmptime;
+	time_t atime = mytime(nullptr);
 	struct tm ltime;
 
-	localtime_r(&lasttime, &tmptime);
-	int _LastMinute = tmptime.tm_min;
+	localtime_r(&atime, &ltime);
+	int _LastMinute = ltime.tm_min;
 
 	_log.Log(LOG_STATUS, "EventSystem: Started");
-	while (!IsStopRequested(500))
+	while (true)
 	{
-		time_t atime = mytime(nullptr);
+		// Calculate sleep time until next 12-second heartbeat
+		// Handle leap seconds (tm_sec can be 60 or 61) by clamping to 59
+		int current_sec = (ltime.tm_sec > 59) ? 59 : ltime.tm_sec;
+		int next_wake_sec = ((current_sec / 12) + 1) * 12;
+		int sleep_ms = (next_wake_sec - current_sec) * 1000;
 
-		if (atime != lasttime)
+		if (IsStopRequested(sleep_ms))
+			break;
+
+		atime = mytime(nullptr);
+		localtime_r(&atime, &ltime);
+
+		if (ltime.tm_sec % 12 == 0) {
+			m_mainworker.HeartbeatUpdate("EventSystem");
+		}
+		if (ltime.tm_min != _LastMinute)
 		{
-			lasttime = atime;
-
-			localtime_r(&atime, &ltime);
-
-			if (ltime.tm_sec % 12 == 0) {
-				m_mainworker.HeartbeatUpdate("EventSystem");
-			}
-			if (ltime.tm_min != _LastMinute)
-			{
-				_LastMinute = ltime.tm_min;
-				ProcessMinute();
-			}
+			_LastMinute = ltime.tm_min;
+			ProcessMinute();
 		}
 	}
 	_log.Log(LOG_STATUS, "EventSystem: Stopped...");
@@ -462,52 +503,59 @@ void CEventSystem::GetCurrentStates()
 			sitem.devType = atoi(sd[5].c_str());
 			sitem.subType = atoi(sd[6].c_str());
 
-			if ((sitem.devType == pTypeGeneral) && (sitem.subType == sTypeCounterIncremental))
+			try
 			{
-				//special case for incremental counter, need to calculate the actual count value
-
-				std::vector<std::vector<std::string> > result2;
-
-				result2 = m_sql.safe_query("SELECT sValue FROM DeviceStatus WHERE (ID=%" PRIu64 ")", sitem.ID);
-				uint64_t total_max = std::stoull(result2[0][0]);
-
-				//get value of today
-				std::string szDate = TimeToString(nullptr, TF_Date);
-				result2 = m_sql.safe_query("SELECT MIN(Value) FROM Meter WHERE (DeviceRowID=%" PRIu64 " AND Date>='%q')", sitem.ID, szDate.c_str());
-				if (!result2.empty())
+				if ((sitem.devType == pTypeGeneral) && (sitem.subType == sTypeCounterIncremental))
 				{
-					uint64_t total_min = std::stoull(result2[0][0]);
-					uint64_t total_real = total_max - total_min;
+					//special case for incremental counter, need to calculate the actual count value
 
-					sd[4] = std::to_string(total_real); //sitem.sValue = l_sValue.assign(sd[4]);
+					std::vector<std::vector<std::string> > result2;
+
+					result2 = m_sql.safe_query("SELECT sValue FROM DeviceStatus WHERE (ID=%" PRIu64 ")", sitem.ID);
+					uint64_t total_max = std::stoull(result2[0][0]);
+
+					//get value of today
+					std::string szDate = TimeToString(nullptr, TF_Date);
+					result2 = m_sql.safe_query("SELECT MIN(Value) FROM Meter WHERE (DeviceRowID=%" PRIu64 " AND Date>='%q')", sitem.ID, szDate.c_str());
+					if (!result2.empty())
+					{
+						uint64_t total_min = std::stoull(result2[0][0]);
+						uint64_t total_real = total_max - total_min;
+
+						sd[4] = std::to_string(total_real); //sitem.sValue = l_sValue.assign(sd[4]);
+					}
 				}
+
+				sitem.nValue = atoi(sd[3].c_str());
+				sitem.sValue = l_sValue.assign(sd[4]);
+
+				sitem.switchtype = atoi(sd[7].c_str());
+				device::tswitch::type::value switchtype = (device::tswitch::type::value)sitem.switchtype;
+				std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10]);
+				sitem.nValueWording = l_nValueWording.assign(nValueToWording(sitem.devType, sitem.subType, switchtype, sitem.nValue, sitem.sValue, options));
+				sitem.lastUpdate = l_lastUpdate.assign(sd[8]);
+				sitem.lastLevel = atoi(sd[9].c_str());
+				sitem.description = l_description.assign(sd[11]);
+				sitem.batteryLevel = atoi(sd[12].c_str());
+				sitem.signalLevel = atoi(sd[13].c_str());
+				sitem.unit = atoi(sd[14].c_str());
+				sitem.deviceID = l_deviceID.assign(sd[15]);
+				sitem.protection = atoi(sd[16].c_str());
+				sitem.AddjValue = std::stof(sd[17]);
+				sitem.AddjMulti = std::stof(sd[18]);
+				sitem.AddjValue2 = std::stof(sd[19]);
+				sitem.AddjMulti2 = std::stof(sd[20]);
+
+				if (!m_sql.m_bDisableDzVentsSystem)
+				{
+					UpdateJsonMap(sitem, sitem.ID);
+				}
+				m_devicestates_temp[sitem.ID] = sitem;
 			}
-
-			sitem.nValue = atoi(sd[3].c_str());
-			sitem.sValue = l_sValue.assign(sd[4]);
-
-			sitem.switchtype = atoi(sd[7].c_str());
-			device::tswitch::type::value switchtype = (device::tswitch::type::value)sitem.switchtype;
-			std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10]);
-			sitem.nValueWording = l_nValueWording.assign(nValueToWording(sitem.devType, sitem.subType, switchtype, sitem.nValue, sitem.sValue, options));
-			sitem.lastUpdate = l_lastUpdate.assign(sd[8]);
-			sitem.lastLevel = atoi(sd[9].c_str());
-			sitem.description = l_description.assign(sd[11]);
-			sitem.batteryLevel = atoi(sd[12].c_str());
-			sitem.signalLevel = atoi(sd[13].c_str());
-			sitem.unit = atoi(sd[14].c_str());
-			sitem.deviceID = l_deviceID.assign(sd[15]);
-			sitem.protection = atoi(sd[16].c_str());
-			sitem.AddjValue = std::stof(sd[17]);
-			sitem.AddjMulti = std::stof(sd[18]);
-			sitem.AddjValue2 = std::stof(sd[19]);
-			sitem.AddjMulti2 = std::stof(sd[20]);
-
-			if (!m_sql.m_bDisableDzVentsSystem)
+			catch (const std::exception& e)
 			{
-				UpdateJsonMap(sitem, sitem.ID);
+				_log.Log(LOG_ERROR, "EventSystem: Exception in GetCurrentStates, probably invalid device data! (Device: %s): %s", l_deviceName.c_str(), e.what());
 			}
-			m_devicestates_temp[sitem.ID] = sitem;
 		}
 		m_devicestates = m_devicestates_temp;
 	}
@@ -1388,33 +1436,66 @@ void CEventSystem::UnlockEventQueueThread()
 void CEventSystem::EventQueueThread()
 {
 	_log.Log(LOG_STATUS, "EventSystem: Queue thread started...");
-	_tEventQueue item;
+
 	std::vector<_tEventQueue> items;
+	auto last_process_time = std::chrono::steady_clock::now();
+	const auto min_batch_interval = std::chrono::milliseconds(100); // Batch events for at least 100ms
 
 	while (!m_TaskQueue.IsStopRequested(0))
 	{
-		bool hasPopped = m_eventqueue.timed_wait_and_pop<std::chrono::duration<int> >(item, std::chrono::duration<int>(5)); // timeout after 5 sec
+		_tEventQueue item;
+		bool hasPopped = m_eventqueue.timed_wait_and_pop<std::chrono::duration<int> >(item, std::chrono::duration<int>(5));
 		if (!hasPopped)
+		{
+			// Timeout - process any pending items
+			if (!items.empty())
+			{
+				_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Processing %d batched event(s)", (int)items.size());
+				EvaluateEvent(items);
+				items.clear();
+				last_process_time = std::chrono::steady_clock::now();
+			}
 			continue;
+		}
 
 		if (m_TaskQueue.IsStopRequested(0))
 			break;
 
-		for (const auto &i : items)
+		// Check for duplicate events (same id and reason)
+		bool is_duplicate = false;
+		for (const auto& i : items)
 		{
 			if (i.id == item.id && i.reason <= REASON_SCENEGROUP && i.reason == item.reason)
 			{
-				EvaluateEvent(items);
-				items.clear();
+				is_duplicate = true;
+				_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Skipping duplicate event for device %" PRIu64, item.id);
 				break;
 			}
 		}
-		items.push_back(item);
-		if (!m_eventqueue.empty())
-			continue;
 
+		if (!is_duplicate)
+			items.push_back(item);
+
+		// Process batch if: queue is empty OR enough time has passed OR duplicate found
+		auto now = std::chrono::steady_clock::now();
+		bool should_process = m_eventqueue.empty() ||
+			is_duplicate ||
+			(now - last_process_time) >= min_batch_interval;
+
+		if (should_process && !items.empty())
+		{
+			_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Processing %d batched event(s)", (int)items.size());
+			EvaluateEvent(items);
+			items.clear();
+			last_process_time = now;
+		}
+	}
+
+	// Process any remaining items before exit
+	if (!items.empty())
+	{
+		_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Processing %d remaining event(s) on shutdown", (int)items.size());
 		EvaluateEvent(items);
-		items.clear();
 	}
 	m_eventqueue.clear();
 
@@ -1448,7 +1529,7 @@ void CEventSystem::ProcessDevice(
 
 	device::tswitch::type::value switchType = (device::tswitch::type::value)std::stoi(sd[0]);
 	std::string lastUpdate = sd[1];
-	uint8_t lastLevel = (uint8_t)std::stoi(sd[2]);
+	uint8_t lastLevel = (uint8_t)atoi(sd[2].c_str());
 	std::string dev_options = sd[3];
 	std::string devname = sd[4];
 
@@ -2247,7 +2328,7 @@ bool CEventSystem::parseBlocklyActions(const _tEventItem &item)
 				mode = ParseBlocklyString(aParam[1]);
 			case 1:
 				temp = ParseBlocklyString(aParam[0]);
-				m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5F, idx, temp, mode, until));
+				m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5F, idx, temp, mode, until, "Blockly/" + item.Name));
 				actionsDone = true;
 				break;
 
@@ -2549,7 +2630,7 @@ bool CEventSystem::PythonScheduleEvent(const std::string &ID, const std::string 
 			mode = aParam[1];
 		case 1:
 			temp = aParam[0];
-			m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5F, idx, temp, mode, until));
+			m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5F, idx, temp, mode, until, "Python/" + eventName));
 			break;
 
 		default:
@@ -2986,7 +3067,12 @@ void CEventSystem::EvaluateLua(const std::vector<_tEventQueue> &items, const std
 	lua_pushcfunction(lua_state, l_domoticz_applyXPath);
 	lua_setglobal(lua_state, "domoticz_applyXPath");
 
-	_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: script %s trigger (%s)", m_szReason[items[0].reason].c_str(), filename.c_str());
+	// For dzVents, log the runtime entry point; actual script names will be logged during execution
+	std::string displayName = filename;
+	CdzVents* dzventsCheck = CdzVents::GetInstance();
+	if (!m_sql.m_bDisableDzVentsSystem && filename == dzventsCheck->m_runtimeDir + "dzVents.lua")
+		displayName = "dzVents runtime";
+	_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: script %s trigger (%s)", m_szReason[items[0].reason].c_str(), displayName.c_str());
 
 	int sunTimers[10];
 	if (m_mainworker.m_SunRiseSetMins.size() == 10)
@@ -3060,12 +3146,43 @@ void CEventSystem::EvaluateLua(const std::vector<_tEventQueue> &items, const std
 	{
 		lua_sethook(lua_state, luaStop, LUA_MASKCOUNT, 10000000);
 
-		boost::thread aluaThread([this, lua_state, filename] { luaThread(lua_state, filename); });
+		// Acquire semaphore to limit concurrent Lua threads
+		// This prevents resource exhaustion from too many simultaneous script executions
+		//_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Waiting for Lua thread slot (available: %d)", g_lua_thread_semaphore.available());
+		g_lua_thread_semaphore.acquire();
+
+		// Use promise/future for timeout detection with std::thread
+		std::promise<void> completion_promise;
+		std::future<void> completion_future = completion_promise.get_future();
+
+		std::thread aluaThread([this, lua_state, filename, promise = std::move(completion_promise)]() mutable {
+			luaThread(lua_state, filename);
+			// Release semaphore when thread completes
+			g_lua_thread_semaphore.release();
+			//_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Lua thread completed, released slot");
+			promise.set_value();
+			});
 		SetThreadName(aluaThread.native_handle(), "luaThread");
 
-		if (!aluaThread.timed_join(boost::posix_time::seconds(10)))
+		// Wait for thread completion with 10 second timeout
+		if (completion_future.wait_for(std::chrono::seconds(10)) == std::future_status::timeout)
 		{
-			_log.Log(LOG_ERROR, "EventSystem: Warning!, lua script %s has been running for more than 10 seconds", filename.c_str());
+			// Timeout occurred - detach the thread and let it complete on its own
+			aluaThread.detach();
+
+			// For dzVents scripts, we can't safely determine which specific script is running
+			// from outside the Lua thread, so indicate it's a dzVents script generically
+			std::string displayName = filename;
+			CdzVents* dzventsCheck = CdzVents::GetInstance();
+			if (!m_sql.m_bDisableDzVentsSystem && filename == dzventsCheck->m_runtimeDir + "dzVents.lua")
+				displayName = "dzVents script (unknown - still executing)";
+			_log.Log(LOG_ERROR, "EventSystem: Warning!, lua script %s has been running for more than 10 seconds", displayName.c_str());
+			// Note: Semaphore will be released when thread eventually completes
+		}
+		else
+		{
+			// Thread completed within timeout - join it
+			aluaThread.join();
 		}
 	}
 	else
@@ -3093,14 +3210,36 @@ void CEventSystem::luaThread(lua_State *lua_state, const std::string &filename)
 	{
 		if (status == 0)
 		{
-			_log.Log(LOG_ERROR, "EventSystem: Lua script %s did not return a commandArray", filename.c_str());
+			// Try to get actual dzVents script name for better error message
+			std::string displayName = filename;
+			lua_getglobal(lua_state, "currentDzVentsScriptName");
+			if (lua_isstring(lua_state, -1))
+			{
+				const char* scriptNamePtr = lua_tostring(lua_state, -1);
+				if (scriptNamePtr != nullptr)
+					displayName = "dzVents/" + std::string(scriptNamePtr);
+			}
+			lua_pop(lua_state, 1);
+			_log.Log(LOG_ERROR, "EventSystem: Lua script %s did not return a commandArray", displayName.c_str());
 		}
 	}
 
 	if (scriptTrue)
 	{
 		if (m_sql.m_bLogEventScriptTrigger)
-			_log.Log(LOG_STATUS, "EventSystem: Script event triggered: %s", filename.c_str());
+		{
+			// Try to get actual dzVents script name for better log message
+			std::string displayName = filename;
+			lua_getglobal(lua_state, "currentDzVentsScriptName");
+			if (lua_isstring(lua_state, -1))
+			{
+				const char* scriptNamePtr = lua_tostring(lua_state, -1);
+				if (scriptNamePtr != nullptr)
+					displayName = "dzVents/" + std::string(scriptNamePtr);
+			}
+			lua_pop(lua_state, 1);
+			_log.Log(LOG_STATUS, "EventSystem: Script event triggered: %s", displayName.c_str());
+		}
 	}
 
 	lua_close(lua_state);
@@ -3139,7 +3278,17 @@ bool CEventSystem::iterateLuaTable(lua_State *lua_state, const int tIndex, const
 		}
 		else
 		{
-			_log.Log(LOG_ERROR, "EventSystem: commandArray in script %s should only return ['string']='actionstring' or [integer]={['string']='actionstring'}", filename.c_str());
+			// Try to get actual dzVents script name for better error message
+			std::string displayName = filename;
+			lua_getglobal(lua_state, "currentDzVentsScriptName");
+			if (lua_isstring(lua_state, -1))
+			{
+				const char* scriptNamePtr = lua_tostring(lua_state, -1);
+				if (scriptNamePtr != nullptr)
+					displayName = "dzVents/" + std::string(scriptNamePtr);
+			}
+			lua_pop(lua_state, 1);
+			_log.Log(LOG_ERROR, "EventSystem: commandArray in script %s should only return ['string']='actionstring' or [integer]={['string']='actionstring'}", displayName.c_str());
 		}
 		// removes 'value'; keeps 'key' for next iteration
 		lua_pop(lua_state, 1);
@@ -3153,6 +3302,17 @@ bool CEventSystem::processLuaCommand(lua_State *lua_state, const std::string &fi
 {
 	bool scriptTrue = false;
 	std::string lCommand = std::string(lua_tostring(lua_state, -2));
+
+	// Try to get the actual dzVents script name from the global variable
+	std::string scriptName = filename;
+	lua_getglobal(lua_state, "currentDzVentsScriptName");
+	if (lua_isstring(lua_state, -1))
+	{
+		const char* scriptNamePtr = lua_tostring(lua_state, -1);
+		if (scriptNamePtr != nullptr)
+			scriptName = std::string(scriptNamePtr);
+	}
+	lua_pop(lua_state, 1); // pop the global variable
 	if (lCommand == "SendNotification") {
 		std::string luaString = lua_tostring(lua_state, -1);
 		std::string subject, body, priority("0"), sound, subsystem;
@@ -3265,7 +3425,7 @@ bool CEventSystem::processLuaCommand(lua_State *lua_state, const std::string &fi
 		//if (strarray.size() > 3 && !strarray[3].empty())
 			//Protected = atoi(strarray[3].c_str()); //GizMoCuz: this should not be able to be changed via events!
 
-		m_mainworker.UpdateDevice(idx, nValue, sValue, "EventSystem/" + filename, 12, 255, false);
+		m_mainworker.UpdateDevice(idx, nValue, sValue, "EventSystem/" + scriptName, 12, 255, false);
 		scriptTrue = true;
 	}
 	else if (lCommand.find("Variable:") == 0)
@@ -3317,7 +3477,7 @@ bool CEventSystem::processLuaCommand(lua_State *lua_state, const std::string &fi
 		case 1:
 			idx = atoi(SetPointIdx.c_str());
 			temp = aParam[0];
-			m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5F, idx, temp, mode, until));
+			m_sql.AddTaskItem(_tTaskItem::SetSetPoint(0.5F, idx, temp, mode, until, "Script/" + scriptName));
 			break;
 
 		default:
@@ -3337,7 +3497,7 @@ bool CEventSystem::processLuaCommand(lua_State *lua_state, const std::string &fi
 	}
 	else
 	{
-		if (ScheduleEvent(lua_tostring(lua_state, -2), lua_tostring(lua_state, -1), filename)) {
+		if (ScheduleEvent(lua_tostring(lua_state, -2), lua_tostring(lua_state, -1), scriptName)) {
 			scriptTrue = true;
 		}
 	}
@@ -3347,7 +3507,18 @@ bool CEventSystem::processLuaCommand(lua_State *lua_state, const std::string &fi
 void CEventSystem::report_errors(lua_State *L, int status, const std::string &filename)
 {
 	if (status != 0) {
-		_log.Log(LOG_ERROR, "EventSystem: in %s: %s", filename.c_str(), lua_tostring(L, -1));
+		// Try to get actual dzVents script name for better error message
+		std::string displayName = filename;
+		lua_getglobal(L, "currentDzVentsScriptName");
+		if (lua_isstring(L, -1))
+		{
+			const char* scriptNamePtr = lua_tostring(L, -1);
+			if (scriptNamePtr != nullptr)
+				displayName = "dzVents/" + std::string(scriptNamePtr);
+		}
+		lua_pop(L, 1); // pop the global variable
+
+		_log.Log(LOG_ERROR, "EventSystem: in %s: %s", displayName.c_str(), lua_tostring(L, -1));
 		lua_pop(L, 1); // remove error message
 	}
 }
@@ -3625,13 +3796,16 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 		if (!oParseResults.bEventTrigger)
 			SetEventTrigger(deviceID, (!isScene ? REASON_DEVICE : REASON_SCENEGROUP), fDelayTime);
 
+		// If eventName doesn't already have a prefix (e.g., "dzVents/..."), add "EventSystem/"
+		std::string userString = (eventName.find('/') != std::string::npos) ? eventName : ("EventSystem/" + eventName);
+
 		if (isScene) {
 
 			if (
 				oParseResults.sCommand == "On"
 				|| oParseResults.sCommand == "Off"
 				) {
-				tItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, oParseResults.sCommand, eventName, "EventSystem/" + eventName);
+				tItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, oParseResults.sCommand, eventName, userString);
 			}
 			else if (oParseResults.sCommand == "Active") {
 				std::vector<std::vector<std::string> > result;
@@ -3648,7 +3822,7 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 		else {
 			if (oParseResults.sCommand == "Closed")
 				oParseResults.sCommand = "Close";
-			tItem = _tTaskItem::SwitchLightEvent(fDelayTime, deviceID, oParseResults.sCommand, level, NoColor, eventName, "EventSystem/" + eventName);
+			tItem = _tTaskItem::SwitchLightEvent(fDelayTime, deviceID, oParseResults.sCommand, level, NoColor, eventName, userString);
 		}
 		m_sql.AddTaskItem(tItem);
 		_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Scheduled %s after %0.2f.", tItem._command.c_str(), tItem._DelayTime);
@@ -3668,14 +3842,14 @@ bool CEventSystem::ScheduleEvent(int deviceID, const std::string &Action, bool i
 			_tTaskItem tDelayedtItem;
 			if (isScene) {
 				if (oParseResults.sCommand == "On") {
-					tDelayedtItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, "Off", eventName, "EventSystem/" + eventName);
+					tDelayedtItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, "Off", eventName, userString);
 				}
 				else if (oParseResults.sCommand == "Off") {
-					tDelayedtItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, "On", eventName, "EventSystem/" + eventName);
+					tDelayedtItem = _tTaskItem::SwitchSceneEvent(fDelayTime, deviceID, "On", eventName, userString);
 				}
 			}
 			else {
-				tDelayedtItem = _tTaskItem::SwitchLightEvent(fDelayTime, deviceID, previousState, previousLevel, NoColor, eventName, "EventSystem/" + eventName);
+				tDelayedtItem = _tTaskItem::SwitchLightEvent(fDelayTime, deviceID, previousState, previousLevel, NoColor, eventName, userString);
 			}
 			m_sql.AddTaskItem(tDelayedtItem);
 
@@ -3767,6 +3941,7 @@ std::string CEventSystem::nValueToWording(const uint8_t dType, const uint8_t dSu
 	}
 	else if (
 		(switchtype == device::tswitch::type::Blinds)
+		|| (switchtype == device::tswitch::type::BlindsWithStop)
 		|| (switchtype == device::tswitch::type::BlindsPercentage)
 		|| (switchtype == device::tswitch::type::BlindsPercentageWithStop)
 		|| (switchtype == device::tswitch::type::VenetianBlindsUS)

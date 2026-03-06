@@ -28,6 +28,7 @@ enum value {
 	DoorLock = 19,
 	DoorLockInverted = 20,
 	BlindsPercentageWithStop = 21,
+	BlindsWithStop = 22,
 
 	END = 23
 };
@@ -60,7 +61,8 @@ const char *Description(const int sType)
 		{ device::tswitch::type::Selector,				"Selector" },
 		{ device::tswitch::type::DoorLock,				"Door Lock" },
 		{ device::tswitch::type::DoorLockInverted,			"Door Lock Inverted" },
-		{ device::tswitch::type::BlindsPercentageWithStop,		"Blinds + Stop" },
+		{ device::tswitch::type::BlindsPercentageWithStop,		"Blinds % + Stop" },
+		{ device::tswitch::type::BlindsWithStop,			"Blinds + Stop" },
 
 		{ 0, nullptr }
 	};

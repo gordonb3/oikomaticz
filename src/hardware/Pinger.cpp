@@ -67,11 +67,11 @@ private:
 		os << echo_request << body;
 
 		// Send the request.
-		time_sent_ = boost::posix_time::microsec_clock::universal_time();
+		time_sent_ = std::chrono::steady_clock::now();
 		socket_.send_to(request_buffer.data(), destination_);
 
 		num_replies_ = 0;
-		timer_.expires_at(time_sent_ + boost::posix_time::milliseconds(PingTimeoutms_));
+		timer_.expires_at(time_sent_ + std::chrono::milliseconds(PingTimeoutms_));
 		timer_.async_wait([this](auto err) { handle_timeout(err); });
 	}
 
@@ -82,7 +82,7 @@ private:
 			if (num_replies_ == 0)
 			{
 				m_PingState = false;
-				timer_.expires_at(time_sent_ + boost::posix_time::milliseconds(PingTimeoutms_));
+				timer_.expires_at(time_sent_ + std::chrono::milliseconds(PingTimeoutms_));
 				num_tries_++;
 				if (num_tries_ > 4)
 				{
@@ -149,9 +149,9 @@ private:
 	boost::asio::ip::icmp::resolver resolver_;
 	boost::asio::ip::icmp::endpoint destination_;
 	boost::asio::ip::icmp::socket socket_;
-	boost::asio::deadline_timer timer_;
+	boost::asio::steady_timer timer_;
 	unsigned short sequence_number_;
-	boost::posix_time::ptime time_sent_;
+	std::chrono::time_point<std::chrono::steady_clock> time_sent_;
 	boost::asio::streambuf reply_buffer_;
 };
 

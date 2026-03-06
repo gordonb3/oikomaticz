@@ -1,0 +1,30 @@
+#pragma once
+
+#include <string>
+#include "jsoncpp/json.h"
+#include "main/Helper.h"
+#include "main/mainworker.h"
+
+namespace mcp
+{
+	void McpInitialize(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	void McpToolsList(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	void McpToolsCall(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	void McpResourcesList(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	void McpResourcesTemplatesList(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	void McpResourcesRead(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	void McpPromptsList(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	void McpPromptsGet(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+
+	bool getSensorValue(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	bool getSwitchState(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	bool getLogging(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	bool getFloorplan(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+
+	bool toggleSwitchState(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
+	bool setThermostatSetpoint(const Json::Value& jsonRequest, Json::Value& jsonRPCRep);
+
+	bool getDeviceByName(const std::string &sDeviceName, Json::Value &device);
+
+	bool validRPC(const std::string &sInput, Json::Value &jsonRequest, std::string &sError);
+}

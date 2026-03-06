@@ -70,15 +70,14 @@ void CDomoticzHardwareBase::EnableOutputLog(const bool bEnableLog)
 
 void CDomoticzHardwareBase::StartHeartbeatThread()
 {
-	StartHeartbeatThread("Domoticz_HBWork");
+	StartHeartbeatThread(std::string("Domoticz_" + m_Name + "_HBWork").c_str());
 }
 
-void CDomoticzHardwareBase::StartHeartbeatThread(const char* ThreadName)
+void CDomoticzHardwareBase::StartHeartbeatThread(const std::string& szThreadName)
 {
 	m_Heartbeatthread = std::make_shared<std::thread>([this] { Do_Heartbeat_Work(); });
-	SetThreadName(m_Heartbeatthread->native_handle(), ThreadName);
+	SetThreadName(m_Heartbeatthread->native_handle(), szThreadName.c_str());
 }
-
 
 void CDomoticzHardwareBase::StopHeartbeatThread()
 {
@@ -94,19 +93,9 @@ void CDomoticzHardwareBase::StopHeartbeatThread()
 
 void CDomoticzHardwareBase::Do_Heartbeat_Work()
 {
-	int secCounter = 0;
-	int hbCounter = 0;
-	while (!IsStopRequested(200))
+	while (!IsStopRequested(12 * 1000))
 	{
-		secCounter++;
-		if (secCounter == 5)
-		{
-			secCounter = 0;
-			hbCounter++;
-			if (hbCounter % 12 == 0) {
-				mytime(&m_LastHeartbeat);
-			}
-		}
+		mytime(&m_LastHeartbeat);
 	}
 }
 
@@ -772,17 +761,17 @@ void CDomoticzHardwareBase::SendCurrentSensor(const int NodeID, const int Batter
 
 	int at10 = ground(std::abs(Current1 * 10.0F));
 	tsen.CURRENT.ch1h = (BYTE)(at10 / 256);
-	at10 -= (tsen.TEMP.temperatureh * 256);
+	at10 -= (tsen.CURRENT.ch1h * 256);
 	tsen.CURRENT.ch1l = (BYTE)(at10);
 
 	at10 = ground(std::abs(Current2 * 10.0F));
 	tsen.CURRENT.ch2h = (BYTE)(at10 / 256);
-	at10 -= (tsen.TEMP.temperatureh * 256);
+	at10 -= (tsen.CURRENT.ch2h * 256);
 	tsen.CURRENT.ch2l = (BYTE)(at10);
 
 	at10 = ground(std::abs(Current3 * 10.0F));
 	tsen.CURRENT.ch3h = (BYTE)(at10 / 256);
-	at10 -= (tsen.TEMP.temperatureh * 256);
+	at10 -= (tsen.CURRENT.ch3h * 256);
 	tsen.CURRENT.ch3l = (BYTE)(at10);
 
 	sDecodeRXMessage(this, (const unsigned char *)&tsen.CURRENT, defaultname.c_str(), BatteryLevel, nullptr);
@@ -1051,7 +1040,7 @@ void CDomoticzHardwareBase::SendSelectorSwitch(const int NodeID, const uint8_t C
 {
 	/*if (std::size_t index = LevelActions.find(sValue) == std::string::npos)
 	{
-	   Log(LOG_ERROR,"Value %s not supported by Selector Switch %s, it needs %s ",sValue.c_str() , defaultname.c_str(), LevelActions.c_str() );
+	   Log(LOG_ERROR,"Value %s not supported by Selector Switch %s, it needs %s",sValue.c_str() , defaultname.c_str(), LevelActions.c_str() );
 	   return; // did not find sValue in LevelAction string so exit with warning
 	}*/
 
@@ -1168,7 +1157,7 @@ int CDomoticzHardwareBase::MigrateSelectorSwitch(const int NodeID, const uint8_t
  *
  * @param  {int} NodeID              : As normal, device ID
  * @param  {uint8_t} ChildID         : As normal, device unit code
- * @param  {device::tswitch::type::value} switchtype : Blind switch type (device::tswitch::type::Blinds, device::tswitch::type::BlindsPercentage, device::tswitch::type::VenetianBlindsUS, device::tswitch::type::VenetianBlindsEU or device::tswitch::type::BlindsPercentageWithStop)
+ * @param  {device::tswitch::type::value} switchtype : Blind switch type (device::tswitch::type::Blinds, device::tswitch::type::BlindsPercentage, device::tswitch::type::VenetianBlindsUS, device::tswitch::type::VenetianBlindsEU or device::tswitch::type::BlindsPercentageWithStop, or device::tswitch::type::BlindsWithStop)
  * @param  {bool} bDeviceUsed        : true : device appeard on switches screen
  * @param  {bool} bReversePosition   : true : reverse slider position
  * @param  {bool} bReverseState      : true : reverse Open/Closed state
@@ -1181,7 +1170,14 @@ int CDomoticzHardwareBase::MigrateSelectorSwitch(const int NodeID, const uint8_t
  */
 void CDomoticzHardwareBase::CreateBlindSwitch(int NodeID, uint8_t ChildID, device::tswitch::type::value switchtype, bool bDeviceUsed, bool bReversePosition, bool bReverseState, uint8_t cmnd, uint8_t level, const std::string &defaultName, const std::string &userName, int32_t batteryLevel, uint8_t rssiLevel)
 {
-	if (switchtype != device::tswitch::type::Blinds && switchtype != device::tswitch::type::BlindsPercentage && switchtype != device::tswitch::type::VenetianBlindsUS && switchtype != device::tswitch::type::VenetianBlindsEU && switchtype != device::tswitch::type::BlindsPercentageWithStop)
+	if (
+		switchtype != device::tswitch::type::Blinds
+		&& switchtype != device::tswitch::type::BlindsWithStop
+		&& switchtype != device::tswitch::type::BlindsPercentage
+		&& switchtype != device::tswitch::type::VenetianBlindsUS
+		&& switchtype != device::tswitch::type::VenetianBlindsEU
+		&& switchtype != device::tswitch::type::BlindsPercentageWithStop
+		)
 	{
 	   Log(LOG_ERROR, "Node %08X (%s), invalid switch type %u", NodeID, defaultName.c_str(), uint32_t(switchtype));
 	   return;
