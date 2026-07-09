@@ -7,33 +7,34 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "stdafx.h"
-#include "connection.hpp"
+#include "webem_stdafx.h"
+#include "webserver/connection.h"
 #include <boost/algorithm/string.hpp>
-#include "connection_manager.hpp"
-#include "request_handler.hpp"
-#include "mime_types.hpp"
-#include "main/Helper.h"
-#include "main/Logger.h"
+#include <iomanip>
+#include <sstream>
+#include "webserver/connection_manager.h"
+#include "webserver/request_handler.h"
+#include "mime_types.h"
+#include "webserver/cWebem.h"
+#include "webserver/webem_utils.h"
 
 namespace http {
 	namespace server {
-		extern std::string convert_to_http_date(time_t time);
-		extern time_t last_write_time(const std::string& path);
-
 		// this is the constructor for plain connections
-		connection::connection(boost::asio::io_context &io_context, connection_manager &manager, request_handler &handler, int read_timeout)
-			: send_buffer_(nullptr)
+		connection::connection(boost::asio::io_context &io_context, connection_manager &manager, request_handler &handler, int read_timeout, WebServerLogger logger)
+			: m_logger(std::move(logger))
+			, send_buffer_(nullptr)
 			, read_timeout_(read_timeout)
 			, read_timer_(io_context, std::chrono::seconds(read_timeout))
 			, default_abandoned_timeout_(20 * 60)
 			// 20mn before stopping abandoned connection
 			, abandoned_timer_(io_context, std::chrono::seconds(default_abandoned_timeout_))
+			, ws_session_renewal_timer_(io_context)
 			, connection_manager_(manager)
 			, request_handler_(handler)
 			, status_(INITIALIZING)
 			, default_max_requests_(20)
-			, websocket_parser([this](auto &&r) { MyWrite(r); }, handler.Get_myWebem(), [this](auto &&r) { WS_Write(r); })
+			, websocket_parser([this](auto &&r) { MyWrite(r); }, [this](auto &&r) { WS_Write(r); })
 		{
 			secure_ = false;
 			keepalive_ = false;
@@ -44,18 +45,20 @@ namespace http {
 
 #ifdef WWW_ENABLE_SSL
 		// this is the constructor for secure connections
-		connection::connection(boost::asio::io_context &io_context, connection_manager &manager, request_handler &handler, int read_timeout, boost::asio::ssl::context &context)
-			: send_buffer_(nullptr)
+		connection::connection(boost::asio::io_context &io_context, connection_manager &manager, request_handler &handler, int read_timeout, boost::asio::ssl::context &context, WebServerLogger logger)
+			: m_logger(std::move(logger))
+			, send_buffer_(nullptr)
 			, read_timeout_(read_timeout)
 			, read_timer_(io_context, std::chrono::seconds(read_timeout))
 			, default_abandoned_timeout_(20 * 60)
 			// 20mn before stopping abandoned connection
 			, abandoned_timer_(io_context, std::chrono::seconds(default_abandoned_timeout_))
+			, ws_session_renewal_timer_(io_context)
 			, connection_manager_(manager)
 			, request_handler_(handler)
 			, status_(INITIALIZING)
 			, default_max_requests_(20)
-			, websocket_parser([this](auto &&r) { MyWrite(r); }, handler.Get_myWebem(), [this](auto &&r) { WS_Write(r); })
+			, websocket_parser([this](auto &&r) { MyWrite(r); }, [this](auto &&r) { WS_Write(r); })
 		{
 			secure_ = true;
 			keepalive_ = false;
@@ -90,7 +93,7 @@ namespace http {
 			if (ec) {
 				// Prevent the exception to be thrown to run to avoid the server to be locked (still listening but no more connection or stop).
 				// If the exception returns to WebServer to also create a exception loop.
-				_log.Log(LOG_ERROR, "Getting error '%s' while getting remote_endpoint in connection::start", ec.message().c_str());
+				if (m_logger) m_logger->Log(LogLevel::Error, "Getting error '%s' while getting remote_endpoint in connection::start", ec.message().c_str());
 				connection_manager_.stop(shared_from_this());
 				return;
 			}
@@ -101,7 +104,7 @@ namespace http {
 			if (ec) {
 				// Prevent the exception to be thrown to run to avoid the server to be locked (still listening but no more connection or stop).
 				// If the exception returns to WebServer to also create a exception loop.
-				_log.Log(LOG_ERROR, "Getting error '%s' while getting local_endpoint in connection::start", ec.message().c_str());
+				if (m_logger) m_logger->Log(LogLevel::Error, "Getting error '%s' while getting local_endpoint in connection::start", ec.message().c_str());
 				connection_manager_.stop(shared_from_this());
 				return;
 			}
@@ -127,16 +130,23 @@ namespace http {
 		{
 			switch (connection_type) {
 			case ConnectionType::connection_websocket:
-				// todo: send close frame and wait for writeQ to flush
-				//websocket_parser.SendClose("");
-				websocket_parser.Stop();
-				break;
 			case ConnectionType::connection_websocket_closing:
-				// todo: wait for writeQ to flush, so client can receive the close frame
-				websocket_parser.Stop();
+			{
+				auto handler = websocket_parser.DetachHandler();
+				if (handler) {
+					auto* webem = request_handler_.Get_myWebem();
+					if (webem) {
+						webem->ScheduleHandlerCleanup(std::move(handler));
+					} else {
+						if (m_logger) m_logger->Log(LogLevel::Error, "WebSocket: webem unavailable, falling back to inline handler cleanup");
+						try { handler->Stop(); } catch (...) {}
+					}
+				}
 				break;
 			}
+			}
 			// Cancel timers
+			cancel_ws_session_renewal();
 			cancel_abandoned_timeout();
 			cancel_read_timeout();
 
@@ -166,7 +176,7 @@ namespace http {
 						socket().close(ignored_ec);
 					}
 					catch (...) {
-						_log.Log(LOG_ERROR, "%s -> exception thrown while stopping connection", host_remote_endpoint_address_.c_str());
+						if (m_logger) m_logger->Log(LogLevel::Error, "%s -> exception thrown while stopping connection", host_remote_endpoint_address_.c_str());
 					}
 					break;
 				case ConnectionType::connection_websocket:
@@ -188,7 +198,7 @@ namespace http {
 				}
 				else
 				{
-					_log.Debug(DEBUG_WEBSERVER, "connection::handle_handshake Error: %s", error.message().c_str());
+					if (m_logger) m_logger->Debug(DebugCategory::WebServer, "connection::handle_handshake Error: %s", error.message().c_str());
 					connection_manager_.stop(shared_from_this());
 				}
 			}
@@ -245,6 +255,18 @@ namespace http {
 				// socket connection not set up yet, add to queue
 				std::unique_lock<std::mutex> lock(writeMutex);
 				writeQ.push_back(CWebsocketFrame::Create(opcode_text, resp, false));
+			}
+		}
+
+		void connection::WS_WriteBinary(const std::string& data)
+		{
+			if (connection_type == ConnectionType::connection_websocket) {
+				MyWrite(CWebsocketFrame::Create(opcode_binary, data, false));
+			}
+			else {
+				// socket connection not set up yet, add to queue
+				std::unique_lock<std::mutex> lock(writeMutex);
+				writeQ.push_back(CWebsocketFrame::Create(opcode_binary, data, false));
 			}
 		}
 
@@ -311,7 +333,7 @@ namespace http {
 				rep = reply::stock_reply(reply::not_found);
 				return false;
 			}
-			time_t ftime = last_write_time(filename);
+			time_t ftime = last_write_time(filename, m_logger);
 
 			sendfile_.seekg(0, std::ios::end);
 			std::streamsize total_size = sendfile_.tellg();
@@ -319,9 +341,14 @@ namespace http {
 
 			reply::add_header(&rep, "Cache-Control", "max-age=0, private");
 			reply::add_header(&rep, "Accept-Ranges", "bytes");
-			reply::add_header(&rep, "Date", make_web_time(time(nullptr)));
-			reply::add_header(&rep, "Last-Modified", make_web_time(ftime));
-			reply::add_header(&rep, "Server", "Apache/2.2.22");
+			reply::add_header(&rep, "Date", utils::make_web_time(time(nullptr)));
+			reply::add_header(&rep, "Last-Modified", utils::make_web_time(ftime));
+			// Use the configured server name if set, otherwise omit the Server header.
+			{
+				auto* webem = request_handler_.Get_myWebem();
+				if (webem && !webem->m_settings.server_name.empty())
+					reply::add_header(&rep, "Server", webem->m_settings.server_name);
+			}
 
 			std::size_t last_dot_pos = filename.find_last_of('.');
 			if (last_dot_pos != std::string::npos) {
@@ -381,14 +408,14 @@ namespace http {
 					}
 					catch (...)
 					{
-						_log.Log(LOG_ERROR, "Exception parsing HTTP. Address: %s", host_remote_endpoint_address_.c_str());
+						if (m_logger) m_logger->Log(LogLevel::Error, "Exception parsing HTTP. Address: %s", host_remote_endpoint_address_.c_str());
 					}
 
 					if (result) {
 						struct timeval tv;
 						std::time_t newt;
 
-						if(_log.IsACLFlogEnabled())
+						if(m_logger && m_logger->IsAccessLogEnabled())
 						{
 							// Record timestamp (with milliseconds) before starting to process
 						#ifdef CLOCK_REALTIME
@@ -400,7 +427,7 @@ namespace http {
 							}
 							else
 						#endif
-								gettimeofday(&tv, nullptr);
+								utils::get_timeofday(&tv);
 							newt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 						}
 
@@ -423,7 +450,7 @@ namespace http {
 						host_last_request_uri_ = request_.uri;
 						request_handler_.handle_request(request_, reply_);
 
-						if(_log.IsACLFlogEnabled())	// Only do this if we are gonna use it, otherwise don't spend the compute power
+						if(m_logger && m_logger->IsAccessLogEnabled())	// Only do this if we are gonna use it, otherwise don't spend the compute power
 						{
 							// Generate webserver logentry
 							std::string wlHost = (reply_.originHost.empty()) ? request_.host_remote_address : reply_.originHost;
@@ -449,23 +476,62 @@ namespace http {
 							std::string wlReqTimeMs = sstr.str();
 
 							char wlReqTime[32];
-							std::strftime(wlReqTime, sizeof(wlReqTime), "%d/%b/%Y:%H:%M:%S", std::localtime(&newt));
+							struct tm ltm{};
+							utils::safe_localtime(&newt, &ltm);
+							std::strftime(wlReqTime, sizeof(wlReqTime), "%d/%b/%Y:%H:%M:%S", &ltm);
 							wlReqTime[sizeof(wlReqTime) - 1] = '\0';
 
 							char wlReqTimeZone[16];
-							std::strftime(wlReqTimeZone, sizeof(wlReqTimeZone), "%z", std::localtime(&newt));
+							std::strftime(wlReqTimeZone, sizeof(wlReqTimeZone), "%z", &ltm);
 							wlReqTimeZone[sizeof(wlReqTimeZone) - 1] = '\0';
 
-							_log.ACLFlog("%s - %s [%s.%s %s] \"%s\" %d %d %s %s", wlHost.c_str(), wlUser.c_str(), wlReqTime, wlReqTimeMs.c_str(), wlReqTimeZone, wlReqUri.c_str(), wlResCode, wlContentSize, wlReqRef.c_str(), wlBrowser.c_str());
+							if (m_logger) m_logger->AccessLog("%s - %s [%s.%s %s] \"%s\" %d %d %s %s", wlHost.c_str(), wlUser.c_str(), wlReqTime, wlReqTimeMs.c_str(), wlReqTimeZone, wlReqUri.c_str(), wlResCode, wlContentSize, wlReqRef.c_str(), wlBrowser.c_str());
 						}
 
 						if (reply_.status == reply::switching_protocols) {
 							// this was an upgrade request
-							connection_type = ConnectionType::connection_websocket;
+							// Do NOT set connection_type = connection_websocket here.
+							// The handler's Start() may call WS_Write/WS_WriteBinary to send data
+							// immediately. Those writes must be queued (writeQ) and delivered only
+							// after the HTTP 101 response below. Setting connection_type to
+							// connection_websocket here causes WS_Write/WS_WriteBinary to write
+							// directly to the socket before the 101, corrupting the handshake.
+							// connection_type is set to connection_websocket after MyWrite() below.
 							// from now on we are a persistant connection
 							keepalive_ = true;
+							// Create the handler via factory for this request path
+							{
+								auto* webem = request_handler_.Get_myWebem();
+								if (webem)
+								{
+									std::string req_path = webem->ExtractRequestPath(request_.uri);
+									auto factory = webem->GetWebsocketFactory(req_path);
+									if (factory)
+									{
+										// Capture weak_ptr instead of raw this so the writer
+										// lambdas safely no-op after the connection is destroyed.
+										// This prevents use-after-free when async handler cleanup
+										// runs after the connection has already been torn down.
+										std::weak_ptr<connection> weak_self = shared_from_this();
+										auto ws_handler = factory(
+											webem,
+											[weak_self](const std::string& data) {
+												if (auto self = weak_self.lock())
+													self->WS_Write(data);
+											},
+											[weak_self](const std::string& data) {
+												if (auto self = weak_self.lock())
+													self->WS_WriteBinary(data);
+											},
+											reply_.ws_session);
+										websocket_parser.SetHandler(ws_handler);
+										webem->RegisterWebsocketHandler(ws_handler);
+									}
+								}
+							}
+							m_ws_session_id = reply_.ws_session.id;
+							start_ws_session_renewal();
 							websocket_parser.Start();
-							websocket_parser.GetHandler()->store_session_id(request_, reply_);
 							// todo: check if multiple connection from the same client in CONNECTING state?
 						}
 						else if (reply_.status == reply::download_file) {
@@ -505,7 +571,7 @@ namespace http {
 					}
 					else if (!result)
 					{
-						_log.Log(LOG_ERROR, "Error parsing http request address: %s", host_remote_endpoint_address_.c_str());
+						if (m_logger) m_logger->Log(LogLevel::Error, "Error parsing http request address: %s", host_remote_endpoint_address_.c_str());
 						keepalive_ = false;
 						reply_ = reply::stock_reply(reply::bad_request);
 						MyWrite(reply_.to_string(request_.method));
@@ -547,7 +613,6 @@ namespace http {
 			}
 			else if (error != boost::asio::error::operation_aborted)
 			{
-				// _log.Log(LOG_ERROR, "connection::handle_read Error: %s", error.message().c_str());
 				connection_manager_.stop(shared_from_this());
 			}
 		}
@@ -570,8 +635,7 @@ namespace http {
 				return;
 			}
 
-			//Stop needs to be outside the lock.
-			//There are flows it dead-locks in CWebSocketPush::Stop()
+			// Stop needs to be outside the lock to avoid potential deadlocks.
 			lock.unlock();
 
 			if (error == boost::asio::error::operation_aborted)
@@ -580,8 +644,7 @@ namespace http {
 			}
 			else if (error)
 			{
-				// _log.Log(LOG_ERROR, "connection::handle_write Error: %s", error.message().c_str());
-				connection_manager_.stop(shared_from_this());
+					connection_manager_.stop(shared_from_this());
 			}
 			else if (keepalive_)
 			{
@@ -607,7 +670,7 @@ namespace http {
 				read_timer_.cancel();
 			}
 			catch (...) {
-				_log.Log(LOG_ERROR, "%s -> exception thrown while canceling read timeout", host_remote_endpoint_address_.c_str());
+				if (m_logger) m_logger->Log(LogLevel::Error, "%s -> exception thrown while canceling read timeout", host_remote_endpoint_address_.c_str());
 			}
 		}
 
@@ -629,7 +692,7 @@ namespace http {
 			}
 			else if (error != boost::asio::error::operation_aborted)
 			{
-				_log.Log(LOG_ERROR, "connection::handle_read_timeout Error: %s", error.message().c_str());
+				if (m_logger) m_logger->Log(LogLevel::Error, "connection::handle_read_timeout Error: %s", error.message().c_str());
 				connection_manager_.stop(shared_from_this());
 			}
 		}
@@ -646,7 +709,7 @@ namespace http {
 				abandoned_timer_.cancel();
 			}
 			catch (...) {
-				_log.Log(LOG_ERROR, "%s -> exception thrown while canceling abandoned timeout", host_remote_endpoint_address_.c_str());
+				if (m_logger) m_logger->Log(LogLevel::Error, "%s -> exception thrown while canceling abandoned timeout", host_remote_endpoint_address_.c_str());
 			}
 		}
 
@@ -659,9 +722,44 @@ namespace http {
 		/// stop connection on abandoned timeout
 		void connection::handle_abandoned_timeout(const boost::system::error_code& error) {
 			if (error != boost::asio::error::operation_aborted) {
-				_log.Log(LOG_STATUS, "%s -> handle abandoned timeout (status=%d)", host_remote_endpoint_address_.c_str(), status_);
+				if (m_logger) m_logger->Log(LogLevel::Status, "%s -> handle abandoned timeout (status=%d)", host_remote_endpoint_address_.c_str(), status_);
 				connection_manager_.stop(shared_from_this());
 			}
+		}
+
+		// Interval at which the WebSocket session renewal timer fires.
+		// Must be shorter than SHORT_SESSION_TIMEOUT/2 (defined in cWebem.cpp) so that
+		// RenewSessionIfNeeded() reliably catches the renewal window before expiry.
+		static constexpr int kWsSessionRenewalInterval = 60; // seconds
+
+		/// Start periodic session renewal timer for an authenticated WebSocket connection.
+		/// Fires every kWsSessionRenewalInterval seconds so the session stays alive
+		/// even when the client sends no HTTP requests (e.g. passive dashboard pages).
+		void connection::start_ws_session_renewal() {
+			if (m_ws_session_id.empty())
+				return;
+			ws_session_renewal_timer_.expires_after(std::chrono::seconds(kWsSessionRenewalInterval));
+			ws_session_renewal_timer_.async_wait([self = shared_from_this()](const boost::system::error_code& err) {
+				self->handle_ws_session_renewal(err);
+			});
+		}
+
+		void connection::cancel_ws_session_renewal() {
+			try {
+				ws_session_renewal_timer_.cancel();
+			}
+			catch (...) {}
+		}
+
+		void connection::handle_ws_session_renewal(const boost::system::error_code& error) {
+			if (error == boost::asio::error::operation_aborted)
+				return;
+			if (connection_type != ConnectionType::connection_websocket)
+				return;
+			auto* webem = request_handler_.Get_myWebem();
+			if (webem && !m_ws_session_id.empty())
+				webem->RenewSessionIfNeeded(m_ws_session_id);
+			start_ws_session_renewal();
 		}
 
 	} // namespace server

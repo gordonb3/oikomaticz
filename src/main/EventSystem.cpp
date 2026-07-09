@@ -23,53 +23,29 @@
 #include "main/LuaTable.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#include <mutex>
-#include <condition_variable>
-
+#include <future>
+#include <memory>
 extern "C" {
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
 }
 
-bool g_bUseEventTrigger = true;
-
-// Simple counting semaphore implementation using C++11 features
-class CountingSemaphore {
-private:
+struct ScriptNameReport {
 	std::mutex mtx;
-	std::condition_variable cv;
-	int count;
-	const int max_count;
-
-public:
-	explicit CountingSemaphore(int initial_count)
-		: count(initial_count), max_count(initial_count) {
-	}
-
-	void acquire() {
-		std::unique_lock<std::mutex> lock(mtx);
-		cv.wait(lock, [this] { return count > 0; });
-		--count;
-	}
-
-	void release() {
-		std::lock_guard<std::mutex> lock(mtx);
-		if (count < max_count) {
-			++count;
-			cv.notify_one();
-		}
-	}
-
-	int available() const {
-		std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
-		return count;
-	}
+	std::string name;
 };
 
-// Global semaphore to limit concurrent Lua thread execution
-// Limit to 4 concurrent threads to prevent resource exhaustion
-static CountingSemaphore g_lua_thread_semaphore(4);
+static int l_reportScriptName(lua_State *L)
+{
+	auto *report = static_cast<ScriptNameReport *>(lua_touserdata(L, lua_upvalueindex(1)));
+	const char *name = luaL_checkstring(L, 1);
+	std::lock_guard<std::mutex> lock(report->mtx);
+	report->name = name;
+	return 0;
+}
+
+bool g_bUseEventTrigger = true;
 
 extern time_t m_StartTime;
 extern std::string szUserDataFolder, szStartupFolder;
@@ -91,7 +67,8 @@ const std::string CEventSystem::m_szReason[] =
 	"time",				// 3
 	"security",			// 4
 	"url",				// 5
-	"notification"			// 6
+	"notification",			// 6
+	"shellcommand"			// 7
 };
 
 // Security status
@@ -167,12 +144,18 @@ CEventSystem::CEventSystem()
 
 CEventSystem::~CEventSystem()
 {
-	StopEventSystem();
+	// Pass false: never call Py_EndInterpreter from the destructor.
+	// Py_EndInterpreter blocks if any Python thread still holds the GIL
+	// (e.g. a plugin callback in flight during shutdown), causing a hang.
+	// The OS releases all Python resources when the process exits.
+	StopEventSystem(false);
 }
 
 void CEventSystem::StartEventSystem()
 {
-	StopEventSystem();
+	// Preserve the Python sub-interpreter across restarts to avoid the
+	// Py_EndInterpreter / Py_NewInterpreter cycle that crashes on Python 3.13.
+	StopEventSystem(false);
 	m_mainworker.m_notificationsystem.Register(this);
 
 	if (!m_bEnabled)
@@ -198,7 +181,7 @@ void CEventSystem::StartEventSystem()
 	m_szStartTime = TimeToString(&m_StartTime, TF_DateTime);
 }
 
-void CEventSystem::StopEventSystem()
+void CEventSystem::StopEventSystem(bool bDestroyPythonInterpreter /*= true*/)
 {
 	RequestStop();
 	m_TaskQueue.RequestStop();
@@ -217,7 +200,7 @@ void CEventSystem::StopEventSystem()
 	}
 
 #ifdef ENABLE_PYTHON
-	Plugins::PythonEventsStop();
+	Plugins::PythonEventsStop(bDestroyPythonInterpreter);
 #endif
 }
 
@@ -360,6 +343,7 @@ void CEventSystem::Do_Work()
 
 	localtime_r(&atime, &ltime);
 	int _LastMinute = ltime.tm_min;
+	m_LastRefreshDay = ltime.tm_mday;
 
 	_log.Log(LOG_STATUS, "EventSystem: Started");
 	while (true)
@@ -378,6 +362,11 @@ void CEventSystem::Do_Work()
 
 		if (ltime.tm_sec % 12 == 0) {
 			m_mainworker.HeartbeatUpdate("EventSystem");
+		}
+		if (ltime.tm_mday != m_LastRefreshDay)
+		{
+			m_LastRefreshDay = ltime.tm_mday;
+			RefreshCounterJsonMaps();
 		}
 		if (ltime.tm_min != _LastMinute)
 		{
@@ -464,6 +453,37 @@ void CEventSystem::UpdateJsonMap(_tDeviceStatus &item, const uint64_t ulDevID)
 				}
 			}
 			index++;
+		}
+	}
+}
+
+void CEventSystem::RefreshCounterJsonMaps()
+{
+	if (m_sql.m_bDisableDzVentsSystem)
+		return;
+
+	// Find the indices of daily counter fields in the JsonMap array
+	std::vector<int> counterTodayIndices;
+	for (int i = 0; JsonMap[i].szOriginal != nullptr; i++)
+	{
+		if (strcmp(JsonMap[i].szOriginal, "CounterToday") == 0 || strcmp(JsonMap[i].szOriginal, "CounterDelivToday") == 0)
+			counterTodayIndices.push_back(i);
+	}
+	if (counterTodayIndices.empty())
+		return;
+
+	_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Refreshing counter device JsonMaps for new day");
+
+	boost::unique_lock<boost::shared_mutex> devicestatesMutexLock(m_devicestatesMutex);
+	for (auto& state : m_devicestates)
+	{
+		for (int idx : counterTodayIndices)
+		{
+			if (state.second.JsonMapString.find(idx) != state.second.JsonMapString.end())
+			{
+				UpdateJsonMap(state.second, state.first);
+				break;
+			}
 		}
 	}
 }
@@ -727,6 +747,66 @@ void CEventSystem::GetCurrentMeasurementStates()
 			{
 				temp = static_cast<float>(atof(splitresults[0].c_str()));
 				isTemp = true;
+			}
+			break;
+		case pTypeThermostat6:
+			// Thermostat 6 combines temperature + setpoint (+ optional humidity/baro)
+			// sValue formats:
+			//   sTypeThermostat6Temp (0x00): "temp;setpoint"
+			//   sTypeThermostat6TempHum (0x01): "temp;setpoint;humidity;humidity_status"
+			//   sTypeThermostat6TempBaro (0x02): "temp;setpoint;barometer;forecast"
+			//   sTypeThermostat6TempHumBaro (0x03): "temp;setpoint;humidity;humidity_status;barometer;forecast"
+			if (sitem.subType == sTypeThermostat6Temp)
+			{
+				if (splitresults.size() >= 2)
+				{
+					temp = static_cast<float>(atof(splitresults[0].c_str()));
+					utilityval = static_cast<float>(atof(splitresults[1].c_str())); // setpoint
+					isTemp = true;
+					isUtility = true;
+				}
+			}
+			else if (sitem.subType == sTypeThermostat6TempHum)
+			{
+				if (splitresults.size() >= 4)
+				{
+					temp = static_cast<float>(atof(splitresults[0].c_str()));
+					utilityval = static_cast<float>(atof(splitresults[1].c_str())); // setpoint
+					humidity = ground(atof(splitresults[2].c_str()));
+					dewpoint = (float)CalculateDewPoint(temp, humidity);
+					isTemp = true;
+					isUtility = true;
+					isHum = true;
+					isDew = true;
+				}
+			}
+			else if (sitem.subType == sTypeThermostat6TempBaro)
+			{
+				if (splitresults.size() >= 4)
+				{
+					temp = static_cast<float>(atof(splitresults[0].c_str()));
+					utilityval = static_cast<float>(atof(splitresults[1].c_str())); // setpoint
+					barometer = static_cast<float>(atof(splitresults[2].c_str()));
+					isTemp = true;
+					isUtility = true;
+					isBaro = true;
+				}
+			}
+			else if (sitem.subType == sTypeThermostat6TempHumBaro)
+			{
+				if (splitresults.size() >= 6)
+				{
+					temp = static_cast<float>(atof(splitresults[0].c_str()));
+					utilityval = static_cast<float>(atof(splitresults[1].c_str())); // setpoint
+					humidity = ground(atof(splitresults[2].c_str()));
+					barometer = static_cast<float>(atof(splitresults[4].c_str()));
+					dewpoint = (float)CalculateDewPoint(temp, humidity);
+					isTemp = true;
+					isUtility = true;
+					isHum = true;
+					isBaro = true;
+					isDew = true;
+				}
 			}
 			break;
 		case pTypeHUM:
@@ -999,7 +1079,7 @@ void CEventSystem::GetCurrentMeasurementStates()
 					{
 						float total_min = static_cast<float>(atof(sd2[0].c_str()));
 						float total_max = static_cast<float>(atof(splitresults[1].c_str()));
-						total_real = total_max - total_min;
+						total_real = std::max(0.0, static_cast<double>(total_max - total_min));
 					}
 					rainmm = float(total_real);
 				}
@@ -1437,66 +1517,45 @@ void CEventSystem::EventQueueThread()
 {
 	_log.Log(LOG_STATUS, "EventSystem: Queue thread started...");
 
-	std::vector<_tEventQueue> items;
-	auto last_process_time = std::chrono::steady_clock::now();
-	const auto min_batch_interval = std::chrono::milliseconds(100); // Batch events for at least 100ms
-
 	while (!m_TaskQueue.IsStopRequested(0))
 	{
+		std::vector<_tEventQueue> items;
+
+		// Block until at least one event arrives (or 5 sec timeout)
 		_tEventQueue item;
-		bool hasPopped = m_eventqueue.timed_wait_and_pop<std::chrono::duration<int> >(item, std::chrono::duration<int>(5));
-		if (!hasPopped)
-		{
-			// Timeout - process any pending items
-			if (!items.empty())
-			{
-				_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Processing %d batched event(s)", (int)items.size());
-				EvaluateEvent(items);
-				items.clear();
-				last_process_time = std::chrono::steady_clock::now();
-			}
+		if (!m_eventqueue.timed_wait_and_pop<std::chrono::duration<int>>(item, std::chrono::duration<int>(5)))
 			continue;
-		}
 
 		if (m_TaskQueue.IsStopRequested(0))
 			break;
 
-		// Check for duplicate events (same id and reason)
-		bool is_duplicate = false;
-		for (const auto& i : items)
+		items.push_back(item); // push the first event in the batch
+
+		try
 		{
-			if (i.id == item.id && i.reason <= REASON_SCENEGROUP && i.reason == item.reason)
+			// Drain all remaining queued events into the batch
+			while (m_eventqueue.try_pop(item))
 			{
-				is_duplicate = true;
-				_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Skipping duplicate event for device %" PRIu64, item.id);
-				break;
+				if (m_TaskQueue.IsStopRequested(0))
+					break;
+				items.push_back(item);
+			}
+
+			if (!items.empty())
+			{
+				EvaluateEvent(items);
 			}
 		}
-
-		if (!is_duplicate)
-			items.push_back(item);
-
-		// Process batch if: queue is empty OR enough time has passed OR duplicate found
-		auto now = std::chrono::steady_clock::now();
-		bool should_process = m_eventqueue.empty() ||
-			is_duplicate ||
-			(now - last_process_time) >= min_batch_interval;
-
-		if (should_process && !items.empty())
+		catch (const std::exception &e)
 		{
-			_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Processing %d batched event(s)", (int)items.size());
-			EvaluateEvent(items);
-			items.clear();
-			last_process_time = now;
+			_log.Log(LOG_ERROR, "EventSystem: Exception during event processing: %s", e.what());
+		}
+		catch (...)
+		{
+			_log.Log(LOG_ERROR, "EventSystem: Unknown exception during event processing");
 		}
 	}
 
-	// Process any remaining items before exit
-	if (!items.empty())
-	{
-		_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Processing %d remaining event(s) on shutdown", (int)items.size());
-		EvaluateEvent(items);
-	}
 	m_eventqueue.clear();
 
 	_log.Log(LOG_STATUS, "EventSystem: Queue thread stopped...");
@@ -1511,13 +1570,30 @@ void CEventSystem::ProcessDevice(
 	const unsigned char signallevel,
 	const unsigned char batterylevel,
 	const int nValue,
-	const char* sValue)
+	const char* sValue,
+	const std::string& lastUpdate)
 {
 	if (!m_bEnabled)
 		return;
 
+	if (!IsEventSwitchLike(devType, subType))
+	{
+		//Check for duplicates (faulty sensors could send 10+ messages a second)
+		// unique_lock required: we write lastUpdate to m_devicestates on duplicate detection
+		boost::unique_lock<boost::shared_mutex> devicestatesMutexLock(m_devicestatesMutex);
+		auto itt = m_devicestates.find(ulDevID);
+		if (sValue && itt != m_devicestates.end()
+			&& itt->second.nValue == nValue
+			&& itt->second.sValue == sValue)
+		{
+			// Value unchanged: still update lastUpdate so scripts can detect last received time
+			itt->second.lastUpdate = lastUpdate;
+			return; // Nothing changed, skip event triggering
+		}
+	}
+
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT SwitchType, LastUpdate, LastLevel, Options, Name FROM DeviceStatus WHERE (ID==%" PRIu64 ")", ulDevID);
+	result = m_sql.safe_query("SELECT SwitchType, LastLevel, Options, Name FROM DeviceStatus WHERE (ID==%" PRIu64 ")", ulDevID);
 	if (result.empty())
 	{
 		//impossible as we just updated it
@@ -1528,10 +1604,9 @@ void CEventSystem::ProcessDevice(
 	std::vector<std::string> sd = result[0];
 
 	device::tswitch::type::value switchType = (device::tswitch::type::value)std::stoi(sd[0]);
-	std::string lastUpdate = sd[1];
-	uint8_t lastLevel = (uint8_t)atoi(sd[2].c_str());
-	std::string dev_options = sd[3];
-	std::string devname = sd[4];
+	uint8_t lastLevel = (uint8_t)atoi(sd[1].c_str());
+	std::string dev_options = sd[2];
+	std::string devname = sd[3];
 
 	std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(dev_options);
 
@@ -3072,7 +3147,7 @@ void CEventSystem::EvaluateLua(const std::vector<_tEventQueue> &items, const std
 	CdzVents* dzventsCheck = CdzVents::GetInstance();
 	if (!m_sql.m_bDisableDzVentsSystem && filename == dzventsCheck->m_runtimeDir + "dzVents.lua")
 		displayName = "dzVents runtime";
-	_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: script %s trigger (%s)", m_szReason[items[0].reason].c_str(), displayName.c_str());
+	_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: script %s trigger (%s) [%d event(s)]", m_szReason[items[0].reason].c_str(), displayName.c_str(), (int)items.size());
 
 	int sunTimers[10];
 	if (m_mainworker.m_SunRiseSetMins.size() == 10)
@@ -3146,42 +3221,41 @@ void CEventSystem::EvaluateLua(const std::vector<_tEventQueue> &items, const std
 	{
 		lua_sethook(lua_state, luaStop, LUA_MASKCOUNT, 10000000);
 
-		// Acquire semaphore to limit concurrent Lua threads
-		// This prevents resource exhaustion from too many simultaneous script executions
-		//_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Waiting for Lua thread slot (available: %d)", g_lua_thread_semaphore.available());
-		g_lua_thread_semaphore.acquire();
+		auto scriptNameReport = std::make_shared<ScriptNameReport>();
+		bool isDzVents = !m_sql.m_bDisableDzVentsSystem && filename == dzvents->m_runtimeDir + "dzVents.lua";
+		if (isDzVents)
+		{
+			lua_pushlightuserdata(lua_state, scriptNameReport.get());
+			lua_pushcclosure(lua_state, l_reportScriptName, 1);
+			lua_setglobal(lua_state, "dz_reportScriptName");
+		}
 
-		// Use promise/future for timeout detection with std::thread
 		std::promise<void> completion_promise;
 		std::future<void> completion_future = completion_promise.get_future();
 
-		std::thread aluaThread([this, lua_state, filename, promise = std::move(completion_promise)]() mutable {
+		std::thread aluaThread([this, lua_state, filename, promise = std::move(completion_promise), scriptNameReport]() mutable {
 			luaThread(lua_state, filename);
-			// Release semaphore when thread completes
-			g_lua_thread_semaphore.release();
-			//_log.Debug(DEBUG_EVENTSYSTEM, "EventSystem: Lua thread completed, released slot");
 			promise.set_value();
-			});
+		});
 		SetThreadName(aluaThread.native_handle(), "luaThread");
 
-		// Wait for thread completion with 10 second timeout
 		if (completion_future.wait_for(std::chrono::seconds(10)) == std::future_status::timeout)
 		{
-			// Timeout occurred - detach the thread and let it complete on its own
 			aluaThread.detach();
 
-			// For dzVents scripts, we can't safely determine which specific script is running
-			// from outside the Lua thread, so indicate it's a dzVents script generically
 			std::string displayName = filename;
-			CdzVents* dzventsCheck = CdzVents::GetInstance();
-			if (!m_sql.m_bDisableDzVentsSystem && filename == dzventsCheck->m_runtimeDir + "dzVents.lua")
-				displayName = "dzVents script (unknown - still executing)";
+			if (isDzVents)
+			{
+				std::lock_guard<std::mutex> lock(scriptNameReport->mtx);
+				if (!scriptNameReport->name.empty())
+					displayName = "dzVents/" + scriptNameReport->name;
+				else
+					displayName = "dzVents script (unknown - still executing)";
+			}
 			_log.Log(LOG_ERROR, "EventSystem: Warning!, lua script %s has been running for more than 10 seconds", displayName.c_str());
-			// Note: Semaphore will be released when thread eventually completes
 		}
 		else
 		{
-			// Thread completed within timeout - join it
 			aluaThread.join();
 		}
 	}
@@ -4170,6 +4244,7 @@ namespace http {
 		{
 			std::string ID;
 			std::string eventstatus;
+			std::string folderid;
 		};
 
 		void CWebServer::Cmd_Events(WebEmSession & session, const request& req, Json::Value &root)
@@ -4195,7 +4270,7 @@ namespace http {
 				root["interpreters"] = "Blockly:Lua:dzVents";
 #endif
 
-				result = m_sql.safe_query("SELECT ID, Name, XMLStatement, Status FROM EventMaster ORDER BY ID ASC");
+				result = m_sql.safe_query("SELECT ID, Name, XMLStatement, Status, FolderID FROM EventMaster ORDER BY ID ASC");
 				if (!result.empty())
 				{
 					std::map<std::string, _tSortedEventsInt> _levents;
@@ -4204,9 +4279,11 @@ namespace http {
 						std::string ID = sd[0];
 						std::string Name = sd[1];
 						std::string eventStatus = sd[3];
+						std::string folderID = sd[4];
 						_tSortedEventsInt eitem;
 						eitem.ID = ID;
 						eitem.eventstatus = eventStatus;
+						eitem.folderid = folderID;
 						if (_levents.find(Name) != _levents.end())
 						{
 							//Duplicate event name, add the ID
@@ -4223,6 +4300,21 @@ namespace http {
 						root["result"][ii]["name"] = event.first;
 						root["result"][ii]["id"] = event.second.ID;
 						root["result"][ii]["eventstatus"] = event.second.eventstatus;
+						root["result"][ii]["folderid"] = event.second.folderid;
+						ii++;
+					}
+				}
+
+				// Also return folders
+				result = m_sql.safe_query("SELECT ID, Name, [Order] FROM EventFolder ORDER BY [Order] ASC, Name ASC");
+				if (!result.empty())
+				{
+					int ii = 0;
+					for (const auto &sd : result)
+					{
+						root["folders"][ii]["id"] = sd[0];
+						root["folders"][ii]["name"] = sd[1];
+						root["folders"][ii]["order"] = atoi(sd[2].c_str());
 						ii++;
 					}
 				}
@@ -4436,6 +4528,53 @@ namespace http {
 				root["title"] = "StoreRecentEvents";
 				std::string recent_list = request::findValue(&req, "recent_list");
 				m_sql.UpdatePreferencesVar("events_recent_list", recent_list);
+				root["status"] = "OK";
+			}
+			else if (cparam == "create_folder")
+			{
+				root["title"] = "CreateEventFolder";
+				std::string foldername = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
+				if (foldername.empty())
+					return;
+				m_sql.safe_query("INSERT INTO EventFolder (Name, [Order]) VALUES ('%q', 0)", foldername.c_str());
+				root["status"] = "OK";
+			}
+			else if (cparam == "rename_folder")
+			{
+				root["title"] = "RenameEventFolder";
+				std::string idx = request::findValue(&req, "folder");
+				if (idx.empty())
+					return;
+				std::string foldername = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
+				if (foldername.empty())
+					return;
+				m_sql.safe_query("UPDATE EventFolder SET Name='%q' WHERE (ID == '%q')", foldername.c_str(), idx.c_str());
+				root["status"] = "OK";
+			}
+			else if (cparam == "delete_folder")
+			{
+				root["title"] = "DeleteEventFolder";
+				std::string idx = request::findValue(&req, "folder");
+				if (idx.empty())
+					return;
+				// Delete all events in the folder
+				result = m_sql.safe_query("SELECT ID FROM EventMaster WHERE (FolderID == '%q')", idx.c_str());
+				for (const auto &sd : result)
+				{
+					m_sql.DeleteEvent(sd[0]);
+				}
+				m_sql.safe_query("DELETE FROM EventFolder WHERE (ID == '%q')", idx.c_str());
+				m_mainworker.m_eventsystem.LoadEvents();
+				root["status"] = "OK";
+			}
+			else if (cparam == "move_event")
+			{
+				root["title"] = "MoveEvent";
+				std::string idx = request::findValue(&req, "event");
+				if (idx.empty())
+					return;
+				std::string folderid = request::findValue(&req, "folder");
+				m_sql.safe_query("UPDATE EventMaster SET FolderID='%q' WHERE (ID == '%q')", folderid.c_str(), idx.c_str());
 				root["status"] = "OK";
 			}
 			else if (cparam == "currentstates")

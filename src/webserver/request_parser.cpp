@@ -7,9 +7,9 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "stdafx.h"
-#include "request_parser.hpp"
-#include "request.hpp"
+#include "webem_stdafx.h"
+#include "webserver/request_parser.h"
+#include "webserver/request.h"
 #include <algorithm>
 
 namespace http {
@@ -300,6 +300,12 @@ boost::tribool request_parser::consume(request& req, const char* &pInput, const 
 			  if (hname == "content-length")
 			  {
 				  req.content_length = atoi(ph.value.c_str());
+				  // Reject excessively large requests early (100 MB max)
+				  constexpr int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
+				  if (req.content_length > MAX_CONTENT_LENGTH)
+				  {
+					  return false; // Request rejected - too large
+				  }
 				  break;
 			  }
 		  }

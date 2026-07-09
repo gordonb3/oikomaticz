@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "jsoncpp/json.h"
+#include "main/json_helper.h"
 #include "main/Helper.h"
 #include "main/mainworker.h"
 
@@ -23,6 +23,7 @@ namespace mcp
 
 	bool toggleSwitchState(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
 	bool setThermostatSetpoint(const Json::Value& jsonRequest, Json::Value& jsonRPCRep);
+	bool getStatus(const Json::Value &jsonRequest, Json::Value &jsonRPCRep);
 
 	bool getDeviceByName(const std::string &sDeviceName, Json::Value &device);
 

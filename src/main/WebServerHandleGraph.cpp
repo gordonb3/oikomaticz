@@ -203,12 +203,20 @@ namespace http
 
 						std::string szGroupBy;
 						int resolution = m_sql.m_PriceResolution.load();
+						std::string sResolution = request::findValue(&req, "resolution");
+						if (!sResolution.empty()) {
+							int reqResolution = atoi(sResolution.c_str());
+							if (reqResolution == 15 || reqResolution == 30 || reqResolution == 60)
+								resolution = reqResolution;
+						}
 						if (resolution < 60) {
 							// Group by sub-hourly slots using the configured resolution (e.g. 15 or 30 minutes)
-							szGroupBy = "strftime('%%Y-%%m-%%d %%H:', Date) || printf('%%02d', (CAST(strftime('%%M', Date) AS INTEGER) / " + std::to_string(resolution) + ") * " + std::to_string(resolution) + ") || ':00'";
+							// Note: single % here because szGroupBy is passed via %s substitution in safe_query,
+							// so its content is not processed by sqlite3_vmprintf's format parser
+							szGroupBy = "strftime('%Y-%m-%d %H:', Date) || printf('%02d', (CAST(strftime('%M', Date) AS INTEGER) / " + std::to_string(resolution) + ") * " + std::to_string(resolution) + ") || ':00'";
 						} else {
 							// Group by hour (original behavior)
-							szGroupBy = "strftime('%%Y-%%m-%%d %%H:00:00', Date)";
+							szGroupBy = "strftime('%Y-%m-%d %H:00:00', Date)";
 						}
 
 						result = m_sql.safe_query("SELECT %s as ymd, MIN(Value1) as u1, MIN(Value5) as u2, MIN(Value2) as d1, MIN(Value6) as d2, MIN(Price) as price FROM %s WHERE (DeviceRowID==%" PRIu64 " AND Date>='%q' AND Date<='%q') GROUP BY ymd",
@@ -1063,7 +1071,14 @@ namespace http
 						time_t lastTime = 0;
 
 						// Sub-hourly slot grouping for kWh meters
-						bool bUseSubHourSlots = (m_sql.m_PriceResolution < 60);
+						int resolution = m_sql.m_PriceResolution.load();
+						std::string sResolution = request::findValue(&req, "resolution");
+						if (!sResolution.empty()) {
+							int reqResolution = atoi(sResolution.c_str());
+							if (reqResolution == 15 || reqResolution == 30 || reqResolution == 60)
+								resolution = reqResolution;
+						}
+						bool bUseSubHourSlots = (resolution < 60);
 						int lastSlot = -1;  // replaces lastHour for 15-min mode
 						int currentSlot = 0;
 
@@ -1103,7 +1118,7 @@ namespace http
 									// Format timestamp for 15-min or hourly slots
 									if (bUseSubHourSlots)
 									{
-										int slotMin = (ntime.tm_min / m_sql.m_PriceResolution) * m_sql.m_PriceResolution;
+										int slotMin = (ntime.tm_min / resolution) * resolution;
 										char szSlot[32];
 										snprintf(szSlot, sizeof(szSlot), "%s%02d", sd[1].substr(0, 14).c_str(), slotMin);
 										szActDateTimeHour = szSlot;
@@ -1119,13 +1134,13 @@ namespace http
 										{
 											//Assume ,eter/counter turnover
 											ulFirstValue = ulRealFirstValue = actValue;
-											currentSlot = bUseSubHourSlots ? (ntime.tm_hour * (60 / m_sql.m_PriceResolution) + ntime.tm_min / m_sql.m_PriceResolution) : ntime.tm_hour;
+											currentSlot = bUseSubHourSlots ? (ntime.tm_hour * (60 / resolution) + ntime.tm_min / resolution) : ntime.tm_hour;
 											lastSlot = currentSlot;
 											lastHour = ntime.tm_hour;
 										}
 									}
 
-									currentSlot = bUseSubHourSlots ? (ntime.tm_hour * (60 / m_sql.m_PriceResolution) + ntime.tm_min / m_sql.m_PriceResolution) : ntime.tm_hour;
+									currentSlot = bUseSubHourSlots ? (ntime.tm_hour * (60 / resolution) + ntime.tm_min / resolution) : ntime.tm_hour;
 									if (lastSlot != currentSlot)
 									{
 										if (lastDay != ntime.tm_mday)
@@ -1142,7 +1157,9 @@ namespace http
 
 											// prevents graph from going crazy if the meter counter resets
 											// removed because it breaks  negative increments
-											double TotalValue = double(actValue - ulFirstValue);
+											// Use ulLastValue (last reading in previous slot) so consumption is attributed
+											// to the slot where the new counter reading arrives, not the prior slot.
+											double TotalValue = double(ulLastValue - ulFirstValue);
 											//if (actValue < ulFirstValue) TotalValue=actValue;
 
 											// if (TotalValue != 0)
@@ -1195,7 +1212,7 @@ namespace http
 										}
 										if (!bIsManagedCounter)
 										{
-											ulFirstValue = actValue;
+											ulFirstValue = ulLastValue;
 										}
 										lastSlot = currentSlot;
 										lastHour = ntime.tm_hour;
@@ -1204,7 +1221,7 @@ namespace http
 									if (!bHaveFirstValue)
 									{
 										bHaveFirstValue = true;
-										currentSlot = bUseSubHourSlots ? (ntime.tm_hour * (60 / m_sql.m_PriceResolution) + ntime.tm_min / m_sql.m_PriceResolution) : ntime.tm_hour;
+										currentSlot = bUseSubHourSlots ? (ntime.tm_hour * (60 / resolution) + ntime.tm_min / resolution) : ntime.tm_hour;
 										lastSlot = currentSlot;
 										lastHour = ntime.tm_hour;
 										ulFirstValue = actValue;
@@ -1410,7 +1427,7 @@ namespace http
 								{
 									//Finish current hour
 									root["result"][ii]["d"] = WorkingHourDate.substr(0, 14) + "00";
-									double mmval = ActTotal - WorkingHourStartValue;
+									double mmval = std::max(0.0, static_cast<double>(ActTotal - WorkingHourStartValue));
 									mmval *= AddjMulti;
 									sprintf(szTmp, "%.1f", mmval);
 									root["result"][ii]["mm"] = szTmp;
@@ -1437,7 +1454,7 @@ namespace http
 									LastValue = ActTotal;
 							}
 						}
-						double mmval = LastValue - WorkingHourStartValue;
+						double mmval = std::max(0.0, static_cast<double>(LastValue - WorkingHourStartValue));
 						if (mmval != 0)
 						{
 							root["result"][ii]["d"] = WorkingHourDate.substr(0, 14) + "00";
@@ -1786,7 +1803,7 @@ namespace http
 						}
 						else
 						{
-							total_real = total_max - total_min;
+							total_real = std::max(0.0, static_cast<double>(total_max - total_min));
 						}
 						total_real *= AddjMulti;
 						sprintf(szTmp, "%.1f", total_real);
@@ -1924,16 +1941,16 @@ namespace http
 						{
 							std::vector<std::string> sd = result[0];
 
-							uint64_t total_min_usage_1 = std::stoull(sd[0]);
-							uint64_t total_max_usage_1 = std::stoull(sd[1]);
-							uint64_t total_min_usage_2 = std::stoull(sd[4]);
-							uint64_t total_max_usage_2 = std::stoull(sd[5]);
-							uint64_t total_real_usage_1, total_real_usage_2;
-							uint64_t total_min_deliv_1 = std::stoull(sd[2]);
-							uint64_t total_max_deliv_1 = std::stoull(sd[3]);
-							uint64_t total_min_deliv_2 = std::stoull(sd[6]);
-							uint64_t total_max_deliv_2 = std::stoull(sd[7]);
-							uint64_t total_real_deliv_1, total_real_deliv_2;
+							int64_t total_min_usage_1 = std::stoll(sd[0]);
+							int64_t total_max_usage_1 = std::stoll(sd[1]);
+							int64_t total_min_usage_2 = std::stoll(sd[4]);
+							int64_t total_max_usage_2 = std::stoll(sd[5]);
+							int64_t total_real_usage_1, total_real_usage_2;
+							int64_t total_min_deliv_1 = std::stoll(sd[2]);
+							int64_t total_max_deliv_1 = std::stoll(sd[3]);
+							int64_t total_min_deliv_2 = std::stoll(sd[6]);
+							int64_t total_max_deliv_2 = std::stoll(sd[7]);
+							int64_t total_real_deliv_1, total_real_deliv_2;
 
 							bool bHaveDeliverd = false;
 
@@ -1947,22 +1964,22 @@ namespace http
 
 							root["result"][ii]["d"] = szDateStart;
 
-							sprintf(szTmp, "%" PRIu64, total_real_usage_1);
+							sprintf(szTmp, "%" PRId64, total_real_usage_1);
 							std::string szValue = szTmp;
 							sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 							root["result"][ii]["v1"] = szTmp;
 
-							sprintf(szTmp, "%" PRIu64, total_real_usage_2);
+							sprintf(szTmp, "%" PRId64, total_real_usage_2);
 							szValue = szTmp;
 							sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 							root["result"][ii]["v2"] = szTmp;
 
-							sprintf(szTmp, "%" PRIu64, total_real_deliv_1);
+							sprintf(szTmp, "%" PRId64, total_real_deliv_1);
 							szValue = szTmp;
 							sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 							root["result"][ii]["r1"] = szTmp;
 
-							sprintf(szTmp, "%" PRIu64, total_real_deliv_2);
+							sprintf(szTmp, "%" PRId64, total_real_deliv_2);
 							szValue = szTmp;
 							sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 							root["result"][ii]["r2"] = szTmp;
@@ -2119,7 +2136,24 @@ namespace http
 
 						if (sensor == "temp")
 						{
-							if (tempsign == 'F')
+							if (var_name == "Barometer")
+							{
+								// Barometer values are stored *10 for certain device types,
+								// apply the same /10.0 correction as the regular graph does
+								bool bDivideBarometer =
+									(dType == pTypeTEMP_BARO)
+									|| ((dType == pTypeTEMP_HUM_BARO) && (dSubType == sTypeTHBFloat))
+									|| ((dType == pTypeGeneral) && (dSubType == sTypeBaro))
+									|| ((dType == pTypeThermostat6) && ((dSubType == sTypeThermostat6TempBaro) || (dSubType == sTypeThermostat6TempHumBaro)));
+								if (bDivideBarometer)
+								{
+									for (auto& itt : root["result"])
+									{
+										itt["s"] = itt["s"].asDouble() / 10.0;
+									}
+								}
+							}
+							else if (tempsign == 'F')
 							{
 								for (auto& itt : root["result"])
 								{
@@ -2608,6 +2642,11 @@ namespace http
 					{
 						root["title"] = "Comparing " + sensor;
 						MakeCompareDataSensor(root, sgroupby, dbasetable, idx, "Total", 1, true);
+						if (AddjMulti != 1.0)
+						{
+							for (auto& itt : root["result"])
+								itt["s"] = itt["s"].asDouble() * AddjMulti;
+						}
 						return;
 					}
 
@@ -2653,7 +2692,7 @@ namespace http
 						}
 						else
 						{
-							total_real = total_max - total_min;
+							total_real = std::max(0.0, static_cast<double>(total_max - total_min));
 						}
 						total_real *= AddjMulti;
 						sprintf(szTmp, "%.1f", total_real);
@@ -2885,7 +2924,14 @@ namespace http
 						if (!sgroupby.empty())
 						{
 							root["title"] = "Comparing " + sensor;
-							MakeCompareDataSensor(root, sgroupby, dbasetable, idx, "Value3");
+							MakeCompareDataSensor(root, sgroupby, dbasetable, idx, "Value3", 10.0);
+							if (m_sql.m_weightscale != 1.0)
+							{
+								for (auto& itt : root["result"])
+								{
+									itt["s"] = itt["s"].asDouble() * m_sql.m_weightscale;
+								}
+							}
 							return;
 						}
 
@@ -3055,7 +3101,14 @@ namespace http
 						if (!sgroupby.empty())
 						{
 							root["title"] = "Comparing " + sensor;
-							MakeCompareDataSensor(root, sgroupby, dbasetable, idx, "Value3");
+							MakeCompareDataSensor(root, sgroupby, dbasetable, idx, "Value3", 10.0);
+							if (m_sql.m_weightscale != 1.0)
+							{
+								for (auto& itt : root["result"])
+								{
+									itt["s"] = itt["s"].asDouble() * m_sql.m_weightscale;
+								}
+							}
 							return;
 						}
 
@@ -3084,7 +3137,7 @@ namespace http
 						if (!sgroupby.empty())
 						{
 							root["title"] = "Comparing " + sensor;
-							MakeCompareDataSensor(root, sgroupby, dbasetable, idx, "Value2");
+							MakeCompareDataSensor(root, sgroupby, dbasetable, idx, "Value2", 10.0);
 							return;
 						}
 						root["title"] = "Graph " + sensor + " " + srange;
@@ -3105,6 +3158,13 @@ namespace http
 					}
 					else if (dType == pTypeCURRENT)
 					{
+						if (!sgroupby.empty())
+						{
+							root["status"] = "OK";
+							root["title"] = "Comparing " + sensor;
+							MakeCompareDataSensor(root, sgroupby, dbasetable, idx, "(Value2+Value4+Value6)/3", 10.0);
+							return;
+						}
 						result = m_sql.safe_query("SELECT Value1,Value2,Value3,Value4,Value5,Value6, Date FROM %s WHERE (DeviceRowID==%" PRIu64
 							" AND Date>='%q' AND Date<='%q') ORDER BY Date ASC",
 							dbasetable.c_str(), idx, szDateStart, szDateEnd);
@@ -3563,16 +3623,16 @@ namespace http
 						if (!result.empty())
 						{
 							std::vector<std::string> sd = result[0];
-							uint64_t total_min_usage_1 = std::stoull(sd[0]);
-							uint64_t total_max_usage_1 = std::stoull(sd[1]);
-							uint64_t total_min_usage_2 = std::stoull(sd[4]);
-							uint64_t total_max_usage_2 = std::stoull(sd[5]);
-							uint64_t total_real_usage_1, total_real_usage_2;
-							uint64_t total_min_deliv_1 = std::stoull(sd[2]);
-							uint64_t total_max_deliv_1 = std::stoull(sd[3]);
-							uint64_t total_min_deliv_2 = std::stoull(sd[6]);
-							uint64_t total_max_deliv_2 = std::stoull(sd[7]);
-							uint64_t total_real_deliv_1, total_real_deliv_2;
+							int64_t total_min_usage_1 = std::stoll(sd[0]);
+							int64_t total_max_usage_1 = std::stoll(sd[1]);
+							int64_t total_min_usage_2 = std::stoll(sd[4]);
+							int64_t total_max_usage_2 = std::stoll(sd[5]);
+							int64_t total_real_usage_1, total_real_usage_2;
+							int64_t total_min_deliv_1 = std::stoll(sd[2]);
+							int64_t total_max_deliv_1 = std::stoll(sd[3]);
+							int64_t total_min_deliv_2 = std::stoll(sd[6]);
+							int64_t total_max_deliv_2 = std::stoll(sd[7]);
+							int64_t total_real_deliv_1, total_real_deliv_2;
 
 							total_real_usage_1 = total_max_usage_1 - total_min_usage_1;
 							total_real_usage_2 = total_max_usage_2 - total_min_usage_2;
@@ -3869,6 +3929,13 @@ namespace http
 					{
 						root["title"] = "Comparing " + sensor;
 						MakeCompareDataSensor(root, sgroupby, dbasetable, idx, "Speed_Max");
+						for (auto& itt : root["result"])
+						{
+							if (m_sql.m_windunit != WINDUNIT_Beaufort)
+								itt["s"] = itt["s"].asDouble() * m_sql.m_windscale;
+							else
+								itt["s"] = MStoBeaufort(static_cast<float>(itt["s"].asDouble() * 0.1F));
+						}
 						return;
 					}
 
@@ -4333,7 +4400,7 @@ namespace http
 						}
 						else
 						{
-							total_real = total_max - total_min;
+							total_real = std::max(0.0F, total_max - total_min);
 						}
 						sprintf(szTmp, "%.1f", total_real);
 						root["result"][ii]["d"] = szDateEnd;
@@ -4438,17 +4505,17 @@ namespace http
 						{
 							std::vector<std::string> sd = result[0];
 
-							uint64_t total_min_usage_1 = std::stoull(sd[0]);
-							uint64_t total_max_usage_1 = std::stoull(sd[1]);
-							uint64_t total_min_usage_2 = std::stoull(sd[4]);
-							uint64_t total_max_usage_2 = std::stoull(sd[5]);
-							uint64_t total_real_usage;
+							int64_t total_min_usage_1 = std::stoll(sd[0]);
+							int64_t total_max_usage_1 = std::stoll(sd[1]);
+							int64_t total_min_usage_2 = std::stoll(sd[4]);
+							int64_t total_max_usage_2 = std::stoll(sd[5]);
+							int64_t total_real_usage;
 
-							uint64_t total_min_deliv_1 = std::stoull(sd[2]);
-							uint64_t total_max_deliv_1 = std::stoull(sd[3]);
-							uint64_t total_min_deliv_2 = std::stoull(sd[6]);
-							uint64_t total_max_deliv_2 = std::stoull(sd[7]);
-							uint64_t total_real_deliv;
+							int64_t total_min_deliv_1 = std::stoll(sd[2]);
+							int64_t total_max_deliv_1 = std::stoll(sd[3]);
+							int64_t total_min_deliv_2 = std::stoll(sd[6]);
+							int64_t total_max_deliv_2 = std::stoll(sd[7]);
+							int64_t total_real_deliv;
 
 							total_real_usage = (total_max_usage_1 + total_max_usage_2) - (total_min_usage_1 + total_min_usage_2);
 							total_real_deliv = (total_max_deliv_1 + total_max_deliv_2) - (total_min_deliv_1 + total_min_deliv_2);
@@ -4458,12 +4525,12 @@ namespace http
 
 							root["result"][ii]["d"] = szDateEnd;
 
-							sprintf(szTmp, "%" PRIu64, total_real_usage);
+							sprintf(szTmp, "%" PRId64, total_real_usage);
 							std::string szValue = szTmp;
 							sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 							root["result"][ii]["v1"] = szTmp;
 
-							sprintf(szTmp, "%" PRIu64, total_real_deliv);
+							sprintf(szTmp, "%" PRId64, total_real_deliv);
 							szValue = szTmp;
 							sprintf(szTmp, "%.3f", atof(szValue.c_str()) / divider);
 							root["result"][ii]["v2"] = szTmp;

@@ -68,6 +68,7 @@ namespace Plugins {
 
 	std::map<int, CDomoticzHardwareBase*>	CPluginSystem::m_pPlugins;
 	std::map<std::string, std::string>		CPluginSystem::m_PluginXml;
+	std::map<std::string, void*>			CPluginSystem::m_PreservedInterpreters;
 	void *CPluginSystem::m_InitialPythonThread;
 
 	CPluginSystem::CPluginSystem()
@@ -144,10 +145,13 @@ namespace Plugins {
 
 			Py_Initialize();
 
-			// Initialise threads. Python 3.7+ does this inside Py_Initialize so done here for compatibility
-			if (!PyEval_ThreadsInitialized())
+			// Initialise threads. Python 3.7+ does this inside Py_Initialize.
+			// PyEval_ThreadsInitialized/PyEval_InitThreads were removed in Python 3.13,
+			// so only call them if the function pointers were resolved.
+			if (PyEval_ThreadsInitialized && !PyEval_ThreadsInitialized())
 			{
-				PyEval_InitThreads();
+				if (PyEval_InitThreads)
+					PyEval_InitThreads();
 			}
 
 			m_InitialPythonThread = PyEval_SaveThread();
@@ -176,13 +180,12 @@ namespace Plugins {
 
 		m_pPlugins.clear();
 
-		if (Py_LoadLibrary() && m_InitialPythonThread)
-		{
-			if (Py_IsInitialized()) {
-				PyEval_RestoreThread((PyThreadState*)m_InitialPythonThread);
-				Py_Finalize();
-			}
-		}
+		// Skip Py_Finalize() - the process is shutting down and the OS will
+		// reclaim all resources. Calling Py_Finalize() after sub-interpreters
+		// have been destroyed via Py_EndInterpreter() + PyThreadState_Swap()
+		// leaves the thread state in an inconsistent status that causes
+		// PyEval_RestoreThread() to trigger Py_FatalError/abort() in Python 3.12+.
+		m_InitialPythonThread = nullptr;
 
 		_log.Log(LOG_STATUS, "PluginSystem: Stopped.");
 		return true;
@@ -219,7 +222,7 @@ namespace Plugins {
 #endif
 		if (!createdir(plugin_BaseDir.c_str(), 0755))
 		{
-			_log.Log(LOG_NORM, "%s: Created directory %s", __func__, plugin_BaseDir.c_str());
+			_log.Debug(DEBUG_PYTHON, "%s: Created directory %s", __func__, plugin_BaseDir.c_str());
 		}
 
 		std::vector<std::string> DirEntries, FileEntries;
@@ -292,6 +295,28 @@ namespace Plugins {
 			std::lock_guard<std::mutex> l(PluginMutex);
 			m_pPlugins.erase(HwdID);
 		}
+	}
+
+	void* CPluginSystem::GetPreservedInterpreter(const std::string& pluginKey)
+	{
+		std::lock_guard<std::mutex> l(PluginMutex);
+		auto it = m_PreservedInterpreters.find(pluginKey);
+		if (it != m_PreservedInterpreters.end())
+		{
+			void* pInterpreter = it->second;
+			m_PreservedInterpreters.erase(it);
+			return pInterpreter;
+		}
+		return nullptr;
+	}
+
+	void CPluginSystem::SetPreservedInterpreter(const std::string& pluginKey, void* pInterpreter)
+	{
+		std::lock_guard<std::mutex> l(PluginMutex);
+		if (pInterpreter)
+			m_PreservedInterpreters[pluginKey] = pInterpreter;
+		else
+			m_PreservedInterpreters.erase(pluginKey);
 	}
 
 	void BoostWorkers()
@@ -390,6 +415,7 @@ namespace http {
 							ATTRIBUTE_VALUE(pXmlEle, "author", root[iPluginCnt]["author"]);
 							ATTRIBUTE_VALUE(pXmlEle, "wikilink", root[iPluginCnt]["wikiURL"]);
 							ATTRIBUTE_VALUE(pXmlEle, "externallink", root[iPluginCnt]["externalURL"]);
+							ATTRIBUTE_VALUE(pXmlEle, "shared", root[iPluginCnt]["shared"]);
 
 							TiXmlElement* pXmlDescNode = (TiXmlElement*)pXmlEle->FirstChild("description");
 							std::string		sDescription;

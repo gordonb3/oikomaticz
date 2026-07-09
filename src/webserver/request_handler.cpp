@@ -7,39 +7,55 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "stdafx.h"
-#include "request_handler.hpp"
-#include "fastcgi.hpp"
+#include "webem_stdafx.h"
+#include "webserver/request_handler.h"
+#include "fastcgi.h"
 #include <fstream>
 #include <sstream>
+#include <sys/stat.h>
 #ifdef WIN32
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/date.hpp>
 #endif
-#include "mime_types.hpp"
-#include "reply.hpp"
-#include "request.hpp"
-#include "cWebem.h"
+#include "mime_types.h"
+#include "webserver/reply.h"
+#include "webserver/request.h"
+#include "webserver/cWebem.h"
+#ifndef WEBEM_NO_GZIP
 #include "GZipHelper.h"
+#endif
 #ifndef WEBSERVER_DONT_USE_ZIP
-	#include <iowin32.h>
+	#include <minizip/unzip.h>
+	#ifdef WIN32
+		#include <minizip/iowin32.h>
+	#endif
 #endif
 
 
-#include "main/Helper.h"
-#include "main/Logger.h"
+#include "webserver/webem_utils.h"
 
-extern std::string szAppVersion;
-extern bool bDoCachePages;
 
 #define ZIPREADBUFFERSIZE (8192)
+
+namespace {
+	inline std::string safe_strerror(int errnum)
+	{
+#ifdef _WIN32
+		char buf[256];
+		if (strerror_s(buf, sizeof(buf), errnum) == 0)
+			return buf;
+		return "unknown error";
+#else
+		return strerror(errnum);
+#endif
+	}
+} // anonymous namespace
 
 #define HTTP_DATE_RFC_1123 "%a, %d %b %Y %H:%M:%S %Z" // Sun, 06 Nov 1994 08:49:37 GMT
 #define HTTP_DATE_RFC_850  "%A, %d-%b-%y %H:%M:%S %Z" // Sunday, 06-Nov-94 08:49:37 GMT
 #define HTTP_DATE_ASCTIME  "%a %b %e %H:%M:%S %Y"     // Sun Nov  6 08:49:37 1994
 
 #ifdef WIN32
-// some ported functions
 #define timegm _mkgmtime
 
 extern "C" const char* strptime(const char* s, const char* f, struct tm* tm)
@@ -65,8 +81,8 @@ namespace http {
 namespace server {
 
 
-request_handler::request_handler(const std::string& doc_root, cWebem* webem)
-  : doc_root_(doc_root), myWebem(webem)
+request_handler::request_handler(const std::string& doc_root, cWebem* webem, WebServerLogger logger)
+  : doc_root_(doc_root), myWebem(webem), m_logger(std::move(logger))
 {
 #ifndef WEBSERVER_DONT_USE_ZIP
 	m_uf=NULL;
@@ -74,9 +90,12 @@ request_handler::request_handler(const std::string& doc_root, cWebem* webem)
 	if (m_bIsZIP)
 	{
 		//open zip file, get file list
+#ifdef WIN32
 		fill_win32_filefunc(&m_ffunc);
-
 		m_uf = unzOpen2(doc_root.c_str(),&m_ffunc);
+#else
+		m_uf = unzOpen(doc_root.c_str());
+#endif
 	}
 	m_pUnzipBuffer = (void*)malloc(ZIPREADBUFFERSIZE);
 #endif
@@ -140,31 +159,34 @@ static time_t convert_from_http_date(const std::string &str)
 
 std::string convert_to_http_date(time_t time)
 {
-	struct tm *tm_result = gmtime(&time);
-
-	if (!tm_result)
+	struct tm tm_result{};
+#ifdef _WIN32
+	if (gmtime_s(&tm_result, &time) != 0)
+#else
+	if (gmtime_r(&time, &tm_result) == nullptr)
+#endif
 		return std::string();
 
 	char buffer[1024];
-	strftime(buffer, sizeof(buffer), HTTP_DATE_RFC_1123, tm_result);
+	strftime(buffer, sizeof(buffer), HTTP_DATE_RFC_1123, &tm_result);
 	buffer[sizeof(buffer) - 1] = '\0';
 
 	return buffer;
 }
 
-time_t last_write_time(const std::string &path)
+time_t last_write_time(const std::string &path, const WebServerLogger &logger)
 {
 	struct stat st;
 	if (stat(path.c_str(), &st) == 0) {
 		return st.st_mtime;
 	}
-	_log.Log(LOG_ERROR, "stat returned errno = %d", errno);
+	if (logger) logger->Log(LogLevel::Error, "stat returned errno = %d", errno);
 	return 0;
 }
 
 bool request_handler::not_modified(const std::string &full_path, const request &req, reply &rep, modify_info &mInfo)
 {
-	mInfo.last_written = last_write_time(full_path);
+	mInfo.last_written = last_write_time(full_path, m_logger);
 	if (mInfo.last_written == 0) {
 		// file system doesn't support this, don't enable header
 		mInfo.mtime_support = false;
@@ -182,17 +204,16 @@ bool request_handler::not_modified(const std::string &full_path, const request &
 			// we have a Cache-Control header asking not to cache so continue to serve content
 			mInfo.is_modified = true;
 			mInfo.mtime_support = false;
-			//_log.Debug(DEBUG_WEBSERVER, "[web %s]: Cache-Control header asking no-cache", full_path.c_str());
 			return false;
 		}
 	}
 	mInfo.mtime_support = true;
 	// propagate timestamp to browser
-	reply::add_header(&rep, "Date", make_web_time(mytime(nullptr)), true);
-	if (bDoCachePages)
+	reply::add_header(&rep, "Date", utils::make_web_time(utils::webem_time()), true);
+	if (myWebem && myWebem->IsCacheEnabled())
 	{
-		reply::add_header(&rep, "ETag", szAppVersion, true);
-		reply::add_header(&rep, "Last-Modified", make_web_time(mInfo.last_written));
+		reply::add_header(&rep, "ETag", myWebem->GetAppVersion(), true);
+		reply::add_header(&rep, "Last-Modified", utils::make_web_time(mInfo.last_written));
 	}
 
 	const char *if_modified = request::get_req_header(&req, "If-Modified-Since");
@@ -200,22 +221,18 @@ bool request_handler::not_modified(const std::string &full_path, const request &
 	{
 		// we have no if-modified header, continue to serve content
 		mInfo.is_modified = true;
-		//_log.Debug(DEBUG_WEBSERVER, "[web %s]: No If-Modified-Since header", full_path.c_str());
 		return false;
 	}
 	time_t if_modified_since_time = convert_from_http_date(if_modified);
 	if (if_modified_since_time >= mInfo.last_written) {
 		mInfo.is_modified = false;
 		if (mInfo.delay_status) {
-			//_log.Debug(DEBUG_WEBSERVER, "[web %s]: Delaying status code", full_path.c_str());
 			return false;
 		}
-		//_log.Debug(DEBUG_WEBSERVER, "[web %s]: Setting status code reply::not_modified", full_path.c_str());
 		return true;
 	}
 	mInfo.is_modified = true;
 	// file is newer, force new content
-	//_log.Debug(DEBUG_WEBSERVER, "[web %s]: Force new content", full_path.c_str());
 	return false;
 }
 
@@ -251,7 +268,7 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 				if (request_path[request_path.size() - 1] == '/')
 				{
 					full_path += "index.html";
-					_log.Debug(DEBUG_WEBSERVER, "[web:%s] modified to (%s).", request_path.c_str(), full_path.c_str());
+					if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] modified to (%s).", request_path.c_str(), full_path.c_str());
 				}
 				else
 				{
@@ -274,7 +291,7 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 			}
 			else
 			{
-				_log.Debug(DEBUG_WEBSERVER, "[web:%s] unable to determine extension for %s!", request_path.c_str(), full_path.c_str());
+				if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] unable to determine extension for %s!", request_path.c_str(), full_path.c_str());
 			}
 		}
 	}
@@ -298,7 +315,7 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 		//
 		//For now this is very simplistic!
 		//Later we should add FastCGI support, or at least provide some environment variables
-		fastcgi_parser::handlePHP(myWebem->m_settings, request_path, req, rep, mInfo);
+		fastcgi_parser::handlePHP(myWebem->m_settings, request_path, req, rep, mInfo, m_logger);
 		return;
 	}
 
@@ -310,7 +327,7 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 	if (if_none_match != nullptr)
 	{
 		//check if etag matches current tag
-		if (strcmp(if_none_match, szAppVersion.c_str()) == 0)
+		if (myWebem && !myWebem->GetAppVersion().empty() && strcmp(if_none_match, myWebem->GetAppVersion().c_str()) == 0)
 		{
 			//nothing changed
 			rep = reply::stock_reply(reply::not_modified);
@@ -389,6 +406,7 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 		// fill out the reply to be sent to the client.
 		try
 		{
+#ifndef WEBEM_NO_GZIP
 			if (bHaveLoadedgzip && (!bClientHasGZipSupport))
 			{
 				// We found an already compressed source file, but the client does not seem to support to received it compressed. So we decompress it first.
@@ -396,14 +414,16 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 
 				CGZIP2AT<> decompress((LPGZIP)gzcontent.c_str(), static_cast<int>(gzcontent.size()));
 				rep.content.append(decompress.psz, decompress.Length);
-				_log.Debug(DEBUG_WEBSERVER, "[web:%s] decompressed content from %s before sending.", request_path.c_str(), full_path.c_str());
+				if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] decompressed content from %s before sending.", request_path.c_str(), full_path.c_str());
 			}
 			else
+#endif
 			{
 				// Load the sourcefile (compressed or not)
 				rep.content.append((std::istreambuf_iterator<char>(is)), (std::istreambuf_iterator<char>()));
 				rep.bIsGZIP = (bClientHasGZipSupport && bHaveLoadedgzip);
 			}
+#ifndef WEBEM_NO_GZIP
 			if (bClientHasGZipSupport && bIsCompressibleType && (!bHaveLoadedgzip))
 			{
 				// The sourcefile is not compressed, but the client supports receiving compressed content
@@ -417,10 +437,11 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 					rep.content.append((char*)gzip.pgzip, gzip.Length);
 				}
 			}
+#endif
 		}
 		catch(const std::exception& e)
 		{
-			_log.Debug(DEBUG_WEBSERVER, "[web:%s] unable to server content from %s (%s).", request_path.c_str(), full_path.c_str(), e.what());
+			if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] unable to server content from %s (%s).", request_path.c_str(), full_path.c_str(), e.what());
 			rep = reply::stock_reply(reply::not_found);
 			return;
 		}
@@ -433,7 +454,7 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 	  if (m_uf==NULL)
 	  {
 		  rep = reply::stock_reply(reply::not_found);
-		  _log.Debug(DEBUG_WEBSERVER, "[web:%s] File '%s': %s (%d) (remote address: %s)", request_path.c_str(), strerror(errno), errno, req.host_address.c_str());
+		  if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] File '%s': %s (%d) (remote address: %s)", request_path.c_str(), safe_strerror(errno).c_str(), errno, req.host_remote_address.c_str());
 		  return;
 	  }
 
@@ -447,7 +468,7 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 			  if (myWebem && do_extract_currentfile(m_uf,myWebem->m_zippassword.c_str(),rep.content)!=UNZ_OK)
 			  {
 				  rep = reply::stock_reply(reply::not_found);
-				  _log.Debug(DEBUG_WEBSERVER, "[web:%s] File '%s': %s (%d) (remote address: %s)", request_path.c_str(), strerror(errno), errno, req.host_address.c_str());
+				  if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] File '%s': %s (%d) (remote address: %s)", request_path.c_str(), safe_strerror(errno).c_str(), errno, req.host_remote_address.c_str());
 				  return;
 			  }
 			  bHaveLoadedgzip=true;
@@ -458,13 +479,13 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 		  if (unzLocateFile(m_uf,request_path.c_str(),0)!=UNZ_OK)
 		  {
 			  rep = reply::stock_reply(reply::not_found);
-			  _log.Debug(DEBUG_WEBSERVER, "[web:%s] File '%s': %s (%d) (remote address: %s)", request_path.c_str(), strerror(errno), errno, req.host_address.c_str());
+			  if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] File '%s': %s (%d) (remote address: %s)", request_path.c_str(), safe_strerror(errno).c_str(), errno, req.host_remote_address.c_str());
 			  return;
 		  }
 		  if (myWebem && do_extract_currentfile(m_uf,myWebem->m_zippassword.c_str(),rep.content)!=UNZ_OK)
 		  {
 			  rep = reply::stock_reply(reply::not_found);
-			  _log.Debug(DEBUG_WEBSERVER, "[web:%s] File '%s': %s (%d) (remote address: %s)", request_path.c_str(), strerror(errno), errno, req.host_address.c_str());
+			  if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] File '%s': %s (%d) (remote address: %s)", request_path.c_str(), safe_strerror(errno).c_str(), errno, req.host_remote_address.c_str());
 			  return;
 		  }
 	  }
@@ -475,28 +496,21 @@ void request_handler::handle_request(const request &req, reply &rep, modify_info
 	{
 		reply::add_header(&rep, "Content-Encoding", "gzip");
 	}
-	if (
-		(req.uri.find("app/") != std::string::npos)
-		|| (req.uri.find("views/") != std::string::npos)
-		|| (req.uri.find("js/domoticz") != std::string::npos)
-		|| (req.uri.find("templates/") != std::string::npos)
-		|| (!bDoCachePages)
-		)
+	if (!(myWebem && myWebem->IsCacheEnabled()) || (myWebem && myWebem->IsNoCacheURI(req.uri)))
 	{
-		//frequently changed files
+		// Frequently-changed or explicitly no-cache content
 		reply::add_header(&rep, "Cache-Control", "no-cache,must-revalidate");
 	}
 	else
 	{
-		//not frequently changed files, cache for a day
+		// Infrequently-changed files, cache for a day
 		reply::add_header(&rep, "Cache-Control", "public,max-age=86400,s-maxage=86400,must-revalidate");
 	}
 
 	reply::add_header_content_type(&rep, mime_types::extension_to_type(extension));
 	reply::add_header(&rep, "Content-Length", std::to_string(rep.content.size()));
 	reply::add_header(&rep, "Access-Control-Allow-Origin", "*");
-	if (myWebem->m_settings.is_secure())
-		reply::add_security_headers(&rep);
+	reply::add_security_headers(&rep, myWebem->m_settings.is_secure());
 }
 
 bool request_handler::url_decode(const std::string& in, std::string& out)

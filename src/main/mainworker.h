@@ -10,7 +10,7 @@
 #include "WindCalculation.h"
 #include "TrendCalculator.h"
 #include "tcpserver/TCPServer.h"
-#include "webserver/server_settings.hpp"
+#include "webserver/server_settings.h"
 #include "iamserver/iam_settings.hpp"
 #ifdef ENABLE_PYTHON
 #	include "hardware/plugins/PluginManager.h"
@@ -25,7 +25,7 @@ public:
 	bool Start();
 	bool Stop();
 
-	void AddAllDomoticzHardware();
+	void AddAllDomoticzHardware(bool bScheduleStart = true);
 	void StopDomoticzHardware();
 	void StartDomoticzHardware();
 	void AddDomoticzHardware(CDomoticzHardwareBase *pHardware);
@@ -156,6 +156,8 @@ private:
 	std::mutex m_devicemutex;
 
 	bool m_bStartHardware;
+	bool m_bStarted{ false };
+	bool m_bStopped{ false };
 	uint8_t m_hardwareStartCounter;
 
 	std::vector<CDomoticzHardwareBase*> m_hardwaredevices;

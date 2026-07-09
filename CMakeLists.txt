@@ -34,7 +34,7 @@ option(USE_PRECOMPILED_HEADER "Use precompiled header feature to speed up build 
 #
 #
 ## required min. libBoost version
-set(DZ_MIN_LIBBOOST_VERSION 1.66.0)
+set(DZ_MIN_LIBBOOST_VERSION 1.69.0)
 ##
 
 

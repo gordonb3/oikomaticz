@@ -1,10 +1,9 @@
-#include "stdafx.h"
-#include "fastcgi.hpp"
+#include "webem_stdafx.h"
+#include "fastcgi.h"
 #include <fstream>
 #include <sstream>
-#include "protocols/UrlEncode.h"
-#include "main/Helper.h"
-#include "main/Logger.h"
+#include "url_encode.h"
+#include "webserver/webem_utils.h"
 
 //(c) 2016 GizMoCuz
 
@@ -16,7 +15,7 @@ namespace http {
 	namespace server {
 
 uint16_t fastcgi_parser::request_id_ = 1;
-
+		
 //http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html
 struct _tFCGI_Header {
 	uint8_t version;
@@ -140,7 +139,7 @@ std::vector<char> ExecuteCommandAndReturnRaw(const std::string &szCommand)
 				const int BufferSize = 1024;
 
 				const size_t oldSize = myData.size();
-				myData.resize(myData.size() + BufferSize);
+				myData.resize(myData.size() + BufferSize);        
 
 				const size_t bytesRead = fread(&myData[oldSize], 1, BufferSize,fp);
 				myData.resize(oldSize + bytesRead);
@@ -166,7 +165,7 @@ std::vector<char> ExecuteCommandAndReturnRaw(const std::string &szCommand)
 
 extern std::istream & safeGetline(std::istream & is, std::string & line);
 
-bool fastcgi_parser::handlePHP(const server_settings &settings, const std::string &script_path, const request &req, reply &rep, modify_info &mInfo)
+bool fastcgi_parser::handlePHP(const server_settings &settings, const std::string &script_path, const request &req, reply &rep, modify_info &mInfo, const WebServerLogger &logger)
 {
 	std::string full_path = settings.www_root + script_path;
 	std::ifstream is(full_path.c_str(), std::ios::in | std::ios::binary);
@@ -289,7 +288,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	}
 
 	//
-
+	
 	_tFCGI_Header gfci;
 	gfci.version = 1;
 	gfci.type = 1;
@@ -327,7 +326,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	fcgi_params["SERVER_PROTOCOL"] = "HTTP/1.1";
 	fcgi_params["REQUEST_SCHEME"] = "http";
 	fcgi_params["GATEWAY_INTERFACE"] = "CGI/1.1";
-	fcgi_params["SERVER_SOFTWARE"] = "Domoticz";
+	fcgi_params["SERVER_SOFTWARE"] = settings.server_name.empty() ? "webem" : settings.server_name;
 	fcgi_params["REMOTE_ADDR"] = req.host_remote_address;
 	fcgi_params["REMOTE_PORT"] = req.host_remote_port;
 	fcgi_params["SERVER_ADDR"] = req.host_local_address;
@@ -336,7 +335,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	fcgi_params["REDIRECT_STATUS"] = "200";
 
 
-	fullexecmd += " SERVER_SOFTWARE=Domoticz";
+	fullexecmd += " SERVER_SOFTWARE=" + (settings.server_name.empty() ? std::string("webem") : settings.server_name);
 	fullexecmd += " SERVER_NAME=localhost";
 	fullexecmd += " SERVER_ADDR='" + req.host_local_address + "'";
 	fullexecmd += " SERVER_PORT=" + req.host_local_port;
@@ -346,11 +345,11 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	for (const auto &header : req.headers)
 	{
 		std::string rName = "HTTP_" + header.name;
-		stdreplace(rName, "-", "_");
-		stdupper(rName);
+		http::server::utils::str_replace(rName, "-", "_");
+		http::server::utils::str_upper(rName);
 		fullexecmd += " " + rName + "='" + header.value + "'";
 
-		fcgi_params[rName] = CURLEncode::URLEncode(header.value);
+		fcgi_params[rName] = URLEncode(header.value);
 	}
 #ifdef WIN32
 	fullexecmd = "SET QUERY_STRING=\""+szQueryString + "\" & " + fullexecmd;
@@ -358,7 +357,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	fullexecmd = "export QUERY_STRING='"+szQueryString + "' && " + fullexecmd;
 #endif
 
-	_log.Debug(DEBUG_NORM, "[PHP] Command: %s", fullexecmd.c_str());
+	if (logger) logger->Debug(DebugCategory::WebServer, "[PHP] Command: %s", fullexecmd.c_str());
 	std::vector<char> v = ExecuteCommandAndReturnRaw(fullexecmd);
 	std::string pret(v.begin(), v.end());
 	if (pret.empty())
@@ -372,7 +371,7 @@ bool fastcgi_parser::handlePHP(const server_settings &settings, const std::strin
 	while (!bDoneWithHeaders)
 	{
 		if (pret[0] == '\r') pret=pret.substr(1);	//Skip CR symbol if present
-
+		
 		size_t tpos = pret.find('\n');
 		if (tpos == std::string::npos)
 		{

@@ -22,6 +22,9 @@
 #include "push/BasePush.h"
 #include "notifications/NotificationHelper.h"
 
+#include "WebServerLoggerAdapter.h"
+#include "DomoticzWebsocketHandler.h"
+
 #ifdef ENABLE_PYTHON
 #include "hardware/plugins/Plugins.h"
 #endif
@@ -62,6 +65,7 @@ extern std::string szAppDate;
 extern std::string szPyVersion;
 
 extern bool g_bLlmMCPSupport;
+extern bool bDoCachePages;
 
 namespace http
 {
@@ -171,7 +175,14 @@ namespace http
 				try
 				{
 					exception = false;
-					m_pWebEm = new http::server::cWebem(settings, serverpath);
+					auto logger = std::make_shared<WebServerLoggerAdapter>();
+				settings.on_heartbeat = [](const std::string& name) {
+					m_mainworker.HeartbeatUpdate(name);
+				};
+				settings.on_heartbeat_remove = [](const std::string& name) {
+					m_mainworker.HeartbeatRemove(name);
+				};
+				m_pWebEm = new http::server::cWebem(settings, serverpath, logger);
 				}
 				catch (std::exception& e)
 				{
@@ -204,7 +215,21 @@ namespace http
 
 			_log.Log(LOG_STATUS, "WebServer(%s) started on address: %s with port %s", m_server_alias.c_str(), settings.listening_address.c_str(), settings.listening_port.c_str());
 
+			m_pWebEm->RegisterWebsocketEndpoint(
+				"/",
+				[](http::server::cWebem* webem,
+				   std::function<void(const std::string&)> writer,
+				   std::function<void(const std::string&)> /*binary_writer*/,
+				   const http::server::WebEmSession& session) {
+					return std::make_shared<CDomoticzWebsocketHandler>(webem, std::move(writer), session);
+				},
+				"domoticz"
+			);
+
 			m_pWebEm->SetDigistRealm(sRealm);
+			// Maintain backward compatibility: libwebem defaults to "SID" but Domoticz
+			// uses "DMZSID" to preserve existing session cookies from before the libwebem extraction
+			m_pWebEm->SetSessionCookieName("DMZSID");
 			m_pWebEm->SetSessionStore(this);
 
 			LoadUsers();
@@ -225,7 +250,7 @@ namespace http
 
 				if (m_users.empty())
 				{
-					AddUser(99999, "tmpadmin", "tmpadmin", "", (_eUserRights)URIGHTS_ADMIN, 0x1F);
+					AddUser(99999, "tmpadmin", "tmpadmin", "", "", (_eUserRights)URIGHTS_ADMIN, 0x1F);
 					_log.Debug(DEBUG_AUTH, "[Start server] Added tmpadmin User as no active Users where found!");
 				}
 			}
@@ -256,7 +281,7 @@ namespace http
 			m_pWebEm->RegisterPageCode("/uvccapture.cgi", [this](auto&& session, auto&& req, auto&& rep) { GetInternalCameraSnapshot(session, req, rep); });
 			// Maybe handle these differently? (Or remove)
 			m_pWebEm->RegisterPageCode("/images/floorplans/plan", [this](auto&& session, auto&& req, auto&& rep) { GetFloorplanImage(session, req, rep); });
-			m_pWebEm->RegisterPageCode("/service-worker.js", [this](auto&& session, auto&& req, auto&& rep) { GetServiceWorker(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/service-worker.js", [this](auto&& session, auto&& req, auto&& rep) { GetServiceWorker(session, req, rep); }, true);
 
 			// End of 'Pages' to be moved...
 
@@ -273,6 +298,17 @@ namespace http
 			m_pWebEm->RegisterActionCode("restoredatabase", [this](auto&& session, auto&& req, auto&& redirect_uri) { RestoreDatabase(session, req, redirect_uri); });
 			m_pWebEm->RegisterActionCode("sbfspotimportolddata", [this](auto&& session, auto&& req, auto&& redirect_uri) { SBFSpotImportOldData(session, req, redirect_uri); });
 
+			// Passkey/WebAuthn commands (bypass authentication - needed during login)
+			RegisterCommandCode("passkeylogin-begin", [this](auto&& session, auto&& req, auto&& root) { Cmd_PasskeyLoginBegin(session, req, root); }, true);
+			RegisterCommandCode("passkeylogin-complete", [this](auto&& session, auto&& req, auto&& root) { Cmd_PasskeyLoginComplete(session, req, root); }, true);
+			RegisterCommandCode("haspasskeys", [this](auto&& session, auto&& req, auto&& root) { Cmd_HasPasskeys(session, req, root); }, true);
+
+			// Passkey/WebAuthn commands (require authentication)
+			RegisterCommandCode("registerpasskey-begin", [this](auto&& session, auto&& req, auto&& root) { Cmd_RegisterPasskeyBegin(session, req, root); });
+			RegisterCommandCode("registerpasskey-complete", [this](auto&& session, auto&& req, auto&& root) { Cmd_RegisterPasskeyComplete(session, req, root); });
+			RegisterCommandCode("getmypasskeys", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetMyPasskeys(session, req, root); });
+			RegisterCommandCode("deletepasskey", [this](auto&& session, auto&& req, auto&& root) { Cmd_DeletePasskey(session, req, root); });
+
 			// Commands that do NOT require authentication
 			RegisterCommandCode("gettimertypes", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetTimerTypes(session, req, root); }, true);
 			RegisterCommandCode("getlanguages", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetLanguages(session, req, root); }, true);
@@ -286,6 +322,8 @@ namespace http
 			RegisterCommandCode("getauth", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetAuth(session, req, root); }, true);
 			RegisterCommandCode("getuptime", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetUptime(session, req, root); }, true);
 			RegisterCommandCode("getconfig", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetConfig(session, req, root); }, true);
+			RegisterCommandCode("getsetuprequired", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetSetupRequired(session, req, root); }, true);
+			RegisterCommandCode("setupwizardcreateadmin", [this](auto&& session, auto&& req, auto&& root) { Cmd_SetupWizardCreateAdmin(session, req, root); }, true);
 
 			// Commands that require authentication
 			RegisterCommandCode("sendopenthermcommand", [this](auto&& session, auto&& req, auto&& root) { Cmd_SendOpenThermCommand(session, req, root); });
@@ -413,6 +451,7 @@ namespace http
 			RegisterCommandCode("setplandevicecoords", [this](auto&& session, auto&& req, auto&& root) { Cmd_SetPlanDeviceCoords(session, req, root); });
 			RegisterCommandCode("deleteallplandevices", [this](auto&& session, auto&& req, auto&& root) { Cmd_DeleteAllPlanDevices(session, req, root); });
 			RegisterCommandCode("changeplanorder", [this](auto&& session, auto&& req, auto&& root) { Cmd_ChangePlanOrder(session, req, root); });
+			RegisterCommandCode("changeplanfullorder", [this](auto&& session, auto&& req, auto&& root) { Cmd_ChangePlanFullOrder(session, req, root); });
 			RegisterCommandCode("changeplandeviceorder", [this](auto&& session, auto&& req, auto&& root) { Cmd_ChangePlanDeviceOrder(session, req, root); });
 
 			RegisterCommandCode("gettimerplans", [this](auto&& session, auto&& req, auto&& root) { Cmd_GetTimerPlans(session, req, root); });
@@ -663,16 +702,18 @@ namespace http
 			m_bDoStop = true;
 			try
 			{
-				if (m_pWebEm == nullptr)
-					return;
-				m_pWebEm->Stop();
+				if (m_pWebEm != nullptr)
+					m_pWebEm->Stop();
 				if (m_thread)
 				{
 					m_thread->join();
 					m_thread.reset();
 				}
-				delete m_pWebEm;
-				m_pWebEm = nullptr;
+				if (m_pWebEm != nullptr)
+				{
+					delete m_pWebEm;
+					m_pWebEm = nullptr;
+				}
 			}
 			catch (...)
 			{
@@ -750,7 +791,7 @@ namespace http
 			ClearUserPasswords();
 			// Add Users
 			std::vector<std::vector<std::string>> result;
-			result = m_sql.safe_query("SELECT ID, Active, Username, Password, MFAsecret, Rights, TabsEnabled FROM Users");
+			result = m_sql.safe_query("SELECT ID, Active, Username, Password, MFAsecret, Rights, TabsEnabled, Passkeys FROM Users");
 			if (!result.empty())
 			{
 				for (const auto& sd : result)
@@ -766,8 +807,9 @@ namespace http
 
 						_eUserRights rights = (_eUserRights)atoi(sd[5].c_str());
 						int activetabs = atoi(sd[6].c_str());
+						std::string passkeys = sd[7];
 
-						AddUser(ID, username, password, mfatoken, rights, activetabs);
+						AddUser(ID, username, password, mfatoken, passkeys, rights, activetabs);
 					}
 				}
 			}
@@ -789,7 +831,7 @@ namespace http
 						uint32_t refreshexpire = static_cast<uint32_t>(atol(sd[6].c_str()));
 						std::string signingsecret = sd[7];
 						time_t accept_legacy_until = static_cast<time_t>(atol(sd[8].c_str()));
-						AddUser(ID, applicationname, secret, "", URIGHTS_CLIENTID, bPublic, pemfile, refreshexpire, signingsecret, accept_legacy_until);
+						AddUser(ID, applicationname, secret, "", "", URIGHTS_CLIENTID, bPublic, pemfile, refreshexpire, signingsecret, accept_legacy_until);
 					}
 				}
 			}
@@ -797,7 +839,7 @@ namespace http
 			m_mainworker.LoadSharedUsers();
 		}
 
-		void CWebServer::AddUser(const unsigned long ID, const std::string& username, const std::string& password, const std::string& mfatoken, const int userrights, const int activetabs, const std::string& pemfile, const uint32_t refreshexpire, const std::string& signingsecret, const time_t accept_legacy_until)
+		void CWebServer::AddUser(const unsigned long ID, const std::string& username, const std::string& password, const std::string& mfatoken, const std::string& passkeys, const int userrights, const int activetabs, const std::string& pemfile, const uint32_t refreshexpire, const std::string& signingsecret, const time_t accept_legacy_until)
 		{
 			if (m_pWebEm == nullptr)
 				return;
@@ -875,6 +917,7 @@ namespace http
 			wtmp.Username = username;
 			wtmp.Password = password;
 			wtmp.Mfatoken = mfatoken;
+			wtmp.Passkeys = passkeys;
 			wtmp.PrivKey = privkey;
 			wtmp.PubKey = pubkey;
 			wtmp.userrights = (_eUserRights)userrights;
@@ -894,7 +937,7 @@ namespace http
 			utmp.RedirectUri = "";
 			m_accesscodes.push_back(utmp);
 
-			m_pWebEm->AddUserPassword(ID, username, password, mfatoken, (_eUserRights)userrights, activetabs, privkey, pubkey, refreshexpire, signingsecret, accept_legacy_until);
+			m_pWebEm->AddUserPassword(ID, username, password, mfatoken, passkeys, (_eUserRights)userrights, activetabs, privkey, pubkey, refreshexpire, signingsecret, accept_legacy_until);
 		}
 
 		void CWebServer::ClearUserPasswords()
@@ -903,6 +946,114 @@ namespace http
 			m_accesscodes.clear();
 			if (m_pWebEm)
 				m_pWebEm->ClearUserPasswords();
+		}
+
+		Json::Value CWebServer::ParsePasskeys(const std::string& passkeysJson)
+		{
+			Json::Value result(Json::arrayValue);
+			if (passkeysJson.empty())
+				return result;
+			if (!ParseJSon(passkeysJson, result) || !result.isArray())
+				return Json::Value(Json::arrayValue);
+			return result;
+		}
+
+		std::string CWebServer::SerializePasskeys(const Json::Value& passkeys)
+		{
+			return JSonToRawString(passkeys);
+		}
+
+		bool CWebServer::AddPasskeyToUser(unsigned long userID, const std::string& credentialID, const std::string& publicKey, const std::string& credentialName, const std::string& deviceInfo)
+		{
+			int iUser = -1;
+			for (size_t i = 0; i < m_users.size(); i++) {
+				if (m_users[i].ID == userID) { iUser = (int)i; break; }
+			}
+			if (iUser == -1) return false;
+
+			Json::Value passkeys = ParsePasskeys(m_users[iUser].Passkeys);
+			Json::Value newPasskey;
+			newPasskey["id"] = credentialID;
+			newPasskey["key"] = publicKey;
+			newPasskey["cnt"] = 0;
+			newPasskey["name"] = credentialName;
+			if (!deviceInfo.empty())
+				newPasskey["device"] = deviceInfo;
+
+			time_t now = mytime(nullptr);
+			struct tm ltime;
+			localtime_r(&now, &ltime);
+			char szTmp[50];
+			strftime(szTmp, sizeof(szTmp), "%Y-%m-%dT%H:%M:%S", &ltime);
+			newPasskey["created"] = std::string(szTmp);
+
+			passkeys.append(newPasskey);
+			return SaveUserPasskeys(userID, SerializePasskeys(passkeys));
+		}
+
+		bool CWebServer::RemovePasskeyFromUser(unsigned long userID, const std::string& credentialID)
+		{
+			int iUser = -1;
+			for (size_t i = 0; i < m_users.size(); i++) {
+				if (m_users[i].ID == userID) { iUser = (int)i; break; }
+			}
+			if (iUser == -1) return false;
+
+			Json::Value passkeys = ParsePasskeys(m_users[iUser].Passkeys);
+			Json::Value newPasskeys(Json::arrayValue);
+			for (Json::ArrayIndex i = 0; i < passkeys.size(); i++) {
+				if (passkeys[i]["id"].asString() != credentialID)
+					newPasskeys.append(passkeys[i]);
+			}
+			return SaveUserPasskeys(userID, SerializePasskeys(newPasskeys));
+		}
+
+		int CWebServer::FindUserByPasskeyCredentialID(const std::string& credentialID)
+		{
+			for (size_t i = 0; i < m_users.size(); i++) {
+				if (m_users[i].Passkeys.empty()) continue;
+				Json::Value passkeys = ParsePasskeys(m_users[i].Passkeys);
+				for (Json::ArrayIndex j = 0; j < passkeys.size(); j++) {
+					if (passkeys[j]["id"].asString() == credentialID)
+						return (int)i;
+				}
+			}
+			return -1;
+		}
+
+		bool CWebServer::UpdatePasskeySignCount(unsigned long userID, const std::string& credentialID, uint32_t newSignCount)
+		{
+			int iUser = -1;
+			for (size_t i = 0; i < m_users.size(); i++) {
+				if (m_users[i].ID == userID) { iUser = (int)i; break; }
+			}
+			if (iUser == -1) return false;
+
+			Json::Value passkeys = ParsePasskeys(m_users[iUser].Passkeys);
+			for (Json::ArrayIndex i = 0; i < passkeys.size(); i++) {
+				if (passkeys[i]["id"].asString() == credentialID) {
+					passkeys[i]["cnt"] = newSignCount;
+					return SaveUserPasskeys(userID, SerializePasskeys(passkeys));
+				}
+			}
+			return false;
+		}
+
+		bool CWebServer::HasAnyPasskeys()
+		{
+			for (const auto& user : m_users) {
+				if (user.Passkeys.empty()) continue;
+				Json::Value passkeys = ParsePasskeys(user.Passkeys);
+				if (passkeys.size() > 0) return true;
+			}
+			return false;
+		}
+
+		bool CWebServer::SaveUserPasskeys(unsigned long userID, const std::string& passkeysJson)
+		{
+			m_sql.safe_query("UPDATE Users SET Passkeys='%q' WHERE (ID==%lu)", passkeysJson.c_str(), userID);
+			LoadUsers();
+			return true;
 		}
 
 		int CWebServer::FindClient(const char* szClientName)
@@ -1421,6 +1572,9 @@ namespace http
 
 			for (const auto& sd : result)
 			{
+				std::string sDeviceName("");
+				uint64_t devIDX = -1;
+
 				try
 				{
 					unsigned char favorite = atoi(sd[12].c_str());
@@ -1433,9 +1587,9 @@ namespace http
 							continue;
 					}
 
-					std::string sDeviceName = sd[3];
+					sDeviceName = sd[3];
 
-					uint64_t devIDX = std::stoull(sd[0]);
+					devIDX = std::stoull(sd[0]);
 
 					if (!bDisplayHidden)
 					{
@@ -2245,6 +2399,7 @@ namespace http
 						root["result"][ii]["min"] = valuemin;
 						root["result"][ii]["max"] = valuemax;
 						root["result"][ii]["vunit"] = value_unit;
+						root["result"][ii]["HaveSetPoint"] = true;
 
 						std::vector<std::string> strarray;
 						StringSplit(sValue, ";", strarray);
@@ -2276,13 +2431,16 @@ namespace http
 								root["result"][ii]["DewPoint"] = dewpoint;
 								sprintf(szData, "%.1f %c, (%.1f %c) / %d%%", temp, tempsign, tempSetPoint, tempsign, humidity);
 							}
-							else if (dSubType == sTypeThermostat6TempBaro && strarray.size() >= 3)
+							else if (dSubType == sTypeThermostat6TempBaro && strarray.size() >= 4)
 							{
 								float barometer = static_cast<float>(atof(strarray[2].c_str()));
+								int forecast = atoi(strarray[3].c_str());
 								root["result"][ii]["Barometer"] = barometer;
+								root["result"][ii]["Forecast"] = forecast;
+								root["result"][ii]["ForecastStr"] = RFX_WSForecast_Desc(forecast);
 								sprintf(szData, "%.1f %c, (%.1f %c), %.1f hPa", temp, tempsign, tempSetPoint, tempsign, barometer);
 							}
-							else if (dSubType == sTypeThermostat6TempHumBaro && strarray.size() >= 5)
+							else if (dSubType == sTypeThermostat6TempHumBaro && strarray.size() >= 6)
 							{
 								int humidity = atoi(strarray[2].c_str());
 								root["result"][ii]["Humidity"] = humidity;
@@ -2293,7 +2451,10 @@ namespace http
 								root["result"][ii]["DewPoint"] = dewpoint;
 
 								float barometer = static_cast<float>(atof(strarray[4].c_str()));
+								int forecast = atoi(strarray[5].c_str());
 								root["result"][ii]["Barometer"] = barometer;
+								root["result"][ii]["Forecast"] = forecast;
+								root["result"][ii]["ForecastStr"] = RFX_WSForecast_Desc(forecast);
 								sprintf(szData, "%.1f %c, (%.1f %c), %d%%, %.1f hPa", temp, tempsign, tempSetPoint, tempsign, humidity, barometer);
 							}
 							else
@@ -2591,7 +2752,7 @@ namespace http
 								{
 									double total_min = atof(sd2[0].c_str());
 									double total_max = atof(strarray[1].c_str());
-									total_real = total_max - total_min;
+									total_real = std::max(0.0, total_max - total_min);
 								}
 
 								total_real *= AddjMulti;
@@ -2692,6 +2853,25 @@ namespace http
 								break;
 							default:
 								strcpy(szTmp, "?");
+								break;
+							}
+						}
+						else
+						{
+							switch (metertype)
+							{
+							case device::tmeter::type::ENERGY:
+							case device::tmeter::type::ENERGY_GENERATED:
+								sprintf(szTmp, "%.3f kWh", 0.0F);
+								break;
+							case device::tmeter::type::GAS:
+								sprintf(szTmp, "%.3f m3", 0.0F);
+								break;
+							case device::tmeter::type::WATER:
+								sprintf(szTmp, "0 Liter");
+								break;
+							default:
+								strcpy(szTmp, "0");
 								break;
 							}
 						}
@@ -2796,6 +2976,25 @@ namespace http
 									strcat(szTmp, " ");
 									strcat(szTmp, ValueUnits.c_str());
 								}
+								break;
+							default:
+								strcpy(szTmp, "0");
+								break;
+							}
+						}
+						else
+						{
+							switch (metertype)
+							{
+							case device::tmeter::type::ENERGY:
+							case device::tmeter::type::ENERGY_GENERATED:
+								sprintf(szTmp, "%.3f kWh", 0.0F);
+								break;
+							case device::tmeter::type::GAS:
+								sprintf(szTmp, "%.3f m3", 0.0F);
+								break;
+							case device::tmeter::type::WATER:
+								sprintf(szTmp, "%.3f m3", 0.0F);
 								break;
 							default:
 								strcpy(szTmp, "0");
@@ -2916,18 +3115,18 @@ namespace http
 								EnergyDivider = float(tValue);
 							}
 
-							uint64_t powerusage1 = std::stoull(splitresults[0]);
-							uint64_t powerusage2 = std::stoull(splitresults[1]);
-							uint64_t powerdeliv1 = std::stoull(splitresults[2]);
-							uint64_t powerdeliv2 = std::stoull(splitresults[3]);
-							uint64_t usagecurrent = std::stoull(splitresults[4]);
-							uint64_t delivcurrent = std::stoull(splitresults[5]);
+							int64_t powerusage1 = std::stoll(splitresults[0]);
+							int64_t powerusage2 = std::stoll(splitresults[1]);
+							int64_t powerdeliv1 = std::stoll(splitresults[2]);
+							int64_t powerdeliv2 = std::stoll(splitresults[3]);
+							int64_t usagecurrent = std::stoll(splitresults[4]);
+							int64_t delivcurrent = std::stoll(splitresults[5]);
 
 							powerdeliv1 = (powerdeliv1 < 10) ? 0 : powerdeliv1;
 							powerdeliv2 = (powerdeliv2 < 10) ? 0 : powerdeliv2;
 
-							uint64_t powerusage = powerusage1 + powerusage2;
-							uint64_t powerdeliv = powerdeliv1 + powerdeliv2;
+							int64_t powerusage = powerusage1 + powerusage2;
+							int64_t powerdeliv = powerdeliv1 + powerdeliv2;
 							if (powerdeliv < 2)
 								powerdeliv = 0;
 
@@ -2946,9 +3145,9 @@ namespace http
 								usagecurrent = 0;
 								delivcurrent = 0;
 							}
-							sprintf(szTmp, "%" PRIu64 " Watt", usagecurrent);
+							sprintf(szTmp, "%" PRId64 " Watt", usagecurrent);
 							root["result"][ii]["Usage"] = szTmp;
-							sprintf(szTmp, "%" PRIu64 " Watt", delivcurrent);
+							sprintf(szTmp, "%" PRId64 " Watt", delivcurrent);
 							root["result"][ii]["UsageDeliv"] = szTmp;
 							root["result"][ii]["Data"] = sValue;
 							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
@@ -2971,11 +3170,11 @@ namespace http
 							{
 								std::vector<std::string> sd2 = result2[0];
 
-								uint64_t total_min_usage_1 = std::stoull(sd2[0]);
-								uint64_t total_min_deliv_1 = std::stoull(sd2[1]);
-								uint64_t total_min_usage_2 = std::stoull(sd2[2]);
-								uint64_t total_min_deliv_2 = std::stoull(sd2[3]);
-								uint64_t total_real_usage, total_real_deliv;
+								int64_t total_min_usage_1 = std::stoll(sd2[0]);
+								int64_t total_min_deliv_1 = std::stoll(sd2[1]);
+								int64_t total_min_usage_2 = std::stoll(sd2[2]);
+								int64_t total_min_deliv_2 = std::stoll(sd2[3]);
+								int64_t total_real_usage, total_real_deliv;
 
 								total_min_deliv_1 = (total_min_deliv_1 < 10) ? 0 : total_min_deliv_1;
 								total_min_deliv_2 = (total_min_deliv_2 < 10) ? 0 : total_min_deliv_2;
@@ -3056,15 +3255,14 @@ namespace http
 						}
 						else
 						{
-							sprintf(szTmp, "%.03f", 0.0F);
+							sprintf(szTmp, "%.03f", atof(sValue.c_str()) / divider);
 							root["result"][ii]["Counter"] = szTmp;
+							root["result"][ii]["Data"] = szTmp;
 							if (dSubType == sTypeP1CityHeat)
 								sprintf(szTmp, "%.03f GJ", 0.0F);
 							else
 								sprintf(szTmp, "%.03f m3", 0.0F);
 							root["result"][ii]["CounterToday"] = szTmp;
-							sprintf(szTmp, "%.03f", atof(sValue.c_str()) / divider);
-							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
 						}
 					}
@@ -3262,6 +3460,7 @@ namespace http
 							root["result"][ii]["min"] = valuemin;
 							root["result"][ii]["max"] = valuemax;
 							root["result"][ii]["vunit"] = value_unit;
+							root["result"][ii]["HaveSetPoint"] = true;
 							root["result"][ii]["TypeImg"] = "override_mini";
 						}
 					}
@@ -3663,6 +3862,25 @@ namespace http
 									break;
 								}
 							}
+							else
+							{
+								switch (metertype)
+								{
+								case device::tmeter::type::ENERGY:
+								case device::tmeter::type::ENERGY_GENERATED:
+									sprintf(szTmp, "%.3f kWh", 0.0F);
+									break;
+								case device::tmeter::type::GAS:
+									sprintf(szTmp, "%.3f m3", 0.0F);
+									break;
+								case device::tmeter::type::WATER:
+									sprintf(szTmp, "%.3f m3", 0.0F);
+									break;
+								default:
+									strcpy(szTmp, "0.000");
+									break;
+								}
+							}
 							root["result"][ii]["Counter"] = sValue;
 							root["result"][ii]["CounterToday"] = szTmp;
 							root["result"][ii]["SwitchTypeVal"] = metertype;
@@ -3918,7 +4136,7 @@ namespace http
 				}
 				catch (const std::exception& e)
 				{
-					_log.Log(LOG_ERROR, "GetJSonDevices: exception occurred : '%s'", e.what());
+					_log.Log(LOG_ERROR, "GetJSonDevices: exception occurred: '%s' (%llu/%s)", e.what(), devIDX, sDeviceName.c_str());
 					continue;
 				}
 			}
@@ -3947,7 +4165,10 @@ namespace http
 			else
 				queryString.append("SUM(" + dfield + ")");
 			queryString.append("/" + std::to_string(divider));
-			queryString.append(" as s FROM " + dbasetable + " WHERE DeviceRowID == " + std::to_string(deviceidx) + " GROUP BY strftime('%Y', Date), ");
+			queryString.append(" as s FROM " + dbasetable + " WHERE DeviceRowID == " + std::to_string(deviceidx));
+			if (dfield == "Barometer")
+				queryString.append(" AND " + dfield + " > 0");
+			queryString.append(" GROUP BY strftime('%Y', Date), ");
 			if ((sgroupby == "month") || (sgroupby == "year"))
 				queryString.append("strftime('%m', Date)");
 			else if (sgroupby == "quarter")
@@ -4005,8 +4226,7 @@ namespace http
 			std::vector<std::vector<std::string>> result;
 			bool bUseValues = false;
 
-			/* if bUseValuesOrCounter is true, then find out if there are any Counter values in the table, if not: use Value instead of Counter */
-			if (bUseValuesOrCounter)
+			/* find out if there are any Counter values in the table, if not: use Value instead of Counter */
 			{
 				queryString = "select count(*) from " + dbasetable + " where DeviceRowID = " + std::to_string(idx) + " and " + counter("") + " != 0 ";
 				result = m_sql.safe_query(queryString.c_str(), idx, idx, idx, idx, idx);
@@ -4052,19 +4272,22 @@ namespace http
 				queryString.append("         date(mc0.Date) as Date,");
 				queryString.append("         case");
 				queryString.append("            when (" + counter("mc1") + ") <= (" + counter("mc0") + ")");
+				queryString.append("                 AND (" + counter("mc0") + ") - (" + counter("mc1") + ") <= (" + value("mc0") + ") * 2 + 2000000");
 				queryString.append("            then (" + counter("mc0") + ") - (" + counter("mc1") + ")");
 				queryString.append("            else (" + value("mc0") + ")");
 				queryString.append("         end as Difference");
 				queryString.append(" 	from " + dbasetable + " mc0");
-				queryString.append(" 	inner join " + dbasetable + " mc1 on mc1.DeviceRowID = mc0.DeviceRowID");
-				queryString.append("         and mc1.Date = (");
-				queryString.append("             select max(mcm.Date)");
-				queryString.append("             from " + dbasetable + " mcm");
+				queryString.append(" 	inner join " + dbasetable + " mc1 on mc1.rowid = (");
+				queryString.append("             select mcm.rowid from " + dbasetable + " mcm");
 				queryString.append("             where mcm.DeviceRowID = mc0.DeviceRowID and mcm.Date < mc0.Date and (" + counter("mcm") + ") > 0");
+				queryString.append("             order by mcm.Date desc, (" + counter("mcm") + ") desc, mcm.rowid desc limit 1");
 				queryString.append("         )");
 				queryString.append(" 	where");
 				queryString.append("         mc0.DeviceRowID = %" PRIu64 "");
 				queryString.append("         and (" + counter("mc0") + ") > 0");
+				queryString.append("         and mc0.rowid = (select mcm2.rowid from " + dbasetable + " mcm2");
+				queryString.append("             where mcm2.DeviceRowID = mc0.DeviceRowID and mcm2.Date = mc0.Date");
+				queryString.append("             order by (" + counter("mcm2") + ") desc, mcm2.rowid desc limit 1)");
 				queryString.append("         and (select min(Date) from " + dbasetable + " where DeviceRowID = %" PRIu64 " and (" + counter("") + ") > 0) <= mc1.Date");
 				queryString.append("         and mc0.Date <= (select max(Date) from " + dbasetable + " where DeviceRowID = %" PRIu64 " and (" + counter("") + ") > 0)");
 				queryString.append("    union all");
@@ -4361,7 +4584,23 @@ namespace http
 
 		void CWebServer::GetServiceWorker(WebEmSession& session, const request& req, reply& rep)
 		{
-			// Return the appcache file (dynamically generated)
+			if (!bDoCachePages)
+			{
+				// No-cache mode: return a service worker that unregisters itself and clears all caches
+				std::string response =
+					"self.addEventListener('install', function() { self.skipWaiting(); });\n"
+					"self.addEventListener('activate', function(event) {\n"
+					"  event.waitUntil(\n"
+					"    caches.keys().then(function(keys) {\n"
+					"      return Promise.all(keys.map(function(k) { return caches.delete(k); }));\n"
+					"    }).then(function() { return self.registration.unregister(); })\n"
+					"  );\n"
+					"});\n";
+				reply::set_content(&rep, response);
+				return;
+			}
+
+			// Return the service worker file (dynamically generated)
 			std::string sLine;
 			std::string filename = szWWWFolder + "/service-worker.js";
 
@@ -4451,6 +4690,11 @@ namespace http
 				backupInfo["duration"] = difftime(mytime(nullptr), now);
 				m_mainworker.m_notificationsystem.Notify(Notification::DZ_BACKUP_DONE, Notification::STATUS_INFO, JSonToRawString(backupInfo));
 			}
+			else
+			{
+				_log.Log(LOG_ERROR, "WebServer: Database backup failed!");
+				rep = reply::stock_reply(reply::internal_server_error);
+			}
 		}
 
 		void CWebServer::RestoreDatabase(WebEmSession& session, const request& req, std::string& redirect_uri)
@@ -4468,10 +4712,54 @@ namespace http
 				return;
 			}
 
-			m_mainworker.StopDomoticzHardware();
+			// Write the uploaded content to a temp file immediately so the in-memory
+			// string can be released before we invoke the restore, reducing peak RAM usage.
+#ifdef WIN32
+			std::string tempPath = szUserDataFolder + "restore.db";
+#else
+			std::string tempPath = "/tmp/restore.db";
+#endif
+			{
+				std::ofstream outfile(tempPath, std::ios::binary | std::ios::trunc);
+				if (!outfile.is_open())
+				{
+					_log.Log(LOG_ERROR, "Restore Database: Could not write temp file!");
+					return;
+				}
+				outfile.write(dbasefile.data(), static_cast<std::streamsize>(dbasefile.size()));
+			}
+			// Release the in-memory copy of the uploaded file before the restore runs
+			dbasefile.clear();
+			dbasefile.shrink_to_fit();
 
-			m_sql.RestoreDatabase(dbasefile);
-			m_mainworker.AddAllDomoticzHardware();
+			m_mainworker.StopDomoticzHardware();
+			// Pass false to preserve the Python event sub-interpreter.
+			// Destroying and recreating it crashes on Python 3.13 due to
+			// stale per-thread GIL state left by Py_EndInterpreter.
+			m_mainworker.m_eventsystem.StopEventSystem(false);
+			m_mainworker.m_notificationsystem.Stop();
+
+			bool bOK = m_sql.RestoreDatabaseFromFile(tempPath);
+
+			std::remove(tempPath.c_str());
+
+			if (!bOK)
+				_log.Log(LOG_ERROR, "Restore Database: Restore failed, restarting hardware with existing database");
+			// Pass false to skip setting m_bStartHardware so Do_Work does
+			// not race with the explicit startup sequence below.
+			m_mainworker.AddAllDomoticzHardware(false);
+
+			// Perform the full startup sequence here rather than relying on
+			// the deferred Do_Work / m_bStartHardware path, which would
+			// race with the stop above.
+			m_mainworker.StartDomoticzHardware();
+#ifdef ENABLE_PYTHON
+			m_mainworker.m_pluginsystem.AllPluginsStarted();
+#endif
+			m_mainworker.m_notificationsystem.Start();
+			m_mainworker.m_eventsystem.SetEnabled(m_sql.m_bEnableEventSystem);
+			m_mainworker.m_eventsystem.StartEventSystem();
+			m_mainworker.m_notificationsystem.Notify(Notification::DZ_START, Notification::STATUS_INFO);
 		}
 
 		/**
@@ -4544,6 +4832,19 @@ namespace http
 				m_sql.safe_query("UPDATE UserSessions set AuthToken = '%q', ExpirationDate = '%q', RemoteHost = '%q', LastUpdate = datetime('now', 'localtime') WHERE SessionID = '%q'",
 					session.auth_token.c_str(), szExpires, remote_host.c_str(), session.id.c_str());
 			}
+		}
+
+		void CWebServer::RenewSessionExpiration(const std::string& sessionId, time_t expires)
+		{
+			if (sessionId.empty())
+				return;
+			char szExpires[30];
+			struct tm ltime;
+			localtime_r(&expires, &ltime);
+			strftime(szExpires, sizeof(szExpires), "%Y-%m-%d %H:%M:%S", &ltime);
+			m_sql.safe_query(
+				"UPDATE UserSessions SET ExpirationDate = '%q', LastUpdate = datetime('now', 'localtime') WHERE SessionID = '%q'",
+				szExpires, sessionId.c_str());
 		}
 
 		/**

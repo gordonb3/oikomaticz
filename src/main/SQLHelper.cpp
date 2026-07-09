@@ -2,6 +2,7 @@
 #include "SQLHelper.h"
 #include <iostream>	 /* standard I/O functions						 */
 #include <string>
+#include <cstdlib>
 #ifdef WIN32
 #include <tchar.h>
 #else
@@ -42,7 +43,7 @@
 #include <inttypes.h>
 
 #define OIKOMATICZ_DB_VERSION 4
-#define DOMOTICZ_DB_VERSION 172
+#define DOMOTICZ_DB_VERSION 176
 
 // combine database versions into a single number by shifting the Oikomaticz DB version 10 bits to the left.
 #define DB_VERSION (OIKOMATICZ_DB_VERSION*1024 + DOMOTICZ_DB_VERSION)
@@ -281,7 +282,8 @@ constexpr auto sqlCreateUsers =
 "[MFAsecret] VARCHAR(200) NULL, "
 "[Rights] INTEGER DEFAULT 255, "
 "[TabsEnabled] INTEGER DEFAULT 255, "
-"[RemoteSharing] INTEGER DEFAULT 0);";
+"[RemoteSharing] INTEGER DEFAULT 0, "
+"[Passkeys] TEXT DEFAULT NULL);";
 
 constexpr auto sqlCreateMeter =
 "CREATE TABLE IF NOT EXISTS [Meter] ("
@@ -454,7 +456,14 @@ constexpr auto sqlCreateEventMaster =
 "[Interpreter] VARCHAR(10) DEFAULT 'Blockly', "
 "[Type] VARCHAR(10) DEFAULT 'All', "
 "[XMLStatement] TEXT NOT NULL, "
-"[Status] INTEGER DEFAULT 0);";
+"[Status] INTEGER DEFAULT 0, "
+"[FolderID] INTEGER DEFAULT 0);";
+
+constexpr auto sqlCreateEventFolder =
+"CREATE TABLE IF NOT EXISTS [EventFolder] ("
+"[ID] INTEGER PRIMARY KEY, "
+"[Name] VARCHAR(200) NOT NULL, "
+"[Order] INTEGER DEFAULT 0);";
 
 constexpr auto sqlCreateEventRules =
 "CREATE TABLE IF NOT EXISTS [EventRules] ("
@@ -754,6 +763,7 @@ bool CSQLHelper::OpenDatabase()
 	query(sqlCreateSharedDevicesTrigger);
 	query(sqlCreateEventMaster);
 	query(sqlCreateEventRules);
+	query(sqlCreateEventFolder);
 	query(sqlCreateWOLNodes);
 	query(sqlCreatePercentage);
 	query(sqlCreatePercentage_Calendar);
@@ -1626,7 +1636,7 @@ bool CSQLHelper::OpenDatabase()
 			result = safe_query("SELECT ID FROM Hardware WHERE (Type==%d)", hardware::type::System);
 			if (result.empty())
 			{
-				safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Motherboard',1, %d,'',1,'','',0,0,0,0,0,0)", hardware::type::System);
+				safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Motherboard',1, %d,'127.0.0.1',8085,'','',0,0,0,0,0,0)", hardware::type::System);
 			}
 		}
 		if (dbversion < 85)
@@ -1921,7 +1931,6 @@ bool CSQLHelper::OpenDatabase()
 				<< "([Type] = " << hardware::type::Meteostick << ") OR "
 				<< "([Type] = " << hardware::type::PVOUTPUT_INPUT << ") OR "
 				<< "([Type] = " << hardware::type::SBFSpot << ") OR "
-				<< "([Type] = " << hardware::type::SolarEdgeTCP << ") OR "
 				<< "([Type] = " << hardware::type::TE923 << ") OR "
 				<< "([Type] = " << hardware::type::TOONTHERMOSTAT << ") OR "
 				<< "([Type] = " << hardware::type::Wunderground << ") OR "
@@ -3325,6 +3334,54 @@ bool CSQLHelper::OpenDatabase()
 				}
 			}
 		}
+		if (dbversion < 173)
+		{
+			// Add Passkeys column to Users table for WebAuthn/passkey support
+			query("ALTER TABLE Users ADD COLUMN [Passkeys] TEXT DEFAULT NULL");
+
+			// Add forecast field to existing Thermostat 6 devices with barometer
+			// Since this is a new field being added in this version, all existing devices
+			// are guaranteed not to have it yet, so we can simply append it
+
+			result = safe_query("SELECT ID, sValue FROM DeviceStatus WHERE (Type=%d) AND (SubType IN (%d, %d))",
+				pTypeThermostat6, sTypeThermostat6TempBaro, sTypeThermostat6TempHumBaro);
+
+			if (!result.empty())
+			{
+				for (const auto& sd : result)
+				{
+					std::string deviceID = sd[0];
+					std::string sValue = sd[1];
+
+					// Append forecast field with default value 0
+					std::string newSValue = sValue + ";0";
+					safe_query("UPDATE DeviceStatus SET sValue='%q' WHERE (ID=%q)", newSValue.c_str(), deviceID.c_str());
+				}
+			}
+		}
+		if (dbversion < 174)
+		{
+			if (!DoesColumnExistsInTable("FolderID", "EventMaster"))
+			{
+				query("ALTER TABLE EventMaster ADD COLUMN [FolderID] INTEGER DEFAULT 0");
+			}
+		}
+		if (dbversion < 175)
+		{
+			// Fix for fresh installs that were missing the Passkeys column (GitHub #6601)
+			if (!DoesColumnExistsInTable("Passkeys", "Users"))
+			{
+				query("ALTER TABLE Users ADD COLUMN [Passkeys] TEXT DEFAULT NULL");
+			}
+		}
+		if (dbversion < 176)
+		{
+			// Normalize Barometer values in Temperature_Calendar.
+			// Before Sept 2023, barometer was stored as actual hPa (e.g., 1013).
+			// Now stored as *10 (e.g., 10130). Patch old data to match.
+			query("UPDATE Temperature_Calendar SET Barometer = Barometer * 10 "
+				"WHERE Barometer > 0 AND Barometer < 8500");
+		}
 	}
 
 	if ((!bNewInstall) && (ozdbversion < OIKOMATICZ_DB_VERSION))
@@ -3433,11 +3490,41 @@ bool CSQLHelper::OpenDatabase()
 		query("INSERT INTO Plans (Name) VALUES ('$Hidden Devices')");
 		// Add hardware for internal use
 		safe_query("INSERT INTO Hardware (Name, Enabled, Type, Address, Port, Username, Password, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) VALUES ('Domoticz Internal',1, %d,'',1,'','',0,0,0,0,0,0)", hardware::type::DomoticzInternal);
-		safe_query("INSERT INTO Users (Active, Username, Password, Rights, TabsEnabled) VALUES (1, '%s', '%s', %d, 0x1F)", base64_encode(DEFAULT_ADMINUSER).c_str(), GenerateMD5Hash(DEFAULT_ADMINPWD).c_str(), http::server::URIGHTS_ADMIN);
+		// Admin user is no longer created here - created via setup wizard or Docker env vars
 		safe_query("INSERT INTO Applications (Active, Public, Applicationname) VALUES (1, 1, 'domoticzUI')");
 		safe_query("INSERT INTO Applications (Active, Public, Applicationname) VALUES (0, 0, 'domoticzMobileApp')");
 	}
 	UpdatePreferencesVar("DB_Version", DB_VERSION);
+
+	// Check for Docker environment variable provisioning
+	// Only applies when no admin user exists (fresh install or admin was deleted)
+	{
+		auto adminResult = safe_query("SELECT ID FROM Users WHERE Rights=%d", http::server::URIGHTS_ADMIN);
+		if (adminResult.empty())
+		{
+			const char *envPassword = std::getenv("DOMOTICZ_ADMIN_PASSWORD");
+			if (envPassword != nullptr && strlen(envPassword) > 0)
+			{
+				const char *envUsername = std::getenv("DOMOTICZ_ADMIN_USERNAME");
+				std::string username = (envUsername != nullptr && strlen(envUsername) > 0) ? envUsername : DEFAULT_ADMINUSER;
+				std::string password = envPassword;
+
+				safe_query("INSERT INTO Users (Active, Username, Password, Rights, TabsEnabled) VALUES (1, '%q', '%q', %d, 0x1F)",
+					base64_encode(username).c_str(), GenerateMD5Hash(password).c_str(), http::server::URIGHTS_ADMIN);
+
+				_log.Log(LOG_STATUS, "Admin user '%s' created from environment variables", username.c_str());
+			}
+		}
+		else
+		{
+			// Admin already exists - ignore env vars if set
+			const char *envPassword = std::getenv("DOMOTICZ_ADMIN_PASSWORD");
+			if (envPassword != nullptr && strlen(envPassword) > 0)
+			{
+				_log.Log(LOG_STATUS, "Admin account already exists, ignoring DOMOTICZ_ADMIN_PASSWORD environment variable");
+			}
+		}
+	}
 
 	//Check preferences table for extreme sized sValues
 	result = safe_query("SELECT Key FROM Preferences WHERE LENGTH(sValue) > 2500");
@@ -4420,7 +4507,7 @@ void CSQLHelper::Do_Work()
 
 		for (const auto &itt : _items2do)
 		{
-			_log.Debug(DEBUG_NORM, "SQLH: Do Task ItemType: %d Cmd: %s Value: %s", itt._ItemType, itt._command.c_str(), itt._sValue.c_str());
+			_log.Debug(DEBUG_SQL, "SQLH: Do Task ItemType: %d Cmd: %s Value: %s", itt._ItemType, itt._command.c_str(), itt._sValue.c_str());
 
 			if (itt._ItemType == TITEM_SWITCHCMD)
 			{
@@ -4928,9 +5015,9 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 		else if (SensorSubType == sTypeThermostat6TempHum)
 			sValue = "20.0;20.0;50;1";
 		else if (SensorSubType == sTypeThermostat6TempBaro)
-			sValue = "20.0;20.0;1013";
+			sValue = "20.0;20.0;1013;0";
 		else if (SensorSubType == sTypeThermostat6TempHumBaro)
-			sValue = "20.0;20.0;50;1;1013";
+			sValue = "20.0;20.0;50;1;1013;0";
 
 		DeviceRowIdx = UpdateValue(HardwareID, 0, ID, 1, SensorType, SensorSubType, 12, 255, 0, sValue.c_str(), devname, true, userName.c_str());
 		break;
@@ -5183,7 +5270,7 @@ uint64_t CSQLHelper::UpdateValue(const int HardwareID, int OrgHardwareID, const 
 			unsigned char ParentType = (unsigned char)atoi(sd[3].c_str());
 			unsigned char ParentSubType = (unsigned char)atoi(sd[4].c_str());
 			unsigned char ParentUnit = (unsigned char)atoi(sd[5].c_str());
-			m_mainworker.m_eventsystem.ProcessDevice(ParentHardwareID, ParentID, ParentUnit, ParentType, ParentSubType, signallevel, batterylevel, nValue, sValue);
+			m_mainworker.m_eventsystem.ProcessDevice(ParentHardwareID, ParentID, ParentUnit, ParentType, ParentSubType, signallevel, batterylevel, nValue, sValue, sLastUpdate);
 
 			m_mainworker.sOnDeviceUpdate(std::stoi(sd[2]), std::stoll(sd[0]));
 
@@ -5533,7 +5620,7 @@ uint64_t CSQLHelper::UpdateManagedValueInt(
 
 	if (bDeviceUsed)
 	{
-		m_mainworker.m_eventsystem.ProcessDevice(HardwareID, ulID, unit, devType, subType, signallevel, batterylevel, nValue, sValue);
+		m_mainworker.m_eventsystem.ProcessDevice(HardwareID, ulID, unit, devType, subType, signallevel, batterylevel, nValue, sValue, sLastUpdate);
 
 		if (OrgHardwareID == 0)
 		{
@@ -5588,6 +5675,7 @@ uint64_t CSQLHelper::UpdateValueInt(
 	int nValueBeforeUpdate = -1;
 	std::string sValueBeforeUpdate;
 	device::tswitch::type::value stype = device::tswitch::type::OnOff;
+	std::string sValueUpdate;
 
 	if (result.empty())
 	{
@@ -5603,7 +5691,7 @@ uint64_t CSQLHelper::UpdateValueInt(
 		//TODO: Plugins should perhaps be blocked from implicitly adding a device by update? It's most likely a bug due to updating a removed device..
 		if (pHardware != nullptr && pHardware->HwdType == hardware::type::PythonPlugin)
 		{
-			_log.Debug(DEBUG_NORM, "CSQLHelper::UpdateValueInt: Notifying plugin %u about creation of device %u", HardwareID, unit);
+			_log.Debug(DEBUG_SQL, "CSQLHelper::UpdateValueInt: Notifying plugin %u about creation of device %u", HardwareID, unit);
 			Plugins::CPlugin* pPlugin = (Plugins::CPlugin*)pHardware;
 			pPlugin->DeviceAdded(ID, unit);
 		}
@@ -5639,31 +5727,31 @@ uint64_t CSQLHelper::UpdateValueInt(
 
             std::vector<std::string> powerAndEnergyBeforeUpdate;
 			StringSplit(sValueBeforeUpdate, ";", powerAndEnergyBeforeUpdate);
-			if (powerAndEnergyBeforeUpdate.size() == 2)
+			if (powerAndEnergyBeforeUpdate.size() != 2)
 			{
-				//we need to use atof here because some users seem to have a illegal sValue in the database that causes std::stof to crash
-				double powerDuringInterval = atof(powerAndEnergyBeforeUpdate[0].c_str());
-				double energyUpToInterval = atof(powerAndEnergyBeforeUpdate[1].c_str());
-				double energyDuringInterval = powerDuringInterval * intervalSeconds / 3600;
-				double energyAfterInterval = energyUpToInterval + energyDuringInterval;
-				std::vector<std::string> powerAndEnergyUpdate;
-				StringSplit(sValue, ";", powerAndEnergyUpdate);
-				if (!powerAndEnergyUpdate.empty())
-				{
-					const char* powerUpdate = powerAndEnergyUpdate[0].c_str();
-                    char sValueUpdate[100];
-                    sprintf(sValueUpdate, "%s;%.4f", powerUpdate, energyAfterInterval);
-					sValue = sValueUpdate;
-				}
-				else
-				{
-                    sValue = sValueBeforeUpdate.c_str();
-				}
+				// Invalid or empty sValue - initialize to safe defaults so the device can recover
+				_log.Log(LOG_STATUS, "Device %" PRIu64 " has invalid sValue '%s' for EnergyMeterMode=1, initializing to '0;0.0'", ulID, sValueBeforeUpdate.c_str());
+				sValueBeforeUpdate = "0;0.0";
+				StringSplit(sValueBeforeUpdate, ";", powerAndEnergyBeforeUpdate);
+			}
+
+			//we need to use atof here because some users seem to have a illegal sValue in the database that causes std::stof to crash
+			double powerDuringInterval = atof(powerAndEnergyBeforeUpdate[0].c_str());
+			double energyUpToInterval = atof(powerAndEnergyBeforeUpdate[1].c_str());
+			double energyDuringInterval = powerDuringInterval * intervalSeconds / 3600;
+			double energyAfterInterval = energyUpToInterval + energyDuringInterval;
+			std::vector<std::string> powerAndEnergyUpdate;
+			StringSplit(sValue, ";", powerAndEnergyUpdate);
+			if (!powerAndEnergyUpdate.empty())
+			{
+				const char* powerUpdate = powerAndEnergyUpdate[0].c_str();
+				sValueUpdate = std_format("%s;%.4f", powerUpdate, energyAfterInterval);
+				sValue = sValueUpdate.c_str();
 			}
 			else
-            {
-                sValue = sValueBeforeUpdate.c_str();
-            }
+			{
+				sValue = sValueBeforeUpdate.c_str();
+			}
 		}
 		//~ use different update queries based on the device type
 		if (devType == pTypeGeneral && subType == sTypeCounterIncremental)
@@ -6018,11 +6106,11 @@ uint64_t CSQLHelper::UpdateValueInt(
 		break;
 	}
 
-	_log.Debug(DEBUG_NORM, "SQLH UpdateValueInt %s HwID:%d  DevID:%s Type:%d  sType:%d nValue:%d sValue:%s IDX: %" PRIu64, devname.c_str(), HardwareID, ID, devType, subType, nValue, sValue, ulID);
+	_log.Debug(DEBUG_SQL, "SQLH UpdateValueInt %s HwID:%d  DevID:%s Type:%d  sType:%d nValue:%d sValue:%s IDX: %" PRIu64, devname.c_str(), HardwareID, ID, devType, subType, nValue, sValue, ulID);
 
 	if (bDeviceUsed)
 	{
-		m_mainworker.m_eventsystem.ProcessDevice(HardwareID, ulID, unit, devType, subType, signallevel, batterylevel, nValue, sValue);
+		m_mainworker.m_eventsystem.ProcessDevice(HardwareID, ulID, unit, devType, subType, signallevel, batterylevel, nValue, sValue, TimeToString(nullptr, TF_DateTime));
 
 		if (OrgHardwareID == 0)
 		{
@@ -7437,24 +7525,24 @@ void CSQLHelper::UpdateMultiMeter()
 			std::vector<std::string> splitresults;
 			StringSplit(sValue, ";", splitresults);
 
-			uint64_t value1 = 0;
-			uint64_t value2 = 0;
-			uint64_t value3 = 0;
-			uint64_t value4 = 0;
-			uint64_t value5 = 0;
-			uint64_t value6 = 0;
+			int64_t value1 = 0;
+			int64_t value2 = 0;
+			int64_t value3 = 0;
+			int64_t value4 = 0;
+			int64_t value5 = 0;
+			int64_t value6 = 0;
 
 			if (dType == pTypeP1Power)
 			{
 				if (splitresults.size() != 6)
 					continue; //impossible
 
-				uint64_t powerusage1 = 0;
-				uint64_t powerusage2 = 0;
-				uint64_t powerdeliv1 = 0;
-				uint64_t powerdeliv2 = 0;
-				uint64_t usagecurrent = 0;
-				uint64_t delivcurrent = 0;
+				int64_t powerusage1 = 0;
+				int64_t powerusage2 = 0;
+				int64_t powerdeliv1 = 0;
+				int64_t powerdeliv2 = 0;
+				int64_t usagecurrent = 0;
+				int64_t delivcurrent = 0;
 
 				try
 				{
@@ -7484,9 +7572,13 @@ void CSQLHelper::UpdateMultiMeter()
 				if (splitresults.size() != 3)
 					continue; //impossible
 
-				value1 = (unsigned long)(atof(splitresults[0].c_str()) * 10.0F);
-				value2 = (unsigned long)(atof(splitresults[1].c_str()) * 10.0F);
-				value3 = (unsigned long)(atof(splitresults[2].c_str()) * 10.0F);
+				double val1 = std::stod(splitresults[0]);
+				double val2 = std::stod(splitresults[1]);
+				double val3 = std::stod(splitresults[2]);
+
+				value1 = std::llround(val1 * 10.0);
+				value2 = std::llround(val2 * 10.0);
+				value3 = std::llround(val3 * 10.0);
 				price = PriceE;
 			}
 			else if ((dType == pTypeCURRENTENERGY) && (dSubType == sTypeELEC4))
@@ -7494,10 +7586,15 @@ void CSQLHelper::UpdateMultiMeter()
 				if (splitresults.size() != 4)
 					continue; //impossible
 
-				value1 = (unsigned long)(atof(splitresults[0].c_str()) * 10.0F);
-				value2 = (unsigned long)(atof(splitresults[1].c_str()) * 10.0F);
-				value3 = (unsigned long)(atof(splitresults[2].c_str()) * 10.0F);
-				value4 = (uint64_t)(atof(splitresults[3].c_str()) * 1000.0F);
+				double val1 = std::stod(splitresults[0]);
+				double val2 = std::stod(splitresults[1]);
+				double val3 = std::stod(splitresults[2]);
+				double val4 = std::stod(splitresults[3]);
+
+				value1 = std::llround(val1 * 10.0);
+				value2 = std::llround(val2 * 10.0);
+				value3 = std::llround(val3 * 10.0);
+				value4 = std::llround(val4 * 1000.0);
 				price = PriceE;
 			}
 			else
@@ -7506,7 +7603,7 @@ void CSQLHelper::UpdateMultiMeter()
 			//insert record
 			safe_query(
 				"INSERT INTO MultiMeter (DeviceRowID, Value1, Value2, Value3, Value4, Value5, Value6, Price) "
-				"VALUES ('%" PRIu64 "', '%" PRIu64 "', '%" PRIu64 "', '%" PRIu64 "', '%" PRIu64 "', '%" PRIu64 "', '%" PRIu64 "', '%.4f')",
+				"VALUES ('%" PRIu64 "', '%" PRId64 "', '%" PRId64 "', '%" PRId64 "', '%" PRId64 "', '%" PRId64 "', '%" PRId64 "', '%.4f')",
 				ID,
 				value1,
 				value2,
@@ -7750,9 +7847,11 @@ void CSQLHelper::AddCalendarUpdateRain()
 
 		unsigned char subType = atoi(sd[0].c_str());
 
+		// Use Date < '%q' (not Date <= '%q 00:00:00') to exclude the midnight record
+		// which belongs to today's cumulative counter, not yesterday's rainfall total
 		if (subType == sTypeRAINWU || subType == sTypeRAINByRate)
 		{
-			result = safe_query("SELECT Total, Total, Rate FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00') ORDER BY ROWID DESC LIMIT 1",
+			result = safe_query("SELECT Total, Total, Rate FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q') ORDER BY ROWID DESC LIMIT 1",
 				ID,
 				szDateStart,
 				szDateEnd
@@ -7760,7 +7859,7 @@ void CSQLHelper::AddCalendarUpdateRain()
 		}
 		else
 		{
-			result = safe_query("SELECT MIN(Total), MAX(Total), MAX(Rate) FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00')",
+			result = safe_query("SELECT MIN(Total), MAX(Total), MAX(Rate) FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
 				ID,
 				szDateStart,
 				szDateEnd
@@ -7782,7 +7881,7 @@ void CSQLHelper::AddCalendarUpdateRain()
 			}
 			else
 			{
-				total_real = total_max - total_min;
+				total_real = std::max(0.0F, total_max - total_min);
 			}
 
 			if (total_real < 1000)
@@ -8061,13 +8160,6 @@ void CSQLHelper::AddCalendarUpdateMeter()
 					m_influxpush.DoInfluxPush(ID, true);
 				}
 			}
-		}
-		else
-		{
-			//no new meter result received in last day
-			result = safe_query("INSERT INTO Meter_Calendar (DeviceRowID, Value, Price, Date) "
-					    "VALUES ('%" PRIu64 "', '%.2f', '%.4f', '%q')",
-					    ID, 0.0F, 0.0F, szDateStart);
 		}
 	}
 }
@@ -8542,7 +8634,7 @@ void CSQLHelper::DeleteDevices(const std::string& idx)
 #ifdef ENABLE_PYTHON
 	for (const auto &str : _idx)
 	{
-		_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDevices: ID: %s", str.c_str());
+		_log.Debug(DEBUG_SQL, "CSQLHelper::DeleteDevices: ID: %s", str.c_str());
 		std::vector<std::vector<std::string> > result;
 		result = safe_query("SELECT HardwareID, DeviceID, Unit FROM DeviceStatus WHERE (ID == '%q')", str.c_str());
 		if (!result.empty())
@@ -8615,7 +8707,7 @@ void CSQLHelper::DeleteDevices(const std::string& idx)
 		CDomoticzHardwareBase* pHardware = m_mainworker.GetHardware(HwID);
 		if (pHardware != nullptr && pHardware->HwdType == hardware::type::PythonPlugin)
 		{
-			_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDevices: Notifying plugin %u about deletion of device %u", HwID, Unit);
+			_log.Debug(DEBUG_SQL, "CSQLHelper::DeleteDevices: Notifying plugin %u about deletion of device %u", HwID, Unit);
 			Plugins::CPlugin* pPlugin = (Plugins::CPlugin*)pHardware;
 			pPlugin->DeviceRemoved(DeviceID, Unit);
 		}
@@ -8827,7 +8919,7 @@ void CSQLHelper::DeleteDateRange(const char *ID, const std::string &fromDate, co
 	for (const auto &historyTable : historyTables)
 	{
 		safe_query("DELETE FROM %q WHERE (DeviceRowID=='%q') AND (Date>='%q') AND (Date<='%q')", historyTable.c_str(), ID, fromDate.c_str(), toDate.c_str() );
-		_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDateRange; delete from %s with idx: %s and Date >= %s and date <= %s" , historyTable.c_str(), std::string(ID).c_str(), fromDate.c_str(), toDate.c_str() );
+		_log.Debug(DEBUG_SQL, "CSQLHelper::DeleteDateRange; delete from %s with idx: %s and Date >= %s and date <= %s" , historyTable.c_str(), std::string(ID).c_str(), fromDate.c_str(), toDate.c_str() );
 	}
 }
 
@@ -8853,7 +8945,7 @@ void CSQLHelper::AddTaskItem(const _tTaskItem& tItem, const bool cancelItem)
 	std::lock_guard<std::mutex> l(m_background_task_mutex);
 
 	// Check if an event for the same device is already in queue, and if so, replace it
-	_log.Debug(DEBUG_NORM, "SQLH AddTask: Request to add task: idx=%" PRIu64 ", DelayTime=%f, Command='%s', Level=%d, Color='%s', RelatedEvent='%s'", tItem._idx, tItem._DelayTime, tItem._command.c_str(), tItem._level, tItem._Color.toString().c_str(), tItem._relatedEvent.c_str());
+	_log.Debug(DEBUG_SQL, "SQLH AddTask: Request to add task: idx=%" PRIu64 ", DelayTime=%f, Command='%s', Level=%d, Color='%s', RelatedEvent='%s'", tItem._idx, tItem._DelayTime, tItem._command.c_str(), tItem._level, tItem._Color.toString().c_str(), tItem._relatedEvent.c_str());
 	// Remove any previous task linked to the same device
 
 	if (
@@ -8866,13 +8958,13 @@ void CSQLHelper::AddTaskItem(const _tTaskItem& tItem, const bool cancelItem)
 		auto itt = m_background_task_queue.begin();
 		while (itt != m_background_task_queue.end())
 		{
-			_log.Debug(DEBUG_NORM, "SQLH AddTask: Comparing with item in queue: idx=%" PRIu64 ", DelayTime=%f, Command='%s', Level=%d, Color='%s', RelatedEvent='%s'", itt->_idx, itt->_DelayTime, itt->_command.c_str(), itt->_level, itt->_Color.toString().c_str(), itt->_relatedEvent.c_str());
+			_log.Debug(DEBUG_SQL, "SQLH AddTask: Comparing with item in queue: idx=%" PRIu64 ", DelayTime=%f, Command='%s', Level=%d, Color='%s', RelatedEvent='%s'", itt->_idx, itt->_DelayTime, itt->_command.c_str(), itt->_level, itt->_Color.toString().c_str(), itt->_relatedEvent.c_str());
 			if (itt->_idx == tItem._idx && itt->_ItemType == tItem._ItemType)
 			{
 				float iDelayDiff = tItem._DelayTime - itt->_DelayTime;
 				if (iDelayDiff < (1. / timer_resolution_hz / 2))
 				{
-					_log.Debug(DEBUG_NORM, "SQLH AddTask: => Already present. Cancelling previous task item");
+					_log.Debug(DEBUG_SQL, "SQLH AddTask: => Already present. Cancelling previous task item");
 					itt = m_background_task_queue.erase(itt);
 				}
 				else
@@ -8988,60 +9080,215 @@ bool CSQLHelper::RestoreDatabase(const std::string& dbase)
 	return true;
 }
 
+bool CSQLHelper::CopyFileBinary(const std::string& src, const std::string& dst)
+{
+	std::ifstream in(src, std::ios::binary);
+	std::ofstream out(dst, std::ios::binary | std::ios::trunc);
+	if (!in.is_open() || !out.is_open())
+		return false;
+	constexpr std::size_t kBufSize = 65536;
+	char buf[kBufSize];
+	while (in)
+	{
+		in.read(buf, kBufSize);
+		std::streamsize bytesRead = in.gcount();
+		if (bytesRead > 0)
+			out.write(buf, bytesRead);
+	}
+	out.flush();
+	return out.good();
+}
+
+bool CSQLHelper::RestoreDatabaseFromFile(const std::string& sourceFilePath)
+{
+	_log.Log(LOG_STATUS, "Restore Database: Starting...");
+
+	// 1. Validate that the source file is a valid Oikomaticz SQLite database
+	sqlite3* dbase_restore = nullptr;
+	int rc = sqlite3_open(sourceFilePath.c_str(), &dbase_restore);
+	if (rc)
+	{
+		_log.Log(LOG_ERROR, "Restore Database: Could not open source file: %s", sqlite3_errmsg(dbase_restore));
+		sqlite3_close(dbase_restore);
+		return false;
+	}
+	if (dbase_restore == nullptr)
+	{
+		_log.Log(LOG_ERROR, "Restore Database: Source file handle is null!");
+		return false;
+	}
+
+	sqlite3_stmt* statement = nullptr;
+	rc = sqlite3_prepare_v2(dbase_restore,
+		"SELECT sValue FROM Preferences WHERE (Key='DB_Version')", -1, &statement, nullptr);
+	// Always finalize the statement before closing to avoid resource leaks
+	sqlite3_finalize(statement);
+	sqlite3_close(dbase_restore);
+
+	if (rc != SQLITE_OK)
+	{
+		_log.Log(LOG_ERROR, "Restore Database: Not a valid Oikomaticz database!");
+		return false;
+	}
+	_log.Log(LOG_STATUS, "Restore Database: Source file validated OK.");
+
+	// 2. Create a safety backup of the current database for rollback.
+	//    This is a plain file copy performed before closing the database handle,
+	//    so it does not interfere with SQLite's own locking / backup API.
+	const std::string backupPath = m_dbase_name + ".pre-restore";
+	if (!CopyFileBinary(m_dbase_name, backupPath))
+	{
+		_log.Log(LOG_ERROR, "Restore Database: Could not create pre-restore backup! Aborting to prevent data loss.");
+		return false;
+	}
+
+	// 3. Capture original file ownership before closing the database
+#ifndef WIN32
+	uid_t original_uid = 0;
+	gid_t original_gid = 0;
+	bool has_ownership = false;
+	{
+		struct stat info;
+		if (stat(m_dbase_name.c_str(), &info) == 0)
+		{
+			original_uid = info.st_uid;
+			original_gid = info.st_gid;
+			has_ownership = true;
+		}
+	}
+#endif
+
+	// 4. Stop the background thread
+	StopThread();
+
+	// 5. Close the current database handle
+	sqlite3_close(m_dbase);
+	m_dbase = nullptr;
+
+	// 6. Copy the source file to the database location using buffered I/O
+	//    (64 KB buffer — never loads the entire file into memory)
+	_log.Log(LOG_STATUS, "Restore Database: Copying to database location...");
+	if (!CopyFileBinary(sourceFilePath, m_dbase_name))
+	{
+		_log.Log(LOG_ERROR, "Restore Database: Write error while copying database file! Attempting rollback...");
+		// Try to restore the original database from the pre-restore backup
+		if (!CopyFileBinary(backupPath, m_dbase_name))
+			_log.Log(LOG_ERROR, "Restore Database: Rollback copy failed - database may be in an inconsistent state!");
+		OpenDatabase(); // Also restarts background thread
+		std::remove(backupPath.c_str());
+		return false;
+	}
+
+	// 7. Restore original file ownership on Linux/macOS
+#ifndef WIN32
+	if (has_ownership)
+	{
+		if (chown(m_dbase_name.c_str(), original_uid, original_gid) != 0)
+		{
+			_log.Log(LOG_ERROR, "Restore Database: Could not set database ownership (chown returned an error!)");
+		}
+	}
+#endif
+
+	// 8. Reopen the database
+	if (!OpenDatabase())
+	{
+		_log.Log(LOG_ERROR, "Restore Database: Error opening new database! Attempting rollback...");
+		// Try to restore the original database from the pre-restore backup
+		if (!CopyFileBinary(backupPath, m_dbase_name))
+			_log.Log(LOG_ERROR, "Restore Database: Rollback copy failed - database may be in an inconsistent state!");
+		if (!OpenDatabase()) // Also restarts background thread
+		{
+			_log.Log(LOG_ERROR, "Restore Database: CRITICAL - Cannot recover database!");
+			std::remove(backupPath.c_str());
+			return false;
+		}
+		std::remove(backupPath.c_str());
+		return false;
+	}
+
+	// 9. Clean up — skip VACUUM here as it rewrites the entire database file
+	//    and can take a very long time for large databases. The next scheduled
+	//    backup will produce a compacted copy anyway.
+	//VacuumDatabase();
+
+	std::remove(backupPath.c_str());
+	_log.Log(LOG_STATUS, "Restore Database: Succeeded!");
+	return true;
+}
+
 bool CSQLHelper::BackupDatabase(const std::string& OutputFile)
 {
 	if (!m_dbase)
 		return false; //database not open!
 
-	//First cleanup the database
-	OptimizeDatabase(m_dbase);
-	VacuumDatabase();
+	int rc;
+	sqlite3* pFile;
+	sqlite3_backup* pBackup;
 
-	std::lock_guard<std::mutex> l(m_sqlQueryMutex);
+	// Lightweight optimization — no VACUUM (too expensive for large databases
+	// and redundant since the backup API creates a compacted copy)
+	{
+		std::lock_guard<std::mutex> l(m_sqlQueryMutex);
+		sqlite3_exec(m_dbase, "PRAGMA optimize;", nullptr, nullptr, nullptr);
+	}
 
-	int rc;					 // Function return code
-	sqlite3* pFile;			 // Database connection opened on zFilename
-	sqlite3_backup* pBackup;	// Backup handle used to copy data
-
-	// Open the database file identified by zFilename.
+	// Open the backup destination file
 	rc = sqlite3_open(OutputFile.c_str(), &pFile);
 	if (rc != SQLITE_OK)
+	{
+		_log.Log(LOG_ERROR, "SQLHelper: Cannot open backup destination: %s", OutputFile.c_str());
 		return false;
+	}
 
-	// Open the sqlite3_backup object used to accomplish the transfer
-	pBackup = sqlite3_backup_init(pFile, "main", m_dbase, "main");
+	// Initialize backup — must hold mutex while accessing m_dbase
+	{
+		std::lock_guard<std::mutex> l(m_sqlQueryMutex);
+		pBackup = sqlite3_backup_init(pFile, "main", m_dbase, "main");
+	}
+
+	if (!pBackup)
+	{
+		_log.Log(LOG_ERROR, "SQLHelper: sqlite3_backup_init failed: %s", sqlite3_errmsg(pFile));
+		sqlite3_close(pFile);
+		return false;
+	}
 
 	time_t startTime = time(nullptr);
+	constexpr int BACKUP_TIMEOUT_SECONDS = 10 * 60; // 10 minutes for large databases
 
-	if (pBackup)
-	{
-		// Each iteration of this loop copies 5 database pages from database
-		// pDb to the backup database.
-		do {
+	// Each iteration copies 256 database pages.
+	// Mutex is held only during each step, allowing other queries between steps.
+	do {
+		{
+			std::lock_guard<std::mutex> l(m_sqlQueryMutex);
 			rc = sqlite3_backup_step(pBackup, 256);
-			//xProgress(  sqlite3_backup_remaining(pBackup), sqlite3_backup_pagecount(pBackup) );
-			if( rc==SQLITE_BUSY || rc==SQLITE_LOCKED ){
-			  sqlite3_sleep(250);
-			}
-			if (rc == SQLITE_BUSY || rc == SQLITE_LOCKED) {
-				time_t actTime = time(nullptr);
-				if (actTime - startTime > 2 * 60)
-				{
-					//Backup should be done in 2 minutes
-					_log.Log(LOG_ERROR, "SQLHelper: Problem making backup! Check destination folder/rights. Process timeout!");
-					break;
-				}
-			}
-		} while (rc == SQLITE_OK || rc == SQLITE_BUSY || rc == SQLITE_LOCKED);
+		}
 
-		/* Release resources allocated by backup_init(). */
-		sqlite3_backup_finish(pBackup);
-	}
+		if (rc == SQLITE_BUSY || rc == SQLITE_LOCKED)
+		{
+			sqlite3_sleep(100);
+			time_t actTime = time(nullptr);
+			if (actTime - startTime > BACKUP_TIMEOUT_SECONDS)
+			{
+				_log.Log(LOG_ERROR, "SQLHelper: Backup timeout after %d seconds!", BACKUP_TIMEOUT_SECONDS);
+				break;
+			}
+		}
+	} while (rc == SQLITE_OK || rc == SQLITE_BUSY || rc == SQLITE_LOCKED);
+
+	// Release resources allocated by backup_init()
+	sqlite3_backup_finish(pBackup);
+
 	rc = sqlite3_errcode(pFile);
-	// Close the database connection opened on database file zFilename
-	// and return the result of this function.
 	sqlite3_close(pFile);
 
+	if (rc != SQLITE_OK)
+	{
+		// Remove the partial backup file so callers are not left with a
+		// corrupt or incomplete file on disk.
+		std::remove(OutputFile.c_str());
+	}
 	return (rc == SQLITE_OK);
 }
 
@@ -9190,9 +9437,9 @@ void CSQLHelper::SetUnitsAndScale()
 bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string& OnAction, const std::string& OffAction)
 {
 	if (bIsOn)
-		_log.Debug(DEBUG_NORM, "SQLH HandleOnOffAction: OnAction:%s", OnAction.c_str());
+		_log.Debug(DEBUG_SQL, "SQLH HandleOnOffAction: OnAction:%s", OnAction.c_str());
 	else
-		_log.Debug(DEBUG_NORM, "SQLH HandleOnOffAction: OffAction:%s", OffAction.c_str());
+		_log.Debug(DEBUG_SQL, "SQLH HandleOnOffAction: OffAction:%s", OffAction.c_str());
 
 	if (bIsOn)
 	{
@@ -9515,26 +9762,26 @@ void CSQLHelper::FixDaylightSaving()
 		std::stringstream sstr;
 		unsigned long ID1;
 		unsigned long ID2;
-		uint64_t tValue1;
-		uint64_t tValue2;
-		uint64_t tValue3;
-		uint64_t tValue4;
-		uint64_t tValue5;
-		uint64_t tValue6;
+		int64_t tValue1;
+		int64_t tValue2;
+		int64_t tValue3;
+		int64_t tValue4;
+		int64_t tValue5;
+		int64_t tValue6;
 
-		uint64_t uValue1;
-		uint64_t uValue2;
-		uint64_t uValue3;
-		uint64_t uValue4;
-		uint64_t uValue5;
-		uint64_t uValue6;
+		int64_t uValue1;
+		int64_t uValue2;
+		int64_t uValue3;
+		int64_t uValue4;
+		int64_t uValue5;
+		int64_t uValue6;
 
-		uint64_t ValueDest1;
-		uint64_t ValueDest2;
-		uint64_t ValueDest3;
-		uint64_t ValueDest4;
-		uint64_t ValueDest5;
-		uint64_t ValueDest6;
+		int64_t ValueDest1;
+		int64_t ValueDest2;
+		int64_t ValueDest3;
+		int64_t ValueDest4;
+		int64_t ValueDest5;
+		int64_t ValueDest6;
 		for (const auto &sd1 : result)
 		{
 			sstr.clear();
@@ -9639,7 +9886,7 @@ void CSQLHelper::FixDaylightSaving()
 				else
 				{
 					//Update row with new Date
-					safe_query("UPDATE MultiMeter_Calendar SET Date='%q', Value1=%" PRIu64 ", Value2=%" PRIu64 ", Value3=%" PRIu64 ", Value4=%" PRIu64 ", Value5=%" PRIu64 ", Value6=%" PRIu64 " WHERE (RowID=='%q')",
+					safe_query("UPDATE MultiMeter_Calendar SET Date='%q', Value1=%" PRId64 ", Value2=%" PRId64 ", Value3=%" PRId64 ", Value4=%" PRId64 ", Value5=%" PRId64 ", Value6=%" PRId64 " WHERE (RowID=='%q')",
 						szDateNew.c_str(), ValueDest1, ValueDest2, ValueDest3, ValueDest4, ValueDest5, ValueDest6, sd1[1].c_str());
 				}
 			}
@@ -10413,20 +10660,20 @@ bool CSQLHelper::CalcMultiMeterPrice(const uint64_t idx, const float divider, co
 		return false;
 
 	bool bResult = false;
-	uint64_t last_cntrs[6] = { (uint64_t)-1,(uint64_t)-1,(uint64_t)-1,(uint64_t)-1,(uint64_t)-1,(uint64_t)-1 };
+	int64_t last_cntrs[6] = { (int64_t)-1,(int64_t)-1,(int64_t)-1,(int64_t)-1,(int64_t)-1,(int64_t)-1 };
 	float total_price[6] = { 0,0,0,0,0,0 };
 
 	for (const auto& itt : result)
 	{
 		float rec_price = std::stof(itt[6]);
 
-		uint64_t cntrs[6];
+		int64_t cntrs[6];
 		for (int ii = 0; ii < 6; ii++)
 		{
-			cntrs[ii] = std::stoull(itt[ii]);
-			if (last_cntrs[ii] != (uint64_t)-1)
+			cntrs[ii] = std::stoll(itt[ii]);
+			if (last_cntrs[ii] != (int64_t)-1)
 			{
-				uint64_t total = cntrs[ii] - last_cntrs[ii];
+				int64_t total = cntrs[ii] - last_cntrs[ii];
 				total_price[ii] += ((static_cast<float>(total) / divider) * rec_price);
 				bResult = true;
 			}
@@ -10484,7 +10731,6 @@ void CSQLHelper::RefreshActualPrices()
 		"Type=%d OR " //pTypeYouLess
 		"Type=%d OR " //pTypeENERGY
 		"Type=%d OR " //pTypePOWER
-		"Type=%d OR " //pTypeUsage
 		"(Type=%d AND SubType=%d) OR " //pTypeGeneral,sTypeCounterIncremental
 		"(Type=%d AND SubType=%d)"	 //pTypeGeneral,sTypeKwh
 		")",
@@ -10493,7 +10739,6 @@ void CSQLHelper::RefreshActualPrices()
 		pTypeYouLess,
 		pTypeENERGY,
 		pTypePOWER,
-		pTypeUsage,
 		pTypeGeneral, sTypeCounterIncremental,
 		pTypeGeneral, sTypeKwh
 	);

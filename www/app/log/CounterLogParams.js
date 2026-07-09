@@ -78,14 +78,14 @@ define(['app', 'log/Chart'], function (app) {
                     highchartTemplate: {
                         xAxis: {
                             dateTimeLabelFormats: {
-                                hour: ($.myglobals && $.myglobals.PriceResolution < 60) ? '%H:%M' : '%H:00',
-                                day: ($.myglobals && $.myglobals.PriceResolution < 60) ? '%H:%M' : '%H:00'
+                                hour: '%H:00',
+                                day: '%H:00'
                             },
 							events: {
 								afterSetExtremes: function (event) {
 									var xMin = event.min;
 									var xMax = event.max;
-/*									
+/*
 									var chart = Highcharts.charts[0]; //need_some_help: this is not always the day chart!?
 									var ex = chart.xAxis[0].getExtremes();
 									if (ex.min != xMin || ex.max != xMax) {
@@ -94,7 +94,7 @@ define(['app', 'log/Chart'], function (app) {
 */
 								}
 							},
-                            tickInterval: ($.myglobals && $.myglobals.PriceResolution < 60) ? ($.myglobals.PriceResolution * 60 * 1000) : (1 * 3600 * 1000)
+                            tickInterval: 1 * 3600 * 1000
                         },
                         tooltip: {
                             crosshairs: false
@@ -111,13 +111,17 @@ define(['app', 'log/Chart'], function (app) {
                     range: ctrl.range,
                     device: ctrl.device,
                     sensorType: 'counter',
-                    chartName: $.t('Usage') + ' / ' + (($.myglobals && $.myglobals.PriceResolution < 60) ? $.myglobals.PriceResolution + ' ' + $.t('Minutes') : $.t('Hour')),
+                    chartName: $.t('Usage') + ' / ' + $.t('Hour'),
                     autoRefreshIsEnabled: function () {
                         return ctrl.logCtrl.autoRefresh;
                     },
                     dataSupplier:
                         _.merge(
                             {
+                                extendDataRequest: function (dataRequest) {
+                                    dataRequest['resolution'] = ctrl.resolution || 60;
+                                    return dataRequest;
+                                },
                                 seriesSuppliers: seriesSuppliers
                             },
                             dataSupplierTemplate
@@ -230,9 +234,18 @@ define(['app', 'log/Chart'], function (app) {
                     tooltip: {
                         useHTML: true,
                         formatter: function () {
+                            var averageHtml = '';
+                            if (ctrl.groupingBy !== 'year' && this.points.length > 0) {
+                                var validPoints = this.points.filter(function (p) { return p.y !== null && p.y !== undefined; });
+                                if (validPoints.length > 0) {
+                                    var sum = validPoints.reduce(function (acc, p) { return acc + p.y; }, 0);
+                                    var avg = sum / validPoints.length;
+                                    averageHtml = ' (' + $.t('Average') + ': ' + Highcharts.numberFormat(avg) + (deviceUnit ? '&nbsp;' + deviceUnit : '') + ')';
+                                }
+                            }
                             return ''
                                 + '<table>'
-                                + '<tr><td colspan="2"><b>' + categoryKeyToStringEx(this.x) + '</b></td></tr>'
+                                + '<tr><td colspan="4"><b>' + categoryKeyToStringEx(this.x) + averageHtml + '</b></td></tr>'
                                 + this.points.reduce(
                                     function (rowsHtml, point) {
                                         return rowsHtml

@@ -2,21 +2,21 @@
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
-#include "server.hpp"
-#include "session_store.hpp"
+#include <jsoncpp/json.h>
+#include "server.h"
+#include "session_store.h"
+#include "IWebServerLogger.h"
+#include "IWebsocketHandler.h"
+#include "session.h"
+#include <functional>
+#include <vector>
+#include <memory>
+#include <mutex>
 
 namespace http
 {
 	namespace server
 	{
-		enum _eUserRights
-		{
-			URIGHTS_VIEWER = 0,
-			URIGHTS_SWITCHER,
-			URIGHTS_ADMIN,
-			URIGHTS_NONE=254,
-			URIGHTS_CLIENTID=255
-		};
 		enum _eAuthenticationMethod
 		{
 			AUTH_LOGIN = 0,
@@ -34,6 +34,7 @@ namespace http
 			std::string Username;
 			std::string Password;
 			std::string Mfatoken;
+			std::string Passkeys;          // JSON array of passkey credentials
 			std::string PrivKey;
 			std::string PubKey;
 			_eUserRights userrights = URIGHTS_VIEWER;
@@ -43,23 +44,6 @@ namespace http
 			std::string SigningSecret;
 			time_t AcceptLegacyTokensUntil = 0;
 		} WebUserPassword;
-
-		typedef struct _tWebEmSession
-		{
-			std::string id;
-			std::string remote_host;
-			std::string local_host;
-			std::string remote_port;
-			std::string local_port;
-			std::string auth_token;
-			std::string username;
-			time_t expires = 0;
-			uint16_t reply_status = http::server::reply::ok;
-			_eUserRights rights = URIGHTS_NONE;
-			bool rememberme = false;
-			bool isnew = false;
-			bool istrustednetwork = false;
-		} WebEmSession;
 
 		typedef struct _tIPNetwork
 		{
@@ -126,8 +110,8 @@ namespace http
 		{
 		      public:
 			/// Construct with a directory containing files to be served.
-			cWebemRequestHandler(const std::string &doc_root, cWebem *webem)
-				: request_handler(doc_root, webem)
+			cWebemRequestHandler(const std::string &doc_root, cWebem *webem, WebServerLogger logger = nullptr)
+				: request_handler(doc_root, webem, std::move(logger))
 			{
 			}
 
@@ -164,8 +148,10 @@ namespace http
 		*/
 		class cWebem
 		{
+			friend class cWebemRequestHandler;
 		      public:
-			cWebem(const server_settings &settings, const std::string &doc_root);
+			cWebem(const server_settings &settings, const std::string &doc_root,
+			       WebServerLogger logger = nullptr);
 			~cWebem();
 			void Run();
 			void Stop();
@@ -190,7 +176,7 @@ namespace http
 			void SetAuthenticationMethod(_eAuthenticationMethod amethod);
 			void SetWebTheme(const std::string &themename);
 			void SetWebRoot(const std::string &webRoot);
-			void AddUserPassword(unsigned long ID, const std::string &username, const std::string &password, const std::string &mfatoken, _eUserRights userrights, int activetabs, const std::string &privkey = "", const std::string &pubkey = "", uint32_t refreshexpire = 0, const std::string &signingsecret = "", time_t accept_legacy_until = 0);
+			void AddUserPassword(unsigned long ID, const std::string &username, const std::string &password, const std::string &mfatoken, const std::string &passkeys, _eUserRights userrights, int activetabs, const std::string &privkey = "", const std::string &pubkey = "", uint32_t refreshexpire = 0, const std::string &signingsecret = "", time_t accept_legacy_until = 0);
 			std::string ExtractRequestPath(const std::string &original_request_path);
 			bool IsBadRequestPath(const std::string &original_request_path);
 
@@ -222,6 +208,10 @@ namespace http
 			void AddSession(const WebEmSession &session);
 			void RemoveSession(const WebEmSession &session);
 			void RemoveSession(const std::string &ssid);
+			/// Renew a session's expiration if past its half-life, using the same
+			/// logic as HTTP request processing. Called by WebSocket connections to
+			/// keep the session alive while no HTTP requests are being made.
+			void RenewSessionIfNeeded(const std::string &sessionId);
 			std::vector<std::string> GetExpiredSessions();
 			int CountSessions();
 			_eAuthenticationMethod m_authmethod;
@@ -236,7 +226,77 @@ namespace http
 			void SetWebCompressionMode(_eWebCompressionMode gzmode);
 			_eWebCompressionMode m_gzipmode;
 
+			/// Set the session cookie name used in Set-Cookie / Cookie headers.
+			/// Defaults to "SID".
+			void SetSessionCookieName(const std::string& name);
+			const std::string& GetSessionCookieName() const;
+			std::string m_session_cookie_name;
+
+			// WebSocket endpoint registry
+			void RegisterWebsocketEndpoint(
+				const std::string& path,
+				WebsocketHandlerFactory factory,
+				const std::string& protocol = "");
+			WebsocketHandlerFactory GetWebsocketFactory(const std::string& path) const;
+			std::string GetWebsocketProtocol(const std::string& path) const;
+			bool HasWebsocketEndpoints() const;
+
+			/// Iterate all active WebSocket handlers, pruning disconnected ones.
+			/// The callback is invoked outside the mutex lock to prevent deadlocks.
+			void ForEachHandler(std::function<void(IWebsocketHandler*)> callback);
+
+			/// Called internally when a new WebSocket handler is created.
+			void RegisterWebsocketHandler(std::shared_ptr<IWebsocketHandler> handler);
+
+			/// Schedule async cleanup of a WebSocket handler.
+			/// Handler::Stop() is called on a background thread, never on the server io_context.
+			void ScheduleHandlerCleanup(std::shared_ptr<IWebsocketHandler> handler);
+
+			/// Register a URI substring pattern that forces no-cache response headers.
+			/// Any request whose URI contains this substring will receive
+			/// "Cache-Control: no-cache,must-revalidate" regardless of the file type.
+			void RegisterNoCachePattern(const std::string& pattern);
+
+			/// Returns true if the URI matches any registered no-cache pattern.
+			bool IsNoCacheURI(const std::string& uri) const;
+
+			/// Set the application version string used in ETag headers for HTTP caching.
+			void SetAppVersion(const std::string& version) { m_app_version = version; }
+			/// Get the application version string used in ETag headers.
+			const std::string& GetAppVersion() const { return m_app_version; }
+
+			/// Enable or disable HTTP caching (ETag / Cache-Control headers).
+			void SetCacheEnabled(bool enabled) { m_cache_enabled = enabled; }
+			/// Returns true if HTTP caching is enabled.
+			bool IsCacheEnabled() const { return m_cache_enabled; }
+
+		      public:
+			WebServerLogger m_logger;
+			/// URI substring patterns that force no-cache response headers.
+			/// Registered via RegisterNoCachePattern().
+			std::vector<std::string> m_noCachePatterns;
 		      private:
+			/// Protects configuration collections (myActions, myPages, myWhitelistURLs,
+			/// myWhitelistCommands, m_noCachePatterns, m_userpasswords) against
+			/// concurrent access from registration and request-handler threads.
+			mutable std::mutex m_configMutex;
+
+			/// Registry of active WebSocket handlers (weak references).
+			/// Pruned automatically by ForEachHandler when connections close.
+			std::vector<std::weak_ptr<IWebsocketHandler>> m_websocketHandlers;
+			std::mutex m_websocketHandlersMutex;
+			/// Application version string sent as ETag header value.
+			std::string m_app_version;
+			/// Whether HTTP caching (ETag / Cache-Control) is enabled.
+			bool m_cache_enabled = false;
+
+			struct WebsocketEndpoint {
+				std::string path;
+				std::string protocol;
+				WebsocketHandlerFactory factory;
+			};
+			std::vector<WebsocketEndpoint> m_websocketEndpoints;
+
 			/// store map between include codes and application functions (20230525 No longer in use! Will be removed soon!)
 			// std::map<std::string, webem_include_function> myIncludes;
 			/// store map between action codes and application functions

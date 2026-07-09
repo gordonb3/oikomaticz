@@ -1118,6 +1118,19 @@ bool IsLightOrSwitch(const int dType, const int dSubType)
 	return bIsLightSwitch;
 }
 
+bool IsEventSwitchLike(const int dType, const int dSubType)
+{
+	if (IsLightOrSwitch(dType, dSubType))
+		return true;
+	if ((dType == pTypeEvohome) || (dType == pTypeEvohomeRelay))
+		return true;
+	if ((dType == pTypeGeneral) && ((dSubType == sTypeTextStatus) || (dSubType == sTypeAlert)))
+		return true;
+	if ((dType == pTypeRego6XXValue) && (dSubType == sTypeRego6XXStatus))
+		return true;
+	return false;
+}
+
 bool IsTemp(const int dType, const int dSubType)
 {
 	return (
@@ -1303,7 +1316,7 @@ std::string GenerateUserAgent()
 	int mversion = distrib_FFFF(gen) % 3;
 	int sversion = distrib_FFFF(gen) % 3;
 	std::stringstream sstr;
-	sstr << "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/" << (601 + sversion) << "." << (36 + mversion) << " (KHTML, like Gecko) Chrome/" << (53 + mversion) << ".0." << cversion << ".0 Safari/" << (601 + sversion) << "." << (36 + sversion);
+	sstr << "Mozilla/5.0 (Windows NT 10.0; WOW64; x64) AppleWebKit/" << (605 + sversion) << "." << (36 + mversion) << " (KHTML, like Gecko) Chrome/" << (26 + mversion) << ".0." << cversion << ".0 Safari/" << (604 + sversion) << "." << (36 + sversion);
 	return sstr.str();
 }
 
@@ -1859,8 +1872,6 @@ bool AESEncryptData(const std::string& szInputBuffer, std::string& szOutputBuffe
 	if (!ctx)
 		return false;
 
-	EVP_CIPHER_CTX_init(ctx);
-
 	fOk = EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, aes_key, iv_enc);
 	if (!fOk)
 	{
@@ -1883,7 +1894,6 @@ bool AESEncryptData(const std::string& szInputBuffer, std::string& szOutputBuffe
 		goto exit_sub;
 	}
 exit_sub:
-	EVP_CIPHER_CTX_cleanup(ctx);
 	EVP_CIPHER_CTX_free(ctx);
 
 	if (!fOk)

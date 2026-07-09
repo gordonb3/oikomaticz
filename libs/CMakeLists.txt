@@ -7,6 +7,7 @@ option(USE_BUILTIN_LUA "Use builtin lua library" NO)
 option(USE_BUILTIN_SQLITE "Use builtin sqlite library" NO)
 option(USE_BUILTIN_ZLIB "Use builtin zlib library" NO)
 option(USE_BUILTIN_MINIZIP "Use builtin minizip library" NO)
+option(USE_BUILTIN_JSON "Use builtin json library" YES)
 
 
 ## static libraries
@@ -14,10 +15,6 @@ option(USE_BUILTIN_MINIZIP "Use builtin minizip library" NO)
 # iamserver
 file(GLOB iamserver_SRCS iamserver/*.cpp)
 add_library(iamserver STATIC ${iamserver_SRCS})
-
-# jsoncpp
-file(GLOB jsoncpp_SRCS jsoncpp/*.cpp)
-add_library(jsoncpp STATIC ${jsoncpp_SRCS})
 
 # tinyxpath
 file(GLOB tinyxpath_SRCS tinyxpath/*.cpp)
@@ -50,10 +47,32 @@ add_library(mdns STATIC ${mdns_SRCS})
 file(GLOB mcpserver_SRCS mcpserver/*.cpp)
 add_library(mcpserver STATIC ${mcpserver_SRCS})
 
-set(STATIC_LIBRARIES iamserver jsoncpp tinyxpath serial evohome tuyapp mdns mcpserver)
+# jwt-cpp
+#include_directories(jwt-cpp/include)
 
+
+set(STATIC_LIBRARIES iamserver jsoncpp tinyxpath serial evohome tuyapp mdns mcpserver)
+set(STATIC_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/jwt-cpp/include")
 
 ## included libraries that may be used to override dynamicly linked system provided libraries
+
+#
+# jsoncpp
+#
+if(USE_BUILTIN_JSON)
+  message(STATUS "Using builtin json library")
+  file(GLOB jsoncpp_SRCS jsoncpp/json/*.cpp)
+  add_library(jsoncpp STATIC ${jsoncpp_SRCS})
+  set(JSONCPP_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/jsoncpp")
+else(USE_BUILTIN_JSON)
+  find_package(PkgConfig)
+  pkg_check_modules(JSONCPP REQUIRED jsoncpp)
+  IF(JSONCPP_FOUND)
+    MESSAGE(STATUS "JSONCPP includes found at: ${JSONCPP_INCLUDE_DIRS}")
+  ELSE(JSONCPP_FOUND)
+    MESSAGE(FATAL_ERROR "JSONCPP not found on your system! try 'sudo apt-get install jsoncpp-dev'")
+  ENDIF(JSONCPP_FOUND)
+endif(USE_BUILTIN_JSON)
 
 #
 # LUA
@@ -178,7 +197,7 @@ else(MQTT_FOUND)
 endif(MQTT_FOUND)
 
 ## combine paths for querying by our main project file
-set(BUILTIN_LIBRARIES ${STATIC_LIBRARIES} ${LUA_LIBRARIES} ${MQTT_LIBRARIES} ${SQLite_LIBRARIES} ${ZLIB_LIBRARIES} ${MINIZIP_LIBRARIES})
-set(BUILTIN_INCLUDE_DIRS ${LUA_INCLUDE_DIRS} ${MQTT_INCLUDE_DIRS} ${SQLite_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS} ${MINIZIP_INCLUDE_DIRS})
+set(BUILTIN_LIBRARIES ${STATIC_LIBRARIES} ${JSONCPP_LIBRARIES} ${LUA_LIBRARIES} ${MQTT_LIBRARIES} ${SQLite_LIBRARIES} ${ZLIB_LIBRARIES} ${MINIZIP_LIBRARIES})
+set(BUILTIN_INCLUDE_DIRS ${STATIC_INCLUDE_DIRS} ${JSONCPP_INCLUDE_DIRS} ${LUA_INCLUDE_DIRS} ${MQTT_INCLUDE_DIRS} ${SQLite_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS} ${MINIZIP_INCLUDE_DIRS})
 set(BUILTIN_DEFINITIONS ${LUA_DEFINITIONS} ${SQLite_DEFINITIONS})
 

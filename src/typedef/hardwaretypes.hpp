@@ -58,7 +58,7 @@ enum value {
 	KMTronic433,			//50
 	Pinger,				//51
 	NestThermostat,			//52
-	NOT_USED,			//53
+	OpenMeteo,			//53
 	Netatmo,			//54
 	Kodi,				//55
 	ANNATHERMOSTAT,			//56
@@ -275,6 +275,7 @@ const STR_TABLE_SINGLE Descriptions[] =
 	{ MQTTAutoDiscovery,		"MQTT Auto Discovery Client Gateway with LAN interface",	"MQTT-AD"		},
 	{ RFLINKMQTT,			"RFLink Gateway MQTT",						"RFLink"		},
 	{ MitsubishiWF,			"Mitsubishi WF RAC Airco with LAN (HTTP) interface",		"MitsubishiWF"		},
+	{ OpenMeteo,			"Open-Meteo (Weather Lookup)",					"OpenMeteo"		},
 	{ LocalTuya,			"Local Tuya",							"LocalTuya"		},
 	{ APSLocalECU,			"APSystems Local ECU",						"APSLocalECU"		},
 	{ 0, nullptr, nullptr }

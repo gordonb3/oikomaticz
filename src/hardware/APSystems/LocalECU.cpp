@@ -254,7 +254,7 @@ void CAPSLocalECU::SendMeters()
 	uint64_t nIDx = atoll(IDx.c_str());
 	// tell mainworker and eventsystem that device was updated
 	m_mainworker.sOnDeviceReceived(m_HwdID, nIDx, "Solar Power", nullptr);
-	m_mainworker.m_eventsystem.ProcessDevice(m_HwdID, nIDx, 1, pTypeP1Power, sTypeP1Power, 255, 255, 0, p1data);
+	m_mainworker.m_eventsystem.ProcessDevice(m_HwdID, nIDx, 1, pTypeP1Power, sTypeP1Power, 255, 255, 0, p1data, timestring);
 
 
 	for (int i = 0; i < m_ECUClient->m_apsecu.inverters.size(); i++)
@@ -272,7 +272,7 @@ void CAPSLocalECU::SendMeters()
 			nIDx = atoll(IDx.c_str());
 			// tell mainworker and eventsystem that device was updated
 			m_mainworker.sOnDeviceReceived(m_HwdID, nIDx, "Voltage", nullptr);
-			m_mainworker.m_eventsystem.ProcessDevice(m_HwdID, nIDx, 1, pTypeGeneral, sTypeVoltage, 255, 255, 0, p1data);
+			m_mainworker.m_eventsystem.ProcessDevice(m_HwdID, nIDx, 1, pTypeGeneral, sTypeVoltage, 255, 255, 0, p1data, timestring);
 		}
 
 		int numchannels = (int)m_ECUClient->m_apsecu.inverters[i].channels.size();
@@ -294,7 +294,7 @@ void CAPSLocalECU::SendMeters()
 				nIDx = atoll(IDx.c_str());
 				// tell mainworker and eventsystem that device was updated
 				m_mainworker.sOnDeviceReceived(m_HwdID, nIDx, "Power", nullptr);
-				m_mainworker.m_eventsystem.ProcessDevice(m_HwdID, nIDx, j + 11, pTypeUsage, sTypeElectric, 255, 255, 0, p1data);
+				m_mainworker.m_eventsystem.ProcessDevice(m_HwdID, nIDx, j + 11, pTypeUsage, sTypeElectric, 255, 255, 0, p1data, timestring);
 			}
 		}
 	}

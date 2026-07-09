@@ -7,10 +7,10 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "stdafx.h"
-#include "reply.hpp"
-#include "mime_types.hpp"
-#include "utf.hpp"
+#include "webem_stdafx.h"
+#include "webserver/reply.h"
+#include "mime_types.h"
+#include "utf.h"
 #include <string>
 #include <fstream>
 #include <boost/algorithm/string.hpp>
@@ -34,6 +34,7 @@ namespace status_strings {
 	constexpr auto unauthorized = "HTTP/1.1 401 Unauthorized\r\n";
 	constexpr auto forbidden = "HTTP/1.1 403 Forbidden\r\n";
 	constexpr auto not_found = "HTTP/1.1 404 Not Found\r\n";
+	constexpr auto method_not_allowed = "HTTP/1.1 405 Method Not Allowed\r\n";
 	constexpr auto internal_server_error = "HTTP/1.1 500 Internal Server Error\r\n";
 	constexpr auto not_implemented = "HTTP/1.1 501 Not Implemented\r\n";
 	constexpr auto bad_gateway = "HTTP/1.1 502 Bad Gateway\r\n";
@@ -71,6 +72,8 @@ namespace status_strings {
 				return forbidden;
 			case reply::not_found:
 				return not_found;
+			case reply::method_not_allowed:
+				return method_not_allowed;
 			case reply::internal_server_error:
 				return internal_server_error;
 			case reply::not_implemented:
@@ -117,6 +120,7 @@ void reply::reset()
 	headers.clear();
 	content = "";
 	bIsGZIP = false;
+	ws_session = WebEmSession{};
 }
 
 namespace stock_replies {
@@ -161,6 +165,10 @@ namespace stock_replies {
 	constexpr auto not_found = "<html>"
 				   "<head><title>Not Found</title></head>"
 				   "<body><h1>404 Not Found</h1></body>"
+				   "</html>";
+	constexpr auto method_not_allowed = "<html>"
+				   "<head><title>Method Not Allowed</title></head>"
+				   "<body><h1>405 Method Not Allowed</h1></body>"
 				   "</html>";
 	constexpr auto internal_server_error = "<html>"
 					       "<head><title>Internal Server Error</title></head>"
@@ -211,6 +219,8 @@ namespace stock_replies {
 				return forbidden;
 			case reply::not_found:
 				return not_found;
+			case reply::method_not_allowed:
+				return method_not_allowed;
 			case reply::internal_server_error:
 				return internal_server_error;
 			case reply::not_implemented:
@@ -226,7 +236,7 @@ namespace stock_replies {
 
 } // namespace stock_replies
 
-reply reply::stock_reply(reply::status_type status, bool addsecheaders)
+reply reply::stock_reply(reply::status_type status, bool addsecheaders, bool is_tls)
 {
 	reply rep;
 	rep.status = status;
@@ -239,13 +249,14 @@ reply reply::stock_reply(reply::status_type status, bool addsecheaders)
 		rep.headers[1].value = "text/html;charset=UTF-8";
 	}
 	if (addsecheaders)
-		add_security_headers(&rep);
+		add_security_headers(&rep, is_tls);
 	return rep;
 }
 
-void reply::add_security_headers(reply *rep)
+void reply::add_security_headers(reply *rep, bool is_tls)
 {
-	add_header(rep, "Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload", true);
+	if (is_tls)
+		add_header(rep, "Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload", true);
 	add_header(rep, "X-Content-Type-Options", "nosniff", true);
 	add_header(rep, "Content-Security-Policy", "frame-ancestors 'self'", true);
 	//add_header(rep, "X-XSS-Protection", "1; mode=block", true);	// obsolete thx to CSP

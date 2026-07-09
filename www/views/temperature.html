@@ -5,7 +5,19 @@
             <td align="right" style="width:120px">
                 <label>Idx: </label>
             </td>
-			<td><span id="deviceidx"></span></td>
+			<td><span id="deviceidx" style="user-select: all; cursor: pointer;"></span></td>
+        </tr>
+        <tr>
+            <td align="right" style="width:120px">
+                <label data-i18n="ID">ID</label>:
+            </td>
+			<td><span id="deviceid" style="user-select: all; cursor: pointer;"></span></td>
+        </tr>
+        <tr>
+            <td align="right" style="width:120px">
+                <label data-i18n="Unit Code">Unit Code</label>:
+            </td>
+			<td><span id="deviceunit" style="user-select: all; cursor: pointer;"></span></td>
         </tr>
         <tr>
           <td align="right"><label for="devicename"><span data-i18n="Name">Name</span>: </label></td>
@@ -49,7 +61,19 @@
             <td align="right" style="width:120px">
                 <label>Idx: </label>
             </td>
-			<td><span id="deviceidx"></span></td>
+			<td><span id="deviceidx" style="user-select: all; cursor: pointer;"></span></td>
+        </tr>
+        <tr>
+            <td align="right" style="width:120px">
+                <label data-i18n="ID">ID</label>:
+            </td>
+			<td><span id="deviceid" style="user-select: all; cursor: pointer;"></span></td>
+        </tr>
+        <tr>
+            <td align="right" style="width:120px">
+                <label data-i18n="Unit Code">Unit Code</label>:
+            </td>
+			<td><span id="deviceunit" style="user-select: all; cursor: pointer;"></span></td>
         </tr>
         <tr>
           <td align="right"><label for="devicename"><span data-i18n="Name">Name</span>: </label></td>
@@ -69,7 +93,19 @@
             <td align="right" style="width:120px">
                 <label>Idx: </label>
             </td>
-			<td><span id="deviceidx"></span></td>
+			<td><span id="deviceidx" style="user-select: all; cursor: pointer;"></span></td>
+        </tr>
+        <tr>
+            <td align="right" style="width:120px">
+                <label data-i18n="ID">ID</label>:
+            </td>
+			<td><span id="deviceid" style="user-select: all; cursor: pointer;"></span></td>
+        </tr>
+        <tr>
+            <td align="right" style="width:120px">
+                <label data-i18n="Unit Code">Unit Code</label>:
+            </td>
+			<td><span id="deviceunit" style="user-select: all; cursor: pointer;"></span></td>
         </tr>
         <tr>
           <td align="right"><label for="devicename"><span data-i18n="Name">Name</span>: </label></td>
@@ -97,7 +133,19 @@
             <td align="right" style="width:120px">
                 <label>Idx: </label>
             </td>
-			<td><span id="deviceidx"></span></td>
+			<td><span id="deviceidx" style="user-select: all; cursor: pointer;"></span></td>
+        </tr>
+        <tr>
+            <td align="right" style="width:120px">
+                <label data-i18n="ID">ID</label>:
+            </td>
+			<td><span id="deviceid" style="user-select: all; cursor: pointer;"></span></td>
+        </tr>
+        <tr>
+            <td align="right" style="width:120px">
+                <label data-i18n="Unit Code">Unit Code</label>:
+            </td>
+			<td><span id="deviceunit" style="user-select: all; cursor: pointer;"></span></td>
         </tr>
         <tr>
           <td align="right"><label for="devicename"><span data-i18n="Name">Name</span>: </label></td>
@@ -129,8 +177,8 @@
   </div>
   <div class="devicesList">
     <div id="tempwidgets" class="row divider">
-      <h2 ng-show="ctrl.temperatures.length == 0" data-i18n="No Temperature sensors found or added in the system...">No Temperature sensors found or added in the system...</h2>
-      <div ng-repeat-start="t in ctrl.temperatures" class="clearfix" ng-if="$index % 3 == 0 && !$first"></div>
+      <h2 ng-show="!loading && ctrl.temperatures.length == 0" data-i18n="No Temperature sensors found or added in the system...">No Temperature sensors found or added in the system...</h2>
+      <div ng-repeat-start="t in ctrl.temperatures track by t.idx" class="clearfix" ng-if="$index % 3 == 0 && !$first"></div>
       <dztemperaturewidget ng-repeat-end class="span4 itemBlock" id="{{t.idx}}" item="t" tempsign="config.TempSign" windsign="config.WindSign" ordering="config.AllowWidgetOrdering" dragwidget="DragWidget(idx)" dropwidget="DropWidget(idx)"></dztemperaturewidget>
     </div>
   </div>

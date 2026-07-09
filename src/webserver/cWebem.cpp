@@ -2,32 +2,30 @@
 //
 //Detailed class and method documentation of the WEBEM C++ embedded web server source code.
 //
-//Modified, extended etc by Robbert E. Peters/RTSS B.V.
-#include "stdafx.h"
-#include "cWebem.h"
-#include "reply.hpp"
-#include "request.hpp"
-#include "mime_types.hpp"
-#include "utf.hpp"
-#include "Base64.h"
-#include "sha1.hpp"
+#include "webem_stdafx.h"
+#include <algorithm>
+#include "webserver/cWebem.h"
+#include "webserver/reply.h"
+#include "webserver/request.h"
+#include "mime_types.h"
+#include "utf.h"
+#include "webserver/Base64.h"
+#include "sha1.h"
+#ifndef WEBEM_NO_GZIP
 #include "GZipHelper.h"
+#endif
 #include <stdarg.h>
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
-#include "main/Helper.h"
-#include "main/Logger.h"
+#include "webserver/webem_utils.h"
 
 #define JWT_DISABLE_BASE64
-#include <jwt-cpp/jwt.h>
+#include <jwt-cpp/traits/open-source-parsers-jsoncpp/defaults.h>
 
 #define SHORT_SESSION_TIMEOUT 600 // 10 minutes
 #define LONG_SESSION_TIMEOUT (30 * 86400) // 30 days
 
-#define websocket_protocol "domoticz"
-
-int m_failcounter = 0;
 
 namespace http {
 	namespace server {
@@ -38,29 +36,46 @@ namespace http {
 		@param[in] server_settings  Server settings (IP address, listening port, ssl options...)
 		@param[in] doc_root path to folder containing html e.g. "./"
 		*/
-		cWebem::cWebem(const server_settings &settings, const std::string &doc_root)
-			: m_DigistRealm("Domoticz.com")
+		cWebem::cWebem(const server_settings &settings, const std::string &doc_root, WebServerLogger logger)
+			: m_logger(std::move(logger))
+			, m_DigistRealm("webem.local")
 			, m_authmethod(AUTH_LOGIN)
 			, m_AllowPlainBasicAuth(false)
+			, m_session_cookie_name("SID")
 			, m_settings(settings)
 			, mySessionStore(nullptr)
-			, myRequestHandler(doc_root, this)
+			, myRequestHandler(doc_root, this, m_logger)
 			// Rene, make sure we initialize m_sessions first, before starting a server
-			, myServer(server_factory::create(settings, myRequestHandler))
+			, myServer(server_factory::create(settings, myRequestHandler, m_logger))
 			, m_io_context()
 			, m_session_clean_timer(m_io_context, std::chrono::minutes(1))
 		{
 			// associate handler to timer and schedule the first iteration
 			m_session_clean_timer.async_wait([this](auto &&) { CleanSessions(); });
 			m_io_context_thread = std::make_shared<std::thread>([p = &m_io_context] { p->run(); });
-			SetThreadName(m_io_context_thread->native_handle(), "Webem_ssncleaner");
+			utils::set_thread_name(m_io_context_thread->native_handle(), "Webem_ssncleaner");
 		}
 
 		cWebem::~cWebem()
 		{
 			// Remove reference to CWebServer before its deletion (fix a "pure virtual method called" exception on server termination)
 			mySessionStore = nullptr;
-			// Delete server (no need with smart pointer)
+			// Ensure session cleaner thread is stopped before members are destroyed
+			try
+			{
+				if (!m_io_context.stopped())
+				{
+					m_io_context.stop();
+				}
+				if (m_io_context_thread)
+				{
+					m_io_context_thread->join();
+					m_io_context_thread.reset();
+				}
+			}
+			catch (...)
+			{
+			}
 		}
 
 		/**
@@ -105,7 +120,7 @@ namespace http {
 			}
 			catch (...)
 			{
-				_log.Log(LOG_ERROR, "[web:%s] exception thrown while stopping session cleaner", GetPort().c_str());
+				if (m_logger) m_logger->Log(LogLevel::Error, "[web:%s] exception thrown while stopping session cleaner", GetPort().c_str());
 			}
 			// Stop Web server
 			if (myServer != nullptr)
@@ -122,6 +137,142 @@ namespace http {
 		void cWebem::SetWebCompressionMode(_eWebCompressionMode gzmode)
 		{
 			m_gzipmode = gzmode;
+		}
+
+		void cWebem::SetSessionCookieName(const std::string& name)
+		{
+			m_session_cookie_name = name;
+		}
+
+		const std::string& cWebem::GetSessionCookieName() const
+		{
+			return m_session_cookie_name;
+		}
+
+		void cWebem::RegisterWebsocketEndpoint(
+			const std::string& path,
+			WebsocketHandlerFactory factory,
+			const std::string& protocol)
+		{
+			m_websocketEndpoints.push_back({path, protocol, std::move(factory)});
+		}
+
+		WebsocketHandlerFactory cWebem::GetWebsocketFactory(const std::string& path) const
+		{
+			// Two-pass: exact path first, then "/" catch-all.
+			// Without the two-pass approach the "/" endpoint always wins because its
+			// condition (ep.path == "/") is unconditionally true, so any specific
+			// endpoint registered after "/" is never reached.
+			WebsocketHandlerFactory fallback;
+			for (const auto& ep : m_websocketEndpoints)
+			{
+				if (ep.path == path)
+					return ep.factory;   // exact match wins
+				if (ep.path == "/" && !fallback)
+					fallback = ep.factory;  // save catch-all for last resort
+			}
+			return fallback;
+		}
+
+		std::string cWebem::GetWebsocketProtocol(const std::string& path) const
+		{
+			// Two-pass: exact path first, then "/" catch-all.
+			std::string fallback;
+			for (const auto& ep : m_websocketEndpoints)
+			{
+				if (ep.path == path)
+					return ep.protocol;  // exact match wins
+				if (ep.path == "/" && fallback.empty())
+					fallback = ep.protocol;
+			}
+			return fallback;
+		}
+
+		bool cWebem::HasWebsocketEndpoints() const
+		{
+			return !m_websocketEndpoints.empty();
+		}
+
+		void cWebem::RegisterWebsocketHandler(std::shared_ptr<IWebsocketHandler> handler)
+		{
+			std::lock_guard<std::mutex> lock(m_websocketHandlersMutex);
+			m_websocketHandlers.erase(
+				std::remove_if(m_websocketHandlers.begin(), m_websocketHandlers.end(),
+					[](const std::weak_ptr<IWebsocketHandler>& wp) { return wp.expired(); }),
+				m_websocketHandlers.end());
+			m_websocketHandlers.push_back(handler);
+		}
+
+		void cWebem::ScheduleHandlerCleanup(std::shared_ptr<IWebsocketHandler> handler)
+		{
+			if (!handler)
+				return;
+			// If the session-cleaner io_context has already been stopped (e.g. because
+			// cWebem::Stop() stops it before myServer->stop() triggers connection teardown),
+			// posting to it would silently drop the task and leave the handler — and any
+			// resources it owns, like an encoder subscriber or a colorbar worker thread —
+			// alive until the io_context is destroyed.  Run Stop() inline in that case so
+			// the handler is always cleaned up before cWebem is torn down.
+			if (m_io_context.stopped())
+			{
+				if (m_logger)
+					m_logger->Debug(DebugCategory::WebServer, "WebSocket: io_context stopped, running handler cleanup inline");
+				try { handler->Stop(); } catch (...) {}
+				return;
+			}
+			if (m_logger)
+				m_logger->Debug(DebugCategory::WebServer, "WebSocket: scheduling async handler cleanup");
+			boost::asio::post(m_io_context, [handler = std::move(handler), logger = m_logger]() {
+				try {
+					handler->Stop();
+				}
+				catch (...) {
+					if (logger)
+						logger->Log(LogLevel::Error, "WebSocket: exception during async handler cleanup");
+				}
+			});
+		}
+
+		void cWebem::ForEachHandler(std::function<void(IWebsocketHandler*)> callback)
+		{
+			std::vector<std::shared_ptr<IWebsocketHandler>> live;
+			{
+				std::lock_guard<std::mutex> lock(m_websocketHandlersMutex);
+				auto it = m_websocketHandlers.begin();
+				while (it != m_websocketHandlers.end())
+				{
+					if (auto sp = it->lock())
+					{
+						live.push_back(sp);
+						++it;
+					}
+					else
+					{
+						it = m_websocketHandlers.erase(it);
+					}
+				}
+			}
+			for (auto& sp : live)
+			{
+				callback(sp.get());
+			}
+		}
+
+		void cWebem::RegisterNoCachePattern(const std::string& pattern)
+		{
+			std::lock_guard<std::mutex> lock(m_configMutex);
+			m_noCachePatterns.push_back(pattern);
+		}
+
+		bool cWebem::IsNoCacheURI(const std::string& uri) const
+		{
+			std::lock_guard<std::mutex> lock(m_configMutex);
+			for (const auto& pattern : m_noCachePatterns)
+			{
+				if (uri.find(pattern) != std::string::npos)
+					return true;
+			}
+			return false;
 		}
 
 		void cWebem::SetAllowPlainBasicAuth(const bool bAllow)
@@ -143,10 +294,11 @@ namespace http {
 
 		void cWebem::RegisterPageCode(const char *pageurl, const webem_page_function &fun, bool bypassAuthentication)
 		{
+			std::lock_guard<std::mutex> lock(m_configMutex);
 			myPages.insert(std::pair<std::string, webem_page_function >(std::string(pageurl), fun));
 			if (bypassAuthentication)
 			{
-				RegisterWhitelistURLString(pageurl);
+				myWhitelistURLs.push_back(pageurl);
 			}
 		}
 
@@ -160,23 +312,27 @@ namespace http {
 		*/
 		void cWebem::RegisterActionCode(const char *idname, const webem_action_function &fun)
 		{
+			std::lock_guard<std::mutex> lock(m_configMutex);
 			myActions.insert(std::pair<std::string, webem_action_function >(std::string(idname), fun));
 		}
 
 		//Used by non basic-auth authentication (for example login forms) to bypass returning false when not authenticated
 		void cWebem::RegisterWhitelistURLString(const char* idname)
 		{
+			std::lock_guard<std::mutex> lock(m_configMutex);
 			myWhitelistURLs.push_back(idname);
 		}
 		void cWebem::RegisterWhitelistCommandsString(const char* idname)
 		{
+			std::lock_guard<std::mutex> lock(m_configMutex);
 			myWhitelistCommands.push_back(idname);
 		}
 
 		// Show a Debug line with the registered functions, actions, includes, whitelist urls and commands
 		void cWebem::DebugRegistrations()
 		{
-			_log.Debug(DEBUG_WEBSERVER, "cWebEm Registration: %zu pages, %zu actions, %zu whitelist urls, %zu whitelist commands",
+			std::lock_guard<std::mutex> lock(m_configMutex);
+			if (m_logger) m_logger->Debug(DebugCategory::WebServer, "cWebEm Registration: %zu pages, %zu actions, %zu whitelist urls, %zu whitelist commands",
 				myPages.size(), myActions.size(), myWhitelistURLs.size(), myWhitelistCommands.size());
 		}
 
@@ -201,6 +357,13 @@ namespace http {
 		{
 			if (strstr(pContent_Type, "multipart/form-data") != nullptr)
 			{
+				// Reject excessively large uploads (100 MB max)
+				constexpr size_t MAX_UPLOAD_SIZE = 100 * 1024 * 1024;
+				if (req.content.size() > MAX_UPLOAD_SIZE)
+				{
+					if (m_logger) m_logger->Log(LogLevel::Error, "WebServer: Upload too large (%zu bytes, max %zu bytes)", req.content.size(), MAX_UPLOAD_SIZE);
+					return false;
+				}
 				std::string szContent = req.content;
 				size_t pos;
 				std::string szVariable, szContentType, szValue;
@@ -323,7 +486,7 @@ namespace http {
 			else
 			{
 				//Unknown content type
-				_log.Debug(DEBUG_WEBSERVER, "[web:%s] Unable to process POST Data, unknown content type: %s", GetPort().c_str(), pContent_Type);
+				if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] Unable to process POST Data, unknown content type: %s", GetPort().c_str(), pContent_Type);
 				return false;
 			}
 			return true;
@@ -357,9 +520,14 @@ namespace http {
 			// find function matching action code
 			size_t q = uri.find(".webem");
 			std::string code = uri.substr(1, q - 1);
-			auto pfun = myActions.find(code);
-			if (pfun == myActions.end())
-				return false;
+			webem_action_function actionFun;
+			{
+				std::lock_guard<std::mutex> lock(m_configMutex);
+				auto pfun = myActions.find(code);
+				if (pfun == myActions.end())
+					return false;
+				actionFun = pfun->second;
+			}
 
 			// decode the values
 			const char *pContent_Type = request::get_req_header(&req, "Content-Type");
@@ -376,7 +544,7 @@ namespace http {
 					// call the function
 					try
 					{
-						pfun->second(session, req, req.uri);
+						actionFun(session, req, req.uri);
 					}
 					catch (...)
 					{
@@ -411,6 +579,7 @@ namespace http {
 				request_path = request_path.substr(0, paramPos);
 			}
 
+			std::lock_guard<std::mutex> lock(m_configMutex);
 			auto pfun = myPages.find(request_path);
 			if (pfun != myPages.end())
 				return true;
@@ -497,21 +666,27 @@ namespace http {
 			}
 			std::string strMimeType = mime_types::extension_to_type(extension);
 
-			auto pfun = myPages.find(request_path);
-			if (pfun != myPages.end())
+			webem_page_function pageFun;
+			{
+				std::lock_guard<std::mutex> lock(m_configMutex);
+				auto pfun = myPages.find(request_path);
+				if (pfun == myPages.end())
+					return false;
+				pageFun = pfun->second;
+			}
 			{
 				rep.status = reply::ok;
 				try
 				{
-					pfun->second(session, req, rep);
+					pageFun(session, req, rep);
 				}
 				catch (std::exception& e)
 				{
-					_log.Log(LOG_ERROR, "[web:%s] PO exception occurred : '%s'", GetPort().c_str(), e.what());
+					if (m_logger) m_logger->Log(LogLevel::Error, "[web:%s] PO exception occurred : '%s'", GetPort().c_str(), e.what());
 				}
 				catch (...)
 				{
-					_log.Log(LOG_ERROR, "[web:%s] PO unknown exception occurred", GetPort().c_str());
+					if (m_logger) m_logger->Log(LogLevel::Error, "[web:%s] PO unknown exception occurred", GetPort().c_str());
 				}
 				std::string attachment;
 				for (const auto &header : rep.headers)
@@ -541,8 +716,7 @@ namespace http {
 					reply::add_header(&rep, "Cache-Control", "max-age=3600, public");
 				}
 				reply::add_header_content_type(&rep, strMimeType);
-				if (m_settings.is_secure())
-					reply::add_security_headers(&rep);
+				reply::add_security_headers(&rep, m_settings.is_secure());
 				return true;
 			}
 
@@ -630,13 +804,14 @@ namespace http {
 			return false;
 		}
 
-		void cWebem::AddUserPassword(const unsigned long ID, const std::string &username, const std::string &password, const std::string &mfatoken, const _eUserRights userrights, const int activetabs, const std::string &privkey, const std::string &pubkey, uint32_t refreshexpire, const std::string &signingsecret, time_t accept_legacy_until)
+		void cWebem::AddUserPassword(const unsigned long ID, const std::string &username, const std::string &password, const std::string &mfatoken, const std::string &passkeys, const _eUserRights userrights, const int activetabs, const std::string &privkey, const std::string &pubkey, uint32_t refreshexpire, const std::string &signingsecret, time_t accept_legacy_until)
 		{
 			_tWebUserPassword wtmp;
 			wtmp.ID = ID;
 			wtmp.Username = username;
 			wtmp.Password = password;
 			wtmp.Mfatoken = mfatoken;
+			wtmp.Passkeys = passkeys;
 			wtmp.PrivKey = privkey;
 			wtmp.PubKey = pubkey;
 			wtmp.userrights = userrights;
@@ -645,12 +820,16 @@ namespace http {
 			wtmp.RefreshExpire = refreshexpire;
 			wtmp.AcceptLegacyTokensUntil = accept_legacy_until;
 			wtmp.TotSensors = 0;
+			std::lock_guard<std::mutex> lock(m_configMutex);
 			m_userpasswords.push_back(wtmp);
 		}
 
 		void cWebem::ClearUserPasswords()
 		{
-			m_userpasswords.clear();
+			{
+				std::lock_guard<std::mutex> cfglock(m_configMutex);
+				m_userpasswords.clear();
+			}
 
 			std::unique_lock<std::mutex> lock(m_sessionsMutex);
 			m_sessions.clear(); //TODO : check if it is really necessary
@@ -671,7 +850,7 @@ namespace http {
 		{
 			if (network.empty())
 			{
-				_log.Log(LOG_STATUS, "[web:%s] Empty trusted network string provided! Skipping...", GetPort().c_str());
+				if (m_logger) m_logger->Log(LogLevel::Status, "[web:%s] Empty trusted network string provided! Skipping...", GetPort().c_str());
 				return;
 			}
 
@@ -681,12 +860,12 @@ namespace http {
 			uint8_t iASize = (!ipnetwork.bIsIPv6) ? 4 : 16;
 			int ii;
 
-			_log.Debug(DEBUG_WEBSERVER, "[web:%s] Adding IPv%s network (%s) to list of trusted networks.", GetPort().c_str(), (ipnetwork.bIsIPv6 ? "6" : "4"), network.c_str());
+			if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] Adding IPv%s network (%s) to list of trusted networks.", GetPort().c_str(), (ipnetwork.bIsIPv6 ? "6" : "4"), network.c_str());
 
 			if (network.find('*') != std::string::npos)
 			{
 				std::vector<std::string> results;
-				StringSplit(network, (!ipnetwork.bIsIPv6) ? "." : ":" , results);
+				utils::split_string(network, (!ipnetwork.bIsIPv6) ? "." : ":" , results);
 				if (results.size() < 2)
 					return;
 
@@ -717,7 +896,7 @@ namespace http {
 					szNetwork += "0";
 					wPos++;
 				}
-
+				
 				if (inet_pton((!ipnetwork.bIsIPv6) ? AF_INET : AF_INET6, szNetwork.c_str(), &ipnetwork.Network) != 1)
 					return; //invalid address
 
@@ -781,8 +960,12 @@ namespace http {
 							pAddress = (uint8_t*)&saddr6->sin6_addr;
 						}
 						else
+						{
+							freeaddrinfo(addr);
 							return;
+						}
 						memcpy(&ipnetwork.Network, pAddress, iASize);
+						freeaddrinfo(addr);
 					}
 					else if (inet_pton((!ipnetwork.bIsIPv6) ? AF_INET : AF_INET6, network.c_str(), &ipnetwork.Network) != 1)
 						return; //invalid address
@@ -859,6 +1042,28 @@ namespace http {
 				m_sessions.erase(itt);
 		}
 
+		void cWebem::RenewSessionIfNeeded(const std::string &sessionId)
+		{
+			if (sessionId.empty())
+				return;
+			WebEmSession* memSession = GetSession(sessionId);
+			if (memSession == nullptr)
+				return;
+			time_t now = utils::webem_time();
+			if (memSession->expires - (SHORT_SESSION_TIMEOUT / 2) < now)
+			{
+				memSession->expires = now + SHORT_SESSION_TIMEOUT;
+				if (mySessionStore != nullptr)
+					mySessionStore->RenewSessionExpiration(sessionId, memSession->expires);
+			}
+			else if ((memSession->expires > SHORT_SESSION_TIMEOUT + now) && (memSession->expires - (LONG_SESSION_TIMEOUT / 2) < now))
+			{
+				memSession->expires = now + LONG_SESSION_TIMEOUT;
+				if (mySessionStore != nullptr)
+					mySessionStore->RenewSessionExpiration(sessionId, memSession->expires);
+			}
+		}
+
 		int cWebem::CountSessions()
 		{
 			std::unique_lock<std::mutex> lock(m_sessionsMutex);
@@ -869,7 +1074,7 @@ namespace http {
 		{
 			std::unique_lock<std::mutex> lock(m_sessionsMutex);
 			std::vector<std::string> ret;
-			time_t now = mytime(nullptr);
+			time_t now = utils::webem_time();
 			for (const auto &session : m_sessions)
 			{
 				if (session.second.expires < now)
@@ -880,7 +1085,7 @@ namespace http {
 
 		void cWebem::CleanSessions()
 		{
-			_log.Debug(DEBUG_WEBSERVER, "[web:%s] cleaning sessions...", GetPort().c_str());
+			if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] cleaning sessions...", GetPort().c_str());
 
 			// Clean up timed out sessions from memory
 			std::vector<std::string> expired_ssids = GetExpiredSessions();
@@ -888,7 +1093,7 @@ namespace http {
 			{
 				RemoveSession(ssid);
 			}
-			// Clean up expired sessions from database in order to avoid to wait for the domoticz restart (long time running instance)
+			// Clean up expired sessions from database to avoid unbounded growth in long-running instances.
 			if (mySessionStore != nullptr)
 			{
 				mySessionStore->CleanSessions();
@@ -903,7 +1108,7 @@ namespace http {
 			if (ip.empty())
 				return false;
 
-			std::string cleanIP = stdstring_trimws(ip);
+			std::string cleanIP = utils::trim_whitespace(ip);
 			bool bIsIPv6 = (cleanIP.find(':') != std::string::npos);
 			// IPv6 and IPv4 addresses can be written as quoted strings
 			if (cleanIP.front() == '"' && cleanIP.back() == '"')
@@ -1020,7 +1225,7 @@ namespace http {
 			for (const auto sLine : vHeaderLines)
 			{
 				std::vector<std::string> vLineParts;
-				StringSplit(sLine, ",", vLineParts);
+				utils::split_string(sLine, ",", vLineParts);
 				for (std::string sPart : vLineParts)
 				{
 					if (isValidIP(sPart))
@@ -1046,10 +1251,10 @@ namespace http {
 			for (const auto sLine : vHeaderLines)
 			{
 				std::vector<std::string> vLineParts;
-				StringSplit(sLine, ",", vLineParts);
+				utils::split_string(sLine, ",", vLineParts);
 				for (std::string sPart : vLineParts)
 				{
-					stdstring_trimws(sPart);
+					utils::trim_whitespace_inplace(sPart);
 					if (std::size_t isPos = sPart.find("for=") != std::string::npos)
 					{
 						isPos = isPos + 3;
@@ -1089,12 +1294,12 @@ namespace http {
 			}
 			else
 			{
-				_log.Debug(DEBUG_WEBSERVER, "[web:%s] Unable to verify vhostname as Host header is missing in request!", GetPort().c_str());
+				if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] Unable to verify vhostname as Host header is missing in request!", GetPort().c_str());
 				return false;
 			}
 
 			bool bStatus = (sHost.compare(vHost) == 0);
-			_log.Debug(DEBUG_WEBSERVER, "[web:%s] Checking vhostname (%s) with request (%s) = %d", GetPort().c_str(), vHost.c_str(), sHost.c_str(), bStatus);
+			if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] Checking vhostname (%s) with request (%s) = %d", GetPort().c_str(), vHost.c_str(), sHost.c_str(), bStatus);
 			return bStatus;
 		}
 
@@ -1104,13 +1309,9 @@ namespace http {
 
 			if (user.empty())
 			{
-				rep = reply::stock_reply(reply::unauthorized, m_settings.is_secure());
+				rep = reply::stock_reply(reply::unauthorized, true, m_settings.is_secure());
 				reply::add_cors_headers(&rep);
-				char szAuthHeader[200];
-				sprintf(szAuthHeader,
-					"Basic "
-					"realm=\"%s\"",
-					m_DigistRealm.c_str());
+				std::string szAuthHeader = "Basic realm=\"" + m_DigistRealm + "\"";
 				reply::add_header(&rep, "WWW-Authenticate", szAuthHeader);
 			}
 
@@ -1130,7 +1331,12 @@ namespace http {
 		bool cWebemRequestHandler::CheckUserAuthorization(std::string &user, struct ah *ah)
 		{
 			// Check if valid password has been provided for the user
-			for (const auto &my : myWebem->m_userpasswords)
+			std::vector<WebUserPassword> userpasswords;
+			{
+				std::lock_guard<std::mutex> lock(myWebem->m_configMutex);
+				userpasswords = myWebem->m_userpasswords;
+			}
+			for (const auto &my : userpasswords)
 			{
 				if (my.Username == ah->user && my.userrights != URIGHTS_CLIENTID)
 				{
@@ -1149,6 +1355,11 @@ namespace http {
 		int cWebemRequestHandler::parse_auth_header(const request& req, struct ah *ah)
 		{
 			const char *auth_header;
+			std::vector<WebUserPassword> userpasswords;
+			{
+				std::lock_guard<std::mutex> lock(myWebem->m_configMutex);
+				userpasswords = myWebem->m_userpasswords;
+			}
 
 			if ((auth_header = request::get_req_header(&req, "Authorization")) == nullptr)
 			{
@@ -1189,7 +1400,7 @@ namespace http {
 					return 0;
 				}
 				ah->method = "X509";
-				_log.Debug(DEBUG_AUTH, "[X509] Found a X509 Auth Header (%s)", ah->user.c_str());
+				if (m_logger) m_logger->Debug(DebugCategory::Auth, "[X509] Found a X509 Auth Header (%s)", ah->user.c_str());
 				return 1;
 			}
 			// Basic Auth header
@@ -1205,7 +1416,7 @@ namespace http {
 				ah->method = "BASIC";
 				ah->user = decoded.substr(0, npos);
 				ah->response = decoded.substr(npos + 1);
-				_log.Debug(DEBUG_AUTH, "[Basic] Found a Basic Auth Header (%s)", ah->user.c_str());
+				if (m_logger) m_logger->Debug(DebugCategory::Auth, "[Basic] Found a Basic Auth Header (%s)", ah->user.c_str());
 				return 1;
 			}
 			// Bearer Auth header
@@ -1226,18 +1437,18 @@ namespace http {
 						auto decodedJWT = jwt::decode(sToken, &base64url_decode);
 						if(!decodedJWT.has_algorithm())
 						{
-							_log.Debug(DEBUG_AUTH,"[JWT] Token does not contain an algorithm!");
+							if (m_logger) m_logger->Debug(DebugCategory::Auth,"[JWT] Token does not contain an algorithm!");
 							return 0;
 						}
 						if(!(decodedJWT.has_audience() && decodedJWT.has_issuer()))
 						{
-							_log.Debug(DEBUG_AUTH,"[JWT] Token does not contain an intended audience and/or issuer!");
+							if (m_logger) m_logger->Debug(DebugCategory::Auth,"[JWT] Token does not contain an intended audience and/or issuer!");
 							return 0;
 						}
-						// Step 2: Find the audience = our ClientID (~ the Username of the Oikomaticz User where the userright = ClientID)
+						// Step 2: Find the audience = our ClientID (the username associated with the ClientID user right)
 						std::string clientid = decodedJWT.get_audience().cbegin()->data();	// Assumption: only 1 element in the AUD set!
 						std::string JWTsubject = decodedJWT.get_subject();
-						_log.Debug(DEBUG_AUTH,"[JWT] Token audience : %s", clientid.c_str());
+						if (m_logger) m_logger->Debug(DebugCategory::Auth,"[JWT] Token audience : %s", clientid.c_str());
 
 						std::string signingsecret;
 						std::string client_password;
@@ -1246,7 +1457,7 @@ namespace http {
 						std::string client_key_id;
 						bool clientispublic = false;
 						// Check if the audience has been registered as a User (type CLIENTID)
-						for (const auto &my : myWebem->m_userpasswords)
+						for (const auto &my : userpasswords)
 						{
 							if (my.Username == clientid)
 							{
@@ -1264,7 +1475,7 @@ namespace http {
 						}
 						if (client_key_id.empty() || (signingsecret.empty() && clientpubkey.empty()))
 						{
-							_log.Debug(DEBUG_AUTH, "[JWT] Unable to verify token as no ClientID for the audience has been found!");
+							if (m_logger) m_logger->Debug(DebugCategory::Auth, "[JWT] Unable to verify token as no ClientID for the audience has been found!");
 							return 0;
 						}
 						// Step 3: Using the (hashed :( ) password of the ClientID as our ClientSecret to verify the JWT signature
@@ -1301,7 +1512,7 @@ namespace http {
 						}
 						else
 						{
-							_log.Debug(DEBUG_AUTH, "[JWT] This token is signed with an unsupported algorithm (%s)!", JWTalgo.c_str());
+							if (m_logger) m_logger->Debug(DebugCategory::Auth, "[JWT] This token is signed with an unsupported algorithm (%s)!", JWTalgo.c_str());
 							return 0;
 						}
 						JWTverifyer.expires_at_leeway(60);	// 60 seconds leeway time in case clocks are NOT fully (NTP) synced
@@ -1311,10 +1522,10 @@ namespace http {
 						if(ec)
 						{
 							// Try legacy verification with client_password if within acceptance window
-							time_t now = mytime(nullptr);
+							time_t now = utils::webem_time();
 							if (accept_legacy_until > 0 && now < accept_legacy_until && !client_password.empty())
 							{
-								_log.Debug(DEBUG_AUTH, "[JWT] Trying legacy verification with client_password");
+								if (m_logger) m_logger->Debug(DebugCategory::Auth, "[JWT] Trying legacy verification with client_password");
 								std::error_code legacy_ec;
 								auto LegacyVerifyer = jwt::verify().with_issuer(expected_issuer).with_audience(clientid);
 								if (JWTalgo.compare("HS256") == 0)
@@ -1335,7 +1546,7 @@ namespace http {
 								LegacyVerifyer.verify(decodedJWT, legacy_ec);
 								if (!legacy_ec)
 								{
-									_log.Debug(DEBUG_AUTH, "[JWT] Legacy token accepted (expires %ld)", (long)accept_legacy_until);
+									if (m_logger) m_logger->Debug(DebugCategory::Auth, "[JWT] Legacy token accepted (expires %ld)", (long)accept_legacy_until);
 									ec.clear();
 								}
 							}
@@ -1343,18 +1554,18 @@ namespace http {
 
 						if(ec)
 						{
-							_log.Debug(DEBUG_AUTH, "[JWT] Token not valid! (%s)", ec.message().c_str());
+							if (m_logger) m_logger->Debug(DebugCategory::Auth, "[JWT] Token not valid! (%s)", ec.message().c_str());
 							return 0;
 						}
 						// Step 4: Now also check if other mandatory claims (nbf, exp, sub) have been provided
 						if(!(decodedJWT.has_expires_at() && decodedJWT.has_not_before() && decodedJWT.has_issued_at() && decodedJWT.has_subject() && decodedJWT.has_key_id()))
 						{
-							_log.Debug(DEBUG_AUTH, "[JWT] Mandatory claims KID, NBF, EXP, IAT, SUB are missing!");
+							if (m_logger) m_logger->Debug(DebugCategory::Auth, "[JWT] Mandatory claims KID, NBF, EXP, IAT, SUB are missing!");
 							return 0;
 						}
 						// Step 5: See of the subject (intended user) is available and exists in the User table
 						std::string key_id = decodedJWT.get_key_id();
-						for (const auto &my : myWebem->m_userpasswords)
+						for (const auto &my : userpasswords)
 						{
 							if (my.Username == JWTsubject)
 							{
@@ -1362,7 +1573,7 @@ namespace http {
 								{
 									if (key_id.compare(client_key_id) == 0)
 									{
-										_log.Debug(DEBUG_AUTH,"[JWT] Decoded valid user (%s)", JWTsubject.c_str());
+										if (m_logger) m_logger->Debug(DebugCategory::Auth,"[JWT] Decoded valid user (%s)", JWTsubject.c_str());
 										ah->method = "JWT";
 										ah->user = JWTsubject;
 										ah->response = my.Password;
@@ -1371,13 +1582,13 @@ namespace http {
 									}
 									else
 									{
-										_log.Debug(DEBUG_AUTH, "[JWT] KID does not match (%s)!", client_key_id.c_str());
+										if (m_logger) m_logger->Debug(DebugCategory::Auth, "[JWT] KID does not match (%s)!", client_key_id.c_str());
 										return 0;
 									}
 								}
 							}
 						}
-						_log.Debug(DEBUG_AUTH, "[JWT] Token contains non-existing user (%s)!", JWTsubject.c_str());
+						if (m_logger) m_logger->Debug(DebugCategory::Auth, "[JWT] Token contains non-existing user (%s)!", JWTsubject.c_str());
 						return 0;
 					}
 				}
@@ -1385,7 +1596,7 @@ namespace http {
 				ah->method = "Bearer";
 				ah->user = "";				// No clue how to deduce the user from the Bearer token provided
 				ah->response = sToken; // Let's provide the found token as the 'password'
-				_log.Debug(DEBUG_AUTH, "[Bearer] Found a Token (%s)", sToken.c_str());
+				if (m_logger) m_logger->Debug(DebugCategory::Auth, "[Bearer] Found a Token (%s)", sToken.c_str());
 				return 1;
 			}
 			return 0;
@@ -1395,7 +1606,7 @@ namespace http {
 		int cWebemRequestHandler::check_password(struct ah *ah, const std::string &ha1)
 		{
 			if ((ah->nonce.empty()) && (!ah->response.empty()))
-				return (ha1 == GenerateMD5Hash(ah->response));
+				return (ha1 == utils::GenerateMD5Hash(ah->response));
 
 			return 0;
 		}
@@ -1403,15 +1614,21 @@ namespace http {
 		bool cWebem::GenerateJwtToken(std::string &jwttoken, const std::string &clientid, const std::string &user, const uint32_t exptime, const Json::Value jwtpayload, const std::string &issuer)
 		{
 			bool bOk = false;
+			// Snapshot password list under lock before iterating
+			std::vector<WebUserPassword> userpasswords;
+			{
+				std::lock_guard<std::mutex> lock(m_configMutex);
+				userpasswords = m_userpasswords;
+			}
 			// Check if the clientID exists and we have a valid clientSecret for it (used when generating Tokens for registered clients)
-			for (const auto &my : myRequestHandler.Get_myWebem()->m_userpasswords)
+			for (const auto &my : userpasswords)
 			{
 				if (my.Username == clientid)
 				{
 					if (my.userrights == URIGHTS_CLIENTID)	// The 'user' should have CLIENTID rights to be a real Client
 					{
 						// Client already validated by caller
-						_log.Debug(DEBUG_AUTH, "[JWT] Generate Token for %s using clientid %s (privKey %d)!", user.c_str(), clientid.c_str(), my.ActiveTabs);
+						if (m_logger) m_logger->Debug(DebugCategory::Auth, "[JWT] Generate Token for %s using clientid %s (privKey %d)!", user.c_str(), clientid.c_str(), my.ActiveTabs);
 						std::string jwt_issuer = issuer.empty() ? m_DigistRealm : issuer;
 						auto JWT = jwt::create()
 							.set_type("JWT")
@@ -1422,7 +1639,7 @@ namespace http {
 							.set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{exptime})
 							.set_audience(clientid)
 							.set_subject(user)
-							.set_id(GenerateUUID());
+							.set_id(utils::generate_uuid());
 						if (!jwtpayload.empty())
 						{
 							for (auto const& id : jwtpayload.getMemberNames())
@@ -1432,12 +1649,12 @@ namespace http {
 									if(jwtpayload[id].isNumeric())
 									{
 										double dVal(jwtpayload[id].asDouble());
-										JWT.set_payload_claim(id, picojson::value(dVal));
+										JWT.set_payload_claim(id, jwt::claim(Json::Value(dVal)));
 									}
 									else if(jwtpayload[id].isString())
 									{
 										std::string sVal(jwtpayload[id].asString());
-										JWT.set_payload_claim(id, picojson::value(sVal));
+										JWT.set_payload_claim(id, jwt::claim(Json::Value(sVal)));
 									}
 									else if(jwtpayload[id].isArray())
 									{
@@ -1480,7 +1697,7 @@ namespace http {
 					return false;
 
 			// As all segments of the given IP fit within the given network range, otherwise we wouldn't be here
-			_log.Debug(DEBUG_WEBSERVER,"[web:%s] IP (%s) is within Trusted network range!",myWebem->GetPort().c_str(), ip.c_str());
+			if (m_logger) m_logger->Debug(DebugCategory::WebServer,"[web:%s] IP (%s) is within Trusted network range!",myWebem->GetPort().c_str(), ip.c_str());
 			return true;
 		}
 
@@ -1494,7 +1711,7 @@ namespace http {
 			//Is the given 'host' a valid IP address?
 			std::string sCleanHost = sHost;
 			if (!cWebem::isValidIP(sCleanHost))			{
-				_log.Log(LOG_STATUS,"[web:%s] Given host (%s) is not a valid Ipv4 or IPv6 address! Unable to check if in Trusted Network!", myWebem->GetPort().c_str() ,sHost.c_str());
+				if (m_logger) m_logger->Log(LogLevel::Status,"[web:%s] Given host (%s) is not a valid Ipv4 or IPv6 address! Unable to check if in Trusted Network!", myWebem->GetPort().c_str() ,sHost.c_str());
 				return false;	// The IP address is not a valid IPv4 or IPv6 address
 			}
 			bool bIsIPv6 = (sCleanHost.find(':') != std::string::npos);
@@ -1506,11 +1723,11 @@ namespace http {
 		std::string cWebemRequestHandler::generateSessionID()
 		{
 			// Session id should not be predictable
-			std::string randomValue = GenerateUUID();
+			std::string randomValue = utils::generate_uuid();
 
-			std::string sessionId = GenerateMD5Hash(base64_encode(randomValue));
+			std::string sessionId = utils::GenerateMD5Hash(base64_encode(randomValue));
 
-			_log.Debug(DEBUG_WEBSERVER, "[web:%s] generate new session id token (%s)", myWebem->GetPort().c_str(), sessionId.c_str());
+			if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] generate new session id token (%s)", myWebem->GetPort().c_str(), sessionId.c_str());
 
 			return sessionId;
 		}
@@ -1518,18 +1735,18 @@ namespace http {
 		std::string cWebemRequestHandler::generateAuthToken(const WebEmSession & session, const request & req)
 		{
 			// Authentication token should not be predictable
-			std::string randomValue = GenerateUUID();
+			std::string randomValue = utils::generate_uuid();
 
 			std::string authToken = base64_encode(randomValue);
 
-			_log.Debug(DEBUG_WEBSERVER, "[web:%s] generate new authentication token (%s) for user (%s)", myWebem->GetPort().c_str(), authToken.c_str(), session.username.c_str());
+			if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] generate new authentication token (%s) for user (%s)", myWebem->GetPort().c_str(), authToken.c_str(), session.username.c_str());
 
 			session_store_impl_ptr sstore = myWebem->GetSessionStore();
 			if (sstore != nullptr)
 			{
 				WebEmStoredSession storedSession;
 				storedSession.id = session.id;
-				storedSession.auth_token = GenerateMD5Hash(authToken); // only save the hash to avoid a security issue if database is stolen
+				storedSession.auth_token = utils::GenerateMD5Hash(authToken); // only save the hash to avoid a security issue if database is stolen
 				storedSession.username = session.username;
 				storedSession.expires = session.expires;
 				storedSession.remote_host = session.remote_host; // to trace host
@@ -1544,18 +1761,29 @@ namespace http {
 
 		void cWebemRequestHandler::send_cookie(reply& rep, const WebEmSession & session)
 		{
+			const std::string& cookieName = myWebem->m_session_cookie_name;
 			std::stringstream sstr;
-			sstr << "DMZSID=" << session.id << "_" << session.auth_token << "." << session.expires;
-			sstr << "; HttpOnly; SameSite=strict; path=/; Expires=" << make_web_time(session.expires);
+			sstr << cookieName << "=" << session.id << "_" << session.auth_token << "." << session.expires;
+			sstr << "; HttpOnly; SameSite=strict; path=/";
+			// Only set Expires for "remember me" (long-lived) sessions.
+			// Short sessions use a browser session cookie (no Expires) so the browser keeps
+			// sending it until it is closed, while the server enforces the actual inactivity
+			// timeout independently via the session expiry check in CheckAuthentication.
+			// Using session.rememberme as primary; fall back to checking the expiry duration
+			// so that remember-me sessions still get a persistent cookie after a server restart
+			// (when rememberme is not stored in the DB and defaults to false in memory).
+			if (session.rememberme || session.expires > utils::webem_time() + SHORT_SESSION_TIMEOUT)
+				sstr << "; Expires=" << utils::make_web_time(session.expires);
 			reply::add_header(&rep, "Set-Cookie", sstr.str(), false);
 		}
 
 		void cWebemRequestHandler::send_remove_cookie(reply& rep)
 		{
+			const std::string& cookieName = myWebem->m_session_cookie_name;
 			std::stringstream sstr;
-			sstr << "DMZSID=none";
-			// RK, we removed path=/ so you can be logged in to two Oikomaticz instances
-			sstr << "; HttpOnly; SameSite=strict; Expires=" << make_web_time(0);
+			sstr << cookieName << "=none";
+			// Omitting path=/ allows simultaneous logins to multiple instances on the same host.
+			sstr << "; HttpOnly; SameSite=strict; Expires=" << utils::make_web_time(0);
 			reply::add_header(&rep, "Set-Cookie", sstr.str(), false);
 		}
 
@@ -1572,8 +1800,10 @@ namespace http {
 			if (cookie_header != nullptr)
 			{
 				// Parse session id and its expiration date
+				const std::string cookiePrefix = myWebem->m_session_cookie_name + "=";
+				const size_t cookiePrefixLen = cookiePrefix.size();
 				std::string scookie = cookie_header;
-				size_t fpos = scookie.find("DMZSID=");
+				size_t fpos = scookie.find(cookiePrefix);
 				if (fpos != std::string::npos)
 				{
 					scookie = scookie.substr(fpos);
@@ -1585,21 +1815,14 @@ namespace http {
 					}
 					size_t upos = scookie.find('_', fpos);
 					size_t ppos = scookie.find('.', upos);
-					time_t now = mytime(nullptr);
 					if ((fpos != std::string::npos) && (upos != std::string::npos) && (ppos != std::string::npos))
 					{
-						sSID = scookie.substr(fpos + 7, upos - fpos - 7);
+						sSID = scookie.substr(fpos + cookiePrefixLen, upos - fpos - cookiePrefixLen);
 						sAuthToken = scookie.substr(upos + 1, ppos - upos - 1);
 						szTime = scookie.substr(ppos + 1);
 
-						time_t stime;
-						std::stringstream sstr;
-						sstr << szTime;
-						sstr >> stime;
-
-						expired = stime < now;
 						bCookie = true;
-						_log.Debug(DEBUG_AUTH, "[web:%s] Found cookie (%s) with expiration time (%s)(%d)", myWebem->GetPort().c_str(), sSID.c_str(), szTime.c_str(), expired);
+						if (m_logger) m_logger->Debug(DebugCategory::Auth, "[web:%s] Found cookie (%s) with expiration time (%s)", myWebem->GetPort().c_str(), sSID.c_str(), szTime.c_str());
 					}
 				}
 			}
@@ -1608,16 +1831,12 @@ namespace http {
 
 		void cWebemRequestHandler::send_authorization_request(reply& rep)
 		{
-			rep = reply::stock_reply(reply::unauthorized, myWebem->m_settings.is_secure());
+			rep = reply::stock_reply(reply::unauthorized, true, myWebem->m_settings.is_secure());
 			reply::add_cors_headers(&rep);
 			send_remove_cookie(rep);
 			if (myWebem->m_authmethod == AUTH_BASIC)
 			{
-				char szAuthHeader[200];
-				sprintf(szAuthHeader,
-					"Basic "
-					"realm=\"%s\"",
-					myWebem->m_DigistRealm.c_str());
+				std::string szAuthHeader = "Basic realm=\"" + myWebem->m_DigistRealm + "\"";
 				reply::add_header(&rep, "WWW-Authenticate", szAuthHeader);
 			}
 		}
@@ -1647,6 +1866,7 @@ namespace http {
 				bool bHaveGZipSupport = (strstr(encoding_header, "gzip") != nullptr);
 				if (bHaveGZipSupport)
 				{
+#ifndef WEBEM_NO_GZIP
 					CA2GZIP gzip((char*)rep.content.c_str(), (int)rep.content.size());
 					if ((gzip.Length > 0) && (gzip.Length < (int)rep.content.size()))
 					{
@@ -1659,6 +1879,7 @@ namespace http {
 						reply::add_header(&rep, "Content-Encoding", "gzip");
 						return true;
 					}
+#endif
 				}
 			}
 			return false;
@@ -1710,10 +1931,11 @@ namespace http {
 				return false;
 			};
 
-			// we only have one service until now
-			if (req.uri.find("/json") == std::string::npos)
+			// Find matching endpoint by request path
+			std::string req_path = myWebem->ExtractRequestPath(req.uri);
+			WebsocketHandlerFactory ws_factory = myWebem->GetWebsocketFactory(req_path);
+			if (!ws_factory)
 			{
-				// todo: request uri could be an absolute URI as well!!!
 				rep = reply::stock_reply(reply::not_found);
 				return true;
 			}
@@ -1751,16 +1973,15 @@ namespace http {
 			}
 
 			h = request::get_req_header(&req, "Sec-Websocket-Protocol");
-			// check if a protocol is given, and it includes the {websocket_protocol}.
-			if (!h)
+			// check sub-protocol if the endpoint requires one
+			std::string expected_protocol = myWebem->GetWebsocketProtocol(req_path);
+			if (!expected_protocol.empty())
 			{
-				return false;
-			}
-			std::string protocol_header = h;
-			if (protocol_header.find(websocket_protocol) == std::string::npos)
-			{
-				rep = reply::stock_reply(reply::bad_request);
-				return true;
+				if (!h || std::string(h).find(expected_protocol) == std::string::npos)
+				{
+					rep = reply::stock_reply(reply::bad_request);
+					return true;
+				}
 			}
 			h = request::get_req_header(&req, "Sec-Websocket-Key");
 			// request MUST include a sec-websocket-key header and we need to respond to it
@@ -1781,8 +2002,14 @@ namespace http {
 				return true;
 			}
 			reply::add_header(&rep, "Sec-Websocket-Accept", accept);
-			// we only speak the {websocket_protocol} subprotocol
-			reply::add_header(&rep, "Sec-Websocket-Protocol", websocket_protocol);
+			// echo the sub-protocol that the endpoint expects
+			if (!expected_protocol.empty())
+			{
+				reply::add_header(&rep, "Sec-Websocket-Protocol", expected_protocol);
+			}
+			// Carry the authenticated session to connection.cpp so the factory receives it
+			// directly without any cookie re-parsing.
+			rep.ws_session = session;
 			return true;
 		}
 
@@ -1818,14 +2045,21 @@ namespace http {
 		bool cWebemRequestHandler::CheckAuthByPass(const request& req)
 		{
 			//Check if we need to bypass authentication for this request (URL or command)
-			for (const auto &url : myWebem->myWhitelistURLs)
+			std::vector<std::string> whitelistURLs;
+			std::vector<std::string> whitelistCommands;
+			{
+				std::lock_guard<std::mutex> lock(myWebem->m_configMutex);
+				whitelistURLs = myWebem->myWhitelistURLs;
+				whitelistCommands = myWebem->myWhitelistCommands;
+			}
+			for (const auto &url : whitelistURLs)
 				if (req.uri.find(url) == 0)
 					return true;
 
 			std::string cmdparam;
 			if (GetURICommandParameter(req.uri, cmdparam))
 			{
-				for (const auto &cmd : myWebem->myWhitelistCommands)
+				for (const auto &cmd : whitelistCommands)
 					if (cmdparam.find(cmd) == 0)
 						return true;
 			}
@@ -1851,15 +2085,22 @@ namespace http {
 			session.auth_token = "";
 			session.istrustednetwork = false;
 
-			if (myWebem->m_userpasswords.empty())
+			// Snapshot the user password list under lock to avoid races with AddUserPassword/ClearUserPasswords
+			std::vector<WebUserPassword> userpasswords;
 			{
-				_log.Log(LOG_ERROR, "[Auth Check] No (active) users in the system! There should be at least 1 active Admin user! Please add an Admin user to the system!");
+				std::lock_guard<std::mutex> lock(myWebem->m_configMutex);
+				userpasswords = myWebem->m_userpasswords;
+			}
+
+			if (userpasswords.empty())
+			{
+				if (m_logger) m_logger->Log(LogLevel::Error, "[Auth Check] No (active) users in the system! There should be at least 1 active Admin user! Please add an Admin user to the system!");
 				authErr = true;
 				return false; // No users in the system!
 			}
 			else if (AreWeInTrustedNetwork(session.remote_host))
 			{
-				for (const auto &my : myWebem->m_userpasswords)
+				for (const auto &my : userpasswords)
 				{
 					if (my.userrights == URIGHTS_ADMIN) // we found an admin
 					{
@@ -1870,7 +2111,7 @@ namespace http {
 				}
 				if (session.rights == URIGHTS_NONE)
 				{
-					_log.Log(LOG_STATUS, "[Auth Check] Trusted network exception detected, but no Admin User found! Please add an Admin user to the system!");
+					if (m_logger) m_logger->Log(LogLevel::Status, "[Auth Check] Trusted network exception detected, but no Admin User found! Please add an Admin user to the system!");
 					//If the User database table is without an Admin, we will create a temporary Admin user (we are in trusted network anyway)
 					session.username = "tmp_admin";
 					session.rights = URIGHTS_ADMIN;
@@ -1884,7 +2125,7 @@ namespace http {
 			{
 				if (_ah.method == "JWT")
 				{
-					_log.Debug(DEBUG_AUTH, "[Auth Check] Found JWT Authorization token: Method %s, Userdata %s, rights %s", _ah.method.c_str(), _ah.user.c_str(), _ah.qop.c_str());
+					if (m_logger) m_logger->Debug(DebugCategory::Auth, "[Auth Check] Found JWT Authorization token: Method %s, Userdata %s, rights %s", _ah.method.c_str(), _ah.user.c_str(), _ah.qop.c_str());
 					session.isnew = false;
 					session.rememberme = false;
 					session.username = _ah.user;
@@ -1896,7 +2137,7 @@ namespace http {
 					// OAuth2 endpoints handle their own client authentication, don't validate as user here
 					if (req.uri.find("/oauth2/") != std::string::npos)
 					{
-						_log.Debug(DEBUG_AUTH, "[Auth Check] Basic Authorization header found for OAuth2 endpoint, will be validated by OAuth2 handler");
+						if (m_logger) m_logger->Debug(DebugCategory::Auth, "[Auth Check] Basic Authorization header found for OAuth2 endpoint, will be validated by OAuth2 handler");
 						// Don't set session, let OAuth2 code handle it
 					}
 					else if (req.uri.find("/json.htm?") != std::string::npos)	// Exception for the main API endpoint so scripts can execute them with 'just' Basic AUTH
@@ -1905,7 +2146,7 @@ namespace http {
 						{
 							if (CheckUserAuthorization(_ah.user, &_ah))
 							{
-								_log.Debug(DEBUG_AUTH, "[Auth Check] Found Basic Authorization for API call: Method %s, Userdata %s, rights %s", _ah.method.c_str(), _ah.user.c_str(), _ah.qop.c_str());
+								if (m_logger) m_logger->Debug(DebugCategory::Auth, "[Auth Check] Found Basic Authorization for API call: Method %s, Userdata %s, rights %s", _ah.method.c_str(), _ah.user.c_str(), _ah.qop.c_str());
 								session.isnew = false;
 								session.rememberme = false;
 								session.username = _ah.user;
@@ -1914,7 +2155,7 @@ namespace http {
 							}
 							else
 							{	// Clear the session as we could be in a Trusted Network BUT have invalid Basic Auth
-								_log.Debug(DEBUG_AUTH, "[Auth Check] Invalid Basic Authorization for API call!");
+								if (m_logger) m_logger->Debug(DebugCategory::Auth, "[Auth Check] Invalid Basic Authorization for API call!");
 								session.username = "";
 								session.rights = URIGHTS_NONE;
 								return false;
@@ -1922,7 +2163,7 @@ namespace http {
 						}
 						else
 						{	// Clear the session as we could be in a Trusted Network BUT rejected Basic Auth
-							_log.Debug(DEBUG_AUTH, "[Auth Check] Basic Authorization rejected as it is not done over HTTPS or not explicitly allowed over HTTP!");
+							if (m_logger) m_logger->Debug(DebugCategory::Auth, "[Auth Check] Basic Authorization rejected as it is not done over HTTPS or not explicitly allowed over HTTP!");
 							session.username = "";
 							session.rights = URIGHTS_NONE;
 							return false;
@@ -1930,7 +2171,7 @@ namespace http {
 					}
 					else
 					{
-						_log.Debug(DEBUG_AUTH, "[Auth Check] Basic Authorization ignored as this is not a call to the API!");
+						if (m_logger) m_logger->Debug(DebugCategory::Auth, "[Auth Check] Basic Authorization ignored as this is not a call to the API!");
 					}
 				}
 			}
@@ -1944,7 +2185,7 @@ namespace http {
 			{
 				if (!(sSID.empty() || sAuthToken.empty() || szTime.empty()))
 				{
-					time_t now = mytime(nullptr);
+					time_t now = utils::webem_time();
 					WebEmSession* oldSession = myWebem->GetSession(sSID);
 					if ((oldSession != nullptr) && (oldSession->expires < now))
 					{
@@ -1954,7 +2195,6 @@ namespace http {
 					if (expired)
 					{
 						//expired session, remove session
-						m_failcounter = 0;
 						if (oldSession != nullptr)
 						{
 							// session exists (delete it from memory and database)
@@ -1999,29 +2239,29 @@ namespace http {
 			session_store_impl_ptr sstore = myWebem->GetSessionStore();
 			if (sstore == nullptr)
 			{
-				_log.Log(LOG_ERROR, "CheckAuthToken(%s_%s) : no store defined", session.id.c_str(), session.auth_token.c_str());
+				if (m_logger) m_logger->Log(LogLevel::Error, "CheckAuthToken(%s_%s) : no store defined", session.id.c_str(), session.auth_token.c_str());
 				return true;
 			}
 
 			if (session.id.empty() || session.auth_token.empty())
 			{
-				_log.Log(LOG_ERROR, "CheckAuthToken(%s_%s) : session id or auth token is empty", session.id.c_str(), session.auth_token.c_str());
+				if (m_logger) m_logger->Log(LogLevel::Error, "CheckAuthToken(%s_%s) : session id or auth token is empty", session.id.c_str(), session.auth_token.c_str());
 				return false;
 			}
 			WebEmStoredSession storedSession = sstore->GetSession(session.id);
 			if (storedSession.id.empty())
 			{
-				_log.Debug(DEBUG_AUTH, "[web:%s] CheckAuthToken(%s_%s) : session id not found", myWebem->GetPort().c_str(), session.id.c_str(), session.auth_token.c_str());
+				if (m_logger) m_logger->Debug(DebugCategory::Auth, "[web:%s] CheckAuthToken(%s_%s) : session id not found", myWebem->GetPort().c_str(), session.id.c_str(), session.auth_token.c_str());
 				return false;
 			}
-			if (storedSession.auth_token != GenerateMD5Hash(session.auth_token))
+			if (storedSession.auth_token != utils::GenerateMD5Hash(session.auth_token))
 			{
-				_log.Log(LOG_ERROR, "CheckAuthToken(%s_%s) : auth token mismatch", session.id.c_str(), session.auth_token.c_str());
+				if (m_logger) m_logger->Log(LogLevel::Error, "CheckAuthToken(%s_%s) : auth token mismatch", session.id.c_str(), session.auth_token.c_str());
 				removeAuthToken(session.id);
 				return false;
 			}
 
-			_log.Debug(DEBUG_AUTH, "[web:%s] CheckAuthToken(%s_%s_%s) : Session found & Token authenticated", myWebem->GetPort().c_str(), session.id.c_str(), session.auth_token.c_str(), session.username.c_str());
+			if (m_logger) m_logger->Debug(DebugCategory::Auth, "[web:%s] CheckAuthToken(%s_%s_%s) : Session found & Token authenticated", myWebem->GetPort().c_str(), session.id.c_str(), session.auth_token.c_str(), session.username.c_str());
 
 			if (session.username.empty())
 			{
@@ -2030,7 +2270,12 @@ namespace http {
 				bool sessionExpires = false;
 				session.username = storedSession.username;
 				session.expires = storedSession.expires;
-				for (const auto &my : myWebem->m_userpasswords)
+				std::vector<WebUserPassword> userpasswords;
+				{
+					std::lock_guard<std::mutex> lock(myWebem->m_configMutex);
+					userpasswords = myWebem->m_userpasswords;
+				}
+				for (const auto &my : userpasswords)
 				{
 					if (my.Username == session.username) // the user still exists
 					{
@@ -2040,12 +2285,12 @@ namespace http {
 					}
 				}
 
-				time_t now = mytime(nullptr);
+				time_t now = utils::webem_time();
 				sessionExpires = session.expires < now;
 
 				if (!userExists || sessionExpires)
 				{
-					_log.Debug(DEBUG_AUTH, "[web:%s] CheckAuthToken(%s_%s) : cannot restore session, user not found or session expired (%d)", myWebem->GetPort().c_str(), session.id.c_str(), session.auth_token.c_str(), sessionExpires);
+					if (m_logger) m_logger->Debug(DebugCategory::Auth, "[web:%s] CheckAuthToken(%s_%s) : cannot restore session, user not found or session expired (%d)", myWebem->GetPort().c_str(), session.id.c_str(), session.auth_token.c_str(), sessionExpires);
 					removeAuthToken(session.id);
 					return false;
 				}
@@ -2053,7 +2298,7 @@ namespace http {
 				WebEmSession* oldSession = myWebem->GetSession(session.id);
 				if (oldSession == nullptr)
 				{
-					_log.Debug(DEBUG_AUTH, "[web:%s] CheckAuthToken(%s_%s_%s) : restore session", myWebem->GetPort().c_str(), session.id.c_str(), session.auth_token.c_str(), session.username.c_str());
+					if (m_logger) m_logger->Debug(DebugCategory::Auth, "[web:%s] CheckAuthToken(%s_%s_%s) : restore session", myWebem->GetPort().c_str(), session.id.c_str(), session.auth_token.c_str(), session.username.c_str());
 					myWebem->AddSession(session);
 				}
 			}
@@ -2072,9 +2317,9 @@ namespace http {
 
 		char *cWebemRequestHandler::strftime_t(const char *format, const time_t rawtime)
 		{
-			static char buffer[1024];
+			static thread_local char buffer[1024];
 			struct tm ltime;
-			localtime_r(&rawtime, &ltime);
+			utils::safe_localtime(&rawtime, &ltime);
 			strftime(buffer, sizeof(buffer), format, &ltime);
 			return buffer;
 		}
@@ -2084,18 +2329,14 @@ namespace http {
 		void cWebemRequestHandler::handle_request(const request& req, reply& rep)
 		{
 			// 0) If extended Webserver debugging is turned on, than log the request details
-			if(_log.IsDebugLevelEnabled(DEBUG_WEBSERVER))
-			{
-				_log.Debug(DEBUG_WEBSERVER, "[web:%s] Host:%s Uri:%s", myWebem->GetPort().c_str(), req.host_remote_address.c_str(), req.uri.c_str());
-				if(_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
+			if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] Host:%s Uri:%s", myWebem->GetPort().c_str(), req.host_remote_address.c_str(), req.uri.c_str());
+			if (m_logger) {
+				std::string sHeaders;
+				for (const auto &header : req.headers)
 				{
-					std::string sHeaders;
-					for (const auto &header : req.headers)
-					{
-						sHeaders += header.name + ": " + header.value + "\n";
-					}
-					_log.Debug(DEBUG_RECEIVED, "[web:%s] Request Headers:\n%s", myWebem->GetPort().c_str(), sHeaders.c_str());
+					sHeaders += header.name + ": " + header.value + "\n";
 				}
+				m_logger->Debug(DebugCategory::WebServer, "[web:%s] Request Headers:\n%s", myWebem->GetPort().c_str(), sHeaders.c_str());
 			}
 
 			// 1) Is the incoming request ment for this Virtual Host?
@@ -2128,14 +2369,14 @@ namespace http {
 			bool bUseRealHost = false;
 			if(!myWebem->findRealHostBehindProxies(req, realHost))
 			{
-				_log.Log(LOG_ERROR, "[web:%s]: Unable to determine origin due to improper proxy header(s) (values) being used (Possible spoofing attempt!?), dropping client request (remote address: %s)", myWebem->GetPort().c_str(), session.remote_host.c_str());
+				if (m_logger) m_logger->Log(LogLevel::Error, "[web:%s]: Unable to determine origin due to improper proxy header(s) (values) being used (Possible spoofing attempt!?), dropping client request (remote address: %s)", myWebem->GetPort().c_str(), session.remote_host.c_str());
 				rep = reply::stock_reply(reply::forbidden);
 				return;
 			}
 			else if (!realHost.empty())
 			{
 				if (AreWeInTrustedNetwork(session.remote_host))
-				{	// 3b) We only use Proxy header information if the connection Oikomaticz receives comes from a Trusted network
+				{	// 3b) We only use Proxy header information if the connection comes from a Trusted network
 					session.remote_host = realHost;		// replace the host of the connection with the originating host behind the proxies
 					rep.originHost = realHost;
 					bUseRealHost = true;
@@ -2155,9 +2396,9 @@ namespace http {
 				itt_rc = m_remote_web_clients.find(remoteClientKey);
 				bSeenBefore = false;
 			}
-			else if (itt_rc->second.last_seen < (mytime(nullptr) - SHORT_SESSION_TIMEOUT))
+			else if (itt_rc->second.last_seen < (utils::webem_time() - SHORT_SESSION_TIMEOUT))
 				bSeenBefore = false;
-			itt_rc->second.last_seen = mytime(nullptr);
+			itt_rc->second.last_seen = utils::webem_time();
 			itt_rc->second.host_last_request_uri_ = req.uri;
 
 			// 4) Respond to CORS Preflight request (for JSON API)
@@ -2187,12 +2428,12 @@ namespace http {
 
 			bool isAPI = (isPage && (req.uri.find("/json.htm?") != std::string::npos));
 			bool isLogout = (isAPI && (req.uri.find("param=dologout") != std::string::npos));
-			bool isLogin = (isAPI && (req.uri.find("param=logincheck") != std::string::npos));
+			bool isLogin = (isAPI && (req.uri.find("param=logincheck") != std::string::npos || req.uri.find("param=passkeylogin-complete") != std::string::npos));
 
 			// 7) If the LogOut API is called, we will remove the session and the cookie
 			if (isLogout)
 			{
-				_log.Debug(DEBUG_AUTH, "[web:%s] Logout : Logging out User %s (%d)", myWebem->GetPort().c_str(), session.username.c_str(), session.rights);
+				if (m_logger) m_logger->Debug(DebugCategory::Auth, "[web:%s] Logout : Logging out User %s (%d)", myWebem->GetPort().c_str(), session.username.c_str(), session.rights);
 
 				rep = reply::stock_reply(reply::no_content);
 				if(bUseRealHost)
@@ -2202,7 +2443,7 @@ namespace http {
 				std::string sSID = session.id;
 				if(!sSID.empty())
 				{
-					_log.Debug(DEBUG_AUTH, "[web:%s] Logout : remove session %s", myWebem->GetPort().c_str(), sSID.c_str());
+					if (m_logger) m_logger->Debug(DebugCategory::Auth, "[web:%s] Logout : remove session %s", myWebem->GetPort().c_str(), sSID.c_str());
 					myWebem->RemoveSession(sSID);
 					removeAuthToken(sSID);
 					send_remove_cookie(rep);
@@ -2216,12 +2457,12 @@ namespace http {
 			// 9) Check if the request needs to be authenticated, only for pages (and actions)
 			bool needsAuthentication = (isPage ? !CheckAuthByPass(req) : false);
 
-			_log.Debug(DEBUG_AUTH,"[web:%s] isPage %d isAction %d isUpgrade %d needsAuthentication %d isAuthenticated %d (%s) isNew %d", myWebem->GetPort().c_str(), isPage, isAction, isUpgradeRequest, needsAuthentication, isAuthenticated, session.username.c_str(), session.isnew);
+			if (m_logger) m_logger->Debug(DebugCategory::Auth,"[web:%s] isPage %d isAction %d isUpgrade %d needsAuthentication %d isAuthenticated %d (%s) isNew %d", myWebem->GetPort().c_str(), isPage, isAction, isUpgradeRequest, needsAuthentication, isAuthenticated, session.username.c_str(), session.isnew);
 
 			// 10) Check if the request has proper user authentication for those pages (or actions) that require it. If not, send an Authorization request
 			if ((isPage || isAction || isUpgradeRequest) && needsAuthentication && !isAuthenticated)
 			{
-				_log.Debug(DEBUG_WEBSERVER, "[web:%s] Did not find suitable Authorization!", myWebem->GetPort().c_str());
+				if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] Did not find suitable Authorization!", myWebem->GetPort().c_str());
 				send_authorization_request(rep);
 				if(bUseRealHost)
 					rep.originHost = realHost;
@@ -2256,7 +2497,7 @@ namespace http {
 						rep.status = reply::ok;
 						rep.content = requestCopy.uri;
 						reply::add_header(&rep, "Content-Length", std::to_string(rep.content.size()));
-						reply::add_header(&rep, "Last-Modified", make_web_time(mytime(nullptr)), true);
+						reply::add_header(&rep, "Last-Modified", utils::make_web_time(utils::webem_time()), true);
 						reply::add_header_content_type(&rep, "application/json");
 						return;
 					}
@@ -2289,19 +2530,19 @@ namespace http {
 							if (uri.find("/images/") == 0)
 							{
 								std::string theme_images_path = myWebem->m_actTheme + uri;
-								if (file_exist((doc_root_ + theme_images_path).c_str()))
+								if (utils::file_exists((doc_root_ + theme_images_path).c_str()))
 								{
 									requestCopy.uri = myWebem->GetWebRoot() + theme_images_path;
-									_log.Debug(DEBUG_WEBSERVER, "[web:%s] modified images request to (%s).", uri.c_str(), requestCopy.uri.c_str());
+									if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] modified images request to (%s).", uri.c_str(), requestCopy.uri.c_str());
 								}
 							}
 							else if (uri.find("/styles/") == 0)
 							{
 								std::string theme_styles_path = myWebem->m_actTheme + uri.substr(15);
-								if (file_exist((doc_root_ + theme_styles_path).c_str()))
+								if (utils::file_exists((doc_root_ + theme_styles_path).c_str()))
 								{
 									requestCopy.uri = myWebem->GetWebRoot() + theme_styles_path;
-									_log.Debug(DEBUG_WEBSERVER, "[web:%s] modified request to (%s).", uri.c_str(), requestCopy.uri.c_str());
+									if (m_logger) m_logger->Debug(DebugCategory::WebServer, "[web:%s] modified request to (%s).", uri.c_str(), requestCopy.uri.c_str());
 								}
 							}
 						}
@@ -2318,7 +2559,7 @@ namespace http {
 
 			// 13) Check if we have seen the client before (recently), if not, log it for security purposes
 			if (!bSeenBefore)
-				_log.Log(LOG_STATUS, "[web:%s] Incoming connection from: %s", myWebem->GetPort().c_str(), session.remote_host.c_str());
+				if (m_logger) m_logger->Log(LogLevel::Status, "[web:%s] Incoming connection from: %s", myWebem->GetPort().c_str(), session.remote_host.c_str());
 
 			// 14) We handled the request, now we need to check if we need to create a new session or renew the existing one
 
@@ -2328,7 +2569,7 @@ namespace http {
 				{
 					// Create a new session ID
 					session.id = generateSessionID();
-					session.expires = mytime(nullptr) + SHORT_SESSION_TIMEOUT;
+					session.expires = utils::webem_time() + SHORT_SESSION_TIMEOUT;
 					if (session.rememberme)
 					{
 						// Extend session by 30 days
@@ -2340,24 +2581,28 @@ namespace http {
 					send_cookie(rep, session);
 				}
 			}
-			else if (!session.id.empty())	// Session found, Renew session expiration and authentication token
+			else if (!session.id.empty())	// Session found, Renew session expiration (keep auth token unchanged to avoid race conditions with concurrent requests)
 			{
 				WebEmSession* memSession = myWebem->GetSession(session.id);
 				if (memSession != nullptr)
 				{
-					time_t now = mytime(nullptr);
+					time_t now = utils::webem_time();
 					// Renew session expiration date if half of session duration has been exceeded ("dont remember me" sessions, 10 minutes)
 					if (memSession->expires - (SHORT_SESSION_TIMEOUT / 2) < now)
 					{
 						memSession->expires = now + SHORT_SESSION_TIMEOUT;
-						memSession->auth_token = generateAuthToken(*memSession, req); // do it after expires to save it also
+						session_store_impl_ptr sstore = myWebem->GetSessionStore();
+						if (sstore != nullptr)
+							sstore->RenewSessionExpiration(memSession->id, memSession->expires);
 						send_cookie(rep, *memSession);
 					}
 					// Renew session expiration date if half of session duration has been exceeded ("remember me" sessions, 30 days)
 					else if ((memSession->expires > SHORT_SESSION_TIMEOUT + now) && (memSession->expires - (LONG_SESSION_TIMEOUT / 2) < now))
 					{
 						memSession->expires = now + LONG_SESSION_TIMEOUT;
-						memSession->auth_token = generateAuthToken(*memSession, req); // do it after expires to save it also
+						session_store_impl_ptr sstore = myWebem->GetSessionStore();
+						if (sstore != nullptr)
+							sstore->RenewSessionExpiration(memSession->id, memSession->expires);
 						send_cookie(rep, *memSession);
 					}
 				}

@@ -1,0 +1,15 @@
+<div class="chart noselect">
+    <div class="chartarea">
+        <div class="zoom-buttons-container">
+            <button class="zoom-button" ng-class="isActDay(6)"><span data-i18n="Sat" ng-click="setWeekday(6)"></span></button>
+            <button class="zoom-button" ng-class="isActDay(5)"><span data-i18n="Fri" ng-click="setWeekday(5)"></span></button>
+            <button class="zoom-button" ng-class="isActDay(4)"><span data-i18n="Thu" ng-click="setWeekday(4)"></span></button>
+            <button class="zoom-button" ng-class="isActDay(3)"><span data-i18n="Wed" ng-click="setWeekday(3)"></span></button>
+            <button class="zoom-button" ng-class="isActDay(2)"><span data-i18n="Tue" ng-click="setWeekday(2)"></span></button>
+            <button class="zoom-button" ng-class="isActDay(1)"><span data-i18n="Mon" ng-click="setWeekday(1)"></span></button>
+            <button class="zoom-button" ng-class="isActDay(0)"><span data-i18n="Sun" ng-click="setWeekday(0)"></span></button>
+            <button class="zoom-button" ng-class="isActDay(-1)"><span data-i18n="Days" ng-click="setWeekday(-1)"></span></button>
+        </div>
+        <highchart id="chart-{{$ctrl.device.idx}}-stat-day" config="chartDefinitionDay" style="display: block; width: 100%; height: 300px;"></highchart>
+    </div>
+</div>

@@ -3688,7 +3688,6 @@ bool IsNetworkDevice(const hardware::type::value htype)
 	case hardware::type::YouLess:
 	case hardware::type::OpenThermGatewayTCP:
 	case hardware::type::LimitlessLights:
-	case hardware::type::SolarEdgeTCP:
 	case hardware::type::WOL:
 	case hardware::type::ECODEVICES:
 	case hardware::type::Mochad:

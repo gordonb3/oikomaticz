@@ -1,4 +1,4 @@
-/*
+/* 
    base64.cpp and base64.h
 
    Copyright (C) 2004-2008 René Nyffenegger
@@ -42,16 +42,16 @@
 	   }
 
 */
-#include "stdafx.h"
-#include "Base64.h"
+#include "webem_stdafx.h"
+#include "webserver/Base64.h"
 #include <iostream>
 
-static const std::string base64_chars =
+static const std::string base64_chars = 
              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
              "abcdefghijklmnopqrstuvwxyz"
              "0123456789+/";
 
-static const std::string base64url_chars =
+static const std::string base64url_chars = 
              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
              "abcdefghijklmnopqrstuvwxyz"
              "0123456789-_";

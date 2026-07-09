@@ -1,6 +1,6 @@
-#include "stdafx.h"
-#include "Websockets.hpp"
-#include "main/json_helper.h"
+#include "webem_stdafx.h"
+#include "webserver/Websockets.h"
+#include <jsoncpp/json.h>
 
 #include <utility>
 
@@ -158,12 +158,17 @@ namespace http {
 			return opcode;
 		};
 
-		CWebsocket::CWebsocket(std::function<void(const std::string &packet_data)> _MyWrite, cWebem *_webEm, std::function<void(const std::string &packet_data)> _WSWrite)
+		CWebsocket::CWebsocket(std::function<void(const std::string &packet_data)> _MyWrite, std::function<void(const std::string &packet_data)> _WSWrite)
 			: OUR_PING_ID("fd")
-			, handler(_webEm, std::move(_WSWrite))
+			, m_WSWrite(std::move(_WSWrite))
 		{
 			start_new_packet = true;
 			MyWrite = std::move(_MyWrite);
+		}
+
+		void CWebsocket::SetHandler(std::shared_ptr<IWebsocketHandler> handler)
+		{
+			m_handler = std::move(handler);
 		}
 
 		boost::tribool CWebsocket::parse(const uint8_t *begin, size_t size, size_t &bytes_consumed, bool &keep_alive)
@@ -222,7 +227,7 @@ namespace http {
 		//       if everything works. We need a proper implementation here.
 		void CWebsocket::OnReceiveText(const std::string &packet_data)
 		{
-			boost::tribool result = handler.Handle(packet_data, false);
+			if (m_handler) m_handler->Handle(packet_data, false);
 		}
 
 		void CWebsocket::OnReceiveBinary(const std::string &packet_data)
@@ -261,17 +266,23 @@ namespace http {
 
 		void CWebsocket::Start()
 		{
-			handler.Start();
+			if (m_handler) m_handler->Start();
 		}
 
 		void CWebsocket::Stop()
 		{
-			handler.Stop();
+			if (m_handler) m_handler->Stop();
+			m_handler.reset();
 		}
 
-		CWebsocketHandler * CWebsocket::GetHandler()
+		std::shared_ptr<IWebsocketHandler> CWebsocket::DetachHandler()
 		{
-			return &handler;
+			return std::move(m_handler);
+		}
+
+		IWebsocketHandler * CWebsocket::GetHandler()
+		{
+			return m_handler.get();
 		}
 
 	} // namespace server
