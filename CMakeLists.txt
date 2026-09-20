@@ -276,7 +276,7 @@ endif(${BIGENDIAN})
 add_custom_target(revisiontag ALL)
 
 # creates appversion.h using cmake script
-add_custom_command(TARGET revisiontag COMMAND ${CMAKE_COMMAND}
+add_custom_command(TARGET revisiontag PRE_BUILD COMMAND ${CMAKE_COMMAND}
    -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
    -DMAJORVERSION=${DZ_VERSION_MAJOR}
    -DMINORVERSION=${DZ_VERSION_MINOR}
@@ -334,7 +334,7 @@ else(USE_STATIC_BOOST)
    message(STATUS "Linking against boost dynamic libraries")
 endif(USE_STATIC_BOOST)
 
-find_package(Boost QUIET REQUIRED COMPONENTS thread system)
+find_package(Boost CONFIG REQUIRED COMPONENTS thread)
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Boost thread/system library not found on your system, try to get this installed.")
 endif(NOT Boost_FOUND)
@@ -346,7 +346,7 @@ else(Boost_VERSION VERSION_LESS DZ_MIN_LIBBOOST_VERSION)
     message(STATUS "Found Boost ${Boost_VERSION} at: ${Boost_INCLUDE_DIR}")
 endif(Boost_VERSION VERSION_LESS DZ_MIN_LIBBOOST_VERSION)
 
-target_link_libraries(oikomaticz Boost::thread Boost::system)
+target_link_libraries(oikomaticz Boost::thread)
 include_directories(${Boost_INCLUDE_DIRS})
 
 #

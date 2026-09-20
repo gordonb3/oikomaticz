@@ -632,12 +632,12 @@ bool P1MeterBase::MatchLine()
 		temp_usage = (unsigned long)(strtod(value, &validate)*1000.0f);
 		if (tariff_id == 2)
 		{
-			if (!m_power.powerdeliv2 || (m_p1version >= 4) || ((temp_usage - m_power.powerdeliv2) < 10000))
+			if ((m_p1version >= 4) || !m_power.powerdeliv2 || ((temp_usage - m_power.powerdeliv2) < 10000))
 				m_power.powerdeliv2 = temp_usage;
 		}
 		else
 		{
-			if (!m_power.powerdeliv1 || (m_p1version >= 4) || ((temp_usage - m_power.powerdeliv1) < 10000))
+			if ((m_p1version >= 4) || !m_power.powerdeliv2 || ((temp_usage - m_power.powerdeliv1) < 10000))
 				m_power.powerdeliv1 = temp_usage;
 		}
 		break;
@@ -645,12 +645,12 @@ bool P1MeterBase::MatchLine()
 		temp_usage = (unsigned long)(strtod(value, &validate)*1000.0f);
 		if (tariff_id == 2)
 		{
-			if (!m_power.powerusage2 || (m_p1version >= 4) || ((temp_usage - m_power.powerusage2) < 10000))
+			if ((m_p1version >= 4) || !m_power.powerdeliv2 || ((temp_usage - m_power.powerusage2) < 10000))
 				m_power.powerusage2 = temp_usage;
 		}
 		else
 		{
-			if (!m_power.powerusage1 || (m_p1version >= 4) || ((temp_usage - m_power.powerusage1) < 10000))
+			if ((m_p1version >= 4) || !m_power.powerdeliv2 || ((temp_usage - m_power.powerusage1) < 10000))
 				m_power.powerusage1 = temp_usage;
 		}
 	case device::tmeter::COSEM::OBIS::activeTariff:
