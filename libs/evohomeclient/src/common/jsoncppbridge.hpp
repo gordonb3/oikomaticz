@@ -12,7 +12,7 @@
 #define _EvohomeJsonBridge
 
 #include <string>
-#include "jsoncpp/json.h"
+#include "json/json.h"
 
 
 namespace evohome {

@@ -12,7 +12,7 @@
 
 #include <vector>
 #include <string>
-#include "jsoncpp/json.h"
+#include "json/json.h"
 #include "../common/devices.hpp"
 
 
